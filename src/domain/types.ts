@@ -1,9 +1,5 @@
 /** Shared domain types. Everything user-facing is Turkish; ids and code are English. */
 
-export interface LocalizedText {
-  tr: string;
-}
-
 /** Inclusive year range the user selects, e.g. 1450–1500. A single year is from === to. */
 export interface YearRange {
   from: number;

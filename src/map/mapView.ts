@@ -6,6 +6,7 @@ import type { HistoricalEvent, PlacePoint } from '../domain/types';
 import { PolityLabels } from './labels';
 import { EventMarkers, type MarkerStats } from './markers';
 import { PlacePins } from './pin';
+import { EventPreview } from './preview';
 import { hatchImage, readTheme, stippleImage, type MapTheme } from './theme';
 
 export interface MapCallbacks {
@@ -32,11 +33,12 @@ const yearFilter = (year: number): ExpressionSpecification => [
   ['>=', ['get', 'to'], year],
 ];
 
-const idFilter = (year: number, id: string | null): ExpressionSpecification => [
+/** Rows of the given polities that are valid in `year` (an empty list matches nothing). */
+const idsFilter = (year: number, ids: string[]): ExpressionSpecification => [
   'all',
   ['<=', ['get', 'from'], year],
   ['>=', ['get', 'to'], year],
-  ['==', ['get', 'id'], id ?? '\u0000none'],
+  ['in', ['get', 'id'], ['literal', ids.length ? ids : ['\u0000none']]],
 ];
 
 /**
@@ -51,9 +53,13 @@ export class MapView {
   private readonly labels: PolityLabels;
   private readonly markers: EventMarkers;
   private readonly pins: PlacePins;
+  private readonly preview: EventPreview;
   private year = 0;
-  private selectedId: string | null = null;
+  /** Border rows valid in the shown year: hit-testing a pointer position only looks at these. */
+  private rowsNow: AppData['rows'] = [];
+  private selectedIds: string[] = [];
   private hoverId: string | null = null;
+  private layoutFailed = false;
   private ready = false;
   private hoverQueued = false;
   private lastPointer: { x: number; y: number; cx: number; cy: number } | null = null;
@@ -65,7 +71,9 @@ export class MapView {
     initialView: { lng: number; lat: number; zoom: number } | null = null,
   ) {
     this.theme = readTheme(data.tintCount);
-    const touchLayout = window.matchMedia('(max-width: 900px)').matches;
+    // On touch devices the map sits inside a scrolling page: one finger scrolls the page, two move the
+    // map. A mouse (even in a narrow window) keeps the wheel for zooming.
+    const touch = window.matchMedia('(pointer: coarse)');
     this.map = new maplibregl.Map({
       container,
       style: {
@@ -80,9 +88,9 @@ export class MapView {
             bounds: INITIAL_BOUNDS,
             fitBoundsOptions: { padding: { top: 56, bottom: 16, left: 16, right: 16 }, animate: false },
           }),
-      // On phones the map sits inside a scrolling page: one finger scrolls the page, two move the map.
-      cooperativeGestures: touchLayout,
+      cooperativeGestures: touch.matches,
       locale: {
+        'Map.Title': 'Harita',
         'CooperativeGesturesHandler.WindowsHelpText': 'Haritayı yakınlaştırmak için Ctrl + fare tekerleğini kullanın',
         'CooperativeGesturesHandler.MacHelpText': 'Haritayı yakınlaştırmak için ⌘ + fare tekerleğini kullanın',
         'CooperativeGesturesHandler.MobileHelpText': 'Haritayı kaydırmak için iki parmak kullanın',
@@ -104,10 +112,15 @@ export class MapView {
       fadeDuration: 0,
     });
     this.map.touchZoomRotate.disableRotation();
+    this.map.keyboard.disableRotation(); // north stays up: Shift+arrows would turn the map otherwise
+    touch.addEventListener('change', (e) =>
+      e.matches ? this.map.cooperativeGestures.enable() : this.map.cooperativeGestures.disable(),
+    );
 
     const canvasContainer = this.map.getCanvasContainer();
     this.labels = new PolityLabels(this.map, canvasContainer, data);
     this.pins = new PlacePins(this.map, canvasContainer);
+    this.preview = new EventPreview(this.map, canvasContainer);
     this.markers = new EventMarkers(this.map, canvasContainer, {
       onClick: (id) => cb.onEventClick(id),
       onHover: (id, el) => cb.onEventHover(id, el),
@@ -128,7 +141,10 @@ export class MapView {
       this.lastPointer = { x: e.point.x, y: e.point.y, cx: e.originalEvent.clientX, cy: e.originalEvent.clientY };
       this.queueHover();
     });
-    this.map.on('mouseout', () => {
+    this.map.on('mouseout', (e) => {
+      // Moving from the map onto a marker also leaves the canvas; the marker's own tooltip takes over.
+      const to = (e.originalEvent as MouseEvent).relatedTarget as HTMLElement | null;
+      if (to?.closest?.('.evt')) return;
       this.lastPointer = null;
       this.setHoverPolity(null);
       cb.onHoverPolity(null, 0, 0);
@@ -206,28 +222,28 @@ export class MapView {
       id: 'polity-hover',
       type: 'fill',
       source: 'borders',
-      filter: idFilter(this.year, this.hoverId),
+      filter: idsFilter(this.year, this.hoverIds()),
       paint: { 'fill-color': t.accent, 'fill-opacity': 0.13 },
     });
     map.addLayer({
       id: 'polity-selected-fill',
       type: 'fill',
       source: 'borders',
-      filter: idFilter(this.year, this.selectedId),
+      filter: idsFilter(this.year, this.selectedIds),
       paint: { 'fill-color': t.accent, 'fill-opacity': 0.2 },
     });
     map.addLayer({
       id: 'polity-selected-hatch',
       type: 'fill',
       source: 'borders',
-      filter: idFilter(this.year, this.selectedId),
+      filter: idsFilter(this.year, this.selectedIds),
       paint: { 'fill-pattern': 'hatch' },
     });
     map.addLayer({
       id: 'polity-selected-glow',
       type: 'line',
       source: 'borders',
-      filter: idFilter(this.year, this.selectedId),
+      filter: idsFilter(this.year, this.selectedIds),
       layout: { 'line-join': 'round' },
       paint: {
         'line-color': t.accent,
@@ -240,7 +256,7 @@ export class MapView {
       id: 'polity-selected-line',
       type: 'line',
       source: 'borders',
-      filter: idFilter(this.year, this.selectedId),
+      filter: idsFilter(this.year, this.selectedIds),
       layout: { 'line-join': 'round' },
       paint: { 'line-color': t.accent, 'line-width': zoomWidth(1.4, 2.4, 3), 'line-opacity': 0.95 },
     });
@@ -274,20 +290,34 @@ export class MapView {
       'polity-selected-glow',
       'polity-selected-line',
     ]) {
-      this.map.setFilter(id, idFilter(this.year, this.selectedId));
+      this.map.setFilter(id, idsFilter(this.year, this.selectedIds));
     }
   }
 
   private applyHover() {
     if (!this.ready) return;
-    // Do not hover-tint the polity that is already selected.
-    this.map.setFilter('polity-hover', idFilter(this.year, this.hoverId === this.selectedId ? null : this.hoverId));
+    this.map.setFilter('polity-hover', idsFilter(this.year, this.hoverIds()));
+  }
+
+  /** The hovered polity, unless it is already selected (no hover tint on top of the selection). */
+  private hoverIds(): string[] {
+    return this.hoverId && !this.selectedIds.includes(this.hoverId) ? [this.hoverId] : [];
   }
 
   private layoutOverlays(force = false) {
-    this.labels.layout(force);
-    this.pins.layout();
-    this.markers.layout(force);
+    // The size is read once, before any overlay writes styles, so the frame does not force extra layouts.
+    const canvas = this.map.getCanvas();
+    const size = { width: canvas.clientWidth, height: canvas.clientHeight };
+    try {
+      this.labels.layout(force, size);
+      this.pins.layout();
+      this.preview.layout();
+      this.markers.layout(force, size);
+    } catch (err) {
+      // A bad record must not stop the map's frame loop (and with it the 'load' event).
+      if (!this.layoutFailed) console.error('[harita] bindirme katmanları çizilemedi', err);
+      this.layoutFailed = true;
+    }
   }
 
   /* --------------------------------------------------------- public API */
@@ -296,25 +326,32 @@ export class MapView {
   setYear(year: number) {
     if (year === this.year && this.ready) return;
     this.year = year;
+    this.rowsNow = this.data.rows.filter((r) => r.from <= year && year <= r.to);
     this.labels.setYear(year);
     this.markers.setFocusYear(year);
     this.applyYear();
   }
 
-  setSelectedPolity(id: string | null) {
-    this.selectedId = id;
-    this.labels.setSelected(id);
+  /** The polities to highlight (those holding the selected places). */
+  setSelectedPolities(ids: string[]) {
+    if (ids.length === this.selectedIds.length && ids.every((id, i) => id === this.selectedIds[i])) return;
+    this.selectedIds = ids;
+    this.labels.setSelected(ids);
     this.applySelection();
     this.applyHover();
   }
 
+  /** Events eligible for the map: decided by the time range alone, never by the selected place. */
+  setEvents(events: HistoricalEvent[], focusYear: number) {
+    this.markers.setEvents(events, focusYear);
+  }
+
   /**
-   * Events eligible for the map (range-only, never place-dependent). `preview` is an event the user
-   * picked elsewhere (e.g. a local event on a timeline) that is not part of that set: it is drawn
-   * with a dashed ring so its location is visible, without changing what the map contains.
+   * Where the selected event happened, when it is not one of the map's events (a local event picked on
+   * a timeline). Drawn as a selection overlay, not as a marker: the markers stay the range's own set.
    */
-  setEvents(events: HistoricalEvent[], focusYear: number, preview: HistoricalEvent | null = null) {
-    this.markers.setEvents(events, focusYear, preview);
+  setPreviewEvent(ev: HistoricalEvent | null) {
+    this.preview.set(ev);
   }
 
   /** The selected places, drawn as pins. */
@@ -328,10 +365,6 @@ export class MapView {
 
   setHoverEvent(id: string | null) {
     this.markers.setHover(id);
-  }
-
-  get zoom(): number {
-    return this.map.getZoom();
   }
 
   /** Resolves once the first frame with all sources and tiles has been drawn (or after `timeoutMs`). */
@@ -353,8 +386,7 @@ export class MapView {
   /* ------------------------------------------------------ interactions */
 
   private pick(lon: number, lat: number) {
-    const hits = rowsContaining(this.data.rows, lon, lat);
-    return primaryAt(hits, this.year);
+    return primaryAt(rowsContaining(this.rowsNow, lon, lat), this.year);
   }
 
   private onMapClick(lon: number, lat: number) {

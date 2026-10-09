@@ -6,12 +6,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/validate-data.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "data:validate": "node scripts/validate-data.mjs",
-    "e2e": "vite build && node scripts/verify-e2e.mjs",
+    "e2e": "node scripts/validate-data.mjs && vite build && node scripts/verify-e2e.mjs",
     "format": "prettier --write \"src/**/*.{ts,css}\" \"tests/**/*.ts\" \"scripts/**/*.mjs\" \"public/data/events/*.json\" public/data/entities.json",
     "data:fetch": "python3 -I scripts/pipeline/fetch_sources.py",
     "data:borders": "python3 -I scripts/pipeline/build_borders.py"

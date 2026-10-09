@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { boundsOf, pointInPolygon, primaryAt, resolvePlace, rowContains, sovereigntySegments } from '../src/domain/geo';
+import {
+  ancestorsOf,
+  boundsOf,
+  pointInPolygon,
+  primaryAt,
+  resolvePlace,
+  rowContains,
+  sovereigntySegments,
+} from '../src/domain/geo';
 import type { BorderRow, Entity, PolygonCoords } from '../src/domain/types';
 
 const square = (x: number, y: number, s: number): PolygonCoords => [
@@ -83,3 +91,35 @@ describe('who holds a place', () => {
     expect(res.sequence).toEqual([]);
   });
 });
+
+describe('lineage reaches every level above the holder', () => {
+  // Moravia holds the point; Bohemia and the Empire hold other ground but are its parents, one above the other.
+  const moravia = row('moravia', 1400, 1600, 10, square(0, 0, 10), ['bohemia']);
+  const bohemia = row('bohemia', 1400, 1600, 100, square(50, 50, 10), ['empire']);
+  const empire = row('empire', 1400, 1600, 1000, square(100, 100, 10));
+  const rows = [moravia, bohemia, empire];
+
+  it('walks "member of" links transitively', () => {
+    expect([...ancestorsOf(rows, ['moravia'], 1450, 1450)].sort()).toEqual(['bohemia', 'empire']);
+    expect([...ancestorsOf(rows, ['empire'], 1450, 1450)]).toEqual([]);
+  });
+
+  it('only follows memberships that hold in the window', () => {
+    const late = row('bohemia', 1500, 1600, 100, square(50, 50, 10), ['empire']);
+    expect([...ancestorsOf([moravia, late], ['moravia'], 1450, 1460)]).toEqual(['bohemia']);
+    expect([...ancestorsOf([moravia, late], ['moravia'], 1450, 1520)].sort()).toEqual(['bohemia', 'empire']);
+  });
+
+  it('survives a membership cycle', () => {
+    const a = row('a', 1400, 1600, 10, square(0, 0, 1), ['b']);
+    const b = row('b', 1400, 1600, 10, square(5, 5, 1), ['a']);
+    expect([...ancestorsOf([a, b], ['a'], 1500, 1500)].sort()).toEqual(['b']);
+  });
+
+  it('puts the whole chain in the lineage of the place', () => {
+    const res = resolvePlace(rows, [], { lon: 5, lat: 5 }, 1450, { from: 1450, to: 1450 });
+    expect(res.row?.id).toBe('moravia');
+    expect([...res.lineage].sort()).toEqual(['bohemia', 'empire', 'moravia']);
+  });
+});
+

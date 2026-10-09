@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_STATE, Store } from '../src/state/store';
-import { hashToPartialState, parseCamera, stateToHash } from '../src/state/url';
+import { hashToPartialState, parseCamera, parsePlace, stateToHash } from '../src/state/url';
 
 const extent = { from: 1400, to: 1600 };
 const make = (patch = {}) => new Store({ ...DEFAULT_STATE, ...patch }, extent);
@@ -91,3 +91,51 @@ describe('url state', () => {
     expect(parseCamera('#t=1500')).toBeNull();
   });
 });
+
+describe('url robustness', () => {
+  it('a place needs exactly two numbers that are on the map', () => {
+    expect(parsePlace('32.85,39.93')).toEqual({ lon: 32.85, lat: 39.93 });
+    expect(parsePlace('-74.5,24')).toEqual({ lon: -74.5, lat: 24 });
+    for (const bad of ['32.85,', ',39.93', '32.85', '1,2,3', '10,100', '-200,10', '10,-86', 'a,b', '1e3,2', '']) {
+      expect(parsePlace(bad), bad).toBeNull();
+    }
+    // an empty half must not become 0 (a phantom place in the Gulf of Guinea)
+    expect(hashToPartialState('#t=1500&p=32.85,', extent).places).toBeUndefined();
+    expect(hashToPartialState('#p=10,100', extent)).toEqual({});
+  });
+
+  it('only one place is kept while comparison mode does not exist', () => {
+    expect(hashToPartialState('#p=10,10&p=20,20', extent).places).toEqual([{ lon: 10, lat: 10 }]);
+  });
+
+  it('a camera needs three numbers', () => {
+    expect(parseCamera('#v=1//2')).toBeNull();
+    expect(parseCamera('#v=2/3')).toBeNull();
+    expect(parseCamera('#v=2/3/4/5')).toBeNull();
+    expect(parseCamera('#v=2/3/4')).toEqual({ zoom: 2, lat: 3, lng: 4 });
+  });
+
+  it('an empty cursor is not 0, and a range outside the dataset is not "the nearest year"', () => {
+    expect(hashToPartialState('#c=', extent)).toEqual({});
+    expect(hashToPartialState('#t=1700-1800', extent)).toEqual({});
+    expect(hashToPartialState('#t=1000-1100', extent)).toEqual({});
+    expect(hashToPartialState('#t=1590-1700', extent).range).toEqual({ from: 1590, to: 1600 });
+  });
+
+  it('the camera is written only when given', () => {
+    expect(stateToHash(DEFAULT_STATE)).not.toContain('v=');
+    expect(stateToHash(DEFAULT_STATE, { zoom: 3, lat: 10, lng: 20 })).toContain('v=3.00/10.000/20.000');
+  });
+});
+
+describe('store.replace', () => {
+  it('swaps the whole state and tells listeners', () => {
+    const s = make();
+    const seen: string[] = [];
+    s.subscribe((state) => seen.push(`${state.range.from}-${state.range.to}`));
+    s.replace({ ...DEFAULT_STATE, range: { from: 1500, to: 1500 } });
+    expect(seen).toEqual(['1500-1500']);
+    expect(s.state.range).toEqual({ from: 1500, to: 1500 });
+  });
+});
+

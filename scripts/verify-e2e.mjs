@@ -298,7 +298,7 @@ try {
     'İşaretçi tıklaması olayı bilgi panelinde açar',
     (await text('[data-testid=event-title]')).trim() === "İstanbul'un Fethi",
   );
-  check('Olay kartı tarihi Türkçe', (await text('[data-testid=event-card] time')).includes('6 Nisan – 29 Mayıs 1453'));
+  check('Olay kartı tarihi Türkçe', (await text('[data-testid=event-date]')).includes('6 Nisan – 29 Mayıs 1453'));
   check('İşaretçi tıklaması da haritayı oynatmadı', sameCamera(baseCam, await camera()));
   check('İşaretçi tıklaması yeri sıfırlamadı', (await text('[data-testid=title-main]')).trim() === 'Ming Hanedanı');
   await page.screenshot({ path: join(OUT, '05-olay-detayi.png') });
@@ -319,7 +319,8 @@ try {
   check('Çizelge düğümü tıklaması olayı açar', evId === nodeId, nodeId);
   check('Çizelge tıklaması haritayı oynatmadı', sameCamera(baseCam, await camera()));
 
-  // a local (importance < 3) event picked on the timeline is previewed on the map without changing the map's own set
+  // a local (importance < 3) event picked on the timeline shows where it happened, as a selection overlay:
+  // it is not a map marker, so the map's own set of markers stays what the time range says
   const local = await page.evaluate(() => {
     const vm = window.__ayni.view();
     const ev = window.__ayni.data.events.find(
@@ -328,17 +329,23 @@ try {
     return ev ? { id: ev.id, lon: ev.location.lon, lat: ev.location.lat } : null;
   });
   if (local) {
+    const markersBefore = await markerIds();
     await page.locator(`.tl-ev[data-id="${local.id}"]`).click();
     await settle(500);
-    const previewVisible = await page.evaluate((id) => {
-      const el = document.querySelector(`.evt[data-id="${id}"]`);
-      return !!el && el.classList.contains('is-preview') && !el.classList.contains('is-hidden');
+    const preview = await page.evaluate((id) => {
+      const el = document.querySelector(`.evt-preview[data-id="${id}"]`);
+      return !!el && !el.hidden;
     }, local.id);
+    const asMarker = await page.evaluate((id) => !!document.querySelector(`.evt[data-id="${id}"]`), local.id);
     const inMapSet = await page.evaluate((id) => window.__ayni.view().mapEvents.some((e) => e.id === id), local.id);
     check(
-      'Çizelgeden seçilen yerel olay haritada önizlenir ama haritanın kendi kümesine girmez',
-      previewVisible && !inMapSet,
+      'Çizelgeden seçilen yerel olayın yeri haritada gösterilir, ama işaretçi olarak değil',
+      preview && !asMarker && !inMapSet,
       local.id,
+    );
+    check(
+      'Yerel olayı seçmek haritanın işaretçi kümesini değiştirmez',
+      JSON.stringify(markersBefore) === JSON.stringify(await markerIds()),
     );
     check('Önizleme haritayı oynatmadı', sameCamera(baseCam, await camera()));
   }
@@ -441,6 +448,216 @@ try {
   await settle(900);
   check('Fare tekerleği yakınlaştırır', (await camera()).zoom > baseCam.zoom);
   await page.screenshot({ path: join(OUT, '06-surukleme-sonrasi.png') });
+
+  /* ---- 7. keyboard, accessibility and robustness (each on a fresh page load) */
+  console.log('\n7. Klavye, erişilebilirlik ve sağlamlık');
+  const open = async (hash = '', viewport = { width: 1440, height: 900 }) => {
+    const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1 });
+    const p = await ctx.newPage();
+    const errs = [];
+    p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`));
+    p.on('console', (m) => {
+      if (m.type() === 'error') errs.push(`console.error: ${m.text()}`);
+    });
+    await p.goto(server.url + hash);
+    await p.waitForFunction(() => window.__ayni, null, { timeout: 60000 });
+    await p.waitForSelector('#loading', { state: 'detached', timeout: 120000 });
+    await p.waitForTimeout(900);
+    return { ctx, p, errs };
+  };
+  const cameraOf = (p) =>
+    p.evaluate(() => {
+      const m = window.__ayni.map;
+      const c = m.getCenter();
+      return { lng: c.lng, lat: c.lat, zoom: m.getZoom(), bearing: m.getBearing(), pitch: m.getPitch() };
+    });
+
+  // 7a. a malformed or truncated link must not brick start-up
+  {
+    const { ctx, p, errs } = await open('#t=1500&p=10,100&e=bu-olay-yok&v=1//2&c=');
+    const st = await p.evaluate(() => ({ ...window.__ayni.store.state }));
+    check(
+      'Bozuk bir bağlantı (p=10,100, bilinmeyen e=, v=1//2) uygulamayı çökertmez',
+      st.places.length === 0 && st.selectedEventId === null && st.range.from === 1500 && errs.length === 0,
+      errs[0] ?? '',
+    );
+    await ctx.close();
+  }
+  {
+    const { ctx, p } = await open('#t=1500&p=32.85,');
+    check('Yarım kalmış p= sahte bir yer seçmez', (await p.evaluate(() => window.__ayni.store.state.places.length)) === 0);
+    await ctx.close();
+  }
+
+  // 7b. the camera enters the link only after the user has moved the map themselves
+  {
+    const { ctx, p } = await open('#t=1450-1500');
+    await p.waitForTimeout(500);
+    const before = await p.evaluate(() => location.hash);
+    const r = await p.locator('#map').boundingBox();
+    await p.mouse.move(r.x + r.width / 2, r.y + r.height / 2);
+    await p.mouse.down();
+    await p.mouse.move(r.x + r.width / 2 - 90, r.y + r.height / 2 + 20, { steps: 6 });
+    await p.mouse.up();
+    await p.waitForTimeout(900);
+    const after = await p.evaluate(() => location.hash);
+    check(
+      'Adres çubuğu kamerayı yalnızca kullanıcı haritayı oynattıktan sonra taşır',
+      !before.includes('v=') && after.includes('v='),
+      `${before} → ${after}`,
+    );
+    await ctx.close();
+  }
+
+  // 7c. markers: one Tab stop, arrow keys, hidden ones are unreachable, the tooltip survives pointer travel
+  {
+    const { ctx, p, errs } = await open('#t=1450-1500');
+    const stops = await p.evaluate(() => [...document.querySelectorAll('.evt')].filter((e) => e.tabIndex === 0).length);
+    const hiddenFocusable = await p.evaluate(() =>
+      [...document.querySelectorAll('.evt.is-hidden')].filter(
+        (e) => getComputedStyle(e).visibility !== 'hidden' || e.tabIndex === 0,
+      ).length,
+    );
+    check('Haritadaki işaretçiler tek bir Tab durağıdır', stops === 1, `${stops} durak`);
+    check('Gizlenen işaretçiler klavyeyle ve ekran okuyucuyla erişilemez', hiddenFocusable === 0);
+
+    const cam0 = await cameraOf(p);
+    await p.locator('.evt[tabindex="0"]').focus();
+    const first = await p.evaluate(() => document.activeElement?.dataset.id);
+    await p.keyboard.press('ArrowRight');
+    await p.keyboard.press('ArrowRight');
+    const second = await p.evaluate(() => document.activeElement?.dataset.id);
+    check('Ok tuşları işaretçiler arasında gezinir', !!second && second !== first, `${first} → ${second}`);
+    check('Ok tuşları haritayı kaydırmaz', sameCamera(cam0, await cameraOf(p)));
+    check(
+      'Odaklanan işaretçinin ipucu görünür',
+      await p.evaluate(() => !document.querySelector('.tip').hidden && document.querySelector('.tip').textContent.length > 3),
+    );
+    await p.keyboard.press('Enter');
+    await p.waitForTimeout(500);
+    const focusedTitle = await p.evaluate(() => document.activeElement?.getAttribute('data-testid'));
+    check('Klavyeyle seçilen olayın kartına odak gider', focusedTitle === 'event-title', String(focusedTitle));
+    check('Klavyeyle olay seçmek haritayı oynatmaz', sameCamera(cam0, await cameraOf(p)));
+    await p.keyboard.press('Escape');
+    await p.waitForTimeout(300);
+    check('Esc olay kartını kapatır', (await p.evaluate(() => window.__ayni.store.state.selectedEventId)) === null);
+
+    // the pointer travelling from the map onto a marker keeps that marker's tooltip
+    const target = await p.evaluate(() => {
+      const el = document.querySelector('.evt:not(.is-hidden)');
+      const r = el.querySelector('.evt-mark').getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: el.dataset.id };
+    });
+    await p.mouse.move(target.x - 90, target.y + 70);
+    await p.waitForTimeout(250);
+    await p.mouse.move(target.x, target.y, { steps: 8 });
+    await p.waitForTimeout(400);
+    const tipShown = await p.evaluate(() => {
+      const t = document.querySelector('.tip');
+      return !t.hidden && t.querySelector('.tip-event') !== null;
+    });
+    check('İşaretçinin üstüne gelince ipucu kalıcı görünür (harita çıkışı onu gizlemez)', tipShown, target.id);
+    check('Sayfa sürümünde konsol hatası yok (7)', errs.length === 0, errs[0] ?? '');
+    await ctx.close();
+  }
+
+  // 7c2. hovering a timeline label (not only its node) keeps the tooltip; removing the hovered node clears it
+  {
+    const { ctx, p, errs } = await open('#t=1490-1520&p=35.5,38.9');
+    const label = p.locator('.tl-label:not(.is-context)').first();
+    const id = await label.getAttribute('data-id');
+    await label.hover();
+    await p.waitForTimeout(900);
+    const kept = await p.evaluate(
+      (want) => !document.querySelector('.tip').hidden && window.__ayni.store.state.hoverEventId === want,
+      id,
+    );
+    check('Çizelge etiketinin üstünde ipucu ve vurgu kalıcıdır', kept, String(id));
+    await p.keyboard.press('Escape'); // Esc dismisses hover content and, with nothing open, deselects the place
+    await p.mouse.move(5, 5);
+    await p.waitForTimeout(900);
+    check(
+      'Üzerinde durulan düğüm kaldırılınca ipucu ve vurgu temizlenir',
+      await p.evaluate(() => document.querySelector('.tip').hidden && window.__ayni.store.state.hoverEventId === null),
+    );
+    check('Çizelge etkileşimlerinde konsol hatası yok', errs.length === 0, errs[0] ?? '');
+    await ctx.close();
+  }
+
+  // 7d. ruler: a click on empty track near an end slides the window, it never shrinks it
+  {
+    const { ctx, p } = await open('#t=1450-1549');
+    const track = await p.locator('.ruler-track').boundingBox();
+    await p.mouse.click(track.x + track.width * 0.985, track.y + track.height - 6);
+    await p.waitForTimeout(500);
+    const r = await p.evaluate(() => window.__ayni.store.state.range);
+    check('Cetvelde uca yakın boş yere tıklamak 100 yıllık pencereyi küçültmez', r.to - r.from + 1 === 100 && r.to === 1600, JSON.stringify(r));
+    await ctx.close();
+  }
+
+  // 7e. year inputs never keep stale text; Esc inside one does not close the place
+  {
+    const { ctx, p } = await open('#t=1450-1500&p=35.5,38.9');
+    const input = p.locator('[data-testid=input-from]');
+    await input.fill('abc');
+    await input.press('Enter');
+    await p.waitForTimeout(300);
+    check('Geçersiz yıl girişi eski değere döner', (await input.inputValue()) === '1450', await input.inputValue());
+    await input.fill('2000');
+    await input.press('Tab');
+    await p.waitForTimeout(300);
+    check(
+      "1600 üstü bir yıl 1600'e kıstırılır ve kutu (yazılan 2000'i değil) 1600'ü gösterir",
+      (await input.inputValue()) === '1600' && (await p.locator('[data-testid=input-to]').inputValue()) === '1600',
+      `${await input.inputValue()} / ${await p.locator('[data-testid=input-to]').inputValue()}`,
+    );
+    await input.fill('1470');
+    await input.press('Escape');
+    check(
+      'Esc, kutudaki yazılanı geri alır ve seçili yeri kapatmaz',
+      (await input.inputValue()) !== '1470' && (await p.evaluate(() => window.__ayni.store.state.places.length)) === 1,
+    );
+    await ctx.close();
+  }
+
+  // 7f. screen readers: no page-wide live region, one status line that says what changed
+  {
+    const { ctx, p } = await open('#t=1500');
+    check('Kök öğe canlı bölge değil', (await p.locator('#app').getAttribute('aria-live')) === null);
+    const anatolia = await p.evaluate(() => {
+      const pt = window.__ayni.map.project([35.5, 38.9]);
+      const r = document.querySelector('#map').getBoundingClientRect();
+      return { x: r.left + pt.x, y: r.top + pt.y };
+    });
+    await p.mouse.click(anatolia.x, anatolia.y);
+    await p.waitForTimeout(600);
+    check(
+      'Yer seçimi durum satırında duyurulur',
+      (await p.locator('#sr-status').innerText()).includes('Osmanlı İmparatorluğu'),
+      await p.locator('#sr-status').innerText(),
+    );
+    await ctx.close();
+  }
+
+  // 7g. a mouse in a narrow window still zooms with the wheel; a pasted link replaces the view
+  {
+    const { ctx, p } = await open('#t=1500', { width: 860, height: 800 });
+    const z0 = (await cameraOf(p)).zoom;
+    const r = await p.locator('#map').boundingBox();
+    await p.mouse.move(r.x + r.width / 2, r.y + r.height / 3);
+    await p.mouse.wheel(0, -300);
+    await p.waitForTimeout(900);
+    check('Dar pencerede de fare tekerleği haritayı yakınlaştırır', (await cameraOf(p)).zoom > z0);
+    await p.evaluate(() => {
+      location.hash = '#t=1550';
+    });
+    await p.waitForTimeout(600);
+    check(
+      'Aynı sekmeye yapıştırılan bağlantı görünümü değiştirir',
+      (await p.evaluate(() => window.__ayni.store.state.range.from)) === 1550,
+    );
+    await ctx.close();
+  }
 
   check('Sayfada konsol/sayfa hatası yok', problems.length === 0, problems.slice(0, 3).join(' | '));
 } catch (err) {

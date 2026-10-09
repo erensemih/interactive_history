@@ -108,6 +108,33 @@ export function regionsAt(entities: Iterable<Entity>, x: number, y: number): str
 }
 
 /**
+ * Everything above `ids` in the "member of" hierarchy, transitively (Moravia → Bohemia → Holy Roman
+ * Empire). A parent's own membership is read from its border rows that overlap [lo, hi]; the parent
+ * need not contain the place itself.
+ */
+export function ancestorsOf(rows: BorderRow[], ids: Iterable<string>, lo: number, hi: number): Set<string> {
+  const parentsOf = new Map<string, Set<string>>();
+  for (const r of rows) {
+    if (!r.up?.length || r.to < lo || r.from > hi) continue;
+    let set = parentsOf.get(r.id);
+    if (!set) parentsOf.set(r.id, (set = new Set()));
+    for (const p of r.up) set.add(p);
+  }
+  const out = new Set<string>();
+  const seen = new Set<string>(ids);
+  const queue = [...seen];
+  while (queue.length) {
+    for (const parent of parentsOf.get(queue.pop()!) ?? []) {
+      if (seen.has(parent)) continue;
+      seen.add(parent);
+      out.add(parent);
+      queue.push(parent);
+    }
+  }
+  return out;
+}
+
+/**
  * Everything the app needs to know about a place: who holds it at `year`, who held it over the
  * detail window, and which entity ids make up its timeline "lineage" (holders, their parents,
  * and the regions it lies in).
@@ -132,5 +159,6 @@ export function resolvePlace(
     lineage.add(r.id);
     for (const parent of r.up ?? []) lineage.add(parent);
   }
+  for (const ancestor of ancestorsOf(rows, lineage, lo, hi)) lineage.add(ancestor);
   return { point, row, regions, sequence, lineage };
 }

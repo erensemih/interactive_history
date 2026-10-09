@@ -38,7 +38,11 @@ function dayOfYear(y: number, m: number, d: number): number {
   return n;
 }
 
-/** Parses "YYYY", "YYYY-MM" or "YYYY-MM-DD" (proleptic Gregorian, years 1–9999). */
+/**
+ * Parses "YYYY", "YYYY-MM" or "YYYY-MM-DD" (years 1–9999). A date is kept exactly as the source writes it
+ * and placed on a proleptic Gregorian year; sources before 1582 often use the Julian calendar, which
+ * differs by about a week or more. That only shifts an event within its year, never into another one.
+ */
 export function parseDate(text: string): ParsedDate {
   const m = /^(\d{1,4})(?:-(\d{2})(?:-(\d{2}))?)?$/.exec(text.trim());
   if (!m) throw new Error(`Geçersiz tarih: "${text}" (YYYY, YYYY-AA veya YYYY-AA-GG bekleniyor)`);

@@ -10,13 +10,17 @@ export interface AppState {
   range: YearRange;
   /** 0..1: where inside the range the shown borders sit. */
   cursor: number;
-  /** Selected places. One for now; the shape is ready for two-place comparison. */
+  /** Selected places (at most MAX_PLACES). A list so two-place comparison needs no change of shape. */
   places: PlacePoint[];
   selectedEventId: string | null;
   hoverEventId: string | null;
 }
 
 export type Listener = (state: AppState, prev: AppState) => void;
+
+/** How many places can be selected at once. The state, the URL and the panel are built for a list;
+ *  raising this (and giving the timeline one lane per place) is what comparison mode needs. */
+export const MAX_PLACES = 1;
 
 export class Store {
   private current: AppState;
@@ -33,10 +37,6 @@ export class Store {
     return this.current;
   }
 
-  get yearExtent(): YearRange {
-    return this.extent;
-  }
-
   subscribe(fn: Listener): () => void {
     this.listeners.add(fn);
     return () => this.listeners.delete(fn);
@@ -47,6 +47,13 @@ export class Store {
     const next = { ...prev, ...patch };
     // Cheap structural no-op check so listeners are not woken for nothing.
     if ((Object.keys(patch) as (keyof AppState)[]).every((k) => Object.is(prev[k], next[k]))) return;
+    this.current = next;
+    for (const fn of this.listeners) fn(next, prev);
+  }
+
+  /** Replaces the whole state (a link opened in this tab). */
+  replace(next: AppState) {
+    const prev = this.current;
     this.current = next;
     for (const fn of this.listeners) fn(next, prev);
   }
@@ -79,15 +86,12 @@ export class Store {
     this.set({ cursor: cursorFor(this.current.range, year) });
   }
 
-  setCursor(cursor: number) {
-    this.set({ cursor: Math.min(1, Math.max(0, cursor)) });
-  }
-
   /** Focus a single year (e.g. "go to this event's year"). */
   focusYear(year: number, span = 1) {
     this.setRange(presetRange({ from: year, to: year }, span, this.extent));
   }
 
+  /** Replaces the selection with this place (or clears it). */
   selectPlace(point: PlacePoint | null) {
     this.set({ places: point ? [point] : [] });
   }

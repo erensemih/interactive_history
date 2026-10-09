@@ -293,6 +293,9 @@
     0 0 4px var(--halo),
     0 0 7px var(--halo);
   transition: opacity 0.18s ease;
+}
+
+.plabel:not(.is-hidden) {
   will-change: transform;
 }
 
@@ -323,24 +326,33 @@
 
 /* ------------------------------------------------------------ event markers */
 .evt {
-  /* The hit area is the mark's own box only; the year label hangs outside it. */
+  /* The hit area is the mark's own box (at least 24 × 24 px); the year label hangs outside it. */
   position: absolute;
   left: 0;
   top: 0;
-  display: block;
-  width: var(--box, 21px);
-  height: var(--box, 21px);
-  margin-left: calc(var(--box, 21px) * -0.5);
-  margin-top: calc(var(--box, 21px) * -0.5);
+  display: grid;
+  place-items: center;
+  width: var(--hit, 24px);
+  height: var(--hit, 24px);
+  margin-left: calc(var(--hit, 24px) * -0.5);
+  margin-top: calc(var(--hit, 24px) * -0.5);
   pointer-events: auto;
   cursor: pointer;
   transition: opacity 0.18s ease;
+}
+
+.evt:not(.is-hidden) {
   will-change: transform;
 }
 
+/* A culled marker is gone for everyone: no pointer, no Tab stop, no screen reader. */
 .evt.is-hidden {
   opacity: 0;
   pointer-events: none;
+  visibility: hidden;
+  transition:
+    opacity 0.18s ease,
+    visibility 0s linear 0.18s;
 }
 
 .evt .mk {
@@ -397,7 +409,7 @@
 
 .evt-year {
   position: absolute;
-  left: calc(100% - 3px);
+  left: calc(50% + var(--box, 21px) * 0.5 - 3px);
   top: 50%;
   transform: translateY(-50%);
   white-space: nowrap;
@@ -564,8 +576,30 @@
   }
 }
 
-/* an event the user picked that the map itself would not show */
-.evt.is-preview .evt-mark::after {
+/* where the selected event happened, when the map itself does not carry that event (dashed ring) */
+.evt-preview {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: var(--box, 21px);
+  height: var(--box, 21px);
+  margin-left: calc(var(--box, 21px) * -0.5);
+  margin-top: calc(var(--box, 21px) * -0.5);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.evt-preview[hidden] {
+  display: none;
+}
+
+.evt-preview .mk {
+  filter: drop-shadow(0 1px 1.5px rgb(30 20 10 / 0.28));
+}
+
+.evt-preview .evt-mark::after {
   border-style: dashed;
   opacity: 1;
   transform: scale(1);

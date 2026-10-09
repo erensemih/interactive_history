@@ -5,7 +5,7 @@ import {
   markerBudget,
   nearestEvent,
   normalizeEvent,
-  pickMarkers,
+  sourceUrl,
   timelineEvents,
   type RawEvent,
 } from '../src/domain/events';
@@ -32,6 +32,31 @@ const events = [
   raw('ming-1421', '1421-02-02', 4, ['ming']),
 ].map((e) => normalizeEvent(e, 'test'));
 
+describe('sources and validation', () => {
+  it('keeps ordinary Wikipedia, Wikidata and http(s) sources', () => {
+    expect(sourceUrl({ wikipedia: 'Battle of Çaldıran', lang: 'tr' })?.url).toBe(
+      'https://tr.wikipedia.org/wiki/Battle_of_%C3%87ald%C4%B1ran',
+    );
+    expect(sourceUrl({ wikidata: 'Q12345' })?.url).toBe('https://www.wikidata.org/wiki/Q12345');
+    expect(sourceUrl({ url: 'https://example.org/x', title: 'X' })).toMatchObject({ kind: 'url', title: 'X' });
+  });
+
+  it('drops anything that would not be an ordinary link', () => {
+    expect(sourceUrl({ url: 'javascript:alert(1)' })).toBeNull();
+    expect(sourceUrl({ wikipedia: 'X', lang: 'evil.example/#' })).toBeNull();
+    expect(sourceUrl({ wikidata: '../../x' })).toBeNull();
+    expect(sourceUrl({})).toBeNull();
+  });
+
+  it('rejects a malformed event with a message that names it', () => {
+    const bad = (patch: Partial<RawEvent>) => () => normalizeEvent({ ...raw('bad-1', '1500', 3, ['x']), ...patch }, 't');
+    expect(bad({ importance: 9 })).toThrow(/bad-1.*önem/);
+    expect(bad({ location: { name: { tr: 'y' }, coordinates: [10, 120] } })).toThrow(/bad-1.*koordinat/);
+    expect(bad({ parties: undefined as unknown as string[] })).toThrow(/bad-1/);
+    expect(bad({ date: '15oo' })).toThrow(/Geçersiz tarih/);
+  });
+});
+
 describe('normalizeEvent', () => {
   it('builds Turkish date labels, source links and fractional intervals', () => {
     const e = events[0]!;
@@ -57,20 +82,9 @@ describe('the map depends on time only', () => {
     expect(mapEventsInRange(events, { from: 1454, to: 1460 })).toEqual([]);
   });
 
-  it('marker budget grows with zoom and importance wins', () => {
+  it('marker budget grows with zoom', () => {
     expect(markerBudget(1)).toBeLessThan(markerBudget(3));
     expect(markerBudget(3)).toBeLessThan(markerBudget(5));
-    const many = Array.from({ length: 30 }, (_, i) =>
-      normalizeEvent(raw(`e${i}`, `${1450 + i}`, 3 + (i % 3), ['x']), 't'),
-    );
-    const picked = pickMarkers(many, { zoom: 1, focusYear: 1460 });
-    expect(picked.length).toBe(markerBudget(1));
-    // 10 of the 30 candidates are importance 5 and the budget at zoom 1 is smaller: only 5s survive
-    expect(picked.every((e) => e.importance === 5)).toBe(true);
-    // with a bigger budget the next tier follows
-    const more = pickMarkers(many, { zoom: 4, focusYear: 1460 });
-    expect(more.filter((e) => e.importance === 5).length).toBe(10);
-    expect(more.some((e) => e.importance === 4)).toBe(true);
   });
 });
 

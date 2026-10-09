@@ -28,7 +28,7 @@ export class PolityLabels {
   private readonly host: HTMLElement;
   private readonly elements = new Map<string, HTMLElement>();
   private candidates: Candidate[] = [];
-  private selectedId: string | null = null;
+  private selected = new Set<string>();
   private readonly measureCtx: CanvasRenderingContext2D;
   private readonly widthCache = new Map<string, number>();
   private lastKey = '';
@@ -72,9 +72,11 @@ export class PolityLabels {
     this.layout();
   }
 
-  setSelected(id: string | null) {
-    this.selectedId = id;
-    for (const [k, el] of this.elements) el.classList.toggle('is-selected', id !== null && k.startsWith(`${id}@`));
+  /** The selected polities always get a label, even where size or collisions would drop it. */
+  setSelected(ids: string[]) {
+    this.selected = new Set(ids);
+    this.lastKey = '';
+    this.layout();
   }
 
   private textWidth(text: string, weight: number, italic: boolean, caps: boolean, spacingEm: number): number {
@@ -89,18 +91,19 @@ export class PolityLabels {
     return w;
   }
 
-  layout(force = false) {
+  /** `size` is the map's pixel size, read once per frame by the caller (reading it here would force a layout). */
+  layout(force = false, size?: { width: number; height: number }) {
     const map = this.map;
     const canvas = map.getCanvas();
+    const W = size?.width ?? canvas.clientWidth;
+    const H = size?.height ?? canvas.clientHeight;
     const c = map.getCenter();
-    const key = `${map.getZoom().toFixed(3)}|${c.lng.toFixed(4)}|${c.lat.toFixed(4)}|${canvas.clientWidth}|${canvas.clientHeight}`;
+    const key = `${map.getZoom().toFixed(3)}|${c.lng.toFixed(4)}|${c.lat.toFixed(4)}|${W}|${H}`;
     if (!force && key === this.lastKey) return;
     this.lastKey = key;
 
     const zoom = map.getZoom();
     const world = 512 * 2 ** zoom; // px for 360° of longitude
-    const W = canvas.clientWidth;
-    const H = canvas.clientHeight;
     const placed: Box[] = [];
     const visible = new Set<string>();
 
@@ -109,11 +112,11 @@ export class PolityLabels {
       const cosLat = Math.cos((lat * Math.PI) / 180);
       const kmPerPx = (40075.017 * Math.max(cosLat, 0.05)) / world;
       const side = Math.sqrt(row.area) / kmPerPx;
-      const selected = row.id === this.selectedId;
+      const selected = this.selected.has(row.id);
       if (side < MIN_SIDE_PX && !selected) continue;
 
       const p = map.project([lon, lat]);
-      if (p.x < -60 || p.y < -30 || p.x > W + 60 || p.y > H + 30) continue;
+      if (!(p.x >= -60 && p.y >= -30 && p.x <= W + 60 && p.y <= H + 30)) continue; // also rejects NaN
 
       // Room available for the text: from the inscribed circle, capped by the polygon's width.
       const degPx = world / 360;

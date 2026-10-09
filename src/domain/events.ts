@@ -24,9 +24,18 @@ export interface RawEvent {
   sources: Array<{ wikipedia?: string; wikidata?: string; lang?: string; url?: string; title?: string }>;
 }
 
+const LANG_RE = /^[a-z]{2,3}(-[a-z0-9]+)?$/i;
+const QID_RE = /^Q\d+$/;
+const HTTP_RE = /^https?:\/\//i;
+
+/**
+ * A source reference as the UI links it. Anything that would not produce an ordinary http(s) link to
+ * Wikipedia/Wikidata (or a plain web page) is dropped rather than rendered.
+ */
 export function sourceUrl(src: RawEvent['sources'][number]): SourceRef | null {
   if (src.wikipedia) {
     const lang = src.lang ?? 'en';
+    if (!LANG_RE.test(lang)) return null;
     return {
       kind: 'wikipedia',
       title: src.wikipedia,
@@ -34,12 +43,34 @@ export function sourceUrl(src: RawEvent['sources'][number]): SourceRef | null {
       url: `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(src.wikipedia.replace(/ /g, '_'))}`,
     };
   }
-  if (src.wikidata) return { kind: 'wikidata', id: src.wikidata, url: `https://www.wikidata.org/wiki/${src.wikidata}` };
-  if (src.url) return { kind: 'url', title: src.title ?? src.url, url: src.url };
+  if (src.wikidata) {
+    if (!QID_RE.test(src.wikidata)) return null;
+    return { kind: 'wikidata', id: src.wikidata, url: `https://www.wikidata.org/wiki/${src.wikidata}` };
+  }
+  if (src.url) {
+    if (!HTTP_RE.test(src.url)) return null;
+    return { kind: 'url', title: src.title ?? src.url, url: src.url };
+  }
   return null;
 }
 
+/** Throws a message naming the event and the problem; the loader skips such an event and warns. */
+function assertValid(raw: RawEvent): void {
+  const fail = (what: string): never => {
+    throw new Error(`${raw?.id ?? '(kimliksiz olay)'}: ${what}`);
+  };
+  if (!raw || typeof raw.id !== 'string' || !raw.id) fail('id eksik');
+  if (!raw.title?.tr || !raw.summary?.tr) fail('Türkçe başlık veya özet eksik');
+  const [lon, lat] = raw.location?.coordinates ?? [];
+  if (!Number.isFinite(lon) || !Number.isFinite(lat) || Math.abs(lon!) > 180 || Math.abs(lat!) > 90)
+    fail('koordinatlar geçersiz');
+  if (!Number.isInteger(raw.importance) || raw.importance < 1 || raw.importance > 5) fail('önem 1–5 arasında olmalı');
+  if (typeof raw.category !== 'string' || !raw.category) fail('kategori eksik');
+  if (!Array.isArray(raw.parties) || !Array.isArray(raw.sources)) fail('taraflar/kaynaklar dizi olmalı');
+}
+
 export function normalizeEvent(raw: RawEvent, set: string): HistoricalEvent {
+  assertValid(raw);
   const rd: RawDate = typeof raw.date === 'string' ? { start: raw.date } : raw.date;
   const start = parseDate(rd.start);
   const end = rd.end ? parseDate(rd.end) : null;
@@ -77,7 +108,7 @@ export function mapEventsInRange(events: HistoricalEvent[], range: YearRange): H
   return events.filter((e) => e.importance >= MAP_MIN_IMPORTANCE && inRange(e, range));
 }
 
-/** How many markers the map may carry at a zoom level: world view stays calm, zooming in adds more. */
+/** How many markers may be drawn in view at a zoom level: the world view stays calm, zooming in adds more. */
 export function markerBudget(zoom: number): number {
   return Math.max(6, Math.round(10 * 2 ** (0.8 * (zoom - 1.8))));
 }
@@ -89,14 +120,6 @@ export function markerPriority(a: HistoricalEvent, b: HistoricalEvent, focusYear
   const db = Math.abs((b.start + b.end) / 2 - focusYear - 0.5);
   if (da !== db) return da - db;
   return a.id < b.id ? -1 : 1;
-}
-
-export function pickMarkers(
-  candidates: HistoricalEvent[],
-  opts: { zoom: number; focusYear: number },
-): HistoricalEvent[] {
-  const sorted = [...candidates].sort((a, b) => markerPriority(a, b, opts.focusYear));
-  return sorted.slice(0, markerBudget(opts.zoom));
 }
 
 /** Events on a place's timeline: any party in the place's lineage, inside the window. No distance test. */

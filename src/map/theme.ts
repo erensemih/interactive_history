@@ -1,6 +1,5 @@
 /** Map colours come from the same CSS tokens as the rest of the UI (single source of truth). */
 export interface MapTheme {
-  paper: string;
   sea: string;
   seaDeep: string;
   nodata: string;
@@ -21,7 +20,6 @@ export function readTheme(count: number): MapTheme {
   const tints: string[] = [];
   for (let i = 0; i < count; i++) tints.push(token(s, `--tint-${i}`, '#e7dbc4'));
   return {
-    paper: token(s, '--paper', '#f5f0e4'),
     sea: token(s, '--sea', '#bdd0d5'),
     seaDeep: token(s, '--sea-deep', '#acc2c8'),
     nodata: token(s, '--land-nodata', '#ebe6d9'),

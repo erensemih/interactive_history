@@ -27,7 +27,8 @@ export const CATEGORY_STYLES: Record<string, CategoryStyle> = {
 export const FALLBACK_STYLE: CategoryStyle = { color: '#5b5346', shape: 'circle' };
 
 export function styleFor(category: string): CategoryStyle {
-  return CATEGORY_STYLES[category] ?? FALLBACK_STYLE;
+  // own keys only: a category named "constructor" or "__proto__" must not reach Object.prototype
+  return Object.hasOwn(CATEGORY_STYLES, category) ? CATEGORY_STYLES[category]! : FALLBACK_STYLE;
 }
 
 /** Marker diameter in px per importance level (3–5 on the map; 1–5 on timelines). */

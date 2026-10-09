@@ -1,11 +1,13 @@
 import { html, nothing, render } from 'lit-html';
+import { live } from 'lit-html/directives/live.js';
 import { styleMap } from 'lit-html/directives/style-map.js';
 import type { AppData } from '../data/load';
-import { clamp } from '../domain/time';
+import { MAP_MIN_IMPORTANCE } from '../domain/events';
+import { clamp, presetRange } from '../domain/time';
 import type { Store } from '../state/store';
 import { clsx, formatRange } from './format';
 
-type Drag = { mode: 'start' | 'end' | 'move' | 'cursor'; grab: number } | null;
+type Drag = { mode: 'start' | 'end' | 'move' | 'cursor'; grab: number; pointerId: number } | null;
 
 const PRESETS = [
   { span: 1, label: '1 yıl' },
@@ -34,7 +36,7 @@ export class Ruler {
     const bins = Math.ceil((to - from + 1) / 5);
     this.binCounts = new Array(bins).fill(0);
     for (const e of data.events) {
-      if (e.importance < 3) continue;
+      if (e.importance < MAP_MIN_IMPORTANCE) continue;
       const b = Math.min(bins - 1, Math.floor((e.start - from) / 5));
       if (b >= 0) this.binCounts[b]!++;
     }
@@ -57,31 +59,46 @@ export class Ruler {
 
   /* ----------------------------------------------------------- pointer */
 
+  /** Only the primary button / first touch drags; a second finger or the right button is ignored. */
+  private static primary(e: PointerEvent): boolean {
+    return e.isPrimary && e.button === 0;
+  }
+
+  private capture(el: Element, pointerId: number) {
+    try {
+      el.setPointerCapture(pointerId);
+    } catch {
+      /* the pointer is already gone (e.g. a touch that ended): nothing to capture */
+    }
+  }
+
   private onDown = (e: PointerEvent, mode: NonNullable<Drag>['mode']) => {
+    if (!Ruler.primary(e)) return;
     e.preventDefault();
     e.stopPropagation();
     const range = this.store.state.range;
     const year = this.xToYear(e.clientX);
-    this.drag = { mode, grab: mode === 'move' ? year - range.from : 0 };
-    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    this.drag = { mode, grab: mode === 'move' ? year - range.from : 0, pointerId: e.pointerId };
+    this.capture(e.currentTarget as HTMLElement, e.pointerId);
   };
 
   private onTrackDown = (e: PointerEvent) => {
-    // A click on empty track recentres the window there and lets the user keep dragging it.
+    if (!Ruler.primary(e)) return;
+    // A click on empty track recentres the window there (sliding, never shrinking, at the ends) and
+    // lets the user keep dragging it.
     const range = this.store.state.range;
     const len = range.to - range.from + 1;
     const year = this.xToYear(e.clientX);
-    const from = Math.round(year - len / 2);
-    this.store.setRange({ from, to: from + len - 1 });
+    this.store.setRange(presetRange({ from: year, to: year }, len, this.data.extent));
     const now = this.store.state.range;
-    this.drag = { mode: 'move', grab: year - now.from };
-    this.track!.setPointerCapture(e.pointerId);
+    this.drag = { mode: 'move', grab: year - now.from, pointerId: e.pointerId };
+    this.capture(this.track!, e.pointerId);
     e.preventDefault();
   };
 
   private onMove = (e: PointerEvent) => {
     const d = this.drag;
-    if (!d) return;
+    if (!d || e.pointerId !== d.pointerId) return;
     const ext = this.data.extent;
     const r = this.store.state.range;
     const year = this.xToYear(e.clientX);
@@ -100,17 +117,20 @@ export class Ruler {
     }
   };
 
-  private onUp = () => {
-    this.drag = null;
+  private onUp = (e: PointerEvent) => {
+    if (this.drag && e.pointerId === this.drag.pointerId) this.drag = null;
   };
 
   /* ---------------------------------------------------------- keyboard */
 
   private onKey = (e: KeyboardEvent, target: 'start' | 'end' | 'move' | 'cursor') => {
+    if (e.altKey || e.ctrlKey || e.metaKey) return; // Alt+← is the browser's Back, not a time step
     const step = e.shiftKey ? 10 : 1;
     let delta = 0;
     if (e.key === 'ArrowRight' || e.key === 'ArrowUp') delta = step;
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') delta = -step;
+    else if (e.key === 'PageUp') delta = 10;
+    else if (e.key === 'PageDown') delta = -10;
     else if (e.key === 'Home') delta = -1000;
     else if (e.key === 'End') delta = 1000;
     else return;
@@ -141,7 +161,11 @@ export class Ruler {
 
   private inputKey(e: KeyboardEvent, which: 'from' | 'to') {
     const input = e.currentTarget as HTMLInputElement;
-    if (e.key === 'Enter') {
+    if (e.key === 'Escape') {
+      // undo an edit that was not committed
+      input.value = String(which === 'from' ? this.store.state.range.from : this.store.state.range.to);
+      input.select();
+    } else if (e.key === 'Enter') {
       this.commitInput(which, input.value);
       input.select();
     } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -208,13 +232,14 @@ export class Ruler {
           </p>
         </div>
 
-        <div class="ruler" aria-label="Zaman cetveli, ${ext.from}–${ext.to}">
+        <div class="ruler" role="group" aria-label="Zaman cetveli, ${ext.from}–${ext.to}">
           <div
             class="ruler-track"
             @pointerdown=${this.onTrackDown}
             @pointermove=${this.onMove}
             @pointerup=${this.onUp}
             @pointercancel=${this.onUp}
+            @lostpointercapture=${this.onUp}
           >
             <div class="ruler-bins" aria-hidden="true">
               ${this.binCounts.map(
@@ -223,7 +248,7 @@ export class Ruler {
                     class="bin"
                     style=${styleMap({
                       left: `${(i * 5 * 100) / this.span}%`,
-                      width: `${(5 * 100) / this.span}%`,
+                      width: `${(Math.min(5, this.span - i * 5) * 100) / this.span}%`,
                       height: `${n === 0 ? 0 : 3 + (n / maxBin) * 13}px`,
                     })}
                   ></i>`,
@@ -247,6 +272,7 @@ export class Ruler {
               @pointermove=${this.onMove}
               @pointerup=${this.onUp}
               @pointercancel=${this.onUp}
+              @lostpointercapture=${this.onUp}
               @keydown=${(e: KeyboardEvent) => this.onKey(e, 'move')}
               tabindex="0"
               role="slider"
@@ -266,6 +292,7 @@ export class Ruler {
               @pointermove=${this.onMove}
               @pointerup=${this.onUp}
               @pointercancel=${this.onUp}
+              @lostpointercapture=${this.onUp}
               @keydown=${(e: KeyboardEvent) => this.onKey(e, 'start')}
               tabindex="0"
               role="slider"
@@ -282,6 +309,7 @@ export class Ruler {
               @pointermove=${this.onMove}
               @pointerup=${this.onUp}
               @pointercancel=${this.onUp}
+              @lostpointercapture=${this.onUp}
               @keydown=${(e: KeyboardEvent) => this.onKey(e, 'end')}
               tabindex="0"
               role="slider"
@@ -298,6 +326,7 @@ export class Ruler {
               @pointermove=${this.onMove}
               @pointerup=${this.onUp}
               @pointercancel=${this.onUp}
+              @lostpointercapture=${this.onUp}
               @keydown=${(e: KeyboardEvent) => this.onKey(e, 'cursor')}
               tabindex="0"
               role="slider"
@@ -326,7 +355,7 @@ export class Ruler {
       maxlength="4"
       size="4"
       aria-label=${label}
-      .value=${String(value)}
+      .value=${live(String(value))}
       @keydown=${(e: KeyboardEvent) => this.inputKey(e, which)}
       @change=${(e: Event) => this.commitInput(which, (e.target as HTMLInputElement).value)}
       @focus=${(e: FocusEvent) => (e.target as HTMLInputElement).select()}

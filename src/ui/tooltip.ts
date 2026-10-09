@@ -1,8 +1,13 @@
 import { html, render, type TemplateResult } from 'lit-html';
 
-/** One floating tooltip for the whole app (map polities, event markers, timeline nodes). */
+/**
+ * One floating tooltip for the whole app (map polities, event markers, timeline nodes). Whoever shows
+ * it is its owner, and only the owner can hide it, so a stale "pointer left" from one source cannot
+ * wipe the tooltip another source has just shown.
+ */
 export class Tooltip {
   private readonly el: HTMLElement;
+  private owner: string | null = null;
 
   constructor(host: HTMLElement) {
     this.el = document.createElement('div');
@@ -13,7 +18,14 @@ export class Tooltip {
   }
 
   /** Shows content near viewport coordinates, keeping inside the window. */
-  show(content: TemplateResult, x: number, y: number, placement: 'above' | 'below' | 'cursor' = 'cursor') {
+  show(
+    content: TemplateResult,
+    x: number,
+    y: number,
+    placement: 'above' | 'below' | 'cursor' = 'cursor',
+    owner = 'default',
+  ) {
+    this.owner = owner;
     render(html`${content}`, this.el);
     this.el.hidden = false;
     const r = this.el.getBoundingClientRect();
@@ -27,7 +39,10 @@ export class Tooltip {
     this.el.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
   }
 
-  hide() {
+  /** Hides the tooltip if `owner` shows it (or, with no owner given, whoever does). */
+  hide(owner?: string) {
+    if (owner !== undefined && owner !== this.owner) return;
+    this.owner = null;
     this.el.hidden = true;
   }
 }

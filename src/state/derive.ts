@@ -17,8 +17,6 @@ export interface PlaceView {
   timeline: HistoricalEvent[];
   /** Closest event in time, for the empty-state hint. */
   nearest: HistoricalEvent | null;
-  /** Global events in the range that do not involve this place. */
-  elsewhere: HistoricalEvent[];
 }
 
 export interface ViewModel {
@@ -29,6 +27,8 @@ export interface ViewModel {
   /** Map content: depends only on the time range. */
   mapEvents: HistoricalEvent[];
   places: PlaceView[];
+  /** Map events that involve none of the selected places (all of them when nothing is selected). */
+  elsewhere: HistoricalEvent[];
   selectedEvent: HistoricalEvent | null;
 }
 
@@ -49,9 +49,9 @@ export function deriveView(state: AppState, data: AppData): ViewModel {
       title,
       timeline: timelineEvents(data.events, resolution.lineage, domain),
       nearest: nearestEvent(data.events, resolution.lineage, year + 0.5),
-      elsewhere: elsewhere(mapEvents, resolution.lineage),
     };
   });
+  const lineages = new Set(places.flatMap((p) => [...p.resolution.lineage]));
 
   return {
     range: state.range,
@@ -60,6 +60,7 @@ export function deriveView(state: AppState, data: AppData): ViewModel {
     domain,
     mapEvents,
     places,
+    elsewhere: places.length ? elsewhere(mapEvents, lineages) : mapEvents,
     selectedEvent: state.selectedEventId ? (data.eventsById.get(state.selectedEventId) ?? null) : null,
   };
 }

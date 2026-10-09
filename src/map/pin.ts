@@ -46,7 +46,8 @@ export class PlacePins {
   layout() {
     this.points.forEach((pt, i) => {
       const p = this.map.project([pt.lon, pt.lat]);
-      this.els[i]!.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
+      if (Number.isFinite(p.x) && Number.isFinite(p.y))
+        this.els[i]!.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
     });
   }
 }

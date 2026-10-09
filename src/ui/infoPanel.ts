@@ -7,11 +7,12 @@ import type { PlaceView, ViewModel } from '../state/derive';
 import type { Store } from '../state/store';
 import { clsx, formatArea, formatRange } from './format';
 import { markerSvg } from './markerShapes';
+import { scrollBehavior } from './motion';
 
 /**
- * The right-hand info panel. It is a stack of cards (event on top, place below) and, below them,
- * the "elsewhere at the same time" list. Each place gets its own `placeCard`, so showing two places
- * side by side later means rendering two columns of the same cards.
+ * The right-hand info panel. It is a stack of cards (event on top, then one card per selected place)
+ * and, below them, the "elsewhere at the same time" list. Each place gets its own `placeCard`, so
+ * showing two places side by side later means laying the same cards out in two columns.
  */
 export class InfoPanel {
   /** Entities whose long summary the reader has unfolded. */
@@ -25,14 +26,21 @@ export class InfoPanel {
 
   render(vm: ViewModel) {
     const ev = vm.selectedEvent;
-    const place = vm.places[0] ?? null;
     render(
       html`
-        ${ev ? this.eventCard(ev, vm) : nothing} ${place ? this.placeCard(place, vm, !!ev) : this.introCard()}
-        ${this.elsewhereList(vm, place)}
+        ${ev ? this.eventCard(ev, vm) : nothing}
+        ${vm.places.length ? vm.places.map((place) => this.placeCard(place, vm, !!ev)) : this.introCard()}
+        ${this.elsewhereList(vm)}
       `,
       this.host,
     );
+  }
+
+  /** Closing a card removes the button that had focus; keep keyboard users in the panel instead of dropping them on <body>. */
+  private close(action: () => void) {
+    const hadFocus = this.host.contains(document.activeElement);
+    action();
+    if (hadFocus) this.host.focus({ preventScroll: true });
   }
 
   /* ---------------------------------------------------------------- intro */
@@ -72,7 +80,7 @@ export class InfoPanel {
           class="icon-btn"
           aria-label="Yer seçimini kaldır"
           title="Seçimi kaldır"
-          @click=${() => this.store.selectPlace(null)}
+          @click=${() => this.close(() => this.store.selectPlace(null))}
         >
           ${closeIcon()}
         </button>
@@ -81,7 +89,7 @@ export class InfoPanel {
       ${
         parents.length
           ? html`<p class="card-sub">
-              ${parents.map((p) => p.name).join(' · ')} ${parents.length > 1 ? 'üyesi' : 'üyesi'}
+              ${parents.map((p) => p.name).join(' · ')} üyesi
             </p>`
           : nothing
       }
@@ -173,7 +181,7 @@ export class InfoPanel {
     const wp = e.wikipedia
       ? `https://en.wikipedia.org/wiki/${encodeURIComponent(e.wikipedia.replace(/ /g, '_'))}`
       : null;
-    const wd = e.wikidata ? `https://www.wikidata.org/wiki/${e.wikidata}` : null;
+    const wd = e.wikidata && /^Q\d+$/.test(e.wikidata) ? `https://www.wikidata.org/wiki/${e.wikidata}` : null;
     if (!wp && !wd) return html``;
     return html`<p class="links">
       <span class="links-label">Kaynak</span>
@@ -200,14 +208,14 @@ export class InfoPanel {
           class="icon-btn"
           aria-label="Olayı kapat"
           title="Olayı kapat"
-          @click=${() => this.store.selectEvent(null)}
+          @click=${() => this.close(() => this.store.selectEvent(null))}
         >
           ${closeIcon()}
         </button>
       </div>
-      <h2 class="card-title" data-testid="event-title">${ev.title}</h2>
+      <h2 class="card-title" data-testid="event-title" tabindex="-1">${ev.title}</h2>
       <p class="event-when">
-        <time>${ev.dateLabel}</time>
+        <span data-testid="event-date">${ev.dateLabel}</span>
         <span class="dot">·</span>
         <span>${ev.location.name}</span>
       </p>
@@ -236,7 +244,7 @@ export class InfoPanel {
         <button
           type="button"
           class="link only-narrow"
-          @click=${() => document.querySelector('.map-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          @click=${() => document.querySelector('.map-wrap')?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })}
         >
           ↑ Haritaya dön
         </button>
@@ -256,9 +264,9 @@ export class InfoPanel {
 
   /* ------------------------------------------------------------ elsewhere */
 
-  private elsewhereList(vm: ViewModel, place: PlaceView | null): TemplateResult {
-    const list = place ? place.elsewhere : vm.mapEvents;
-    const title = place ? 'Aynı sırada, başka yerlerde' : 'Bu aralıkta dünyada olanlar';
+  private elsewhereList(vm: ViewModel): TemplateResult {
+    const list = vm.elsewhere;
+    const title = vm.places.length ? 'Aynı sırada, başka yerlerde' : 'Bu aralıkta dünyada olanlar';
     const sorted = [...list].sort((a, b) => a.start - b.start || b.importance - a.importance);
     return html`<section class="elsewhere" aria-labelledby="elsewhere-title" data-testid="elsewhere">
       <div class="elsewhere-head">
@@ -284,6 +292,7 @@ export class InfoPanel {
         type="button"
         class=${clsx('row', selected && 'is-selected', this.store.state.hoverEventId === e.id && 'is-hover')}
         data-id=${e.id}
+        aria-pressed=${selected}
         @click=${() => this.store.selectEvent(selected ? null : e.id)}
         @pointerenter=${() => this.store.hoverEvent(e.id)}
         @pointerleave=${() => this.store.hoverEvent(null)}

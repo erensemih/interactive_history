@@ -13,6 +13,8 @@ import { markerSvg } from './markerShapes';
 import type { Tooltip } from './tooltip';
 
 const MAX_LANES = 3;
+/** Half the width of a four-digit year label, with a little air: ticks nearer the edge show no label. */
+const EDGE_ROOM = 20;
 const LANE_H = 26;
 const LABEL_H = 22;
 /** Distance of the axis from the top of the plot: three label lanes sit above it. The height is
@@ -27,7 +29,7 @@ const laneTopOf = (lane: number) => AXIS_FROM_TOP - 12 - lane * LANE_H - LABEL_H
  * horizontal axis is the selected range plus context on both sides; events outside the range are
  * drawn faded so a one-year range still has neighbours to read.
  *
- * It takes one `PlaceView` per lane, so comparison mode later is a matter of passing two.
+ * It draws the first selected place; comparison mode would draw one such plot (lane) per place.
  */
 export class Timeline {
   private width = 800;
@@ -114,16 +116,18 @@ export class Timeline {
           <span class="tl-band-label">${formatRange(range)}</span>
         </div>
         <div class="tl-axis" aria-hidden="true"></div>
-        ${ticks.map(
-          (t) =>
-            html`<div
-              class=${clsx('tl-tick', t.major && 'is-major')}
-              style=${styleMap({ left: `${this.xOf(t.year, domain)}px` })}
-              aria-hidden="true"
-            >
-              <span>${t.year}</span>
-            </div>`,
-        )}
+        ${ticks.map((t) => {
+          const x = this.xOf(t.year, domain);
+          // A year label is centred on its tick; one that would be cut by the plot's edge is left off (the tick stays).
+          const clipped = x < EDGE_ROOM || x > w - EDGE_ROOM;
+          return html`<div
+            class=${clsx('tl-tick', t.major && 'is-major', clipped && 'is-edge')}
+            style=${styleMap({ left: `${x}px` })}
+            aria-hidden="true"
+          >
+            <span>${t.year}</span>
+          </div>`;
+        })}
         <div
           class="tl-cursor"
           style=${styleMap({ left: `${cursorX}px` })}
@@ -194,7 +198,8 @@ export class Timeline {
   private layoutEvents(events: HistoricalEvent[], domain: YearRange) {
     const w = this.width;
     const boxes = events.map((ev) => {
-      const x = this.xOf(ev.start, domain);
+      // An event that began before the window is pinned to its left edge instead of being drawn off-plot.
+      const x = Math.min(w, Math.max(0, this.xOf(ev.start, domain)));
       const label = ev.title;
       const lw = this.textWidth(label, 600, 12.5) + this.textWidth(String(ev.year), 500, 11) + 36;
       const flip = x + lw > w - 6; // label would run off the right edge: anchor it leftwards
@@ -262,6 +267,7 @@ export class Timeline {
               type="button"
               class=${clsx('tl-label', flip && 'is-flipped', !inRange && 'is-context', selected && 'is-selected', hovered && 'is-hover')}
               style=${styleMap({ left: `${left}px`, top: `${laneTop}px`, width: `${lw}px` })}
+              data-id=${ev.id}
               tabindex="-1"
               aria-hidden="true"
               @click=${() => this.store.selectEvent(selected ? null : ev.id)}
@@ -278,12 +284,12 @@ export class Timeline {
   private hover(ev: HistoricalEvent, el: HTMLElement) {
     this.store.hoverEvent(ev.id);
     const r = el.getBoundingClientRect();
-    this.tip.show(eventTip(ev, this.data), r.left + r.width / 2, r.top, 'above');
+    this.tip.show(eventTip(ev, this.data), r.left + r.width / 2, r.top, 'above', 'event');
   }
 
   private unhover() {
     this.store.hoverEvent(null);
-    this.tip.hide();
+    this.tip.hide('event');
   }
 }
 

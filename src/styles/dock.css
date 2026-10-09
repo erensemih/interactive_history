@@ -51,7 +51,6 @@
 }
 
 .year-input:focus {
-  outline: none;
   background: var(--paper-2);
   border-bottom-color: var(--accent);
 }
@@ -435,6 +434,10 @@
   height: 9px;
 }
 
+.tl-tick.is-edge span {
+  visibility: hidden;
+}
+
 .tl-cursor {
   position: absolute;
   top: 0;
@@ -454,6 +457,14 @@
   display: grid;
   place-items: center;
   z-index: 2;
+  border-radius: 50%;
+}
+
+.tl-ev::before {
+  /* invisible, so even the smallest node is a comfortable (≥ 24 px) target */
+  content: '';
+  position: absolute;
+  inset: -5px;
   border-radius: 50%;
 }
 
