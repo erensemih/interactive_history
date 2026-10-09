@@ -40,10 +40,14 @@ uygulamanın kendisi Python'a ihtiyaç duymaz, çünkü üretilen veri depoda du
 | Zaman aralığını seçmek | Alttaki cetvelde aralığı sürükleyin, kenarlarından uzunluğunu ayarlayın; ya da yılları yazın; ya da *1 / 5 / 25 / 100 yıl* düğmelerini kullanın |
 | Haritada hangi yılın sınırlarının çizildiğini seçmek | Cetvelde aralığın içindeki **▾** işaretini sürükleyin (varsayılan: aralığın ortası). Seçili yıl, zaman denetiminde "Haritadaki sınırlar" yanında ve haritanın başlığında yazar |
 | Bir yeri seçmek | Haritada bir devletin üzerine tıklayın. **Harita yerinden oynamaz**: yalnızca sürükleme, tekerlek, çimdik ve `+/−` düğmeleri haritayı hareket ettirir |
-| Bir olayı okumak | Haritadaki işaretçiye, çizelgedeki düğüme ya da sağdaki listeye tıklayın |
+| Bir olayı okumak | Haritadaki işaretçiye, çizelgedeki düğüme ya da sağdaki listeye tıklayın. Klavyeyle: `Tab` ile işaretçi grubuna girin, ok tuşlarıyla işaretçiler arasında gezinin, `Enter` ile açın (odak olay kartına gider) |
 | Seçimi kaldırmak | Panelde ✕ ya da `Esc` |
 
 Adres çubuğu durumu taşır (`#t=1450-1500&p=32.85,39.93&e=...`), bu yüzden bir görünümü bağlantıyla paylaşabilirsiniz.
+Harita kamerası (`v=yakınlaştırma/enlem/boylam`) adrese yalnızca siz haritayı kendiniz oynattıktan sonra yazılır; açılıştaki
+otomatik çerçeve herkes için aynıdır ve bağlantıya girmez. Bozuk ya da yarım bir bağlantı (ör. `p=32.85,`) yok sayılır;
+uygulamayı çökertmez. Fare olan cihazlarda tekerlek haritayı yakınlaştırır (dar pencerede de); dokunmatik ekranlarda sayfa
+kaydırması ile harita hareketi karışmasın diye harita iki parmakla gezilir.
 
 ## Tasarım kararları ve gerekçeleri
 
@@ -53,7 +57,7 @@ Adres çubuğu durumu taşır (`#t=1450-1500&p=32.85,39.93&e=...`), bu yüzden b
 | **Vite + TypeScript + lit-html** (React yok) | Arayüz küçük ve durum odaklı; bir bileşen çerçevesi gereksiz. Mantık (`src/domain`) arayüzden ayrıdır ve birim testlidir. |
 | **Sınır verisi: Seshat Cliopatria** (CC BY 4.0) | 1400–1600 arasında devletler için 5–20 yıllık kayıt dönemleriyle, çoğunlukla aralıksız sınır verir (yıl yıl seçilebilir); zaman sürükleyince sınırlar gerçekten kayar. Alternatif `historical-basemaps` bu aralıkta yalnızca 5 anlık görüntü (1400, 1492, 1500, 1530, 1600) sunuyor ve GPL-3.0. Cliopatria ayrıca her devlet için Wikipedia/Wikidata kimliği ve üst-alt (ör. Brandenburg → Kutsal Roma) ilişkisi taşır. Bedeli: yalnızca devletleri haritalar; devlet kaydı olmayan karalar noktalı "veri yok" zemini olarak gösterilir. |
 | **Yer = bir nokta, devlet = o noktanın o yıldaki sahibi** | Konya 1450'de Karamanoğulları, 1475'te Osmanlı'dır. Zaman çizelgesi, aralık boyunca o noktayı elinde tutan *tüm* devletlerin (ve üst yapılarının, bulunduğu bölgenin) olaylarını toplar; böylece "yerin tarihi" okunur. |
-| **Haritadaki olay sayısı: önem + yakınlaştırma bütçesi** | Önem 1–5. Haritada yalnızca ≥3 görünür; dünya görünümünde en önemliler, yakınlaştıkça daha fazlası (bütçe zoom ile artar), ekranda çakışanlar önem sırasına göre elenir. Sağ alttaki not kaç olayın çizildiğini ve geri kalanının neden görünmediğini söyler. Önem 1–2 olaylar yalnızca çizelgededir. |
+| **Haritadaki olay sayısı: önem + yakınlaştırma bütçesi** | Önem 1–5. Haritada yalnızca ≥3 görünür; bütçe *görünümdeki* olaylara harcanır: dünya görünümünde en önemliler, yakınlaştıkça (bütçe zoom ile artar) o bölgenin daha fazlası. Ekranda çakışanlar önem sırasına göre elenir. Sağ alttaki not kaç olayın çizildiğini ve geri kalanının neden görünmediğini söyler. Önem 1–2 olaylar yalnızca çizelgededir. |
 | **Aralık seçici: fırçalı cetvel + hazır uzunluklar + yazılan yıl + "sınır yılı" işareti** | Tek yıl da 100 yıl da aynı denetimle seçilir. 100 yıllık bir aralıkta tek bir sınır haritası yetmez; fırçanın içindeki işaret, o aralık içinde hangi yılın sınırlarının çizileceğini seçtirir ve arayüzde her zaman yazılı görünür. Cetvelden çizelgeye çizilen "büyüteç" bağlantısı, çizelgenin aralığın yakınlaştırılmış hâli olduğunu gösterir. |
 | **Çizelge, aralığın biraz ötesini soluk gösterir** | Tek yıllık bir seçimde bile yerin komşu yıllardaki olayları okunur; aralığın içindekiler vurgulu, dışındakiler soluktur. |
 | **Düzen sabittir** | Bir yer seçilince alt bölümün ya da panelin boyu değişseydi harita yeniden boyutlanır ve kaymış gibi görünürdü. Boyutlar durumdan bağımsızdır. |
@@ -120,7 +124,9 @@ aralığı dosyadan okur.
 - `parties`: `entities.json` içindeki devlet/bölge kimlikleri. Olay, bu tarafların çizelgesinde **mesafeden
   bağımsız** görünür. Bir "üst yapı" taraf olarak yazılırsa (ör. `holy-roman-empire`), üyelerinin (Saksonya,
   Bavyera…) çizelgesinde de görünür.
-- `sources`: en az bir Vikipedi makalesi (`wikipedia`, varsayılan dil `en`), Vikiveri kimliği (`wikidata`) ya da `url`.
+- `sources`: en az bir Vikipedi makalesi (`wikipedia`, varsayılan dil `en`), Vikiveri kimliği (`wikidata`, `Q123` biçimi)
+  ya da `url` (yalnızca `http(s)`). Bunlara uymayan kaynaklar doğrulayıcıda hata olur, çalışma anında ise bağlanmadan atılır.
+  Tek bozuk olay uygulamayı durdurmaz: atlanır ve konsola uyarı yazılır.
 - Yeni bir **bölge** (devlet kaydı olmayan karalar için, ör. Karayipler) `entities.json`'a `kind: "region"` ve
   `bounds: [batı, güney, doğu, kuzey]` ile eklenir.
 - Kategori eklemek için `categories.json`'a kayıt yeterlidir; görünümü `src/domain/categories.ts`'de tanımlanmazsa
@@ -137,9 +143,19 @@ kaynak yokluğu, Türkçe ad eksikliği…).
   bu yıllarda devlet haritada görünmez. **Uydurma sınır çizilmez.**
 - Sınırlar yaklaşıktır (veri setinin kendi uyarısı: bir yorumun yalnızca bir sürümü). Panelde, çizilen sınırın hangi
   kayıt dönemine ait olduğu (ör. "1492–1501") gösterilir.
-- Olayların kaynakları İngilizce Vikipedi makale başlıklarıdır. Geliştirme ortamında Vikipedi/Vikiveri'ye erişim
-  olmadığından başlıklar ve olay Wikidata kimlikleri **otomatik doğrulanamadı**; bağlantıları ilk fırsatta kontrol
-  edin. Devletlerin Vikiveri kimlikleri ise doğrudan Cliopatria'dan gelir.
+- Olayların kaynakları İngilizce Vikipedi makale başlıklarıdır. Geliştirme ortamında Vikipedi'ye doğrudan erişim
+  olmadığından başlıklar, arama sonuçlarındaki `en.wikipedia.org` adresleriyle karşılaştırılarak düzeltildi (72 başlığın
+  15'i değişti); yine de bağlantılar tarayıcıda tek tek **açılarak sınanmadı**. Olaylar için Vikiveri kimliği yoktur.
+  Devletlerin Vikiveri kimlikleri doğrudan Cliopatria'dan gelir.
+- Cliopatria'nın bazı etiketleri dönemle uyuşmuyor (ör. "Mahdids" kaydı Umman'ın iç kesimini, "Ngô Dynasty" 1400–1406'da
+  Vietnam'ı, "Hashemite Arab Federation" Mezopotamya'yı, "Kingdom of Pajana" Orta Java'yı gösteriyor; "County of
+  Brabant/Béarn/Savoy" aslında dükalık/vikontluk). Sınır verisine dokunulmadı; Türkçe adlar `entities.json`'da coğrafyaya
+  göre düzeltildi, yanlış Vikipedi/Vikiveri bağlantıları ise `wikipedia`/`wikidata` alanlarıyla değiştirildi ya da
+  `null` ile kaldırıldı. Her düzeltmenin nedeni aynı kayıttaki `note` alanındadır (arayüzde gösterilmez).
+- Aynı devletin iki ayrı adla bölünmüş kayıtları (ör. Lan Na, Makuria) `entities.json`'da `"sameAs": "<kimlik>"`
+  ile tek devlet sayılır.
+- Tarihler kaynakta yazıldığı gibi tutulur ve (1582 öncesi için Jülyen takvimi kullanan kaynaklarda bir haftayı aşabilen
+  farkla) Gregoryen yıl üzerine yerleştirilir; bu, olayı yalnızca kendi yılı içinde kaydırır.
 
 ## Mimari
 
@@ -154,14 +170,17 @@ src/
 ```
 
 - Durumda **harita kamerası yoktur**; harita görünümünü yalnızca kullanıcının kendi eylemleri değiştirir.
-  Kaynakta kamerayı oynatan tek yer, açılıştaki başlangıç çerçevesi ve kullanıcının bastığı `+/−` düğmeleridir
-  (`flyTo`, `fitBounds`, `easeTo` vb. hiçbir yerde çağrılmaz); çift tıklamayla yakınlaştırma da kapalıdır.
-- `ViewModel.mapEvents` yalnızca zaman aralığından hesaplanır. Seçili yer yalnızca vurgu katmanını, yer iğnesini,
-  panelin yer kartını ve çizelgeyi değiştirir.
-- **Karşılaştırma moduna hazırlık:** seçim bir dizidir (`places: PlacePoint[]`), türetilmiş görünüm yer başına bir
-  `PlaceView` üretir, panel `placeCard`'ı yer başına çizer, çizelge yer başına bir şerit alacak biçimde yazılmıştır,
-  harita iğneleri bir listedir. İkinci yeri eklemek, durum ve çizim katmanlarında ek özellik gerektirmez; yalnızca
-  ikinci bir seçim eylemi ve iki sütunlu düzen gerekir.
+  Kaynakta kamerayı oynatan tek yer, açılıştaki başlangıç çerçevesi (ya da bağlantıdaki `v=`) ve kullanıcının
+  bastığı `+/−` düğmeleridir (`flyTo`, `fitBounds`, `easeTo` vb. hiçbir yerde çağrılmaz); çift tıklamayla
+  yakınlaştırma ve klavyeyle döndürme de kapalıdır.
+- `ViewModel.mapEvents` yalnızca zaman aralığından hesaplanır, işaretçileri seçen `placeMarkers` saf bir işlevdir
+  (aynı olaylar + kamera → aynı işaretçiler). Seçili yer yalnızca vurgu katmanını, yer iğnesini, panelin yer kartını
+  ve çizelgeyi değiştirir. Çizelgeden seçilen yerel bir olayın (önem < 3) yeri, işaretçi olarak değil, yer iğnesi gibi
+  bir **seçim katmanında** kesikli halkayla gösterilir; haritanın işaretçi kümesi değişmez.
+- **Karşılaştırma moduna hazırlık, dürüst durum:** *hazır olanlar* durum (`places: PlacePoint[]`), adres (`p=` yinelenebilir),
+  görünüm modeli (yer başına `PlaceView`, birleşik "başka yerlerde" listesi), bilgi paneli (yer başına bir kart) ve
+  haritadaki vurgu/iğneler (liste). *Eksik olanlar:* `MAX_PLACES` şimdilik 1, ikinci yeri ekleyen bir eylem yok, çizelge
+  yalnızca ilk yeri çiziyor (yer başına bir şerit çizilmeli) ve iki yer için iki vurgu rengi gerekecek.
 - **Ek katmanlar (din, dil):** `MapView.onLoad` katman listesine yeni kaynak/katman eklemek yeter; zaman filtresi
   (`from/to`) aynı biçimde uygulanır.
 
@@ -176,7 +195,11 @@ ekran görüntüleri ve `RAPOR.md` yazar:
 
 Ek olarak: işaretçi/çizelge/deniz tıklamalarının haritayı oynatmadığı, haritanın yerden bağımsız olduğu, düzenin
 kaymadığı, klavye ve sürükleme denetimlerinin çalıştığı ve (duyarlılık sınaması olarak) gerçek bir sürüklemenin
-kamerayı **gerçekten** hareket ettirdiği denetlenir.
+kamerayı **gerçekten** hareket ettirdiği denetlenir. Ayrı sayfa yüklemelerinde ayrıca: bozuk bağlantıların uygulamayı
+çökertmediği, kameranın adrese yalnızca kullanıcı oynattıktan sonra girdiği, işaretçilerin tek Tab durağı olduğu ve ok
+tuşlarının haritayı kaydırmadan gezdirdiği, ipucunun fareyle işaretçiye gelince kaybolmadığı, cetvelde uca tıklamanın
+pencereyi küçültmediği, yıl kutularının bayat metin tutmadığı, ekran okuyucu durum satırının çalıştığı, dar pencerede
+tekerleğin yakınlaştırdığı denetlenir.
 
 ## Bilinen sınırlar ve sonraki adımlar
 

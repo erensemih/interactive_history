@@ -1,8 +1,8 @@
 # Doğrulama raporu
 
-Çalıştırma: 2026-10-09T15:26:56.594Z · Chromium (başsız) · 1440×900
+Çalıştırma: 2026-10-09T16:12:58.869Z · Chromium (başsız) · 1440×900
 
-**54/54 denetim geçti.**
+**79/79 denetim geçti.**
 
 | Durum | Denetim | Ayrıntı |
 |---|---|---|
@@ -33,7 +33,7 @@
 | ✓ | Haritanın olay kümesi, aralığa göre hesaplanan kümeyle birebir aynı | 12 olay |
 | ✓ | İstanbul'un Fethi (1453) ve Kolomb (1492) kümede |  |
 | ✓ | Aralık dışı olaylar (Luther 1517, Armada 1588) yok |  |
-| ✓ | Görünen her işaretçi aralığın içinde | 7 görünür |
+| ✓ | Görünen her işaretçi aralığın içinde | 8 görünür |
 | ✓ | Paneldeki "başka yerlerde" listesi aynı küme | 12 satır |
 | ✓ | Seçili yer (Ming) korundu |  |
 | ✓ | Harita HAREKET ETMEDİ (aralık değişimi) |  |
@@ -45,7 +45,8 @@
 | ✓ | Aralık 1450–1500 iken Anadolu → Osmanlı |  |
 | ✓ | Çizelge düğümü tıklaması olayı açar | varna-1444 |
 | ✓ | Çizelge tıklaması haritayı oynatmadı |  |
-| ✓ | Çizelgeden seçilen yerel olay haritada önizlenir ama haritanın kendi kümesine girmez | bedesten-1461 |
+| ✓ | Çizelgeden seçilen yerel olayın yeri haritada gösterilir, ama işaretçi olarak değil | bedesten-1461 |
+| ✓ | Yerel olayı seçmek haritanın işaretçi kümesini değiştirmez |  |
 | ✓ | Önizleme haritayı oynatmadı |  |
 | ✓ | Denize tıklamak seçimi değiştirmez, harita oynamaz |  |
 | ✓ | Deniz tıklaması kullanıcıya açıklanır |  |
@@ -59,6 +60,30 @@
 | ✓ | Seçimi kaldırmak haritayı oynatmadı |  |
 | ✓ | Kullanıcı sürüklemesi haritayı gerçekten hareket ettirir |  |
 | ✓ | Fare tekerleği yakınlaştırır |  |
+| ✓ | Bozuk bir bağlantı (p=10,100, bilinmeyen e=, v=1//2) uygulamayı çökertmez |  |
+| ✓ | Yarım kalmış p= sahte bir yer seçmez |  |
+| ✓ | Adres çubuğu kamerayı yalnızca kullanıcı haritayı oynattıktan sonra taşır | #t=1450-1500 → #t=1450-1500&v=1.42/36.550/42.596 |
+| ✓ | Haritadaki işaretçiler tek bir Tab durağıdır | 1 durak |
+| ✓ | Gizlenen işaretçiler klavyeyle ve ekran okuyucuyla erişilemez |  |
+| ✓ | Ok tuşları işaretçiler arasında gezinir | kolomb-1492 → girnata-1492 |
+| ✓ | Ok tuşları haritayı kaydırmaz |  |
+| ✓ | Odaklanan işaretçinin ipucu görünür |  |
+| ✓ | Klavyeyle seçilen olayın kartına odak gider | event-title |
+| ✓ | Klavyeyle olay seçmek haritayı oynatmaz |  |
+| ✓ | Esc olay kartını kapatır |  |
+| ✓ | İşaretçinin üstüne gelince ipucu kalıcı görünür (harita çıkışı onu gizlemez) | istanbul-fethi-1453 |
+| ✓ | Sayfa sürümünde konsol hatası yok (7) |  |
+| ✓ | Çizelge etiketinin üstünde ipucu ve vurgu kalıcıdır | sefarad-gocu-1492 |
+| ✓ | Üzerinde durulan düğüm kaldırılınca ipucu ve vurgu temizlenir |  |
+| ✓ | Çizelge etkileşimlerinde konsol hatası yok |  |
+| ✓ | Cetvelde uca yakın boş yere tıklamak 100 yıllık pencereyi küçültmez | {"from":1501,"to":1600} |
+| ✓ | Geçersiz yıl girişi eski değere döner | 1450 |
+| ✓ | 1600 üstü bir yıl 1600'e kıstırılır ve kutu (yazılan 2000'i değil) 1600'ü gösterir | 1600 / 1600 |
+| ✓ | Esc, kutudaki yazılanı geri alır ve seçili yeri kapatmaz |  |
+| ✓ | Kök öğe canlı bölge değil |  |
+| ✓ | Yer seçimi durum satırında duyurulur | Seçili yer: Osmanlı İmparatorluğu, 1500 |
+| ✓ | Dar pencerede de fare tekerleği haritayı yakınlaştırır |  |
+| ✓ | Aynı sekmeye yapıştırılan bağlantı görünümü değiştirir |  |
 | ✓ | Sayfada konsol/sayfa hatası yok |  |
 
 ## Ekran görüntüleri
