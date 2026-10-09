@@ -1,3 +1,47 @@
+/* ---------------------------------------------------------- strip above the map */
+.title-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-size: clamp(20px, 1.7vw, 24px);
+  line-height: 1.12;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+}
+
+.title-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* the same red dot that marks the place on the map */
+.title-pin {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgb(207 58 33 / 0.16);
+}
+
+.title-meta {
+  flex: none;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.title-meta b {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ------------------------------------------------------------- map chrome */
 .map-chrome {
   position: absolute;
@@ -10,74 +54,10 @@
   pointer-events: auto;
 }
 
-.map-wrap::before {
-  /* soft paper veil so the title reads over any border */
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 118px;
-  background: linear-gradient(to bottom, rgb(245 240 228 / 0.9), rgb(245 240 228 / 0.5) 55%, rgb(245 240 228 / 0));
-  z-index: 2;
-  pointer-events: none;
-}
-
-.map-title {
-  position: absolute;
-  top: 16px;
-  left: var(--gutter);
-  max-width: min(60%, 760px);
-  pointer-events: none;
-}
-
-.map-title .eyebrow {
-  color: var(--ink-3);
-}
-
-.map-title {
-  text-shadow:
-    0 0 3px var(--halo),
-    0 0 8px var(--halo),
-    0 0 16px var(--halo);
-}
-
-.title-main {
-  font-family: var(--font-serif);
-  font-optical-sizing: auto;
-  font-weight: 500;
-  font-size: clamp(28px, 3.1vw, 42px);
-  line-height: 1.04;
-  letter-spacing: -0.014em;
-  margin: 4px 0 6px;
-  color: var(--ink);
-  text-wrap: balance;
-}
-
-.title-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 8px;
-  font-size: 12.5px;
-  color: var(--ink-2);
-}
-
-.title-meta b {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.title-meta .sep {
-  color: var(--rule-strong);
-}
-
-/* selected place: tint the kicker with the accent so the title reads as "chosen" */
-.map-title[data-has-place='true'] .eyebrow {
-  color: var(--accent-ink);
-}
-
 .map-zoom {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 12px;
+  right: 12px;
   display: flex;
   flex-direction: column;
   background: var(--paper);
@@ -107,8 +87,8 @@
 
 .map-stats {
   position: absolute;
-  right: 14px;
-  bottom: 14px;
+  right: 12px;
+  bottom: 12px;
   z-index: 3;
   padding: 5px 11px;
   font-size: 11.5px;
@@ -129,136 +109,59 @@
   display: none;
 }
 
+@media (max-width: 560px) {
+  /* a narrow map: the counter moves to the free top-left corner instead of crowding the legend */
+  .map-stats {
+    right: auto;
+    left: 12px;
+    bottom: auto;
+    top: 12px;
+  }
+}
+
 /* ------------------------------------------------------------------ legend */
+/* Untitled, always visible, and only about colour: which kind of event each dot colour is. */
 .legend {
   position: absolute;
-  left: 14px;
-  bottom: 14px;
-  max-width: calc(100% - 28px);
-  background: rgb(245 240 228 / 0.94);
-  backdrop-filter: blur(6px);
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-float);
-  font-size: 12px;
-  color: var(--ink-2);
-}
-
-.legend > summary {
-  list-style: none;
-  cursor: pointer;
+  left: 12px;
+  bottom: 12px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(3, auto);
+  gap: 5px 18px;
   padding: 8px 12px;
-  font-size: 10.5px;
-  font-weight: 650;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.legend > summary::-webkit-details-marker {
-  display: none;
-}
-
-.legend > summary::after {
-  content: '';
-  width: 7px;
-  height: 7px;
-  margin-left: auto;
-  border-right: 1.6px solid currentColor;
-  border-bottom: 1.6px solid currentColor;
-  transform: rotate(225deg) translate(-1px, -1px);
-  transition: transform 0.2s;
-}
-
-.legend:not([open]) > summary::after {
-  transform: rotate(45deg) translateY(-2px);
-}
-
-.legend-strip {
-  display: inline-flex;
-  gap: 3px;
-  align-items: center;
-}
-
-.legend[open] .legend-strip {
-  display: none;
-}
-
-.legend-body {
-  padding: 2px 14px 12px;
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: 0 26px;
-}
-
-.legend-col {
-  display: grid;
-  align-content: start;
-  gap: 6px;
-}
-
-.legend-h {
-  margin-top: 4px;
-  font-size: 10.5px;
-  font-weight: 650;
-  color: var(--ink-3);
-}
-
-.legend-cats {
-  display: grid;
-  gap: 5px;
+  background: rgb(245 240 228 / 0.94);
+  border: 1px solid var(--rule-strong);
+  border-radius: 9px;
+  box-shadow: var(--shadow-float);
+  font-size: 11.5px;
+  line-height: 1.2;
+  color: var(--ink-2);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .legend li {
   display: flex;
   align-items: center;
-  gap: 7px;
-  line-height: 1.2;
+  gap: 8px;
+  white-space: nowrap;
 }
 
-.legend svg.mk {
+/* ----------------------------------------------------------- event dots */
+/* One mark for every event, everywhere (map, timeline, legend, panel): the same shape and the same
+   size, told apart by colour alone. The paper ring and the ink hairline keep a light dot readable on
+   a pale tint and a dark one readable on a dark border. */
+.dot {
+  display: block;
   flex: none;
-}
-
-.legend-sizes {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.legend-sizes li {
-  flex-direction: column;
-  gap: 2px;
-  font-size: 11px;
-  text-align: center;
-}
-
-.legend-ground {
-  display: grid;
-  gap: 6px;
-  max-width: 190px;
-}
-
-.sw {
-  flex: none;
-  width: 22px;
-  height: 14px;
-  border-radius: 3px;
-  border: 1px solid var(--rule-strong);
-}
-
-.sw-polity {
-  background: linear-gradient(90deg, var(--tint-0) 0 33%, var(--tint-3) 33% 66%, var(--tint-2) 66%);
-}
-
-.sw-nodata {
-  background-color: var(--land-nodata);
-  background-image: radial-gradient(circle, rgb(102 93 79 / 0.55) 0.9px, transparent 1.1px);
-  background-size: 5px 5px;
+  width: var(--d, 13px);
+  height: var(--d, 13px);
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow:
+    0 0 0 1.6px var(--paper),
+    0 0 0 2.4px var(--dot-edge);
 }
 
 /* ---------------------------------------------------------- polity labels */
@@ -326,16 +229,15 @@
 
 /* ------------------------------------------------------------ event markers */
 .evt {
-  /* The hit area is the mark's own box (at least 24 × 24 px); the year label hangs outside it. */
+  /* The pointer target is 24 × 24 px (WCAG 2.5.8) around a 13 px dot; the year hangs outside it. */
   position: absolute;
   left: 0;
   top: 0;
   display: grid;
   place-items: center;
-  width: var(--hit, 24px);
-  height: var(--hit, 24px);
-  margin-left: calc(var(--hit, 24px) * -0.5);
-  margin-top: calc(var(--hit, 24px) * -0.5);
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
   pointer-events: auto;
   cursor: pointer;
   transition: opacity 0.18s ease;
@@ -355,27 +257,18 @@
     visibility 0s linear 0.18s;
 }
 
-.evt .mk {
-  display: block;
-  flex: none;
-  overflow: visible;
-  transition: transform 0.14s ease;
-  filter: drop-shadow(0 1px 1.5px rgb(30 20 10 / 0.28));
-}
-
 .evt-mark {
   position: relative;
   display: block;
-  width: var(--box, 21px);
-  height: var(--box, 21px);
-  flex: none;
+  width: 13px;
+  height: 13px;
 }
 
+/* hover / keyboard focus: a thin accent ring */
 .evt-mark::after {
-  /* selection / hover ring in the accent colour */
   content: '';
   position: absolute;
-  inset: -3px;
+  inset: -6px;
   border-radius: 50%;
   border: 2px solid var(--accent);
   opacity: 0;
@@ -383,33 +276,75 @@
   transition:
     opacity 0.16s ease,
     transform 0.16s ease;
+  pointer-events: none;
 }
 
-.evt:hover .mk,
-.evt:focus-visible .mk,
-.evt.is-hover .mk {
-  transform: scale(1.14);
-}
-
+.evt:hover .evt-mark::after,
 .evt.is-hover .evt-mark::after,
 .evt:focus-visible .evt-mark::after {
-  opacity: 0.75;
+  opacity: 0.8;
   transform: scale(1);
-}
-
-.evt.is-selected .evt-mark::after {
-  opacity: 1;
-  transform: scale(1);
-  border-width: 2.5px;
 }
 
 .evt:focus-visible {
   outline: none;
 }
 
+/* The opened event cannot be missed: a heavy accent ring with a paper halo, a soft glow under it, a
+   ripple that runs twice when it opens, and its name next to it. */
+.evt.is-selected .evt-mark::after {
+  inset: -7px;
+  border-width: 3px;
+  opacity: 1;
+  transform: scale(1);
+  box-shadow:
+    0 0 0 2px var(--paper),
+    0 2px 8px rgb(110 25 10 / 0.35);
+}
+
+.evt-mark::before {
+  content: '';
+  position: absolute;
+  inset: -19px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(207 58 33 / 0.34) 0 32%, rgb(207 58 33 / 0.12) 52%, rgb(207 58 33 / 0) 72%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.evt.is-selected .evt-mark::before {
+  opacity: 1;
+}
+
+.evt.is-selected::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 13px;
+  height: 13px;
+  margin: -6.5px 0 0 -6.5px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  pointer-events: none;
+  animation: evt-ripple 1.7s ease-out 2;
+}
+
+@keyframes evt-ripple {
+  from {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(4.2);
+  }
+}
+
 .evt-year {
   position: absolute;
-  left: calc(50% + var(--box, 21px) * 0.5 - 3px);
+  left: calc(50% + 11px);
   top: 50%;
   transform: translateY(-50%);
   white-space: nowrap;
@@ -426,7 +361,42 @@
 }
 
 .evt.is-selected .evt-year {
+  left: calc(50% + 15px);
   color: var(--accent-ink);
+}
+
+/* the opened event's name: above its dot, or below it near the top edge, kept inside the map by --shift.
+   Generated content from data-title: the button's text stays its year, which its accessible name contains. */
+.evt::after {
+  content: attr(data-title);
+  display: none;
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 7px);
+  transform: translateX(calc(-50% + var(--shift, 0px)));
+  max-width: 280px;
+  padding: 5px 10px 6px;
+  border-radius: 7px;
+  background: #241f18;
+  color: #f5f0e4;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 8px 20px -8px rgb(20 12 4 / 0.55);
+  pointer-events: none;
+}
+
+.evt.is-selected::after {
+  display: block;
+}
+
+.evt[data-callout='below']::after {
+  bottom: auto;
+  top: calc(100% + 7px);
 }
 
 /* ----------------------------------------------------------------- tooltip */
@@ -454,6 +424,12 @@
   font-family: var(--font-serif);
   font-size: 15px;
   font-style: italic;
+  white-space: nowrap;
+}
+
+.tip-nodata {
+  font-size: 12.5px;
+  color: #d8cdb6;
   white-space: nowrap;
 }
 
@@ -515,13 +491,8 @@
   outline: none;
 }
 
-@media (max-width: 900px) {
-  .legend {
-    display: none;
-  }
-}
-
 /* ------------------------------------------------------------- place pin */
+/* The selected place: a solid red dot, with a soft red glow that fades out around it. No ring. */
 .pin-layer {
   position: absolute;
   inset: 0;
@@ -543,30 +514,39 @@
   display: none;
 }
 
-.pin i {
+.pin-glow {
   position: absolute;
-  left: -9px;
-  top: -9px;
-  width: 18px;
-  height: 18px;
+  left: -32px;
+  top: -32px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  border: 2.5px solid var(--accent);
-  background: rgb(245 240 228 / 0.55);
-  box-shadow:
-    0 0 0 2px var(--paper),
-    0 2px 6px rgb(60 20 10 / 0.35);
+  background: radial-gradient(
+    circle,
+    rgb(207 58 33 / 0.36) 0,
+    rgb(207 58 33 / 0.2) 22%,
+    rgb(207 58 33 / 0.07) 48%,
+    rgb(207 58 33 / 0) 72%
+  );
 }
 
-.pin i::after {
-  content: '';
+.pin-dot {
   position: absolute;
-  inset: 3.5px;
+  left: -6px;
+  top: -6px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--accent);
+  box-shadow: 0 1px 3px rgb(90 20 10 / 0.45);
 }
 
-.pin.is-new i {
+.pin.is-new .pin-dot {
   animation: pin-drop 0.38s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.pin.is-new .pin-glow {
+  animation: pin-glow 0.6s ease-out;
 }
 
 @keyframes pin-drop {
@@ -576,31 +556,9 @@
   }
 }
 
-/* where the selected event happened, when the map itself does not carry that event (dashed ring) */
-.evt-preview {
-  position: absolute;
-  left: 0;
-  top: 0;
-  display: grid;
-  place-items: center;
-  width: var(--box, 21px);
-  height: var(--box, 21px);
-  margin-left: calc(var(--box, 21px) * -0.5);
-  margin-top: calc(var(--box, 21px) * -0.5);
-  pointer-events: none;
-  will-change: transform;
-}
-
-.evt-preview[hidden] {
-  display: none;
-}
-
-.evt-preview .mk {
-  filter: drop-shadow(0 1px 1.5px rgb(30 20 10 / 0.28));
-}
-
-.evt-preview .evt-mark::after {
-  border-style: dashed;
-  opacity: 1;
-  transform: scale(1);
+@keyframes pin-glow {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
 }

@@ -1,7 +1,7 @@
 /*
  * Design tokens. A printed-atlas palette: warm paper, brown-black ink, quiet pastel polity tints,
  * and exactly one loud colour (vermilion) that always means "this is what you chose".
- * Marker colours live in src/domain/categories.ts (validated for colour-blind separation).
+ * Marker colours live in src/domain/categories.ts (checked for colour-blind separation, no blue).
  */
 :root {
   color-scheme: light;
@@ -33,17 +33,22 @@
   --accent-ink: #a5301d; /* text on paper, 6:1 */
   --accent-wash: rgb(207 58 33 / 0.12);
 
-  /* nine polity tints: graph-coloured at build time so neighbours differ; identity is carried
-     by labels and borders, never by colour alone */
-  --tint-0: #e7dbc4;
-  --tint-1: #cfdecb;
-  --tint-2: #efd4cc;
-  --tint-3: #c4dddd;
-  --tint-4: #ded4ea;
-  --tint-5: #f1d9c5;
-  --tint-6: #d7dac1;
-  --tint-7: #c9d8e7;
-  --tint-8: #ead4db;
+  /* nine polity tints: graph-coloured at build time so neighbours differ; identity is carried by labels
+     and borders, never by colour alone. No blue, teal, indigo or violet anywhere in this set: on a map
+     those read as water, and blue belongs to the sea and the lakes alone. (tests/palette.test.ts keeps it so.) */
+  --tint-0: #e2d9c6; /* sand */
+  --tint-1: #b9dca8; /* green */
+  --tint-2: #f1b8c2; /* rose */
+  --tint-3: #f7eeb0; /* butter */
+  --tint-4: #f6bd8a; /* apricot */
+  --tint-5: #d9c3a5; /* tan */
+  --tint-6: #c6cb98; /* olive */
+  --tint-7: #e6b3a6; /* clay */
+  --tint-8: #b6b5a7; /* greige: a spare, the data's colouring never needs it */
+
+  /* event markers are plain dots told apart by colour alone (see src/domain/categories.ts); this is the
+     hairline that keeps a light dot readable on a pale tint */
+  --dot-edge: rgb(31 27 22 / 0.55);
 
   --radius: 10px;
   --radius-sm: 6px;
@@ -51,5 +56,10 @@
 
   --panel-w: 410px;
   --topbar-h: 46px;
+  /* the strip above the map (place name + border year) and the time dock below it: both fixed, so
+     selecting a place can never resize the map and make it look as if it had moved */
+  --head-h: 44px;
+  --dock-h: 100px;
+  --dock-label-w: 156px;
   --gutter: 24px;
 }

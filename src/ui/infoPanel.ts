@@ -1,18 +1,27 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html';
-import { unsafeSVG } from 'lit-html/directives/unsafe-svg.js';
+import { styleMap } from 'lit-html/directives/style-map.js';
 import type { AppData } from '../data/load';
-import { IMPORTANCE_LABELS, styleFor } from '../domain/categories';
+import { styleFor } from '../domain/categories';
 import type { Entity, HistoricalEvent, SourceRef } from '../domain/types';
-import type { PlaceView, ViewModel } from '../state/derive';
+import { selectionsOf, type PlaceView, type SelectionRef, type ViewModel } from '../state/derive';
+import { panelLayout } from '../state/panelLayout';
 import type { Store } from '../state/store';
+import { dot } from './dot';
 import { clsx, formatArea, formatRange } from './format';
-import { markerSvg } from './markerShapes';
 import { scrollBehavior } from './motion';
 
+/** A card is either read in full or folded into a one-line header. */
+type Variant = 'full' | 'compact';
+
 /**
- * The right-hand info panel. It is a stack of cards (event on top, then one card per selected place)
- * and, below them, the "elsewhere at the same time" list. Each place gets its own `placeCard`, so
- * showing two places side by side later means laying the same cards out in two columns.
+ * The right-hand info panel. What it shows is decided by `panelLayout` from a list of selection
+ * references (type + id); each reference becomes a card through `card()`, in one of two sizes. The
+ * selected place is the context and an opened event the focus: with only a place selected the panel
+ * describes the place; with an event open it describes the event and the place folds into a header
+ * above it. Nothing here is written for "one place plus one event": a comparison mode would pass two
+ * references and lay the focus cards out in two columns.
+ *
+ * Below the cards sits the "elsewhere at the same time" list.
  */
 export class InfoPanel {
   /** Entities whose long summary the reader has unfolded. */
@@ -25,15 +34,44 @@ export class InfoPanel {
   ) {}
 
   render(vm: ViewModel) {
-    const ev = vm.selectedEvent;
+    const { places, event } = selectionsOf(vm);
+    const layout = panelLayout(places, event);
     render(
       html`
-        ${ev ? this.eventCard(ev, vm) : nothing}
-        ${vm.places.length ? vm.places.map((place) => this.placeCard(place, vm, !!ev)) : this.introCard()}
+        ${
+          layout.context.length
+            ? html`<div class="panel-context" data-testid="panel-context">
+                ${layout.context.map((ref) => this.card(ref, vm, 'compact'))}
+              </div>`
+            : nothing
+        }
+        ${
+          layout.focus.length
+            ? html`<div
+                class="panel-focus"
+                data-testid="panel-focus"
+                style=${styleMap({ '--cols': String(layout.focus.length) })}
+              >
+                ${layout.focus.map((ref) => this.card(ref, vm, 'full'))}
+              </div>`
+            : this.introCard()
+        }
         ${this.elsewhereList(vm)}
       `,
       this.host,
     );
+  }
+
+  /** One card for one selection reference. Unknown references (a place that was cleared meanwhile) draw nothing. */
+  private card(ref: SelectionRef, vm: ViewModel, variant: Variant): TemplateResult | typeof nothing {
+    if (ref.type === 'place') {
+      const place = vm.places.find((p) => p.id === ref.id);
+      if (!place) return nothing;
+      return variant === 'full' ? this.placeCard(place, vm) : this.placeLine(place, vm);
+    }
+    const ev = this.data.eventsById.get(ref.id);
+    if (!ev) return nothing;
+    return variant === 'full' ? this.eventCard(ev, vm) : this.eventLine(ev);
   }
 
   /** Closing a card removes the button that had focus; keep keyboard users in the panel instead of dropping them on <body>. */
@@ -50,20 +88,36 @@ export class InfoPanel {
       <p class="eyebrow">Aynı Zamanda</p>
       <h2 class="card-title">Aynı sırada, dünyanın başka yerlerinde ne oluyordu?</h2>
       <p class="prose">
-        Cetvelden bir zaman aralığı, haritadan bir yer seçin. Harita o dönemin sınırlarını ve dünya tarihi için önemli
-        olayları gösterir; seçtiğiniz yerin kendi olayları ise aşağıdaki çizelgede ayrıca belirir.
+        Alttaki cetvelden bir zaman aralığı, haritadan bir yer seçin. Harita o dönemin sınırlarını ve dünyanın dört bir
+        yanından bir olay seçkisini gösterir; seçtiğiniz yerin kendi olayları ise aşağıdaki çizelgede ayrıca belirir.
       </p>
       <ul class="intro-steps">
-        <li><span class="step">1</span> Cetvelde aralığı sürükleyin veya yıl girin.</li>
+        <li><span class="step">1</span> Cetvelde aralığı sürükleyin; kenarlarından uzunluğunu ayarlayın.</li>
         <li><span class="step">2</span> Haritada bir devletin üzerine tıklayın. Harita yerinden oynamaz.</li>
-        <li><span class="step">3</span> İşaretçilere ve çizelgedeki olaylara tıklayıp ayrıntıyı buradan okuyun.</li>
+        <li><span class="step">3</span> İşaretçilere ve çizelgedeki noktalara tıklayıp ayrıntıyı buradan okuyun.</li>
       </ul>
     </section>`;
   }
 
   /* ---------------------------------------------------------------- place */
 
-  private placeCard(place: PlaceView, vm: ViewModel, compact: boolean): TemplateResult {
+  /** The place folded into one line: its name and the selected time range. Clicking it returns to the place's own card. */
+  private placeLine(place: PlaceView, vm: ViewModel): TemplateResult {
+    return html`<button
+      type="button"
+      class="line line-place"
+      data-testid="place-line"
+      title="Yerin ayrıntısına dön"
+      aria-label=${`Yerin ayrıntısına dön: ${place.title}, ${formatRange(vm.range)}`}
+      @click=${() => this.store.selectEvent(null)}
+    >
+      <span class="line-back" aria-hidden="true">‹</span>
+      <span class="line-name">${place.title}</span>
+      <span class="line-range">${formatRange(vm.range)}</span>
+    </button>`;
+  }
+
+  private placeCard(place: PlaceView, vm: ViewModel): TemplateResult {
     const holder = place.holder;
     const row = place.resolution.row;
     const regions = place.regions;
@@ -72,7 +126,7 @@ export class InfoPanel {
     const sequence = place.resolution.sequence;
     const inWindowSeq = sequence.filter((s) => s.to >= vm.range.from && s.from <= vm.range.to);
 
-    return html`<section class=${clsx('card card-place', compact && 'is-compact')} data-testid="place-card">
+    return html`<section class="card card-place" data-testid="place-card">
       <div class="card-top">
         <span class="eyebrow">Seçili yer · ${vm.year}</span>
         <button
@@ -86,13 +140,7 @@ export class InfoPanel {
         </button>
       </div>
       <h2 class="card-title" data-testid="place-title">${place.title}</h2>
-      ${
-        parents.length
-          ? html`<p class="card-sub">
-              ${parents.map((p) => p.name).join(' · ')} üyesi
-            </p>`
-          : nothing
-      }
+      ${parents.length ? html`<p class="card-sub">${parents.map((p) => p.name).join(' · ')} üyesi</p>` : nothing}
       ${
         holder
           ? html`${
@@ -192,6 +240,23 @@ export class InfoPanel {
 
   /* ---------------------------------------------------------------- event */
 
+  /** The event folded into one line (for the day a place is the focus and an event the context). */
+  private eventLine(ev: HistoricalEvent): TemplateResult {
+    return html`<button
+      type="button"
+      class="line line-event"
+      data-testid="event-line"
+      title="Olayın ayrıntısına dön"
+      aria-label=${`Olayın ayrıntısına dön: ${ev.title}, ${ev.dateLabel}`}
+      @click=${() => this.store.selectEvent(ev.id)}
+    >
+      <span class="line-back" aria-hidden="true">‹</span>
+      ${dot(ev.category)}
+      <span class="line-name">${ev.title}</span>
+      <span class="line-range">${ev.dateLabel}</span>
+    </button>`;
+  }
+
   private eventCard(ev: HistoricalEvent, vm: ViewModel): TemplateResult {
     const cat = this.data.categories.find((c) => c.id === ev.category);
     const style = styleFor(ev.category);
@@ -200,7 +265,7 @@ export class InfoPanel {
     return html`<section class="card card-event" data-testid="event-card" style=${`--c: ${style.color}`}>
       <div class="card-top">
         <span class="badge">
-          ${unsafeSVG(markerSvg(ev.category, ev.importance, { diameter: 13 }))}
+          ${dot(ev.category)}
           <span>${cat?.label ?? ev.category}</span>
         </span>
         <button
@@ -216,19 +281,10 @@ export class InfoPanel {
       <h2 class="card-title" data-testid="event-title" tabindex="-1">${ev.title}</h2>
       <p class="event-when">
         <span data-testid="event-date">${ev.dateLabel}</span>
-        <span class="dot">·</span>
+        <span class="sep">·</span>
         <span>${ev.location.name}</span>
       </p>
       <p class="prose">${ev.summary}</p>
-      <div class="importance" title=${IMPORTANCE_LABELS[ev.importance] ?? ''}>
-        <span class="importance-dots" aria-hidden="true"
-          >${[1, 2, 3, 4, 5].map((n) => html`<i class=${clsx(n <= ev.importance && 'on')}></i>`)}</span
-        >
-        <span
-          >${IMPORTANCE_LABELS[ev.importance]} ·
-          ${ev.importance >= 3 ? 'haritada gösterilir' : 'yalnızca çizelgede'}</span
-        >
-      </div>
       <div class="parties">
         <span class="parties-label">Taraflar</span>
         ${parties.map((p) => html`<span class="pill">${p}</span>`)}
@@ -244,7 +300,7 @@ export class InfoPanel {
         <button
           type="button"
           class="link only-narrow"
-          @click=${() => document.querySelector('.map-wrap')?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })}
+          @click=${() => document.querySelector('.map-col')?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })}
         >
           ↑ Haritaya dön
         </button>
@@ -267,7 +323,7 @@ export class InfoPanel {
   private elsewhereList(vm: ViewModel): TemplateResult {
     const list = vm.elsewhere;
     const title = vm.places.length ? 'Aynı sırada, başka yerlerde' : 'Bu aralıkta dünyada olanlar';
-    const sorted = [...list].sort((a, b) => a.start - b.start || b.importance - a.importance);
+    const sorted = [...list].sort((a, b) => a.start - b.start || (a.id < b.id ? -1 : 1));
     return html`<section class="elsewhere" aria-labelledby="elsewhere-title" data-testid="elsewhere">
       <div class="elsewhere-head">
         <h3 id="elsewhere-title" class="eyebrow">${title}</h3>
@@ -299,7 +355,7 @@ export class InfoPanel {
         @focus=${() => this.store.hoverEvent(e.id)}
         @blur=${() => this.store.hoverEvent(null)}
       >
-        <span class="row-mark">${unsafeSVG(markerSvg(e.category, e.importance, { diameter: 10 }))}</span>
+        <span class="row-mark">${dot(e.category)}</span>
         <span class="row-body">
           <span class="row-title">${e.title}</span>
           <span class="row-meta">${e.dateLabel} · ${e.location.name}</span>

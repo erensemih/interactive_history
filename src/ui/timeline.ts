@@ -1,27 +1,42 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { styleMap } from 'lit-html/directives/style-map.js';
-import { unsafeSVG as unsafeSvg } from 'lit-html/directives/unsafe-svg.js';
 import type { AppData } from '../data/load';
-import { MARKER_SIZE, styleFor } from '../domain/categories';
-import { assignLanes } from '../domain/lanes';
+import { MARKER_DIAMETER, styleFor } from '../domain/categories';
+import { stackDots } from '../domain/lanes';
 import { axisTicks } from '../domain/time';
 import type { HistoricalEvent, YearRange } from '../domain/types';
 import type { PlaceView, ViewModel } from '../state/derive';
 import type { Store } from '../state/store';
-import { clsx, formatRange, shortName } from './format';
-import { markerSvg } from './markerShapes';
+import { dot } from './dot';
+import { clsx, formatRange } from './format';
 import type { Tooltip } from './tooltip';
 
-const MAX_LANES = 3;
-/** Half the width of a four-digit year label, with a little air: ticks nearer the edge show no label. */
-const EDGE_ROOM = 20;
-const LANE_H = 26;
-const LABEL_H = 22;
-/** Distance of the axis from the top of the plot: three label lanes sit above it. The height is
- *  fixed on purpose: if the dock changed height when a place was selected, the map above it would
+/** Dots that would touch are stacked into this many rows above the axis. */
+const ROWS = 3;
+/** Distance between rows. The dots are 13 px, so neighbouring rows touch but do not cover each other. */
+const PITCH = 14;
+const DOT_AREA = ROWS * PITCH;
+/** The strip under the dots: it carries the years and, in colour, who held the place. */
+const BAND_TOP = DOT_AREA + 2;
+const BAND_H = 14;
+/** Fixed on purpose: if the dock changed height when a place was selected, the map above it would
  *  resize and appear to move. */
-const AXIS_FROM_TOP = 6 + MAX_LANES * LANE_H + 4;
-const laneTopOf = (lane: number) => AXIS_FROM_TOP - 12 - lane * LANE_H - LABEL_H;
+export const TIMELINE_H = BAND_TOP + BAND_H;
+/** Closest two dots in one row may sit (px, centre to centre). */
+const SPACING = MARKER_DIAMETER + 3;
+/** Height of the selected event's name tag. */
+const TAG_H = 20;
+/** A year label this close to the right edge would be cut off, so it is left out (its tick stays). */
+const EDGE_ROOM = 30;
+
+const rowCentre = (row: number) => DOT_AREA - PITCH / 2 - row * PITCH;
+
+/** An event of the place, placed on the plot: its x and the row its dot was stacked into. */
+interface Item {
+  ev: HistoricalEvent;
+  x: number;
+  row: number;
+}
 
 /**
  * The place timeline. It shows what happened *to the selected place*: events whose parties include
@@ -29,7 +44,10 @@ const laneTopOf = (lane: number) => AXIS_FROM_TOP - 12 - lane * LANE_H - LABEL_H
  * horizontal axis is the selected range plus context on both sides; events outside the range are
  * drawn faded so a one-year range still has neighbours to read.
  *
- * It draws the first selected place; comparison mode would draw one such plot (lane) per place.
+ * Event names are not written on the timeline: hovering (or focusing) a dot names it, and so does a
+ * tap, which also opens it. Only the opened event keeps a name tag next to its dot.
+ *
+ * It draws the first selected place; comparison mode would draw one such plot per place.
  */
 export class Timeline {
   private width = 800;
@@ -48,12 +66,16 @@ export class Timeline {
       if (this.last) this.render(this.last);
     });
     new ResizeObserver(() => {
-      const w = this.host.clientWidth;
+      const w = this.plotWidth();
       if (w && Math.abs(w - this.width) > 2) {
         this.width = w;
         if (this.last) this.render(this.last);
       }
     }).observe(this.host);
+  }
+
+  private plotWidth(): number {
+    return this.host.querySelector<HTMLElement>('.tl-plot')?.clientWidth ?? 0;
   }
 
   private textWidth(text: string, weight: number, size: number): number {
@@ -74,75 +96,82 @@ export class Timeline {
 
   render(vm: ViewModel) {
     this.last = vm;
-    const { domain, range } = vm;
-    this.width = this.host.clientWidth || this.width;
+    this.width = this.plotWidth() || this.width;
     const place = vm.places[0] ?? null;
+    const { domain } = vm;
 
     render(
       html`
-        <div class="tl-head">
-          <div class="tl-title">
-            <span class="eyebrow">Zaman çizelgesi</span>
-            <h3 class="tl-name" data-testid="timeline-name">${place ? place.title : 'Henüz bir yer seçilmedi'}</h3>
-          </div>
-          <p class="tl-sub">
-            ${
-              place
-                ? html`<span class="tl-count">${place.timeline.length} olay</span> · ${formatRange(domain)}`
-                : html`Haritadan bir yer seçin; o yerin olayları burada görünür.`
-            }
-          </p>
+        <div class="dock-label">
+          <span class="eyebrow">Zaman çizelgesi</span>
+          <h3 class="tl-name" data-testid="timeline-name" title=${place ? place.title : ''}>
+            ${place ? place.title : 'Yer seçilmedi'}
+          </h3>
+          ${
+            place
+              ? html`<p class="tl-sub">
+                  <span class="tl-count">${place.timeline.length} olay</span> · ${formatRange(domain)}
+                </p>`
+              : nothing
+          }
         </div>
-        ${this.plot(vm, place, domain, range)}
+        ${this.plot(vm, place)}
       `,
       this.host,
     );
+    // The very first pass runs before the plot has a width; settle on the real one right away.
+    const w = this.plotWidth();
+    if (w && Math.abs(w - this.width) > 2) {
+      this.width = w;
+      this.render(vm);
+    }
   }
 
-  private plot(vm: ViewModel, place: PlaceView | null, domain: YearRange, range: YearRange): TemplateResult {
+  private plot(vm: ViewModel, place: PlaceView | null): TemplateResult {
+    const { domain, range } = vm;
     const w = this.width;
-    const ticks = axisTicks(domain.from, domain.to, w, 70);
     const bandL = this.xOf(range.from, domain);
     const bandW = this.xOf(range.to + 1, domain) - bandL;
     const cursorX = this.xOf(vm.year + 0.5, domain);
+    const ticks = axisTicks(domain.from, domain.to, w, 64);
 
     const items = place ? this.layoutEvents(place.timeline, domain) : [];
-    const sovereignty = place?.resolution.sequence ?? [];
-    const plotH = AXIS_FROM_TOP + 44;
+    const picked = items.find((it) => it.ev.id === this.store.state.selectedEventId) ?? null;
 
     return html`
-      <div class="tl-plot" style=${styleMap({ height: `${plotH}px`, '--axis-y': `${AXIS_FROM_TOP}px` })}>
-        <div class="tl-band" style=${styleMap({ left: `${bandL}px`, width: `${Math.max(2, bandW)}px` })}>
-          <span class="tl-band-label">${formatRange(range)}</span>
-        </div>
-        <div class="tl-axis" aria-hidden="true"></div>
-        ${ticks.map((t) => {
-          const x = this.xOf(t.year, domain);
-          // A year label is centred on its tick; one that would be cut by the plot's edge is left off (the tick stays).
-          const clipped = x < EDGE_ROOM || x > w - EDGE_ROOM;
-          return html`<div
-            class=${clsx('tl-tick', t.major && 'is-major', clipped && 'is-edge')}
-            style=${styleMap({ left: `${x}px` })}
-            aria-hidden="true"
-          >
-            <span>${t.year}</span>
-          </div>`;
-        })}
+      <div
+        class="tl-plot"
+        style=${styleMap({ height: `${TIMELINE_H}px` })}
+        role="group"
+        aria-label=${place ? `Zaman çizelgesi: ${place.title}` : 'Zaman çizelgesi: yer seçilmedi'}
+      >
         <div
-          class="tl-cursor"
-          style=${styleMap({ left: `${cursorX}px` })}
+          class="tl-range"
+          style=${styleMap({ left: `${bandL}px`, width: `${Math.max(2, bandW)}px` })}
           aria-hidden="true"
-          title="Haritadaki sınırların yılı"
         ></div>
+        <div class="tl-cursor" style=${styleMap({ left: `${cursorX}px` })} aria-hidden="true"></div>
+
+        <div class="tl-ground" style=${styleMap({ top: `${BAND_TOP}px`, height: `${BAND_H}px` })}>
+          ${(place?.resolution.sequence ?? []).map((s) => this.sovereigntySegment(s, domain))}
+          ${ticks.map((t) => {
+            const x = this.xOf(t.year, domain);
+            return html`<span
+              class=${clsx('tl-tick', t.major && 'is-major')}
+              style=${styleMap({ left: `${x}px` })}
+              aria-hidden="true"
+              >${x <= w - EDGE_ROOM ? t.year : nothing}</span
+            >`;
+          })}
+        </div>
 
         ${
           place
             ? html`
-                ${items.map((it) => this.eventItem(it, vm))}
-                ${sovereignty.map((s) => this.sovereigntySegment(s, domain))}
+                ${items.map((it) => this.eventItem(it, vm))} ${picked ? this.tag(picked, items) : nothing}
                 ${place.timeline.length === 0 ? this.empty(vm, place) : nothing}
               `
-            : html`<p class="tl-empty">Seçili yer yok</p>`
+            : html`<p class="tl-empty">Haritadan bir yer seçin; o yerin olayları burada görünür.</p>`
         }
       </div>
     `;
@@ -151,21 +180,21 @@ export class Timeline {
   private empty(vm: ViewModel, place: PlaceView): TemplateResult {
     const n = place.nearest;
     return html`<div class="tl-none">
-      <p>Bu yer için bu dönemde kayıtlı olay yok.</p>
+      <span>Bu yer için bu dönemde kayıtlı olay yok.</span>
       ${
         n
-          ? html`<p class="tl-near">
-              En yakın kayıt:
+          ? html`<span class="tl-near"
+              >En yakın kayıt:
               <button type="button" class="link" @click=${() => this.store.selectEvent(n.id)}>${n.title}</button>
-              (${n.dateLabel}).
+              (${n.dateLabel}) ·
               <button
                 type="button"
                 class="link"
                 @click=${() => this.store.focusYear(n.year, vm.range.to - vm.range.from + 1)}
               >
                 Aralığı oraya taşı
-              </button>
-            </p>`
+              </button></span
+            >`
           : nothing
       }
     </div>`;
@@ -179,68 +208,52 @@ export class Timeline {
     const x = this.xOf(lo, domain);
     const wpx = this.xOf(hi + 1, domain) - x;
     const name = ent?.name ?? s.id;
-    const label =
-      this.textWidth(name, 600, 11) + 12 <= wpx
-        ? name
-        : this.textWidth(shortName(name), 600, 11) + 12 <= wpx
-          ? shortName(name)
-          : '';
     const tint = ent?.tint ?? null;
-    return html`<div
+    const years = s.from === s.to ? `${s.from}` : `${s.from}–${s.to}`;
+    return html`<i
       class="tl-seg"
       style=${styleMap({ left: `${x}px`, width: `${wpx}px`, background: tint === null ? 'var(--paper-3)' : `var(--tint-${tint})` })}
-      title=${`${name}: ${s.from === s.to ? s.from : `${s.from}–${s.to}`}`}
-    >
-      ${label}
-    </div>`;
+      @pointerenter=${(e: PointerEvent) => {
+        const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        this.tip.show(
+          html`<div class="tip-event">
+            <strong>${name}</strong><span class="tip-meta">Bu noktanın egemeni: ${years}</span>
+          </div>`,
+          Math.min(Math.max(e.clientX, r.left), r.right),
+          r.top,
+          'above',
+          'segment',
+        );
+      }}
+      @pointerleave=${() => this.tip.hide('segment')}
+    ></i>`;
   }
 
-  private layoutEvents(events: HistoricalEvent[], domain: YearRange) {
+  private layoutEvents(events: HistoricalEvent[], domain: YearRange): Item[] {
     const w = this.width;
-    const boxes = events.map((ev) => {
-      // An event that began before the window is pinned to its left edge instead of being drawn off-plot.
-      const x = Math.min(w, Math.max(0, this.xOf(ev.start, domain)));
-      const label = ev.title;
-      const lw = this.textWidth(label, 600, 12.5) + this.textWidth(String(ev.year), 500, 11) + 36;
-      const flip = x + lw > w - 6; // label would run off the right edge: anchor it leftwards
-      const left = Math.max(2, Math.min(w - lw - 2, flip ? x - lw + 14 : x - 7)); // keep the label inside the plot
-      return { ev, x, lw, flip, left };
-    });
-    const lanes = assignLanes(
-      boxes.map((b) => ({ id: b.ev.id, x: b.left, width: b.lw, priority: b.ev.importance * 1000 - b.ev.start })),
-      MAX_LANES,
-      8,
+    // An event that began before the window is pinned to its left edge instead of being drawn off-plot.
+    const xs = events.map((ev) => ({ ev, x: Math.min(w, Math.max(0, this.xOf(ev.start, domain))) }));
+    const rows = stackDots(
+      xs.map(({ ev, x }) => ({ id: ev.id, x })),
+      ROWS,
+      SPACING,
     );
-    return boxes.map((b) => ({ ...b, lane: lanes.get(b.ev.id) ?? null }));
+    return xs.map(({ ev, x }) => ({ ev, x, row: rows.get(ev.id) ?? 0 }));
   }
 
-  private eventItem(
-    it: { ev: HistoricalEvent; x: number; lw: number; flip: boolean; left: number; lane: number | null },
-    vm: ViewModel,
-  ): TemplateResult {
-    const { ev, x, lane, left, lw, flip } = it;
+  private eventItem(it: Item, vm: ViewModel): TemplateResult {
+    const { ev, x, row } = it;
     const inRange = ev.end > vm.range.from && ev.start < vm.range.to + 1;
     const selected = this.store.state.selectedEventId === ev.id;
     const hovered = this.store.state.hoverEventId === ev.id;
-    const style = styleFor(ev.category);
-    const d = MARKER_SIZE[ev.importance] ?? 14;
-    const spanPx = Math.max(0, this.xOf(ev.end, { from: vm.domain.from, to: vm.domain.to }) - x);
-    const laneTop = lane === null ? null : laneTopOf(lane);
+    const cy = rowCentre(row);
+    const spanPx = Math.max(0, this.xOf(ev.end, vm.domain) - x);
     return html`
       ${
-        ev.range && spanPx > 8
+        ev.range && spanPx > 10
           ? html`<div
               class=${clsx('tl-span', !inRange && 'is-context')}
-              style=${styleMap({ left: `${x}px`, width: `${spanPx}px`, '--c': style.color })}
-              aria-hidden="true"
-            ></div>`
-          : nothing
-      }
-      ${
-        lane !== null
-          ? html`<div
-              class=${clsx('tl-stem', !inRange && 'is-context')}
-              style=${styleMap({ left: `${x}px`, top: `${laneTop! + LABEL_H}px`, height: `${AXIS_FROM_TOP - (laneTop! + LABEL_H)}px` })}
+              style=${styleMap({ left: `${x}px`, top: `${cy}px`, width: `${spanPx}px`, '--c': styleFor(ev.category).color })}
               aria-hidden="true"
             ></div>`
           : nothing
@@ -249,36 +262,68 @@ export class Timeline {
         type="button"
         class=${clsx('tl-ev', !inRange && 'is-context', selected && 'is-selected', hovered && 'is-hover')}
         data-id=${ev.id}
-        data-importance=${ev.importance}
-        style=${styleMap({ left: `${x}px`, top: `${AXIS_FROM_TOP}px`, '--d': `${d}px` })}
+        style=${styleMap({ left: `${x}px`, top: `${cy}px` })}
         aria-label=${`${ev.title}, ${ev.dateLabel}`}
         aria-pressed=${selected}
         @click=${() => this.store.selectEvent(selected ? null : ev.id)}
-        @pointerenter=${(e: PointerEvent) => this.hover(ev, e.currentTarget as HTMLElement)}
+        @pointerenter=${(e: PointerEvent) => {
+          if (e.pointerType !== 'touch') this.hover(ev, e.currentTarget as HTMLElement);
+        }}
         @pointerleave=${() => this.unhover()}
-        @focus=${(e: FocusEvent) => this.hover(ev, e.currentTarget as HTMLElement)}
+        @focus=${(e: FocusEvent) => {
+          // keyboard focus names the dot; the focus a tap leaves behind must not (the tap opens the event, whose name stays)
+          const el = e.currentTarget as HTMLElement;
+          if (el.matches(':focus-visible')) this.hover(ev, el);
+        }}
         @blur=${() => this.unhover()}
       >
-        ${unsafeSvg(markerSvg(ev.category, ev.importance, { diameter: d }))}
+        ${dot(ev.category)}
       </button>
-      ${
-        lane !== null
-          ? html`<button
-              type="button"
-              class=${clsx('tl-label', flip && 'is-flipped', !inRange && 'is-context', selected && 'is-selected', hovered && 'is-hover')}
-              style=${styleMap({ left: `${left}px`, top: `${laneTop}px`, width: `${lw}px` })}
-              data-id=${ev.id}
-              tabindex="-1"
-              aria-hidden="true"
-              @click=${() => this.store.selectEvent(selected ? null : ev.id)}
-              @pointerenter=${(e: PointerEvent) => this.hover(ev, e.currentTarget as HTMLElement)}
-              @pointerleave=${() => this.unhover()}
-            >
-              <span class="tl-label-year">${ev.year}</span><span class="tl-label-text">${ev.title}</span>
-            </button>`
-          : nothing
-      }
     `;
+  }
+
+  /**
+   * The opened event keeps its name beside its dot. It sits where it covers the fewest other dots: to the
+   * right of the dot in its own row if that is clear, else to the left, else in a neighbouring row. It
+   * never takes pointer events from the dots beneath it.
+   */
+  private tag(picked: Item, items: Item[]): TemplateResult {
+    const { ev, x, row } = picked;
+    const lw = this.textWidth(ev.title, 600, 12.5) + this.textWidth(String(ev.year), 500, 11) + 26;
+    const others = items.filter((o) => o !== picked);
+    const covered = (left: number, top: number) =>
+      others.filter((o) => {
+        const cy = rowCentre(o.row);
+        return o.x + 8 > left - 1 && o.x - 8 < left + lw + 1 && cy + 8 > top - 1 && cy - 8 < top + TAG_H + 1;
+      }).length;
+    const byDistance = [...Array(ROWS).keys()].sort((a, b) => Math.abs(a - row) - Math.abs(b - row) || a - b);
+    let best: { left: number; top: number; left_of_dot: boolean; n: number } | null = null;
+    for (const r of byDistance) {
+      const top = Math.min(DOT_AREA - TAG_H, Math.max(0, rowCentre(r) - TAG_H / 2));
+      for (const leftOfDot of [false, true]) {
+        const left = leftOfDot ? x - 14 - lw : x + 14;
+        if (left < 2 || left + lw > this.width - 2) continue; // would be cut off by the plot's edge
+        const n = covered(left, top);
+        if (!best || n < best.n) best = { left, top, left_of_dot: leftOfDot, n };
+        if (n === 0) break;
+      }
+      if (best?.n === 0) break;
+    }
+    // A tag wider than either side of the dot can hold: keep it inside the plot anyway.
+    const fallback = {
+      left: Math.max(2, Math.min(this.width - lw - 2, x + 14)),
+      top: Math.min(DOT_AREA - TAG_H, Math.max(0, rowCentre(row) - TAG_H / 2)),
+      left_of_dot: false,
+    };
+    const at = best ?? fallback;
+    return html`<div
+      class=${clsx('tl-tag', at.left_of_dot && 'is-flipped')}
+      style=${styleMap({ left: `${at.left}px`, top: `${at.top}px`, height: `${TAG_H}px` })}
+      aria-hidden="true"
+      data-testid="timeline-tag"
+    >
+      <span class="tl-tag-year">${ev.year}</span><span class="tl-tag-text">${ev.title}</span>
+    </div>`;
   }
 
   private hover(ev: HistoricalEvent, el: HTMLElement) {

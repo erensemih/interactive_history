@@ -27,10 +27,10 @@ describe('store', () => {
     expect(s.shownYear).toBe(1520);
   });
 
-  it('presets, focusing a year, and selection are independent of the map', () => {
+  it('focusing a year and selection are independent of the map', () => {
     const s = make();
-    s.setPreset(1);
-    expect(s.state.range.from).toBe(s.state.range.to);
+    s.focusYear(1500, 1);
+    expect(s.state.range).toEqual({ from: 1500, to: 1500 });
     s.focusYear(1453, 5);
     expect(s.state.range).toEqual({ from: 1451, to: 1455 });
     s.selectPlace({ lon: 33, lat: 39 });
@@ -138,4 +138,3 @@ describe('store.replace', () => {
     expect(s.state.range).toEqual({ from: 1500, to: 1500 });
   });
 });
-

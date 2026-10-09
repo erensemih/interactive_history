@@ -2,11 +2,11 @@ import maplibregl, { type ExpressionSpecification, type Map as MLMap } from 'map
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { AppData } from '../data/load';
 import { isLand, primaryAt, rowsContaining } from '../domain/geo';
+import { unionBounds, zoomOutToReveal, type Rect } from '../domain/reveal';
 import type { HistoricalEvent, PlacePoint } from '../domain/types';
 import { PolityLabels } from './labels';
 import { EventMarkers, type MarkerStats } from './markers';
 import { PlacePins } from './pin';
-import { EventPreview } from './preview';
 import { hatchImage, readTheme, stippleImage, type MapTheme } from './theme';
 
 export interface MapCallbacks {
@@ -16,16 +16,24 @@ export interface MapCallbacks {
   onPlaceClick(point: PlacePoint): void;
   /** A click on open water or outside any land. */
   onWaterClick(): void;
-  /** Polity under the pointer (for the hover tooltip), or null. */
-  onHoverPolity(id: string | null, clientX: number, clientY: number): void;
+  /** Polity under the pointer (for the hover tooltip), or null; `noData` is true on land the border data does not cover. */
+  onHoverPolity(id: string | null, clientX: number, clientY: number, noData: boolean): void;
   onEventClick(id: string): void;
   onEventHover(id: string | null, el: HTMLElement | null): void;
+  /** Map controls (zoom buttons, legend, counter) in map pixels: a revealed event must not hide behind them. */
+  avoidRects(): Rect[];
 }
+
+/** Room kept clear around a revealed event: its dot, the year on its right and its name above it. */
+const REVEAL_MARGIN = { top: 44, right: 60, bottom: 36, left: 36 };
 
 const INITIAL_BOUNDS: [[number, number], [number, number]] = [
   [-108, -34],
   [146, 68],
 ];
+
+/** Gentle at both ends and never abrupt in the middle, so a long zoom-out stays easy to follow. */
+const easeInOutSine = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
 
 const yearFilter = (year: number): ExpressionSpecification => [
   'all',
@@ -43,9 +51,10 @@ const idsFilter = (year: number, ids: string[]): ExpressionSpecification => [
 
 /**
  * The MapLibre map. Its job is to draw the borders of one year and to report what the user clicks.
- * It has no method that moves the camera: the view changes only through the user's own drag, wheel,
- * pinch, keyboard or zoom buttons. (Double-click zoom is disabled so a click can never be mistaken
- * for a camera command.)
+ * Clicking a place, a marker or a control never moves it: the view changes through the user's own
+ * drag, wheel, pinch, keyboard or zoom buttons, and in exactly one other case, `revealEvent`, when
+ * the user opens an event whose location is out of sight. (Double-click zoom is disabled so a click
+ * can never be mistaken for a camera command.)
  */
 export class MapView {
   readonly map: MLMap;
@@ -53,7 +62,6 @@ export class MapView {
   private readonly labels: PolityLabels;
   private readonly markers: EventMarkers;
   private readonly pins: PlacePins;
-  private readonly preview: EventPreview;
   private year = 0;
   /** Border rows valid in the shown year: hit-testing a pointer position only looks at these. */
   private rowsNow: AppData['rows'] = [];
@@ -86,7 +94,7 @@ export class MapView {
         ? { center: [initialView.lng, initialView.lat] as [number, number], zoom: initialView.zoom }
         : {
             bounds: INITIAL_BOUNDS,
-            fitBoundsOptions: { padding: { top: 56, bottom: 16, left: 16, right: 16 }, animate: false },
+            fitBoundsOptions: { padding: { top: 12, bottom: 12, left: 12, right: 12 }, animate: false },
           }),
       cooperativeGestures: touch.matches,
       locale: {
@@ -120,7 +128,6 @@ export class MapView {
     const canvasContainer = this.map.getCanvasContainer();
     this.labels = new PolityLabels(this.map, canvasContainer, data);
     this.pins = new PlacePins(this.map, canvasContainer);
-    this.preview = new EventPreview(this.map, canvasContainer);
     this.markers = new EventMarkers(this.map, canvasContainer, {
       onClick: (id) => cb.onEventClick(id),
       onHover: (id, el) => cb.onEventHover(id, el),
@@ -147,7 +154,7 @@ export class MapView {
       if (to?.closest?.('.evt')) return;
       this.lastPointer = null;
       this.setHoverPolity(null);
-      cb.onHoverPolity(null, 0, 0);
+      cb.onHoverPolity(null, 0, 0, false);
     });
     this.map.on('dragstart', () => {
       this.map.getCanvas().style.cursor = '';
@@ -311,7 +318,6 @@ export class MapView {
     try {
       this.labels.layout(force, size);
       this.pins.layout();
-      this.preview.layout();
       this.markers.layout(force, size);
     } catch (err) {
       // A bad record must not stop the map's frame loop (and with it the 'load' event).
@@ -346,21 +352,62 @@ export class MapView {
     this.markers.setEvents(events, focusYear);
   }
 
-  /**
-   * Where the selected event happened, when it is not one of the map's events (a local event picked on
-   * a timeline). Drawn as a selection overlay, not as a marker: the markers stay the range's own set.
-   */
-  setPreviewEvent(ev: HistoricalEvent | null) {
-    this.preview.set(ev);
-  }
-
   /** The selected places, drawn as pins. */
   setPlaces(points: PlacePoint[]) {
     this.pins.setPoints(points);
   }
 
-  setSelectedEvent(id: string | null) {
-    this.markers.setSelected(id);
+  /** The opened event: always drawn (even if the range's set or the zoom budget would hide it) and highlighted. */
+  setSelectedEvent(ev: HistoricalEvent | null) {
+    this.markers.setSelected(ev);
+  }
+
+  /**
+   * Brings an event into view if it is out of sight, changing the camera as little as possible: the map
+   * zooms out about its current centre just far enough (nothing pans, and the view the user was in stays
+   * inside the new one), eased so the user can follow where it went. If even the widest view cannot show
+   * it, the map falls back to the smallest view that holds the old view and the event. Does nothing when
+   * the event is already visible, so clicking a marker never moves the map.
+   */
+  revealEvent(ev: HistoricalEvent) {
+    if (!this.ready) return;
+    const map = this.map;
+    const canvas = map.getCanvas();
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const p = map.project([ev.location.lon, ev.location.lat]);
+    const levels = zoomOutToReveal({
+      dx: p.x - width / 2,
+      dy: p.y - height / 2,
+      width,
+      height,
+      margin: REVEAL_MARGIN,
+      avoid: this.cb.avoidRects(),
+    });
+    if (levels === 0) return;
+    const zoom = map.getZoom() - levels - 0.05;
+    if (Number.isFinite(levels) && zoom >= map.getMinZoom()) {
+      map.easeTo({ zoom, duration: Math.min(2600, 900 + 500 * levels), easing: easeInOutSine });
+      return;
+    }
+    const b = map.getBounds();
+    const [w, s, e, n] = unionBounds([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], ev.location);
+    map.fitBounds(
+      [
+        [w, s],
+        [e, n],
+      ],
+      {
+        padding: {
+          top: REVEAL_MARGIN.top + 16,
+          right: REVEAL_MARGIN.right + 16,
+          bottom: REVEAL_MARGIN.bottom + 16,
+          left: REVEAL_MARGIN.left + 16,
+        },
+        duration: 1800,
+        easing: easeInOutSine,
+      },
+    );
   }
 
   setHoverEvent(id: string | null) {
@@ -409,7 +456,7 @@ export class MapView {
       const row = onLand ? this.pick(ll.lng, ll.lat) : null;
       this.setHoverPolity(row?.id ?? null);
       this.map.getCanvas().style.cursor = onLand ? 'pointer' : '';
-      this.cb.onHoverPolity(row?.id ?? null, p.cx, p.cy);
+      this.cb.onHoverPolity(row?.id ?? null, p.cx, p.cy, onLand && !row);
     });
   }
 

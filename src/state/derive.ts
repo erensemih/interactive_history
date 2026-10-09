@@ -2,11 +2,23 @@ import type { AppData } from '../data/load';
 import { elsewhere, mapEventsInRange, nearestEvent, timelineEvents } from '../domain/events';
 import { resolvePlace } from '../domain/geo';
 import { detailDomain, displayYear } from '../domain/time';
-import type { Entity, HistoricalEvent, PlaceResolution, YearRange } from '../domain/types';
+import type { Entity, HistoricalEvent, PlacePoint, PlaceResolution, YearRange } from '../domain/types';
 import type { AppState } from './store';
+
+/**
+ * What a card in the info panel is about: a place or an event, by id. The panel is driven by these
+ * references, so any combination of cards (a place, an event, two of either) is just a different list.
+ */
+export type SelectionRef = { type: 'place'; id: string } | { type: 'event'; id: string };
+
+/** A place is a point on the map; its id is that point, rounded to ~100 m. */
+export const placeId = (p: PlacePoint): string => `${p.lon.toFixed(3)},${p.lat.toFixed(3)}`;
 
 /** One place's slice of the view: what the info panel column and the timeline lane show. */
 export interface PlaceView {
+  /** `placeId` of the clicked point (the `id` of this place's `SelectionRef`). */
+  id: string;
+  point: PlacePoint;
   resolution: PlaceResolution;
   /** The polity holding the point at the shown year (null on blank land). */
   holder: Entity | null;
@@ -43,6 +55,8 @@ export function deriveView(state: AppState, data: AppData): ViewModel {
     const regions = resolution.regions.map((id) => data.entities.get(id)).filter((e): e is Entity => !!e);
     const title = holder?.name ?? regions[0]?.name ?? 'Kayıtlı devlet yok';
     return {
+      id: placeId(point),
+      point,
       resolution,
       holder,
       regions,
@@ -62,5 +76,13 @@ export function deriveView(state: AppState, data: AppData): ViewModel {
     places,
     elsewhere: places.length ? elsewhere(mapEvents, lineages) : mapEvents,
     selectedEvent: state.selectedEventId ? (data.eventsById.get(state.selectedEventId) ?? null) : null,
+  };
+}
+
+/** The selections the current state describes: every selected place, and the opened event if there is one. */
+export function selectionsOf(vm: ViewModel): { places: SelectionRef[]; event: SelectionRef | null } {
+  return {
+    places: vm.places.map((p) => ({ type: 'place' as const, id: p.id })),
+    event: vm.selectedEvent ? { type: 'event' as const, id: vm.selectedEvent.id } : null,
   };
 }

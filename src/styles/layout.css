@@ -85,8 +85,29 @@ body {
   grid-template-columns: minmax(0, 1fr) var(--panel-w);
 }
 
+.map-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* The place name and the border year sit above the map, never on it. */
+.map-head {
+  flex: none;
+  height: var(--head-h);
+  display: flex;
+  align-items: center;
+  gap: 6px 16px;
+  padding: 0 var(--gutter);
+  overflow: hidden;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+
 .map-wrap {
   position: relative;
+  flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -120,9 +141,13 @@ body {
 /* --------------------------------------------------------------------- dock */
 .dock {
   flex: none;
+  height: var(--dock-h);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   background: var(--paper);
   border-top: 1px solid var(--rule-strong);
-  padding: 10px var(--gutter) 8px;
+  padding: 5px var(--gutter) 3px;
   position: relative;
   z-index: 4;
   box-shadow: 0 -10px 24px -18px rgb(60 45 20 / 0.45);
@@ -187,6 +212,7 @@ body {
 @media (max-width: 1180px) {
   :root {
     --panel-w: 360px;
+    --dock-label-w: 136px;
   }
   .tagline {
     display: none;
@@ -195,6 +221,11 @@ body {
 
 @media (max-width: 900px) {
   /* Phone/tablet: one column. Order = map, time controls, then the reading panel. */
+  :root {
+    --gutter: 16px;
+    --head-h: 40px;
+    --dock-label-w: 86px;
+  }
   html,
   body {
     overflow: auto;
@@ -206,8 +237,11 @@ body {
   .stage {
     display: contents;
   }
-  .map-wrap {
+  .map-col {
     order: 1;
+    flex: none;
+  }
+  .map-wrap {
     flex: none;
     height: 58vh;
     min-height: 360px;
@@ -224,19 +258,6 @@ body {
     overflow: visible;
   }
   .credits {
-    display: none;
-  }
-}
-
-/* Short laptop screens: give the map back some height. */
-@media (max-height: 780px) and (min-width: 901px) {
-  .title-main {
-    font-size: 30px;
-  }
-  .ruler-bins {
-    display: none;
-  }
-  .dock-hint {
     display: none;
   }
 }

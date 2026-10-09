@@ -1,46 +1,27 @@
 import { html, nothing, render } from 'lit-html';
-import { live } from 'lit-html/directives/live.js';
 import { styleMap } from 'lit-html/directives/style-map.js';
 import type { AppData } from '../data/load';
-import { MAP_MIN_IMPORTANCE } from '../domain/events';
 import { clamp, presetRange } from '../domain/time';
 import type { Store } from '../state/store';
 import { clsx, formatRange } from './format';
 
 type Drag = { mode: 'start' | 'end' | 'move' | 'cursor'; grab: number; pointerId: number } | null;
 
-const PRESETS = [
-  { span: 1, label: '1 yıl' },
-  { span: 5, label: '5 yıl' },
-  { span: 25, label: '25 yıl' },
-  { span: 100, label: '100 yıl' },
-];
-
 /**
- * The time control. Top: range inputs and span presets. Below: a ruler over the whole dataset
- * (1400–1600) with a brush for the selected range and a small "borders year" marker inside it.
- * The brush selects *time*; it never knows about places.
+ * The time control: one slim ruler over the whole dataset (1400–1600) with a brush for the selected
+ * range and a small marker inside it for the year whose borders the map draws. Dragging the brush
+ * moves the range, its two edges resize it, a click on the empty track recentres it. There are no
+ * number fields or presets: the ruler is the whole control. It selects *time*; it never knows about places.
  */
 export class Ruler {
   private drag: Drag = null;
   private track: HTMLElement | null = null;
-  private binCounts: number[] = [];
 
   constructor(
     private readonly host: HTMLElement,
     private readonly store: Store,
     private readonly data: AppData,
-  ) {
-    // Density of globally important events across the whole extent (a static overview).
-    const { from, to } = data.extent;
-    const bins = Math.ceil((to - from + 1) / 5);
-    this.binCounts = new Array(bins).fill(0);
-    for (const e of data.events) {
-      if (e.importance < MAP_MIN_IMPORTANCE) continue;
-      const b = Math.min(bins - 1, Math.floor((e.start - from) / 5));
-      if (b >= 0) this.binCounts[b]!++;
-    }
-  }
+  ) {}
 
   private get span() {
     const e = this.data.extent;
@@ -146,43 +127,12 @@ export class Ruler {
     }
   };
 
-  /* ------------------------------------------------------------ inputs */
-
-  private commitInput(which: 'from' | 'to', raw: string) {
-    const n = Number.parseInt(raw.replace(/\D/g, ''), 10);
-    const r = this.store.state.range;
-    if (!Number.isFinite(n)) return this.render();
-    const ext = this.data.extent;
-    const v = clamp(n, ext.from, ext.to);
-    if (which === 'from') this.store.setRange({ from: v, to: Math.max(v, r.to) });
-    else this.store.setRange({ from: Math.min(v, r.from), to: v });
-    this.render();
-  }
-
-  private inputKey(e: KeyboardEvent, which: 'from' | 'to') {
-    const input = e.currentTarget as HTMLInputElement;
-    if (e.key === 'Escape') {
-      // undo an edit that was not committed
-      input.value = String(which === 'from' ? this.store.state.range.from : this.store.state.range.to);
-      input.select();
-    } else if (e.key === 'Enter') {
-      this.commitInput(which, input.value);
-      input.select();
-    } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      const dir = e.key === 'ArrowUp' ? 1 : -1;
-      const r = this.store.state.range;
-      this.commitInput(which, String((which === 'from' ? r.from : r.to) + dir * (e.shiftKey ? 10 : 1)));
-    }
-  }
-
   /* ------------------------------------------------------------ render */
 
   render() {
     const { range } = this.store.state;
     const year = this.store.shownYear;
     const ext = this.data.extent;
-    const span = range.to - range.from + 1;
     const left = this.pct(range.from);
     const width = this.pct(range.to + 1) - left;
     const cursorX = range.to === range.from ? this.pct(range.from + 0.5) : this.pct(year + 0.5);
@@ -190,46 +140,11 @@ export class Ruler {
     const ticks: { year: number; major: boolean }[] = [];
     for (let y = Math.ceil(ext.from / 10) * 10; y <= ext.to + 1; y += 10) ticks.push({ year: y, major: y % 50 === 0 });
 
-    const maxBin = Math.max(1, ...this.binCounts);
-
     render(
       html`
-        <div class="dock-controls">
-          <div class="dock-block">
-            <span class="eyebrow">Zaman aralığı</span>
-            <div class="range-inputs">
-              ${this.yearInput('from', range.from, 'Başlangıç yılı')}
-              <span class="range-dash" aria-hidden="true">–</span>
-              ${this.yearInput('to', range.to, 'Bitiş yılı')}
-            </div>
-          </div>
-          <div class="dock-block">
-            <span class="eyebrow" id="preset-label">Uzunluk</span>
-            <div class="presets" role="group" aria-labelledby="preset-label">
-              ${PRESETS.map(
-                (p) =>
-                  html`<button
-                    type="button"
-                    class=${clsx('chip', span === p.span && 'is-on')}
-                    aria-pressed=${span === p.span}
-                    @click=${() => this.store.setPreset(p.span)}
-                  >
-                    ${p.label}
-                  </button>`,
-              )}
-            </div>
-          </div>
-          <div
-            class="dock-block dock-year"
-            title="Haritada çizilen sınırların yılı. Cetvelde, seçili aralığın içindeki işaretçiyi sürükleyerek değiştirebilirsiniz."
-          >
-            <span class="eyebrow">Haritadaki sınırlar</span>
-            <strong class="year-readout" data-testid="shown-year">${year}</strong>
-          </div>
-          <p class="dock-hint">
-            Aralığı sürükleyin · kenarlarından uzunluğunu ayarlayın · <span class="hint-mark">▾</span> ile sınır yılını
-            seçin
-          </p>
+        <div class="dock-label">
+          <span class="eyebrow">Zaman aralığı</span>
+          <strong class="range-readout" data-testid="range-readout">${formatRange(range)}</strong>
         </div>
 
         <div class="ruler" role="group" aria-label="Zaman cetveli, ${ext.from}–${ext.to}">
@@ -241,19 +156,6 @@ export class Ruler {
             @pointercancel=${this.onUp}
             @lostpointercapture=${this.onUp}
           >
-            <div class="ruler-bins" aria-hidden="true">
-              ${this.binCounts.map(
-                (n, i) =>
-                  html`<i
-                    class="bin"
-                    style=${styleMap({
-                      left: `${(i * 5 * 100) / this.span}%`,
-                      width: `${(Math.min(5, this.span - i * 5) * 100) / this.span}%`,
-                      height: `${n === 0 ? 0 : 3 + (n / maxBin) * 13}px`,
-                    })}
-                  ></i>`,
-              )}
-            </div>
             <div class="ruler-axis" aria-hidden="true"></div>
             ${ticks.map(
               (t) =>
@@ -330,6 +232,7 @@ export class Ruler {
               @keydown=${(e: KeyboardEvent) => this.onKey(e, 'cursor')}
               tabindex="0"
               role="slider"
+              title="Haritadaki sınırların yılı: ${year}"
               aria-label="Haritada gösterilen sınırların yılı"
               aria-valuemin=${range.from}
               aria-valuemax=${range.to}
@@ -337,7 +240,6 @@ export class Ruler {
               data-testid="cursor"
             >
               <span class="cursor-pin" aria-hidden="true"></span>
-              <span class="cursor-year" aria-hidden="true">${year}</span>
             </div>
           </div>
         </div>
@@ -345,21 +247,5 @@ export class Ruler {
       this.host,
     );
     this.track = this.host.querySelector('.ruler-track');
-  }
-
-  private yearInput(which: 'from' | 'to', value: number, label: string) {
-    return html`<input
-      class="year-input"
-      type="text"
-      inputmode="numeric"
-      maxlength="4"
-      size="4"
-      aria-label=${label}
-      .value=${live(String(value))}
-      @keydown=${(e: KeyboardEvent) => this.inputKey(e, which)}
-      @change=${(e: Event) => this.commitInput(which, (e.target as HTMLInputElement).value)}
-      @focus=${(e: FocusEvent) => (e.target as HTMLInputElement).select()}
-      data-testid=${`input-${which}`}
-    />`;
   }
 }

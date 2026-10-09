@@ -2,9 +2,10 @@ import type { Map as MLMap } from 'maplibre-gl';
 import type { PlacePoint } from '../domain/types';
 
 /**
- * A small ring at each selected place, so a click on blank land (where no polity lights up) still
- * answers "where did I click?". It follows the map's projection like every other overlay and never
- * touches the camera. One pin per place: the same element list serves two-place comparison later.
+ * A solid red dot with a soft red glow at each selected place, so a click on blank land (where no
+ * polity lights up) still answers "where did I click?". The dot is the mark; the glow only fades it
+ * into the map. It follows the map's projection like every other overlay and never touches the
+ * camera. One pin per place: the same element list serves two-place comparison later.
  */
 export class PlacePins {
   private readonly host: HTMLElement;
@@ -26,7 +27,7 @@ export class PlacePins {
     while (this.els.length < points.length) {
       const el = document.createElement('div');
       el.className = 'pin';
-      el.innerHTML = '<i></i>';
+      el.innerHTML = '<b class="pin-glow"></b><i class="pin-dot"></i>';
       this.host.appendChild(el);
       this.els.push(el);
     }

@@ -1,11 +1,12 @@
 import { html, render } from 'lit-html';
 import { loadData, type AppData } from './data/load';
+import type { HistoricalEvent } from './domain/types';
 import { MapView } from './map/mapView';
 import { deriveView, type ViewModel } from './state/derive';
 import { DEFAULT_STATE, Store, type AppState } from './state/store';
 import { hashToPartialState, parseCamera, stateToHash } from './state/url';
 import { InfoPanel } from './ui/infoPanel';
-import { MapChrome } from './ui/mapChrome';
+import { MapChrome, MapHead } from './ui/mapChrome';
 import { formatRange } from './ui/format';
 import { scrollBehavior } from './ui/motion';
 import { Ruler } from './ui/ruler';
@@ -43,11 +44,14 @@ const SHELL = `
     <p class="credits" id="credits"></p>
   </header>
   <div class="stage">
-    <main class="map-wrap" aria-label="Harita">
-      <div class="map" id="map" lang="tr"></div>
-      <div class="map-chrome" id="map-chrome"></div>
-      <div class="map-stats" id="map-stats" hidden></div>
-      <div class="toast" id="toast" role="status" hidden></div>
+    <main class="map-col" aria-label="Harita">
+      <div class="map-head" id="map-head"></div>
+      <div class="map-wrap" role="region" aria-label="Harita alanı">
+        <div class="map" id="map" lang="tr"></div>
+        <div class="map-chrome" id="map-chrome"></div>
+        <div class="map-stats" id="map-stats" hidden></div>
+        <div class="toast" id="toast" role="status" hidden></div>
+      </div>
     </main>
     <aside class="panel" aria-label="Bilgi paneli">
       <div class="panel-scroll" id="panel" tabindex="-1"></div>
@@ -55,7 +59,6 @@ const SHELL = `
   </div>
   <section class="dock" aria-label="Zaman">
     <div class="dock-ruler" id="dock-ruler" tabindex="-1"></div>
-    <div class="dock-funnel" id="dock-funnel" aria-hidden="true"></div>
     <div class="dock-timeline" id="dock-timeline"></div>
   </section>
   <div class="sr-only" id="sr-status" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -112,7 +115,8 @@ export async function startApp(root: HTMLElement): Promise<void> {
   // The camera goes into the link only once the user has moved the map themselves (or the link had one):
   // the automatic first framing is the same for everyone and does not belong in a shared address.
   let cameraTouched = parseCamera(location.hash) !== null;
-  const chrome = new MapChrome($('map-chrome'), data, {
+  const head = new MapHead($('map-head'));
+  new MapChrome($('map-chrome'), data, {
     zoomIn: () => {
       cameraTouched = true;
       mapView.map.zoomIn();
@@ -205,15 +209,14 @@ export async function startApp(root: HTMLElement): Promise<void> {
     mapView.setSelectedPolities(vm.places.map((p) => p.resolution.row?.id).filter((id): id is string => !!id));
     mapView.setPlaces(state.places);
     const open = vm.selectedEvent;
-    mapView.setPreviewEvent(open && !vm.mapEvents.some((e) => e.id === open.id) ? open : null);
-    mapView.setSelectedEvent(state.selectedEventId);
+    mapView.setSelectedEvent(open);
     mapView.setHoverEvent(state.hoverEventId);
+    revealIfNew(open);
 
-    chrome.render(vm);
+    head.render(vm);
     panel.render(vm);
     ruler.render();
     timeline.render(vm);
-    renderFunnel(vm);
 
     announceChanges(vm);
     if (focusCardAfterUpdate && open) {
@@ -266,6 +269,9 @@ export async function startApp(root: HTMLElement): Promise<void> {
   function scheduleHash() {
     window.clearTimeout(hashTimer);
     hashTimer = window.setTimeout(() => {
+      // The address was changed from outside since we last wrote it (a pasted link): its hashchange is on
+      // its way and will replace the state. Writing now would overwrite the link before it was read.
+      if (location.hash !== lastHash) return;
       let camera = null;
       if (cameraTouched) {
         const c = mapView.map.getCenter();
@@ -274,30 +280,27 @@ export async function startApp(root: HTMLElement): Promise<void> {
       const next = stateToHash(store.state, camera);
       try {
         if (next !== location.hash) history.replaceState(null, '', next);
-        lastHash = next;
+        lastHash = location.hash; // as the browser spells it, so the comparison above stays honest
       } catch {
         /* a sandboxed frame may refuse to touch the address: the link is a convenience, not a requirement */
       }
     }, 250);
   }
 
-  function renderFunnel(v: ViewModel) {
-    const ext = data.extent;
-    const extSpan = ext.to - ext.from + 1;
-    const dSpan = v.domain.to - v.domain.from + 1;
-    const pct = (y: number, from: number, span: number) => ((y - from) / span) * 100;
-    const bl = pct(v.range.from, ext.from, extSpan);
-    const br = pct(v.range.to + 1, ext.from, extSpan);
-    const dl = pct(v.range.from, v.domain.from, dSpan);
-    const dr = pct(v.range.to + 1, v.domain.from, dSpan);
-    render(
-      html`<svg viewBox="0 0 100 10" preserveAspectRatio="none" width="100%" height="100%">
-        <polygon points=${`${bl},0 ${br},0 ${dr},10 ${dl},10`} class="funnel-fill" />
-        <line x1=${bl} y1="0" x2=${dl} y2="10" class="funnel-edge" vector-effect="non-scaling-stroke" />
-        <line x1=${br} y1="0" x2=${dr} y2="10" class="funnel-edge" vector-effect="non-scaling-stroke" />
-      </svg>`,
-      $('dock-funnel'),
-    );
+  /**
+   * An event opened from the timeline, the list or a link is brought into view if it is off-screen (the
+   * map zooms out just far enough, smoothly). One opened by clicking its own marker is already in sight,
+   * so the map stays exactly where it is.
+   */
+  let revealed: string | null = store.state.selectedEventId;
+  let skipReveal = false;
+  function revealIfNew(open: HistoricalEvent | null) {
+    const id = open?.id ?? null;
+    if (id === revealed) return;
+    revealed = id;
+    const skip = skipReveal;
+    skipReveal = false;
+    if (open && !skip) mapView.revealEvent(open);
   }
 
   store.subscribe((state: AppState, prev: AppState) => {
@@ -327,9 +330,9 @@ export async function startApp(root: HTMLElement): Promise<void> {
   // A link pasted into this tab (or an edited address) replaces the view; the map's own camera is not touched.
   // (history.replaceState, which this app uses to keep the address current, does not fire this event.)
   window.addEventListener('hashchange', () => {
-    if (location.hash === lastHash || !new URLSearchParams(location.hash.slice(1)).has('t')) return;
+    if (location.hash === lastHash) return; // our own write
     lastHash = location.hash;
-    store.replace(stateFromHash());
+    if (new URLSearchParams(location.hash.slice(1)).has('t')) store.replace(stateFromHash());
   });
 
   // Skip links move focus without touching the address.
@@ -343,11 +346,10 @@ export async function startApp(root: HTMLElement): Promise<void> {
   // First paint of everything except the map, then the map itself.
   vm = deriveView(store.state, data);
   vmState = store.state;
-  chrome.render(vm);
+  head.render(vm);
   panel.render(vm);
   ruler.render();
   timeline.render(vm);
-  renderFunnel(vm);
   announceChanges(vm);
   await new Promise((r) => requestAnimationFrame(() => r(null)));
   const initialView = parseCamera(location.hash);
@@ -373,12 +375,34 @@ export async function startApp(root: HTMLElement): Promise<void> {
           render(html`<b>${shown}</b> / ${total} olay haritada${hint}`, el);
         },
         onWaterClick: () => toast('Burası deniz. Bir kara parçasına tıklayın; harita yerinden oynamaz.'),
-        onHoverPolity: (id, x, y) => {
-          if (!id) return tip.hide('polity');
-          const ent = data.entities.get(id);
-          tip.show(html`<div class="tip-polity">${ent?.name ?? id}</div>`, x, y, 'cursor', 'polity');
+        onHoverPolity: (id, x, y, noData) => {
+          if (id) {
+            const ent = data.entities.get(id);
+            tip.show(html`<div class="tip-polity">${ent?.name ?? id}</div>`, x, y, 'cursor', 'polity');
+          } else if (noData) {
+            tip.show(html`<div class="tip-nodata">Bu dönem için sınır verisi yok</div>`, x, y, 'cursor', 'polity');
+          } else {
+            tip.hide('polity');
+          }
         },
-        onEventClick: (id) => store.selectEvent(store.state.selectedEventId === id ? null : id),
+        avoidRects: () => {
+          // Controls drawn over the map: a revealed event must not end up hidden behind one of them.
+          const origin = $('map').getBoundingClientRect();
+          const pad = 8;
+          return [...root.querySelectorAll<HTMLElement>('.map-zoom, .legend, .map-stats:not([hidden])')].map((el) => {
+            const r = el.getBoundingClientRect();
+            return {
+              left: r.left - origin.left - pad,
+              top: r.top - origin.top - pad,
+              right: r.right - origin.left + pad,
+              bottom: r.bottom - origin.top + pad,
+            };
+          });
+        },
+        onEventClick: (id) => {
+          skipReveal = true; // the marker was clicked, so it is in sight: do not move the map
+          store.selectEvent(store.state.selectedEventId === id ? null : id);
+        },
         onEventHover: (id, el) => {
           store.hoverEvent(id);
           const ev = id ? data.eventsById.get(id) : null;
@@ -403,6 +427,8 @@ export async function startApp(root: HTMLElement): Promise<void> {
   update();
   loadingText.textContent = 'Harita çiziliyor…';
   await mapView.whenDrawn();
+  // A link that opens an event may point at one outside the first view.
+  if (vm.selectedEvent) mapView.revealEvent(vm.selectedEvent);
   $('loading').classList.add('is-done');
   window.setTimeout(() => $('loading').remove(), 400);
 

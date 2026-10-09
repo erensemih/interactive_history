@@ -1,4 +1,63 @@
 /* -------------------------------------------------------------- info panel */
+/* The context: the selected place folded into one line at the top edge, while an event is read. */
+.panel-context {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  margin: -24px calc(-1 * var(--gutter)) 20px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 9px var(--gutter);
+}
+
+.line:hover {
+  background: var(--paper-2);
+}
+
+.line-back {
+  flex: none;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink-3);
+  transform: translateY(-1px);
+}
+
+.line-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-size: 17.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.line-range {
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+}
+
+/* The focus: one card now; a comparison would put two side by side. */
+.panel-focus {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr));
+  gap: 0 24px;
+}
+
 .card {
   position: relative;
   padding-bottom: 24px;
@@ -100,14 +159,6 @@
 }
 
 /* place card */
-.card-place.is-compact .prose {
-  font-size: 15.5px;
-}
-
-.card-place.is-compact .card-title {
-  font-size: 24px;
-}
-
 .facts {
   margin-top: 18px;
 }
@@ -241,10 +292,6 @@
   color: var(--ink-2);
 }
 
-.badge svg.mk {
-  margin: -4px 0 -4px -2px;
-}
-
 .event-when {
   display: flex;
   flex-wrap: wrap;
@@ -255,34 +302,8 @@
   margin-bottom: 12px;
 }
 
-.event-when .dot {
+.event-when .sep {
   color: var(--rule-strong);
-}
-
-.importance {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin-top: 14px;
-  font-size: 12.5px;
-  color: var(--ink-3);
-}
-
-.importance-dots {
-  display: inline-flex;
-  gap: 3px;
-}
-
-.importance-dots i {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 1.4px solid var(--ink-3);
-}
-
-.importance-dots i.on {
-  background: var(--ink);
-  border-color: var(--ink);
 }
 
 .parties {

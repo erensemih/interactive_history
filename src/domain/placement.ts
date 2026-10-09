@@ -1,4 +1,4 @@
-import { MARKER_SIZE } from './categories';
+import { MARKER_DIAMETER } from './categories';
 import { markerBudget, markerPriority } from './events';
 import type { HistoricalEvent } from './types';
 
@@ -34,10 +34,13 @@ export interface PlacementResult {
 const VIEW_MARGIN = 20;
 /** Room the year label next to a mark needs, for collisions. */
 const LABEL_ROOM = 34;
+/** The paper ring and ink hairline around a dot. */
+const RING = 5;
 
 /**
- * Chooses which markers are drawn. The budget is spent on what is *in view*, most important first,
- * so zooming into a region fills it up instead of spending the budget on events elsewhere on Earth.
+ * Chooses which markers are drawn. The budget is spent on what is *in view*, most important first
+ * (importance is only ever used here, to thin a crowded map; it is never drawn), so zooming into a
+ * region fills it up instead of spending the budget on events elsewhere on Earth.
  * Pure: the same events, camera and viewport always give the same markers.
  */
 export function placeMarkers(input: PlacementInput): PlacementResult {
@@ -70,9 +73,11 @@ export function placeMarkers(input: PlacementInput): PlacementResult {
       thinned++;
       continue;
     }
-    const d = MARKER_SIZE[ev.importance] ?? 14;
+    const d = MARKER_DIAMETER + RING;
     const box = { x: p.x - d / 2 - 3, y: p.y - d / 2 - 3, w: d + 6 + LABEL_ROOM, h: d + 6 };
-    const clash = boxes.some((o) => box.x < o.x + o.w && o.x < box.x + box.w && box.y < o.y + o.h && o.y < box.y + box.h);
+    const clash = boxes.some(
+      (o) => box.x < o.x + o.w && o.x < box.x + box.w && box.y < o.y + o.h && o.y < box.y + box.h,
+    );
     if (clash && !isSelected) {
       thinned++;
       continue;

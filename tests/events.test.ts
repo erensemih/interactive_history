@@ -9,7 +9,7 @@ import {
   timelineEvents,
   type RawEvent,
 } from '../src/domain/events';
-import { assignLanes } from '../src/domain/lanes';
+import { stackDots } from '../src/domain/lanes';
 
 const raw = (id: string, date: RawEvent['date'], importance: number, parties: string[]): RawEvent => ({
   id,
@@ -49,7 +49,8 @@ describe('sources and validation', () => {
   });
 
   it('rejects a malformed event with a message that names it', () => {
-    const bad = (patch: Partial<RawEvent>) => () => normalizeEvent({ ...raw('bad-1', '1500', 3, ['x']), ...patch }, 't');
+    const bad = (patch: Partial<RawEvent>) => () =>
+      normalizeEvent({ ...raw('bad-1', '1500', 3, ['x']), ...patch }, 't');
     expect(bad({ importance: 9 })).toThrow(/bad-1.*önem/);
     expect(bad({ location: { name: { tr: 'y' }, coordinates: [10, 120] } })).toThrow(/bad-1.*koordinat/);
     expect(bad({ parties: undefined as unknown as string[] })).toThrow(/bad-1/);
@@ -114,20 +115,45 @@ describe('the timeline depends on the place', () => {
   });
 });
 
-describe('timeline lanes', () => {
-  it('stacks overlapping labels and drops what does not fit', () => {
-    const lanes = assignLanes(
+describe('timeline dot rows', () => {
+  it('stacks dots that would touch and reuses a row once there is room', () => {
+    const rows = stackDots(
       [
-        { id: 'a', x: 0, width: 100, priority: 5 },
-        { id: 'b', x: 50, width: 100, priority: 4 },
-        { id: 'c', x: 60, width: 100, priority: 3 },
-        { id: 'd', x: 300, width: 100, priority: 1 },
+        { id: 'a', x: 100 },
+        { id: 'b', x: 104 },
+        { id: 'c', x: 109 },
+        { id: 'd', x: 300 },
+        { id: 'e', x: 118 },
       ],
-      2,
+      3,
+      16,
     );
-    expect(lanes.get('a')).toBe(0);
-    expect(lanes.get('b')).toBe(1);
-    expect(lanes.get('c')).toBeNull();
-    expect(lanes.get('d')).toBe(0);
+    expect(rows.get('a')).toBe(0);
+    expect(rows.get('b')).toBe(1);
+    expect(rows.get('c')).toBe(2);
+    expect(rows.get('d')).toBe(0);
+    expect(rows.get('e')).toBe(0); // 18 px after 'a': row 0 is free again
+  });
+
+  it('never drops a dot: when every row is crowded it takes the row whose last dot is farthest', () => {
+    const rows = stackDots(
+      [
+        { id: 'a', x: 0 },
+        { id: 'b', x: 2 },
+        { id: 'c', x: 4 },
+        { id: 'd', x: 6 },
+      ],
+      3,
+      16,
+    );
+    expect([...rows.keys()].sort()).toEqual(['a', 'b', 'c', 'd']);
+    expect(rows.get('d')).toBe(0); // row 0 holds x = 0, the farthest from x = 6
+  });
+
+  it('gives the same rows for the same dots, whatever order they arrive in', () => {
+    const dots = Array.from({ length: 12 }, (_, i) => ({ id: `e${i}`, x: i * 5 }));
+    const a = stackDots(dots, 3, 16);
+    const b = stackDots([...dots].reverse(), 3, 16);
+    expect([...b].sort()).toEqual([...a].sort());
   });
 });

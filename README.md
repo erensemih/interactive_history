@@ -6,8 +6,8 @@ Bir bölgenin tarihini tek başına okumak, olayları birbirinden kopuk bir list
 soruyu kolay yanıtlamak için tasarlanmış, zamanı ön plana alan etkileşimli bir tarih haritasıdır. Kullanıcı iki şey
 seçer: bir **zaman aralığı** (tek yıl, 5 yıl, 100 yıl; kararı kullanıcı verir) ve haritada bir **yer**.
 
-- **Harita zamana bağlıdır ve herkes için aynıdır:** o dönemin siyasi sınırlarını ve dünya tarihi için önemli
-  olayları gösterir. Hangi yerin seçili olduğu haritanın *içeriğini* değiştirmez.
+- **Harita zamana bağlıdır ve herkes için aynıdır:** o dönemin siyasi sınırlarını ve dünyanın dört bir yanından bir
+  olay seçkisini gösterir. Hangi yerin seçili olduğu haritanın *içeriğini* değiştirmez.
 - **Zaman çizelgesi yere bağlıdır:** seçilen yerle doğrudan ilgili olayları, dünya tarihinde önemsiz olsalar bile,
   gösterir.
 
@@ -18,6 +18,12 @@ Bu ilk prototip, görsel dili ve etkileşimi oturtmak içindir; veri bilerek kü
 | Çin seçili, aynı harita | Aralık 1450–1500 | Olay ayrıntısı |
 |---|---|---|
 | ![](docs/verification/03-cin-1500.png) | ![](docs/verification/04-aralik-1450-1500.png) | ![](docs/verification/05-olay-detayi.png) |
+
+Çizelgeden görünüm dışındaki bir olay (Mohaç, 1526) seçilince harita yumuşakça, yalnızca gerektiği kadar uzaklaşır:
+
+| Önce: Çin'e yakınlaşılmış | Sonra: Macaristan görünür, işaretçi vurgulu | Olay kapatılınca |
+|---|---|---|
+| ![](docs/verification/11-mohac-once-cin.png) | ![](docs/verification/12-mohac-sonra.png) | ![](docs/verification/13-olay-kapaninca.png) |
 
 ## Çalıştırma
 
@@ -51,11 +57,18 @@ uygulamanın kendisi Python'a ihtiyaç duymaz, çünkü üretilen veri depoda du
 
 | Ne yapmak istiyorsunuz | Nasıl |
 |---|---|
-| Zaman aralığını seçmek | Alttaki cetvelde aralığı sürükleyin, kenarlarından uzunluğunu ayarlayın; ya da yılları yazın; ya da *1 / 5 / 25 / 100 yıl* düğmelerini kullanın |
-| Haritada hangi yılın sınırlarının çizildiğini seçmek | Cetvelde aralığın içindeki **▾** işaretini sürükleyin (varsayılan: aralığın ortası). Seçili yıl, zaman denetiminde "Haritadaki sınırlar" yanında ve haritanın başlığında yazar |
-| Bir yeri seçmek | Haritada bir devletin üzerine tıklayın. **Harita yerinden oynamaz**: yalnızca sürükleme, tekerlek, çimdik ve `+/−` düğmeleri haritayı hareket ettirir |
-| Bir olayı okumak | Haritadaki işaretçiye, çizelgedeki düğüme ya da sağdaki listeye tıklayın. Klavyeyle: `Tab` ile işaretçi grubuna girin, ok tuşlarıyla işaretçiler arasında gezinin, `Enter` ile açın (odak olay kartına gider) |
-| Seçimi kaldırmak | Panelde ✕ ya da `Esc` |
+| Zaman aralığını seçmek | Alttaki cetvelde aralık çubuğunu sürükleyin; kenarlarından sürükleyerek uzunluğunu ayarlayın; boş yere tıklarsanız aralık oraya taşınır. Başka denetim yoktur (yıl kutusu, hazır süre düğmesi yok). Klavyeyle: çubukta `←/→` 1 yıl, `Shift` ile 10 yıl, `Home/End` uçlara |
+| Haritada hangi yılın sınırlarının çizildiğini seçmek | Aralığın içindeki küçük işareti (çizgi + nokta) sürükleyin (varsayılan: aralığın ortası). Seçili yıl, haritanın üstündeki başlıkta "… yılının sınırları" notunda yazar |
+| Bir yeri seçmek | Haritada bir devletin üzerine tıklayın. **Harita yerinden oynamaz**: yalnızca sürükleme, tekerlek, çimdik ve `+/−` düğmeleri haritayı hareket ettirir (tek istisna aşağıda: görünüm dışındaki bir olayı açmak) |
+| Bir olayı okumak | Haritadaki işaretçiye, çizelgedeki noktaya ya da sağdaki listeye tıklayın. Çizelgede olay adları kalıcı yazılmaz: noktanın üstüne gelince (dokunmatikte dokununca) adı görünür; açık olayın adı noktasının yanında kalır. Klavyeyle: `Tab` ile işaretçi grubuna girin, ok tuşlarıyla işaretçiler arasında gezinin, `Enter` ile açın (odak olay kartına gider) |
+| Olaydan yer görünümüne dönmek | Panelin üstündeki tek satırlık yer başlığına tıklayın (ad + aralık), olay kartında ✕'e basın ya da `Esc` |
+| Seçimi kaldırmak | Panelde ✕ ya da `Esc` (önce açık olayı, ikincisi yeri kapatır) |
+
+**Açık olay her zaman haritadadır.** Çizelgeden ya da listeden bir olay açtığınızda işaretçisi, yakınlaştırma bütçesi veya
+eleme yüzünden normalde çizilmeyecek olsa bile, çizilir ve belirgin biçimde vurgulanır (kalın vermilyon halka, ışıma,
+adı yanında). Yeri o anki görünümün dışındaysa harita, yeri görünene kadar **yalnızca uzaklaşır** (kaydırmak yerine
+uzaklaşmak tercih edilir; önceki görünüm yeni görünümün içinde kalır) ve bunu sıçramadan, yumuşakça yapar. Zaten görünen
+bir olayı açmak (örneğin kendi işaretçisine tıklamak) haritayı hiç oynatmaz.
 
 Adres çubuğu durumu taşır (`#t=1450-1500&p=32.85,39.93&e=...`), bu yüzden bir görünümü bağlantıyla paylaşabilirsiniz.
 Harita kamerası (`v=yakınlaştırma/enlem/boylam`) adrese yalnızca siz haritayı kendiniz oynattıktan sonra yazılır; açılıştaki
@@ -71,22 +84,30 @@ kaydırması ile harita hareketi karışmasın diye harita iki parmakla gezilir.
 | **Vite + TypeScript + lit-html** (React yok) | Arayüz küçük ve durum odaklı; bir bileşen çerçevesi gereksiz. Mantık (`src/domain`) arayüzden ayrıdır ve birim testlidir. |
 | **Sınır verisi: Seshat Cliopatria** (CC BY 4.0) | 1400–1600 arasında devletler için 5–20 yıllık kayıt dönemleriyle, çoğunlukla aralıksız sınır verir (yıl yıl seçilebilir); zaman sürükleyince sınırlar gerçekten kayar. Alternatif `historical-basemaps` bu aralıkta yalnızca 5 anlık görüntü (1400, 1492, 1500, 1530, 1600) sunuyor ve GPL-3.0. Cliopatria ayrıca her devlet için Wikipedia/Wikidata kimliği ve üst-alt (ör. Brandenburg → Kutsal Roma) ilişkisi taşır. Bedeli: yalnızca devletleri haritalar; devlet kaydı olmayan karalar noktalı "veri yok" zemini olarak gösterilir. |
 | **Yer = bir nokta, devlet = o noktanın o yıldaki sahibi** | Konya 1450'de Karamanoğulları, 1475'te Osmanlı'dır. Zaman çizelgesi, aralık boyunca o noktayı elinde tutan *tüm* devletlerin (ve üst yapılarının, bulunduğu bölgenin) olaylarını toplar; böylece "yerin tarihi" okunur. |
-| **Haritadaki olay sayısı: önem + yakınlaştırma bütçesi** | Önem 1–5. Haritada yalnızca ≥3 görünür; bütçe *görünümdeki* olaylara harcanır: dünya görünümünde en önemliler, yakınlaştıkça (bütçe zoom ile artar) o bölgenin daha fazlası. Ekranda çakışanlar önem sırasına göre elenir. Sağ alttaki not kaç olayın çizildiğini ve geri kalanının neden görünmediğini söyler. Önem 1–2 olaylar yalnızca çizelgededir. |
-| **Aralık seçici: fırçalı cetvel + hazır uzunluklar + yazılan yıl + "sınır yılı" işareti** | Tek yıl da 100 yıl da aynı denetimle seçilir. 100 yıllık bir aralıkta tek bir sınır haritası yetmez; fırçanın içindeki işaret, o aralık içinde hangi yılın sınırlarının çizileceğini seçtirir ve arayüzde her zaman yazılı görünür. Cetvelden çizelgeye çizilen "büyüteç" bağlantısı, çizelgenin aralığın yakınlaştırılmış hâli olduğunu gösterir. |
-| **Çizelge, aralığın biraz ötesini soluk gösterir** | Tek yıllık bir seçimde bile yerin komşu yıllardaki olayları okunur; aralığın içindekiler vurgulu, dışındakiler soluktur. |
-| **Düzen sabittir** | Bir yer seçilince alt bölümün ya da panelin boyu değişseydi harita yeniden boyutlanır ve kaymış gibi görünürdü. Boyutlar durumdan bağımsızdır. |
+| **Haritadaki olay sayısı: yakınlaştırma bütçesi; önem yalnızca eleme için** | Her olayın içsel bir önem puanı (1–5) vardır, ama arayüz bunu **göstermez** (boyut, rozet, etiket yok): neyin önemli olduğuna kullanıcı karar verir. Puan yalnızca kalabalığı ayıklar: haritada yalnızca puanı ≥3 olanlar yer alır (daha yerel olanlar yalnızca çizelgededir); bütçe *görünümdeki* olaylara harcanır (dünya görünümünde az, yakınlaştıkça o bölgenin daha fazlası) ve ekranda çakışanlardan puanı düşük olan elenir. Sağ alttaki not kaç olayın çizildiğini ve geri kalanının neden görünmediğini söyler. |
+| **Açık olay bu elemenin dışındadır, görünüm en az değişir** | Açık olay, bütçeye, önem süzgecine ve çakışmaya bakılmadan çizilir. Görünüm dışındaysa harita merkezi etrafında *yalnızca uzaklaşır* (Web Mercator'da merkezden uzaklık her yakınlaştırma düzeyinde yarıya iner; bu yüzden gereken en az düzey doğrudan hesaplanır, `domain/reveal.ts`) ve kontrollerin (`+/−`, lejant, sayaç) arkasında kalmamasına dikkat edilir. |
+| **Aralık seçici: yalnızca cetvel** | Tek yıl da 100 yıl da aynı denetimle seçilir; sayı kutusu ya da hazır süre düğmesi yoktur. Fırçanın içindeki işaret, o aralık içinde hangi yılın sınırlarının çizileceğini seçtirir; seçilen yıl harita başlığının yanındaki notta görünür. Alt bölüm bu yüzden iki ince satırdır (≈ 100 px). |
+| **Yer başlığı haritanın üstündedir, haritanın içinde değil** | Başlık ve "… yılının sınırları" notu, haritanın üstündeki sabit yükseklikli bir şeritte durur; hiçbir sınırı ya da işaretçiyi örtemez ve adın uzunluğu haritayı yeniden boyutlandırıp kaymış gibi göstermez. |
+| **Bilgi paneli seçimlerle yönlenir: yer bağlam, olay odak** | Panel, `{ type: 'place' \| 'event', id }` başvurularının listesini kartlara çevirir. Yalnızca yer seçiliyse panel yeri anlatır; olay açıksa olayı anlatır ve yer tek satırlık bir başlığa (ad + aralık) küçülür; başlığa tıklamak ya da olayı kapatmak yer görünümüne döndürür. Hiçbir yerde "bir yer kartı + bir olay kartı" sabit düzeni yoktur. |
+| **Çizelge, aralığın biraz ötesini soluk gösterir** | Tek yıllık bir seçimde bile yerin komşu yıllardaki olayları okunur; aralığın içindekiler vurgulu, dışındakiler soluktur. Çakışan noktalar (en çok 3 sıra) üst üste biner ama hiçbiri düşürülmez; her olay gerçek tarihinde çizilir. |
+| **Düzen sabittir** | Bir yer seçilince başlık şeridinin, alt bölümün ya da panelin boyu değişseydi harita yeniden boyutlanır ve kaymış gibi görünürdü. Boyutlar durumdan bağımsızdır. |
 
 ### Görsel dil
 
 Basılı bir atlas: sıcak kâğıt, kahverengi-siyah mürekkep, sakin pastel devlet dolguları ve **tek canlı renk**
-(vermilyon): "seçtiğiniz şey". Seçili devlet taramalı ve ışıltılı çizilir. Devlet dolgularının rengi yalnızca
-komşuları ayırır (derleme sırasında komşuluk grafiği boyanır; kimlik etiket ve sınırla taşınır). Yazı: okuma
+(vermilyon): "seçtiğiniz şey". Seçili yer halkasız, dolu kırmızı bir nokta ve çevresinde yarıçapsal sönen yumuşak bir
+ışımadır; seçili devlet taramalı çizilir; açık olay vermilyon halkayla vurgulanır. Devlet dolgularının rengi yalnızca
+komşuları ayırır (derleme sırasında komşuluk grafiği boyanır; kimlik etiket ve sınırla taşınır) ve **hiçbiri mavi, turkuaz ya
+da mor değildir**: haritada mavi yalnızca deniz ve göllere aittir (`tests/palette.test.ts` bunu sayıyla korur). Yazı: okuma
 metinleri ve başlıklar için **Newsreader**, denetimler için **Instrument Sans**; ikisi de uygulamayla paketlenir.
 
-**İşaretçiler harita, çizelge, lejant ve panelde aynıdır:** *şekil* kategoriyi, *boyut* önemi, renk şekli
-pekiştirir. Altı kategori rengi bir renk-ayırt-edilebilirlik doğrulayıcısından (OKLab ΔE, protan/deutan simülasyonu), en sert
-senaryoda (herhangi iki işaretçi yan yana, kâğıt zemin) geçirilmiştir: normal görüşte en kötü çift ΔE 19,3; protan/deutan simülasyonunda 10,0;
-tümü kâğıda karşı ≥3:1 kontrast. Renk tek başına taşıyıcı değildir; şekil ikinci kanaldır.
+**Olay işaretçileri haritada, çizelgede, lejantta ve panelde aynı tek işarettir:** aynı şekil (daire), aynı boyut (13 px);
+yalnızca renk değişir ve renk kategoriyi anlatır. Boyut önemi anlatmaz. Altı kategori rengi bir renk-ayırt-edilebilirlik
+doğrulayıcısından (OKLab ΔE, tüm çiftler, kâğıt zemin) geçirilmiştir: normal görüşte en kötü çift ΔE 15,0; protan/deutan
+simülasyonunda en kötü çift ΔE 7,7. Bu değer doğrulayıcının 6–8 "uyarı" bandındadır ve yalnızca ikinci bir kanalla geçerlidir:
+lejant, ipucu ve olay kartı kategoriyi **sözle** de söyler. Üç rengin (zeytin sarısı, pembe, turuncu) kâğıda karşı kontrastı
+3:1'in altındadır; bu yüzden her noktanın çevresinde kâğıt halkası ve ince mürekkep çizgisi vardır. Lejant başlıksızdır, açılır-kapanır
+değildir, haritanın sol alt köşesinde durur ve yalnızca bu altı rengi açıklar.
 
 ## Veri
 
@@ -175,7 +196,7 @@ kaynak yokluğu, Türkçe ad eksikliği…).
 
 ```
 src/
-  domain/   saf mantık (arayüzsüz, testli): time, geo, events, lanes, categories
+  domain/   saf mantık (arayüzsüz, testli): time, geo, events, lanes, categories, placement, reveal
   data/     veri yükleyici ve birleştirme
   state/    store (durum + eylemler), derive (görünüm modeli), url (adres çubuğu)
   map/      MapLibre görünümü, DOM etiketleri, işaretçiler, yer iğnesi
@@ -183,18 +204,25 @@ src/
   styles/   tasarım belirteçleri ve bileşen stilleri
 ```
 
-- Durumda **harita kamerası yoktur**; harita görünümünü yalnızca kullanıcının kendi eylemleri değiştirir.
-  Kaynakta kamerayı oynatan tek yer, açılıştaki başlangıç çerçevesi (ya da bağlantıdaki `v=`) ve kullanıcının
-  bastığı `+/−` düğmeleridir (`flyTo`, `fitBounds`, `easeTo` vb. hiçbir yerde çağrılmaz); çift tıklamayla
-  yakınlaştırma ve klavyeyle döndürme de kapalıdır.
+- Durumda **harita kamerası yoktur**; harita görünümünü yalnızca kullanıcının kendi eylemleri değiştirir: sürükleme,
+  tekerlek, çimdik, `+/−` düğmeleri, klavye. **Tek istisna `MapView.revealEvent`'tir:** kullanıcı görünüm dışındaki bir
+  olayı çizelgeden, listeden ya da bir bağlantıdan açarsa harita, olay (ve kenar boşluğu) görünene kadar yalnızca uzaklaşır
+  (`easeTo`, 0,9–2,6 sn, yumuşak giriş-çıkış). Dünyanın kenar sınırı uzaklaşmayı tek başına yetirmezse ya da olay en uzak
+  görünümde bile sığmazsa `fitBounds` ile eski görünümü ve olayı kapsayan en küçük görünüme gidilir. Zaten görünen olay
+  için (ör. kendi işaretçisine tıklamak) hiçbir şey yapılmaz. "Hareketi azalt" tercihinde MapLibre görünümü animasyonsuz değiştirir.
+  Çift tıklamayla yakınlaştırma ve klavyeyle döndürme kapalıdır.
 - `ViewModel.mapEvents` yalnızca zaman aralığından hesaplanır, işaretçileri seçen `placeMarkers` saf bir işlevdir
-  (aynı olaylar + kamera → aynı işaretçiler). Seçili yer yalnızca vurgu katmanını, yer iğnesini, panelin yer kartını
-  ve çizelgeyi değiştirir. Çizelgeden seçilen yerel bir olayın (önem < 3) yeri, işaretçi olarak değil, yer iğnesi gibi
-  bir **seçim katmanında** kesikli halkayla gösterilir; haritanın işaretçi kümesi değişmez.
+  (aynı olaylar + kamera → aynı işaretçiler). Seçili yer yalnızca vurgu katmanını, yer noktasını, panelin yer kartını
+  ve çizelgeyi değiştirir. Açık olay `EventMarkers.setSelected` ile her zaman çizilir (kendi kümesinde olmasa bile);
+  haritanın olay kümesi yine yalnızca zaman aralığına bağlıdır.
+- **Bilgi paneli:** `SelectionRef = { type: 'place' | 'event'; id }` (`state/derive.ts`); `panelLayout(places, event)`
+  (`state/panelLayout.ts`, saf ve testli) hangi başvurunun *bağlam* (tek satır) hangisinin *odak* (tam kart) olduğunu söyler;
+  `InfoPanel.card(ref, vm, 'full' | 'compact')` her başvuruyu karta çevirir; odak kartları `--cols` ızgarasında yan yana dizilir.
 - **Karşılaştırma moduna hazırlık, dürüst durum:** *hazır olanlar* durum (`places: PlacePoint[]`), adres (`p=` yinelenebilir),
-  görünüm modeli (yer başına `PlaceView`, birleşik "başka yerlerde" listesi), bilgi paneli (yer başına bir kart) ve
-  haritadaki vurgu/iğneler (liste). *Eksik olanlar:* `MAX_PLACES` şimdilik 1, ikinci yeri ekleyen bir eylem yok, çizelge
-  yalnızca ilk yeri çiziyor (yer başına bir şerit çizilmeli) ve iki yer için iki vurgu rengi gerekecek.
+  görünüm modeli (yer başına `PlaceView`), bilgi paneli (başvuru listesinden kartlar, yan yana odak ızgarası) ve haritadaki
+  vurgu/yer noktaları (liste). *Eksik olanlar:* `MAX_PLACES` şimdilik 1, ikinci yeri ekleyen bir eylem yok, çizelge yalnızca
+  ilk yeri çiziyor (yer başına bir şerit çizilmeli), iki yer için iki vurgu rengi gerekecek ve "yer–olay" karşılaştırmasında
+  panelin hangi kartı odak sayacağı (`panelLayout`) yeniden tanımlanmalı. Karşılaştırma bu turda yapılmadı.
 - **Ek katmanlar (din, dil):** `MapView.onLoad` katman listesine yeni kaynak/katman eklemek yeter; zaman filtresi
   (`from/to`) aynı biçimde uygulanır.
 
@@ -206,18 +234,34 @@ ekran görüntüleri ve `RAPOR.md` yazar:
 1. 1500'de Anadolu'da bir nokta → **Osmanlı** vurgulanır, çizelgede Osmanlı olayları görünür.
 2. Çin'de bir nokta → **Ming** görünür; **harita kamerası (merkez, yakınlaştırma, açı) birebir aynı kalır.**
 3. Aralık 1450–1500 → haritadaki olay kümesi, aralıktan bağımsız hesaplanan kümeyle birebir aynıdır.
+4. Başlık haritanın üstündeki şeritte, küçük ve "SEÇİLİ YER" etiketsizdir; hiçbir devlet mavi değildir (CSS belirteçleri, harita
+   boya ifadesi ve ekranda çizilmiş devlet pikselleri ölçülür); alt bölüm ≈ 100 px'dir (eskisi 286 px) ve çizelgede kalıcı olay
+   adı yoktur (üzerine gelince ve dokununca görünür); seçili yer halkasız dolu bir noktadır ve çevresinde sönen ışıma vardır;
+   tüm olay noktaları aynı şekil ve boyuttadır, renkleri lejanttaki türüyle birebir aynıdır; lejant başlıksızdır ve yalnızca
+   renkleri anlatır.
+5. Çin'e yakınlaşıp çizelgeden Mohaç'ı (1526) seçmek → harita, kareler boyunca yumuşakça (atlamadan, tek yönde) ve yalnızca
+   gerektiği kadar uzaklaşır; önceki görünüm yenisinin içinde kalır; işaretçi vurgulanır; panelde olay odakta, yer tek
+   satırlık başlıktadır; başlığa tıklamak, ✕ ya da `Esc` yer görünümüne döndürür ve haritayı oynatmaz. Yakınlaştırma bütçesi
+   yüzünden çizilmeyen olaylar seçilince çizilir.
 
-Ek olarak: işaretçi/çizelge/deniz tıklamalarının haritayı oynatmadığı, haritanın yerden bağımsız olduğu, düzenin
-kaymadığı, klavye ve sürükleme denetimlerinin çalıştığı ve (duyarlılık sınaması olarak) gerçek bir sürüklemenin
-kamerayı **gerçekten** hareket ettirdiği denetlenir. Ayrı sayfa yüklemelerinde ayrıca: bozuk bağlantıların uygulamayı
-çökertmediği, kameranın adrese yalnızca kullanıcı oynattıktan sonra girdiği, işaretçilerin tek Tab durağı olduğu ve ok
-tuşlarının haritayı kaydırmadan gezdirdiği, ipucunun fareyle işaretçiye gelince kaybolmadığı, cetvelde uca tıklamanın
-pencereyi küçültmediği, yıl kutularının bayat metin tutmadığı, ekran okuyucu durum satırının çalıştığı, dar pencerede
-tekerleğin yakınlaştırdığı denetlenir.
+Ek olarak: işaretçi/çizelge/deniz tıklamalarının haritayı oynatmadığı (görünür bir olayı açmak dahil), haritanın yerden bağımsız
+olduğu, düzenin kaymadığı, cetvelin fare ve klavyeyle çalıştığı ve (duyarlılık sınaması olarak) gerçek bir sürüklemenin kamerayı
+**gerçekten** hareket ettirdiği denetlenir. Ayrı sayfa yüklemelerinde ayrıca: bozuk bağlantıların uygulamayı çökertmediği, kameranın
+adrese yalnızca kullanıcı oynattıktan sonra girdiği, yapıştırılan bağlantının bekleyen bir adres yazımıyla ezilmediği,
+işaretçilerin tek Tab durağı olduğu ve ok tuşlarının haritayı kaydırmadan gezdirdiği, ipucunun fareyle işaretçiye gelince
+kaybolmadığı, cetvelde uca tıklamanın pencereyi küçültmediği, ekran okuyucu durum satırının çalıştığı, dar pencerede tekerleğin
+yakınlaştırdığı, telefon genişliğinde taşma olmadığı, dokunuşun olayı açıp adını gösterdiği (ve ekranda ipucu bırakmadığı) ve
+"hareketi azalt" tercihinde görünümün animasyonsuz değiştiği denetlenir.
 
 ## Bilinen sınırlar ve sonraki adımlar
 
-- Karşılaştırma modu henüz yok (veri yapıları hazır; yukarıya bakın).
+- Karşılaştırma modu henüz yok (veri yapıları ve panel yapısı hazır; yukarıya bakın).
+- Görünüm dışındaki bir olayı açınca harita yalnızca uzaklaşır; ancak dünyanın kenar sınırı (`maxBounds`) çok büyük uzaklaşmalarda
+  merkezi de kaydırır (ör. Çin'den Macaristan'a: merkez 112°D'den 75°D'ya kayar). Bu hâlâ tek, sürekli ve yumuşak bir harekettir;
+  önceki görünüm yeni görünümün içinde kalır.
+- Renk-körlüğü payı dardır: protan/deutan simülasyonunda iki kategori rengi arasındaki en küçük ΔE 7,7'dir (6–8 "uyarı" bandı).
+  Renkler tek başına taşıyıcı değildir (lejant, ipucu ve kart kategoriyi sözle de söyler) ama bir olayın türünü yalnızca
+  noktanın renginden okuyan renk-körü bir kullanıcı zeytin sarısı ile turuncuyu karıştırabilir.
 - Haritada devlet seçimi yalnızca fare/dokunma ile yapılır; klavye ile devlet seçimi için bir arama kutusu eklenebilir.
 - Karanlık tema yok (renkler `tokens.css`'te belirteç olarak duruyor).
 - İlk yükleme ~9 MB sınır verisi indirir (sıkıştırılmış ~1,7 MB); büyük aralıklar için sınırlar yıl dilimlerine bölünebilir.

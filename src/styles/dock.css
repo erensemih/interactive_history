@@ -1,131 +1,50 @@
-/* ------------------------------------------------------------- dock: controls */
-.dock-controls {
+/* ------------------------------------------------------------------- dock rows */
+/* Two slim rows share one grid: a label column on the left, the ruler / the plot on the right. */
+.dock-ruler,
+.dock-timeline {
+  display: grid;
+  grid-template-columns: var(--dock-label-w) minmax(0, 1fr);
+  column-gap: 16px;
+  min-width: 0;
+}
+
+.dock-ruler {
+  flex: none;
+  height: 30px;
+}
+
+.dock-timeline {
+  flex: none;
+  height: 58px;
+}
+
+.dock-label {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 24px;
-  margin-bottom: 4px;
-}
-
-.dock-block {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.range-inputs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.range-dash {
-  color: var(--ink-3);
-  font-family: var(--font-serif);
-  font-size: 22px;
-  line-height: 1;
-  transform: translateY(-1px);
-}
-
-.year-input {
-  width: 4.1ch;
-  box-sizing: content-box;
-  padding: 1px 5px 2px;
-  font-family: var(--font-serif);
-  font-optical-sizing: auto;
-  font-size: 22px;
-  font-weight: 500;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
   line-height: 1.15;
-  font-variant-numeric: lining-nums tabular-nums;
-  letter-spacing: 0.01em;
-  text-align: center;
-  color: var(--ink);
-  background: transparent;
-  border: 0;
-  border-bottom: 1.5px solid var(--ink);
-  border-radius: 3px 3px 0 0;
 }
 
-.year-input:hover {
-  background: var(--paper-2);
-}
-
-.year-input:focus {
-  background: var(--paper-2);
-  border-bottom-color: var(--accent);
-}
-
-.presets {
-  display: flex;
-  gap: 6px;
-}
-
-.chip {
-  padding: 5px 11px;
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.2;
-  border: 1px solid var(--rule-strong);
-  border-radius: 99px;
-  background: var(--paper);
-  color: var(--ink-2);
-  transition:
-    background 0.15s,
-    border-color 0.15s,
-    color 0.15s;
-}
-
-.chip:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-}
-
-.chip.is-on {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--paper);
-}
-
-.dock-year {
-  padding-left: 24px;
-  border-left: 1px solid var(--rule);
-}
-
-.year-readout {
-  font-family: var(--font-serif);
-  font-optical-sizing: auto;
-  font-size: 26px;
-  font-weight: 500;
-  line-height: 1.05;
-  color: var(--accent-ink);
-  font-variant-numeric: lining-nums;
-}
-
-.dock-hint {
-  flex: 1 1 260px;
-  margin-left: auto;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--ink-3);
-  text-align: right;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@media (max-width: 1360px) {
-  .dock-hint {
-    display: none;
-  }
-}
-
-.hint-mark {
-  color: var(--accent);
+.dock-label .eyebrow {
+  font-size: 9.5px;
+  line-height: 1.1;
 }
 
 /* ------------------------------------------------------------- dock: ruler */
+.range-readout {
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--accent-ink);
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: nowrap;
+}
+
 .ruler {
-  height: 66px;
+  height: 30px;
   position: relative;
 }
 
@@ -142,54 +61,41 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 42px;
+  top: 14px;
   height: 1px;
   background: var(--ink-3);
 }
 
-.ruler-bins {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.bin {
-  position: absolute;
-  bottom: 24px;
-  background: var(--paper-4);
-  border-radius: 2px 2px 0 0;
-  box-shadow: inset -1.5px 0 0 var(--paper);
-}
-
 .ruler-tick {
   position: absolute;
-  top: 42px;
+  top: 14px;
   width: 1px;
-  height: 5px;
+  height: 4px;
   background: var(--rule-strong);
   pointer-events: none;
 }
 
 .ruler-tick.is-major {
-  height: 9px;
+  height: 6px;
   background: var(--ink-3);
 }
 
 .ruler-tick b {
   position: absolute;
-  top: 11px;
+  top: 7px;
   left: 0;
   transform: translateX(-50%);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
+  line-height: 11px;
   font-variant-numeric: tabular-nums;
   color: var(--ink-3);
 }
 
 .brush {
   position: absolute;
-  top: 20px;
-  height: 22px;
+  top: 0;
+  height: 14px;
   min-width: 3px;
   background: var(--accent-wash);
   border-top: 2px solid var(--accent);
@@ -212,8 +118,8 @@
   position: absolute;
   inset: 0;
   place-items: center start;
-  padding-left: 9px;
-  font-size: 11px;
+  padding-left: 8px;
+  font-size: 10.5px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--accent-ink);
@@ -221,23 +127,24 @@
   pointer-events: none;
 }
 
-@container (min-width: 84px) {
+@container (min-width: 76px) {
   .brush-label {
     display: grid;
   }
 }
 
+/* The handles are 22 px wide so a finger can find them; only the 5 px bar is drawn. */
 .handle {
   position: absolute;
-  top: 17px;
-  height: 28px;
-  width: 16px;
+  top: -1px;
+  height: 30px;
+  width: 22px;
   cursor: ew-resize;
   touch-action: none;
 }
 
 .handle-start {
-  margin-left: -13px;
+  margin-left: -19px;
 }
 
 .handle-end {
@@ -247,8 +154,8 @@
 .handle::before {
   content: '';
   position: absolute;
-  top: 2px;
-  bottom: 2px;
+  top: 0;
+  height: 16px;
   width: 5px;
   border-radius: 3px;
   background: var(--accent);
@@ -267,32 +174,19 @@
   background: var(--accent-ink);
 }
 
+/* The year whose borders the map draws: a thin line through the brush with a dot on the axis. */
 .cursor {
   position: absolute;
-  top: 0;
-  width: 22px;
-  margin-left: -11px;
-  height: 46px;
+  top: -1px;
+  width: 20px;
+  margin-left: -10px;
+  height: 22px;
   cursor: ew-resize;
   touch-action: none;
   z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.cursor-year {
-  order: -1;
-  flex: none;
-  padding: 0 6px;
-  height: 17px;
-  line-height: 17px;
-  border-radius: 99px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
 }
 
 .cursor-pin {
@@ -306,7 +200,7 @@
   content: '';
   position: absolute;
   left: -4px;
-  bottom: -1px;
+  bottom: -2px;
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -314,58 +208,29 @@
   box-shadow: 0 0 0 1.5px var(--paper);
 }
 
-/* ------------------------------------------------------------ dock: funnel */
-.dock-funnel {
-  height: 10px;
-  margin-top: 0;
-}
-
-.dock-funnel svg {
-  display: block;
-  overflow: visible;
-}
-
-.funnel-fill {
-  fill: var(--accent-wash);
-}
-
-.funnel-edge {
-  stroke: var(--accent);
-  stroke-opacity: 0.4;
-  stroke-width: 1px;
-}
-
 /* ---------------------------------------------------------- dock: timeline */
-.tl-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 24px;
-  margin: 2px 0 2px;
-}
-
-.tl-title {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  min-width: 0;
-}
-
 .tl-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  margin: 1px 0 2px;
   font-family: var(--font-serif);
   font-optical-sizing: auto;
   font-weight: 500;
-  font-size: 19px;
-  line-height: 1.15;
-  letter-spacing: -0.008em;
-  white-space: nowrap;
+  font-size: 14.5px;
+  line-height: 1.12;
+  letter-spacing: -0.006em;
 }
 
 .tl-sub {
-  font-size: 12.5px;
+  font-size: 11px;
+  line-height: 1.2;
   color: var(--ink-3);
-  text-align: right;
-  max-width: 560px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tl-count {
@@ -375,67 +240,19 @@
 
 .tl-plot {
   position: relative;
+  min-width: 0;
   overflow: clip;
   border-radius: 6px;
 }
 
-.tl-band {
+/* the selected range, and the year the map shows, run through the whole plot */
+.tl-range {
   position: absolute;
   top: 0;
   bottom: 0;
   background: var(--accent-wash);
   border-left: 1px solid rgb(207 58 33 / 0.4);
   border-right: 1px solid rgb(207 58 33 / 0.4);
-}
-
-.tl-band-label {
-  position: absolute;
-  left: 5px;
-  bottom: 4px;
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accent-ink);
-  white-space: nowrap;
-}
-
-.tl-axis {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: var(--axis-y);
-  height: 1.5px;
-  margin-top: -0.75px;
-  background: var(--ink-2);
-}
-
-.tl-tick {
-  position: absolute;
-  top: var(--axis-y);
-  width: 1px;
-  height: 6px;
-  background: var(--ink-3);
-}
-
-.tl-tick span {
-  position: absolute;
-  top: 8px;
-  left: 0;
-  transform: translateX(-50%);
-  font-size: 11px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-3);
-  white-space: nowrap;
-}
-
-.tl-tick.is-major {
-  height: 9px;
-}
-
-.tl-tick.is-edge span {
-  visibility: hidden;
 }
 
 .tl-cursor {
@@ -448,190 +265,211 @@
   pointer-events: none;
 }
 
-.tl-ev {
+/* the strip under the dots: tinted by who held the place, carrying the years */
+.tl-ground {
   position: absolute;
-  width: calc(var(--d) * 1.5);
-  height: calc(var(--d) * 1.5);
-  margin-left: calc(var(--d) * -0.75);
-  margin-top: calc(var(--d) * -0.75);
-  display: grid;
-  place-items: center;
-  z-index: 2;
-  border-radius: 50%;
-}
-
-.tl-ev::before {
-  /* invisible, so even the smallest node is a comfortable (≥ 24 px) target */
-  content: '';
-  position: absolute;
-  inset: -5px;
-  border-radius: 50%;
-}
-
-.tl-ev .mk {
-  display: block;
-  overflow: visible;
-  transition: transform 0.14s ease;
-}
-
-.tl-ev:hover .mk,
-.tl-ev.is-hover .mk,
-.tl-ev:focus-visible .mk {
-  transform: scale(1.15);
-}
-
-.tl-ev.is-selected {
-  box-shadow: 0 0 0 2.5px var(--accent);
-}
-
-.tl-ev.is-hover:not(.is-selected) {
-  box-shadow: 0 0 0 2px rgb(207 58 33 / 0.6);
-}
-
-.tl-ev.is-context,
-.tl-stem.is-context {
-  opacity: 0.5;
-}
-
-.tl-ev.is-context:hover,
-.tl-ev.is-context.is-hover,
-.tl-ev.is-context.is-selected {
-  opacity: 1;
-}
-
-/* faded context labels stay readable (text is never dimmed with opacity, only recoloured) */
-.tl-label.is-context {
-  color: var(--ink-3);
-  font-weight: 560;
-  background: rgb(245 240 228 / 0.7);
-}
-
-.tl-stem {
-  position: absolute;
-  width: 0;
-  border-left: 1px solid var(--rule-strong);
-  z-index: 1;
-}
-
-.tl-span {
-  position: absolute;
-  top: calc(var(--axis-y) - 3.5px);
-  height: 7px;
-  border-radius: 4px;
-  background: color-mix(in oklab, var(--c) 30%, var(--paper));
-  border: 1px solid color-mix(in oklab, var(--c) 70%, transparent);
-  z-index: 1;
-}
-
-.tl-span.is-context {
-  opacity: 0.5;
-}
-
-.tl-label {
-  position: absolute;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 7px 0 8px;
-  border-radius: 5px;
-  background: rgb(245 240 228 / 0.88);
-  white-space: nowrap;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink);
-  z-index: 2;
-  transition: background 0.12s;
-}
-
-.tl-label.is-flipped {
-  flex-direction: row-reverse;
-  padding: 0 8px 0 7px;
-}
-
-.tl-label:hover,
-.tl-label.is-hover,
-.tl-label.is-selected {
-  background: var(--paper);
-  color: var(--accent-ink);
-  box-shadow: 0 0 0 1px var(--accent);
-}
-
-.tl-label-year {
-  font-size: 11px;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-3);
-}
-
-.tl-label-text {
+  left: 0;
+  right: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
+  background: var(--paper-3);
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgb(60 45 20 / 0.16);
 }
 
 .tl-seg {
   position: absolute;
-  top: calc(var(--axis-y) + 26px);
-  height: 18px;
-  display: flex;
-  align-items: center;
-  padding: 0 8px;
-  font-size: 11px;
-  font-weight: 650;
-  color: var(--ink-2);
-  white-space: nowrap;
-  overflow: hidden;
-  border-right: 2px solid var(--paper);
-  border-radius: 4px;
-  box-shadow: inset 0 0 0 1px rgb(60 45 20 / 0.12);
+  top: 0;
+  bottom: 0;
+  box-shadow: inset -1.5px 0 0 var(--paper);
 }
 
-.tl-empty {
+.tl-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  padding-left: 3px;
+  border-left: 1px solid rgb(31 27 22 / 0.3);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tl-tick.is-major {
+  border-left-color: rgb(31 27 22 / 0.6);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* event dots */
+.tl-ev {
+  position: absolute;
+  width: 22px;
+  height: 14px;
+  margin: -7px 0 0 -11px;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+  border-radius: 7px;
+}
+
+.tl-ev::before {
+  /* invisible, so a dot is a comfortable (≥ 24 × 24 px) target */
+  content: '';
+  position: absolute;
+  inset: -5px -1px;
+}
+
+.tl-ev .dot {
+  box-shadow:
+    0 0 0 1px var(--paper),
+    0 0 0 1.7px var(--dot-edge);
+  transition: box-shadow 0.12s ease;
+}
+
+.tl-ev:hover .dot,
+.tl-ev.is-hover .dot,
+.tl-ev:focus-visible .dot {
+  box-shadow:
+    0 0 0 1.5px var(--paper),
+    0 0 0 3.4px var(--accent);
+}
+
+.tl-ev:focus-visible {
+  outline: none;
+}
+
+.tl-ev.is-selected {
+  z-index: 4;
+}
+
+.tl-ev.is-selected .dot {
+  box-shadow:
+    0 0 0 1.8px var(--paper),
+    0 0 0 4.4px var(--accent),
+    0 0 12px 4px rgb(207 58 33 / 0.4);
+}
+
+.tl-ev:hover,
+.tl-ev.is-hover,
+.tl-ev:focus-visible {
   z-index: 3;
-  padding: 2px 14px;
+}
+
+.tl-ev.is-context {
+  opacity: 0.62;
+}
+
+.tl-ev.is-context:hover,
+.tl-ev.is-context.is-hover,
+.tl-ev.is-context:focus-visible,
+.tl-ev.is-context.is-selected {
+  opacity: 1;
+}
+
+/* a ranged event (a siege, a war) runs as a thin bar behind its dot */
+.tl-span {
+  position: absolute;
+  height: 5px;
+  margin-top: -2.5px;
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--c) 30%, var(--paper));
+  border: 1px solid color-mix(in oklab, var(--c) 70%, transparent);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.tl-span.is-context {
+  opacity: 0.6;
+}
+
+/* The opened event keeps its name beside its dot (nothing else on the timeline is named until hovered). */
+.tl-tag {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px 0 8px;
   border-radius: 6px;
-  background: rgb(245 240 228 / 0.92);
+  background: var(--paper);
+  box-shadow:
+    0 0 0 1.5px var(--accent),
+    0 4px 10px -4px rgb(60 45 20 / 0.45);
+  white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--accent-ink);
+  pointer-events: none;
+}
+
+.tl-tag.is-flipped {
+  flex-direction: row-reverse;
+  padding: 0 8px 0 9px;
+}
+
+.tl-tag-year {
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
 }
 
 .tl-empty,
 .tl-none {
   position: absolute;
   left: 50%;
-  top: 14px;
+  top: 0;
+  height: 42px;
   transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  max-width: 94%;
+  line-height: 1.2;
+}
+
+.tl-empty {
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 16px;
+  font-size: 15px;
   color: var(--ink-3);
-  max-width: 80%;
 }
 
 .tl-none {
-  top: 16px;
-  z-index: 3;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  padding: 0 14px;
+  font-size: 13px;
+  color: var(--ink-3);
   background: rgb(245 240 228 / 0.92);
-  padding: 8px 16px;
   border-radius: 8px;
 }
 
 .tl-near {
-  font-family: var(--font-sans);
-  font-style: normal;
-  font-size: 13px;
-  margin-top: 4px;
   color: var(--ink-2);
 }
 
 @media (max-width: 900px) {
-  .dock-hint {
+  .dock-label .eyebrow {
+    letter-spacing: 0.06em;
+  }
+  /* the place's name says enough in a narrow label column */
+  .dock-timeline .dock-label .eyebrow {
     display: none;
   }
-  .dock-year {
-    padding-left: 0;
-    border-left: 0;
+  .range-readout {
+    font-size: 14px;
   }
-  .tl-sub {
-    display: none;
+  .tl-name {
+    font-size: 12.5px;
+  }
+  .tl-empty {
+    font-size: 13.5px;
   }
 }

@@ -77,10 +77,6 @@ export class Store {
     this.setRange(shiftRange(this.current.range, deltaYears, this.extent));
   }
 
-  setPreset(spanYears: number) {
-    this.setRange(presetRange(this.current.range, spanYears, this.extent));
-  }
-
   /** Jumps to a displayed border year, widening nothing: clamps to the current range. */
   setDisplayYear(year: number) {
     this.set({ cursor: cursorFor(this.current.range, year) });

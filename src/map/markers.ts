@@ -1,7 +1,7 @@
 import type { Map as MLMap } from 'maplibre-gl';
 import { placeMarkers } from '../domain/placement';
 import type { HistoricalEvent } from '../domain/types';
-import { markerBox, markerSvg } from '../ui/markerShapes';
+import { dotMarkup } from '../ui/dot';
 
 export interface MarkerCallbacks {
   onClick(id: string): void;
@@ -19,13 +19,21 @@ export interface MarkerStats {
   offscreen: number;
 }
 
-/** A pointer target should be at least 24 × 24 px (WCAG 2.5.8); small marks get an invisible larger box. */
-const MIN_HIT = 24;
+/** The pointer target of every marker (WCAG 2.5.8 asks for at least 24 × 24 px); the dot itself is smaller. */
+const HIT = 24;
+/** Breathing room kept between a selected marker's label and the edge of the map. */
+const CALLOUT_EDGE = 8;
+/** The name tag: its widest size (CSS max-width) and the room its padding adds around the text. */
+const CALLOUT_MAX = 280;
+const CALLOUT_PAD = 20;
 
 /**
- * Event markers on the map. Which events exist here depends only on the time range; how many are
- * visible depends on zoom (a budget spent on what is in view, most important first) and on screen
- * collisions. The selected place never changes any of this: the map is the same for everyone.
+ * Event markers on the map: one kind of dot, coloured by category, nothing else. Which events exist
+ * here depends only on the time range; how many are visible depends on zoom (a budget spent on what
+ * is in view) and on screen collisions. The selected place never changes any of this.
+ *
+ * The one exception is the event the user has opened: it is always drawn, even when the zoom budget
+ * or its importance would have hidden it, and it is unmistakable (halo, ripple, name beside it).
  *
  * Keyboard: the markers form one group with a single Tab stop; the arrow keys move between the visible
  * ones in reading order, so a screen full of markers does not turn into dozens of Tab stops.
@@ -33,13 +41,17 @@ const MIN_HIT = 24;
 export class EventMarkers {
   private readonly host: HTMLElement;
   private readonly elements = new Map<string, HTMLButtonElement>();
+  /** The range's map events (what the stats chip counts). */
   private events: HistoricalEvent[] = [];
+  /** The opened event; may be one the range's set does not contain. */
+  private selected: HistoricalEvent | null = null;
   private focusYear = 0;
-  private selectedId: string | null = null;
   private hoverId: string | null = null;
   private lastKey = '';
   private lastStats = '';
   private size = { width: 0, height: 0 };
+  private calloutWidth = 0;
+  private readonly measure = document.createElement('canvas').getContext('2d')!;
   /** The one marker in the Tab order (roving tabindex). */
   private tabStop: string | null = null;
   /** Visible markers, left to right then top to bottom. */
@@ -60,20 +72,36 @@ export class EventMarkers {
     container.appendChild(this.host);
   }
 
-  setEvents(events: HistoricalEvent[], focusYear: number) {
-    if (events === this.events && focusYear === this.focusYear) return;
-    this.events = events;
-    this.focusYear = focusYear;
-    const ids = new Set(events.map((e) => e.id));
+  /** Everything that gets a marker element: the range's events plus the opened one. */
+  private all(): HistoricalEvent[] {
+    const s = this.selected;
+    return s && !this.events.some((e) => e.id === s.id) ? [...this.events, s] : this.events;
+  }
+
+  private sync() {
+    const all = this.all();
+    const ids = new Set(all.map((e) => e.id));
     for (const [id, el] of this.elements) {
       if (!ids.has(id)) {
         el.remove();
         this.elements.delete(id);
       }
     }
-    for (const ev of events) if (!this.elements.has(ev.id)) this.create(ev);
+    for (const ev of all) if (!this.elements.has(ev.id)) this.create(ev);
+    for (const [id, el] of this.elements) {
+      const on = id === this.selected?.id;
+      el.classList.toggle('is-selected', on);
+      el.setAttribute('aria-pressed', String(on));
+    }
     this.lastKey = '';
     this.layout();
+  }
+
+  setEvents(events: HistoricalEvent[], focusYear: number) {
+    if (events === this.events && focusYear === this.focusYear) return;
+    this.events = events;
+    this.focusYear = focusYear;
+    this.sync();
   }
 
   setFocusYear(year: number) {
@@ -83,15 +111,11 @@ export class EventMarkers {
     this.layout();
   }
 
-  setSelected(id: string | null) {
-    if (id === this.selectedId) return;
-    this.selectedId = id;
-    for (const [eid, el] of this.elements) {
-      el.classList.toggle('is-selected', eid === id);
-      el.setAttribute('aria-pressed', String(eid === id));
-    }
-    this.lastKey = '';
-    this.layout();
+  setSelected(ev: HistoricalEvent | null) {
+    if (ev?.id === this.selected?.id) return;
+    this.selected = ev;
+    this.calloutWidth = ev ? this.calloutWidthOf(ev.title) : 0;
+    this.sync();
   }
 
   setHover(id: string | null) {
@@ -111,10 +135,12 @@ export class EventMarkers {
     el.className = 'evt is-hidden';
     el.tabIndex = -1;
     el.dataset.id = ev.id;
-    el.dataset.importance = String(ev.importance);
     el.setAttribute('aria-label', `${ev.title}, ${ev.dateLabel}, ${ev.location.name}`);
-    el.setAttribute('aria-pressed', String(this.selectedId === ev.id));
-    el.innerHTML = `<span class="evt-mark">${markerSvg(ev.category, ev.importance)}</span><span class="evt-year">${ev.year}</span>`;
+    el.setAttribute('aria-pressed', 'false');
+    // The opened event's name is drawn by CSS from data-title (generated content), so the button's own text
+    // stays exactly its year: the visible label is then part of the accessible name, as WCAG 2.5.3 asks.
+    el.dataset.title = ev.title;
+    el.innerHTML = `<span class="evt-mark">${dotMarkup(ev.category)}</span><span class="evt-year">${ev.year}</span>`;
     // A drag that happens to start and end on a marker is a pan, not a click. (A keyboard click has
     // detail 0 and no position, so it is never mistaken for one.)
     let downAt: [number, number] | null = null;
@@ -130,24 +156,27 @@ export class EventMarkers {
       downAt = null;
       if (!dragged) this.cb.onClick(ev.id);
     });
-    el.addEventListener('pointerenter', () => this.cb.onHover(ev.id, el));
+    el.addEventListener('pointerenter', (e) => {
+      if (e.pointerType !== 'touch') this.cb.onHover(ev.id, el);
+    });
     el.addEventListener('pointerleave', () => this.cb.onHover(null, null));
     el.addEventListener('focus', () => {
       this.tabStop = ev.id;
       this.syncTabStops();
-      this.cb.onHover(ev.id, el);
+      // keyboard focus names the marker; the focus a tap leaves behind must not (the tap opens the event)
+      if (el.matches(':focus-visible')) this.cb.onHover(ev.id, el);
     });
     el.addEventListener('blur', () => this.cb.onHover(null, null));
     this.host.appendChild(el);
     this.elements.set(ev.id, el);
-    if (this.selectedId === ev.id) el.classList.add('is-selected');
     if (this.hoverId === ev.id) el.classList.add('is-hover');
   }
 
   /* ---------------------------------------------------------------- keyboard */
 
   private syncTabStops() {
-    for (const [id, el] of this.elements) el.tabIndex = id === this.tabStop && !el.classList.contains('is-hidden') ? 0 : -1;
+    for (const [id, el] of this.elements)
+      el.tabIndex = id === this.tabStop && !el.classList.contains('is-hidden') ? 0 : -1;
   }
 
   private onKeyDown = (e: KeyboardEvent) => {
@@ -183,11 +212,12 @@ export class EventMarkers {
     if (!force && key === this.lastKey) return;
     this.lastKey = key;
 
+    const selectedId = this.selected?.id ?? null;
     const { placed, offscreen, thinned } = placeMarkers({
-      events: this.events,
+      events: this.all(),
       zoom,
       focusYear: this.focusYear,
-      selectedId: this.selectedId,
+      selectedId,
       viewport: this.size,
       project: (ev) => map.project([ev.location.lon, ev.location.lat]),
     });
@@ -197,12 +227,11 @@ export class EventMarkers {
       shown.add(ev.id);
       const el = this.elements.get(ev.id);
       if (!el) continue;
-      const box = markerBox(ev.importance);
       el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
-      el.style.setProperty('--box', `${box}px`);
-      el.style.setProperty('--hit', `${Math.max(MIN_HIT, box)}px`);
-      el.style.zIndex = String(10 + ev.importance + (ev.id === this.selectedId ? 10 : 0));
+      const isSelected = ev.id === selectedId;
+      el.style.zIndex = String(isSelected ? 30 : 10);
       el.classList.remove('is-hidden');
+      if (isSelected) this.placeCallout(el, x, y);
     }
 
     this.reading = placed
@@ -223,11 +252,36 @@ export class EventMarkers {
     }
     this.syncTabStops();
 
-    const stats: MarkerStats = { shown: placed.length, total: this.events.length, thinned, offscreen };
+    const rangeIds = new Set(this.events.map((e) => e.id));
+    const stats: MarkerStats = {
+      shown: placed.filter((p) => rangeIds.has(p.ev.id)).length,
+      total: this.events.length,
+      thinned,
+      offscreen,
+    };
     const statsKey = `${stats.shown}/${stats.total}/${stats.thinned}/${stats.offscreen}`;
     if (statsKey !== this.lastStats) {
       this.lastStats = statsKey;
       this.cb.onStats?.(stats);
     }
+  }
+
+  /** The name tag's width: its text in the tag's font, plus padding, capped like the CSS (max-width). */
+  private calloutWidthOf(title: string): number {
+    this.measure.font = '600 12.5px "Instrument Sans Variable", system-ui, sans-serif';
+    return Math.min(CALLOUT_MAX, this.measure.measureText(title).width + CALLOUT_PAD);
+  }
+
+  /** The opened event's name sits beside its dot: above it, or below near the top edge, and kept inside the map. */
+  private placeCallout(el: HTMLElement, x: number, y: number) {
+    const half = this.calloutWidth / 2;
+    const shift =
+      x - half < CALLOUT_EDGE
+        ? CALLOUT_EDGE - (x - half)
+        : x + half > this.size.width - CALLOUT_EDGE
+          ? this.size.width - CALLOUT_EDGE - (x + half)
+          : 0;
+    el.dataset.callout = y < HIT + 40 ? 'below' : 'above';
+    el.style.setProperty('--shift', `${shift.toFixed(1)}px`);
   }
 }
