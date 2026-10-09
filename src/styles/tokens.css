@@ -1,0 +1,65 @@
+/*
+ * Design tokens. A printed-atlas palette: warm paper, brown-black ink, quiet pastel polity tints,
+ * and exactly one loud colour (vermilion) that always means "this is what you chose".
+ * Marker colours live in src/domain/categories.ts (checked for colour-blind separation, no blue).
+ */
+:root {
+  color-scheme: light;
+
+  --font-serif: 'Newsreader Variable', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* paper and ink */
+  --paper: #f5f0e4;
+  --paper-2: #eee7d9;
+  --paper-3: #e4dbca;
+  --paper-4: #d9cfba;
+  --ink: #1f1b16;
+  --ink-2: #4a4339;
+  --ink-3: #665d4f; /* muted text, 5.7:1 on paper */
+  --rule: #d8ceb9;
+  --rule-strong: #bdb097;
+
+  /* map */
+  --sea: #bdd0d5;
+  --sea-deep: #acc2c8;
+  --land-nodata: #ebe6d9;
+  --coast: #3a3128;
+  --border-ink: #5d4d3b;
+  --halo: rgb(245 240 228 / 0.92);
+
+  /* selection accent (vermilion): reserved for the user's own choices */
+  --accent: #cf3a21;
+  --accent-ink: #a5301d; /* text on paper, 6:1 */
+  --accent-wash: rgb(207 58 33 / 0.12);
+
+  /* nine polity tints: graph-coloured at build time so neighbours differ; identity is carried by labels
+     and borders, never by colour alone. No blue, teal, indigo or violet anywhere in this set: on a map
+     those read as water, and blue belongs to the sea and the lakes alone. (tests/palette.test.ts keeps it so.) */
+  --tint-0: #e2d9c6; /* sand */
+  --tint-1: #b9dca8; /* green */
+  --tint-2: #f1b8c2; /* rose */
+  --tint-3: #f7eeb0; /* butter */
+  --tint-4: #f6bd8a; /* apricot */
+  --tint-5: #d9c3a5; /* tan */
+  --tint-6: #c6cb98; /* olive */
+  --tint-7: #e6b3a6; /* clay */
+  --tint-8: #b6b5a7; /* greige: a spare, the data's colouring never needs it */
+
+  /* event markers are plain dots told apart by colour alone (see src/domain/categories.ts); this is the
+     hairline that keeps a light dot readable on a pale tint */
+  --dot-edge: rgb(31 27 22 / 0.55);
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow-float: 0 1px 0 rgb(60 45 20 / 0.06), 0 8px 22px -10px rgb(60 45 20 / 0.35);
+
+  --panel-w: 410px;
+  --topbar-h: 46px;
+  /* the strip above the map (place name + border year) and the time dock below it: both fixed, so
+     selecting a place can never resize the map and make it look as if it had moved */
+  --head-h: 44px;
+  --dock-h: 100px;
+  --dock-label-w: 156px;
+  --gutter: 24px;
+}

@@ -1,0 +1,10 @@
+{
+  "categories": [
+    { "id": "military", "label": { "tr": "Savaş ve fetih" } },
+    { "id": "politics", "label": { "tr": "Devlet ve siyaset" } },
+    { "id": "exploration", "label": { "tr": "Keşif ve ticaret" } },
+    { "id": "religion", "label": { "tr": "Din ve inanç" } },
+    { "id": "culture", "label": { "tr": "Bilim, sanat ve kültür" } },
+    { "id": "disaster", "label": { "tr": "Doğal afet" } }
+  ]
+}

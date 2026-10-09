@@ -1,0 +1,384 @@
+{
+  "$schema": "../schema/events.schema.json",
+  "set": "global",
+  "title": { "tr": "Küresel olaylar" },
+  "events": [
+    {
+      "id": "timur-olumu-1405",
+      "title": { "tr": "Timur'un ölümü" },
+      "summary": {
+        "tr": "Timur, Ming Çin'ine yönelik büyük bir sefere çıkmışken Otrar'da hastalanıp öldü. Ölümünün ardından devleti oğulları ve torunları arasındaki taht mücadeleleriyle bölündü; Şahruh Herat'ta düzeni yeniden kurdu."
+      },
+      "date": "1405-02-18",
+      "location": { "name": { "tr": "Otrar" }, "coordinates": [68.3, 42.85] },
+      "importance": 3,
+      "category": "politics",
+      "parties": ["timurid-empire", "ming-dynasty"],
+      "sources": [{ "wikipedia": "Timur" }]
+    },
+    {
+      "id": "grunwald-1410",
+      "title": { "tr": "Grunwald Muharebesi" },
+      "summary": {
+        "tr": "Polonya Kralı Jagiełło ile Litvanya Büyük Dükü Vytautas'ın birleşik ordusu, Töton Şövalyeleri'ni ağır bir yenilgiye uğrattı. Tarikat bir daha eski gücüne ulaşamadı; Polonya-Litvanya, Doğu Avrupa'nın baskın gücü olarak yükseldi."
+      },
+      "date": "1410-07-15",
+      "location": { "name": { "tr": "Grunwald" }, "coordinates": [20.1, 53.48] },
+      "importance": 4,
+      "category": "military",
+      "parties": ["kingdom-of-poland", "grand-duchy-of-lithuania", "teutonic-order"],
+      "sources": [{ "wikipedia": "Battle of Grunwald" }]
+    },
+    {
+      "id": "jan-hus-1415",
+      "title": { "tr": "Jan Hus'un yakılması" },
+      "summary": {
+        "tr": "Bohemyalı din reformcusu Jan Hus, Konstanz Konsili'nde sapkınlıkla suçlanarak yakıldı. Ölümü, Bohemya'da Hus Savaşları'na yol açan geniş bir ayaklanmayı tetikledi; Hus, Reform'un habercilerinden biri sayılır."
+      },
+      "date": "1415-07-06",
+      "location": { "name": { "tr": "Konstanz" }, "coordinates": [9.17, 47.66] },
+      "importance": 3,
+      "category": "religion",
+      "parties": ["kingdom-of-bohemia", "holy-roman-empire"],
+      "sources": [{ "wikipedia": "Jan Hus" }]
+    },
+    {
+      "id": "ceuta-1415",
+      "title": { "tr": "Portekiz Ceuta'yı alıyor" },
+      "summary": {
+        "tr": "Portekiz Kralı I. João'nun ordusu, Kuzey Afrika'daki Merînî şehri Ceuta'yı ele geçirdi. Bu, Portekiz'in Afrika kıyıları boyunca ilerleyişinin ve Avrupa'nın deniz aşırı yayılmasının başlangıcı sayılır."
+      },
+      "date": "1415-08-21",
+      "location": { "name": { "tr": "Ceuta" }, "coordinates": [-5.31, 35.89] },
+      "importance": 3,
+      "category": "exploration",
+      "parties": ["kingdom-of-portugal", "marinid-sultanate"],
+      "sources": [{ "wikipedia": "Portuguese conquest of Ceuta" }]
+    },
+    {
+      "id": "ulug-bey-rasathanesi-1424",
+      "title": { "tr": "Uluğ Bey Rasathanesi" },
+      "summary": {
+        "tr": "Timurlu hükümdarı ve astronom Uluğ Bey, Semerkant'ta devrin en büyük gözlemevlerinden birini kurdu. Buradaki gözlemlerden derlenen yıldız kataloğu yüzyıllarca başvuru kaynağı olarak kullanıldı."
+      },
+      "date": { "start": "1424", "end": "1429", "approximate": true },
+      "location": { "name": { "tr": "Semerkant" }, "coordinates": [66.99, 39.67] },
+      "importance": 3,
+      "category": "culture",
+      "parties": ["timurid-empire"],
+      "sources": [{ "wikipedia": "Ulugh Beg Observatory" }]
+    },
+    {
+      "id": "hangul-1443",
+      "title": { "tr": "Hangul alfabesi" },
+      "summary": {
+        "tr": "Kral Sejong'un öncülüğünde saray bilginleri, Korece'yi doğrudan yazmak için fonetik bir alfabe geliştirdi; 1446'da Hunminjeongeum adıyla ilan edildi. Hangul, halkın okuryazarlığını kolaylaştırmak amacıyla tasarlandı ve bugün de Kore'nin yazı sistemidir."
+      },
+      "date": { "start": "1443", "end": "1446" },
+      "location": { "name": { "tr": "Hanyang (Seul)" }, "coordinates": [126.98, 37.57] },
+      "importance": 4,
+      "category": "culture",
+      "parties": ["joseon"],
+      "sources": [{ "wikipedia": "Hangul" }]
+    },
+    {
+      "id": "castillon-1453",
+      "title": { "tr": "Castillon Muharebesi" },
+      "summary": {
+        "tr": "Fransız ordusu, Castillon'da İngiliz kuvvetlerini yenerek Yüzyıl Savaşları'nı fiilen sona erdirdi. İstanbul'un düştüğü yıla denk gelmesiyle, 1453 genellikle Ortaçağ'ın sonu olarak anılır."
+      },
+      "date": "1453-07-17",
+      "location": { "name": { "tr": "Castillon-la-Bataille" }, "coordinates": [-0.03, 44.85] },
+      "importance": 3,
+      "category": "military",
+      "parties": ["kingdom-of-france", "kingdom-of-england"],
+      "sources": [{ "wikipedia": "Battle of Castillon" }]
+    },
+    {
+      "id": "gutenberg-incili-1455",
+      "title": { "tr": "Gutenberg Kutsal Kitabı" },
+      "summary": {
+        "tr": "Johannes Gutenberg, Mainz'da Avrupa'da hareketli metal harflerle basılan ilk büyük kitabı, Kutsal Kitap'ı bastı. Matbaa, bilginin yayılma hızını kökten değiştirdi ve Rönesans ile Reform'un en önemli teknik altyapılarından biri oldu."
+      },
+      "date": { "start": "1454", "end": "1455" },
+      "location": { "name": { "tr": "Mainz" }, "coordinates": [8.27, 50.0] },
+      "importance": 5,
+      "category": "culture",
+      "parties": ["holy-roman-empire"],
+      "sources": [{ "wikipedia": "Gutenberg Bible" }]
+    },
+    {
+      "id": "ugra-1480",
+      "title": { "tr": "Ugra Nehri'nde karşılaşma" },
+      "summary": {
+        "tr": "Moskova Büyük Prensi III. İvan ile Altın Orda'nın mirasçısı Büyük Orda'nın hanı Ahmed, Ugra Nehri kıyısında karşı karşıya geldi. Ahmed Han'ın büyük bir savaşa girmeden geri çekilmesi, Rus prensliklerinin Moğol hâkimiyetinden kurtuluşunun simgesi sayılır."
+      },
+      "date": { "start": "1480-10", "end": "1480-11" },
+      "location": { "name": { "tr": "Ugra Nehri (Kaluga yakını)" }, "coordinates": [36.2, 54.55] },
+      "importance": 3,
+      "category": "politics",
+      "parties": ["grand-principality-of-moscow", "golden-horde"],
+      "sources": [{ "wikipedia": "Great Stand on the Ugra River" }]
+    },
+    {
+      "id": "dias-umit-burnu-1488",
+      "title": { "tr": "Dias, Ümit Burnu'nu dolaşıyor" },
+      "summary": {
+        "tr": "Portekizli denizci Bartolomeu Dias, Afrika'nın güney ucunu dolaşan ilk Avrupalı oldu. Bu başarı, Hint Okyanusu'na giden doğrudan deniz yolunun kapısını araladı."
+      },
+      "date": "1488-02",
+      "location": { "name": { "tr": "Ümit Burnu" }, "coordinates": [18.47, -34.36] },
+      "importance": 3,
+      "category": "exploration",
+      "parties": ["kingdom-of-portugal"],
+      "sources": [{ "wikipedia": "Bartolomeu Dias" }]
+    },
+    {
+      "id": "kongo-vaftiz-1491",
+      "title": { "tr": "Kongo Kralı vaftiz oluyor" },
+      "summary": {
+        "tr": "Kongo Kralı Nzinga a Nkuwu, Portekizli misyonerlerin etkisiyle vaftiz olarak João adını aldı. Hristiyanlık, oğlu I. Afonso (1509–1542) döneminde krallığın ağırlıklı dini hâline geldi; Portekiz ile ilişkiler, 1480'lerde başlayan temasın ardından bu dönemde yoğunlaştı."
+      },
+      "date": "1491",
+      "location": { "name": { "tr": "Mbanza Kongo" }, "coordinates": [14.25, -6.27] },
+      "importance": 3,
+      "category": "religion",
+      "parties": ["kingdom-of-kongo", "kingdom-of-portugal"],
+      "sources": [{ "wikipedia": "João I of Kongo" }]
+    },
+    {
+      "id": "girnata-1492",
+      "title": { "tr": "Gırnata'nın düşüşü" },
+      "summary": {
+        "tr": "Katolik Krallar Isabel ve Ferdinand'ın orduları Nasrî Emirliği'nin başkenti Gırnata'ya girdi. İber Yarımadası'ndaki son Müslüman devlet ortadan kalktı ve Reconquista tamamlandı."
+      },
+      "date": "1492-01-02",
+      "location": { "name": { "tr": "Gırnata" }, "coordinates": [-3.6, 37.18] },
+      "importance": 4,
+      "category": "military",
+      "parties": ["crown-of-castile", "crown-of-aragon", "emirate-of-granada"],
+      "sources": [{ "wikipedia": "Granada War" }]
+    },
+    {
+      "id": "kolomb-1492",
+      "title": { "tr": "Kolomb Karayipler'de" },
+      "summary": {
+        "tr": "Kastilya hizmetindeki Kristof Kolomb, Bahamalar'daki bir adaya ayak bastı. Batı'ya yelken açarak Asya'ya ulaşmayı umuyordu; bunun yerine Avrupa ile Amerika kıtaları arasında kalıcı bir bağlantı başlattı."
+      },
+      "date": "1492-10-12",
+      "location": { "name": { "tr": "Guanahani (Bahamalar)" }, "coordinates": [-74.46, 24.06] },
+      "importance": 5,
+      "category": "exploration",
+      "parties": ["crown-of-castile", "caribbean"],
+      "sources": [{ "wikipedia": "Voyages of Christopher Columbus" }]
+    },
+    {
+      "id": "tordesillas-1494",
+      "title": { "tr": "Tordesillas Antlaşması" },
+      "summary": {
+        "tr": "Portekiz ve Kastilya, Avrupa dışında keşfedilecek toprakları aralarında bölüşmek üzere Yeşil Burun Adaları'nın batısından geçen bir meridyen belirledi. Antlaşma, Avrupa dışındaki dünyanın Portekiz ile Kastilya arasında paylaşılmasının temelini oluşturdu; öbür Avrupa devletleri bunu tanımadı."
+      },
+      "date": "1494-06-07",
+      "location": { "name": { "tr": "Tordesillas" }, "coordinates": [-4.99, 41.5] },
+      "importance": 4,
+      "category": "politics",
+      "parties": ["kingdom-of-portugal", "crown-of-castile"],
+      "sources": [{ "wikipedia": "Treaty of Tordesillas" }]
+    },
+    {
+      "id": "vasco-da-gama-1498",
+      "title": { "tr": "Vasco da Gama Hindistan'da" },
+      "summary": {
+        "tr": "Vasco da Gama komutasındaki Portekiz filosu, Ümit Burnu'nu dolaşıp Kalikut'a ulaştı. Avrupa ile Hint Okyanusu arasında doğrudan deniz yolu açıldı ve baharat ticaretindeki aracı güçlerin konumu sarsıldı."
+      },
+      "date": "1498-05-20",
+      "location": { "name": { "tr": "Kalikut (Kozhikode)" }, "coordinates": [75.78, 11.25] },
+      "importance": 4,
+      "category": "exploration",
+      "parties": ["kingdom-of-portugal", "malabar"],
+      "sources": [{ "wikipedia": "Portuguese discovery of the sea route to India" }]
+    },
+    {
+      "id": "kabral-brezilya-1500",
+      "title": { "tr": "Cabral Brezilya kıyısında" },
+      "summary": {
+        "tr": "Hindistan'a gitmekte olan Pedro Álvares Cabral'ın filosu, Güney Amerika'nın doğu kıyısına ulaştı ve bölgeyi Portekiz adına sahiplendi. Brezilya'nın Portekiz yönetimine girişinin başlangıcı sayılır."
+      },
+      "date": "1500-04-22",
+      "location": { "name": { "tr": "Porto Seguro kıyıları" }, "coordinates": [-39.06, -16.44] },
+      "importance": 4,
+      "category": "exploration",
+      "parties": ["kingdom-of-portugal", "brazil-coast"],
+      "sources": [{ "wikipedia": "Discovery of Brazil" }]
+    },
+    {
+      "id": "safevi-1501",
+      "title": { "tr": "Safevî Devleti'nin kuruluşu" },
+      "summary": {
+        "tr": "Şeyh Safiyyüddin soyundan gelen genç İsmail, Akkoyunlu hâkimiyetine son verip Tebriz'de şah ilan edildi. Şiîliği devlet mezhebi yapan Safevîler, İran'ı yeniden tek bir devlet altında birleştirdi ve Osmanlı ile uzun bir rekabete girdi."
+      },
+      "date": "1501",
+      "location": { "name": { "tr": "Tebriz" }, "coordinates": [46.29, 38.08] },
+      "importance": 4,
+      "category": "politics",
+      "parties": ["safavid-dynasty", "aq-qoyunlu"],
+      "sources": [{ "wikipedia": "Ismail I" }]
+    },
+    {
+      "id": "malaka-1511",
+      "title": { "tr": "Portekiz Malaka'yı alıyor" },
+      "summary": {
+        "tr": "Afonso de Albuquerque komutasındaki Portekiz kuvvetleri, Hint Okyanusu ile Güney Çin Denizi arasındaki ticaretin anahtarı Malaka'yı ele geçirdi. Sultan Mahmud Şah önce Pahang'a, sonra Bintan'a çekildi; Portekiz, Asya deniz ticaretinde kalıcı bir üs kazandı."
+      },
+      "date": "1511-08-24",
+      "location": { "name": { "tr": "Malaka" }, "coordinates": [102.25, 2.19] },
+      "importance": 4,
+      "category": "exploration",
+      "parties": ["portuguese-empire", "sultanate-of-malacca"],
+      "sources": [{ "wikipedia": "Capture of Malacca (1511)" }]
+    },
+    {
+      "id": "luther-95-tez-1517",
+      "title": { "tr": "Luther'in 95 Tezi" },
+      "summary": {
+        "tr": "Martin Luther'in endüljans satışını eleştiren 95 tezini Wittenberg'de yayımlaması, geleneksel olarak Reform'un başlangıcı sayılır. Matbaa sayesinde metinler kısa sürede Avrupa'ya yayıldı ve Batı Hristiyanlığı kalıcı biçimde bölündü."
+      },
+      "date": "1517-10-31",
+      "location": { "name": { "tr": "Wittenberg" }, "coordinates": [12.65, 51.87] },
+      "importance": 5,
+      "category": "religion",
+      "parties": ["holy-roman-empire", "electorate-of-saxony"],
+      "sources": [{ "wikipedia": "Ninety-five Theses" }]
+    },
+    {
+      "id": "magellan-elcano-1519",
+      "title": { "tr": "Macellan–Elcano seferi" },
+      "summary": {
+        "tr": "İspanya adına yola çıkan Macellan'ın (Fernão de Magalhães) filosu, Atlantik'ten Pasifik'e geçti. Macellan Filipinler'de öldü; Juan Sebastián Elcano komutasındaki tek gemi dünyayı dolaşarak 1522'de İspanya'ya döndü."
+      },
+      "date": { "start": "1519-09-20", "end": "1522-09-06" },
+      "location": { "name": { "tr": "Sanlúcar de Barrameda (hareket noktası)" }, "coordinates": [-6.35, 36.78] },
+      "importance": 5,
+      "category": "exploration",
+      "parties": ["spanish-empire"],
+      "sources": [{ "wikipedia": "Magellan expedition" }]
+    },
+    {
+      "id": "tenochtitlan-1521",
+      "title": { "tr": "Tenochtitlan'ın düşüşü" },
+      "summary": {
+        "tr": "Hernán Cortés komutasındaki İspanyollar, Tlaxcala gibi yerli müttefiklerle birlikte Aztek başkenti Tenochtitlan'ı aldı. Çiçek hastalığı salgını da kuşatmanın sonucunu belirleyen etkenlerden biriydi; Meksika'nın İspanyol egemenliğine girişi başladı."
+      },
+      "date": "1521-08-13",
+      "location": { "name": { "tr": "Tenochtitlan" }, "coordinates": [-99.13, 19.43] },
+      "importance": 4,
+      "category": "military",
+      "parties": ["spanish-empire", "aztec-triple-alliance"],
+      "sources": [{ "wikipedia": "Spanish conquest of the Aztec Empire" }]
+    },
+    {
+      "id": "panipat-1526",
+      "title": { "tr": "Birinci Panipat Savaşı" },
+      "summary": {
+        "tr": "Babür, topçu ve tüfekli birlikleriyle Delhi Sultanı İbrahim Lodi'nin çok daha kalabalık ordusunu yendi. Zafer, Hindistan'da Babür İmparatorluğu'nun temelini attı."
+      },
+      "date": "1526-04-21",
+      "location": { "name": { "tr": "Panipat" }, "coordinates": [76.97, 29.39] },
+      "importance": 4,
+      "category": "military",
+      "parties": ["mughal-empire", "lodi-dynasty", "delhi-sultanate"],
+      "sources": [{ "wikipedia": "First Battle of Panipat" }]
+    },
+    {
+      "id": "habes-adal-savasi-1529",
+      "title": { "tr": "Habeş–Adal Savaşı" },
+      "summary": {
+        "tr": "Adal Sultanlığı'nın komutanı Ahmed Gran, Habeş Hristiyan İmparatorluğu'nun büyük bölümünü istila etti. Savaş, Portekiz askerî yardımı ve Osmanlı silahlarının çatışmaya dâhil olduğu bir vekâlet mücadelesine dönüştü; 1543'te Ahmed Gran'ın ölümüyle sona erdi."
+      },
+      "date": { "start": "1529", "end": "1543" },
+      "location": { "name": { "tr": "Harar ve Habeş yaylaları" }, "coordinates": [42.12, 9.31] },
+      "importance": 3,
+      "category": "military",
+      "parties": ["ethiopian-empire", "adal-sultanate", "kingdom-of-portugal", "ottoman-empire"],
+      "sources": [{ "wikipedia": "Ethiopian–Adal War" }]
+    },
+    {
+      "id": "cajamarca-1532",
+      "title": { "tr": "Cajamarca'da Atahualpa'nın yakalanması" },
+      "summary": {
+        "tr": "Francisco Pizarro ve yaklaşık 170 İspanyol, Cajamarca'da İnka hükümdarı Atahualpa'yı pusuya düşürüp esir aldı. İç savaşla zaten zayıflamış olan İnka İmparatorluğu birkaç yıl içinde çöktü."
+      },
+      "date": "1532-11-16",
+      "location": { "name": { "tr": "Cajamarca" }, "coordinates": [-78.51, -7.16] },
+      "importance": 4,
+      "category": "military",
+      "parties": ["spanish-empire", "inca-empire"],
+      "sources": [{ "wikipedia": "Battle of Cajamarca" }]
+    },
+    {
+      "id": "kopernik-1543",
+      "title": { "tr": "Kopernik'in Güneş merkezli evreni" },
+      "summary": {
+        "tr": "Nikolaus Kopernik, Dünya'nın ve gezegenlerin Güneş etrafında döndüğünü savunan eseri De revolutionibus'u Frombork'ta tamamladı; kitap 1543'te Nürnberg'de basıldı. Eser, evrene bakışı kökten değiştiren Bilimsel Devrim'in başlangıç noktalarından biri sayılır."
+      },
+      "date": "1543",
+      "location": { "name": { "tr": "Frombork (eserin yazıldığı yer)" }, "coordinates": [19.68, 54.36] },
+      "importance": 4,
+      "category": "culture",
+      "parties": ["house-of-jagiellon"],
+      "sources": [{ "wikipedia": "De revolutionibus orbium coelestium" }]
+    },
+    {
+      "id": "talikota-1565",
+      "title": { "tr": "Talikota Savaşı" },
+      "summary": {
+        "tr": "Ahmednagar, Bicapur, Golkonda ve Bidar sultanlıklarının ittifakı, Vicayanagara ordusunu ağır bir yenilgiye uğrattı. Hampi yağmalandı ve Güney Hindistan'ın son büyük Hindu imparatorluğu fiilen çöktü."
+      },
+      "date": "1565-01-23",
+      "location": { "name": { "tr": "Talikota" }, "coordinates": [76.31, 16.47] },
+      "importance": 4,
+      "category": "military",
+      "parties": ["vijayanagara-empire", "bijapur-sultanate", "ahmadnagar-sultanate", "golconda-sultanate", "bidar-sultanate"],
+      "sources": [{ "wikipedia": "Battle of Talikota" }]
+    },
+    {
+      "id": "armada-1588",
+      "title": { "tr": "İspanyol Armadası'nın yenilgisi" },
+      "summary": {
+        "tr": "II. Felipe'nin İngiltere'yi istila etmek için gönderdiği büyük donanma, Manş Denizi'nde İngiliz gemilerinin saldırılarıyla dağıldı; geri dönüş yolunda fırtınalar da büyük kayıplara yol açtı. İngiltere'nin deniz gücü olarak yükselişinde dönüm noktası sayılır."
+      },
+      "date": { "start": "1588-07", "end": "1588-08" },
+      "location": { "name": { "tr": "Manş Denizi (Gravelines)" }, "coordinates": [2.13, 51.0] },
+      "importance": 4,
+      "category": "military",
+      "parties": ["kingdom-of-england", "spanish-empire"],
+      "sources": [{ "wikipedia": "Spanish Armada" }]
+    },
+    {
+      "id": "tondibi-1591",
+      "title": { "tr": "Tondibi Savaşı" },
+      "summary": {
+        "tr": "Fas'ın Sa'dî ordusu, ateşli silahlarıyla Songhay İmparatorluğu'nun ordusunu Gao yakınlarında yendi. Batı Afrika'nın en büyük imparatorluğu çöktü ve Sahra ticaret yolları üzerindeki dengeler değişti."
+      },
+      "date": "1591-03-13",
+      "location": { "name": { "tr": "Tondibi (Gao yakını)" }, "coordinates": [0.05, 16.75] },
+      "importance": 4,
+      "category": "military",
+      "parties": ["saadi-sultanate", "songhai-empire"],
+      "sources": [{ "wikipedia": "Battle of Tondibi" }]
+    },
+    {
+      "id": "sekigahara-1600",
+      "title": { "tr": "Sekigahara Muharebesi" },
+      "summary": {
+        "tr": "Tokugawa Ieyasu'nun öncülüğündeki Doğu ordusu, Toyotomi taraftarlarının Batı ordusunu yendi. Zafer, Tokugawa Şogunluğu'nun kurulmasının (1603) ve yaklaşık iki buçuk yüzyıl sürecek barış döneminin yolunu açtı."
+      },
+      "date": "1600-10-21",
+      "location": { "name": { "tr": "Sekigahara" }, "coordinates": [136.46, 35.37] },
+      "importance": 4,
+      "category": "military",
+      "parties": ["warring-states-japan", "tokugawa-shogunate"],
+      "sources": [{ "wikipedia": "Battle of Sekigahara" }]
+    }
+  ]
+}

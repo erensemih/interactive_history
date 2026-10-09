@@ -1,0 +1,454 @@
+{
+  "$schema": "../schema/events.schema.json",
+  "set": "ming",
+  "title": {
+    "tr": "Ming Çin'i"
+  },
+  "events": [
+    {
+      "id": "yongle-tahta-cikis-1402",
+      "title": {
+        "tr": "Yongle İmparatoru tahta çıkıyor"
+      },
+      "summary": {
+        "tr": "Zhu Di, yeğeni Jianwen İmparatoru'na karşı yürüttüğü iç savaşı kazanıp Nanjing'i aldı ve Yongle adıyla tahta çıktı. Hükümdarlığı boyunca başkentin Pekin'e taşınması, büyük denizci seferleri ve Yongle Ansiklopedisi gibi girişimler gerçekleşti."
+      },
+      "date": "1402-07-17",
+      "location": {
+        "name": {
+          "tr": "Nanjing"
+        },
+        "coordinates": [118.78, 32.06]
+      },
+      "importance": 3,
+      "category": "politics",
+      "parties": ["ming-dynasty"],
+      "sources": [
+        {
+          "wikipedia": "Yongle Emperor"
+        }
+      ]
+    },
+    {
+      "id": "zheng-he-1405",
+      "title": {
+        "tr": "Zheng He'nin hazine seferleri"
+      },
+      "summary": {
+        "tr": "Amiral Zheng He komutasındaki Ming filoları, Güneydoğu Asya, Hint Okyanusu, Arabistan ve Doğu Afrika kıyılarına yedi büyük sefer yaptı. Seferler Ming Çin'inin denizlerdeki diplomatik ve ticari ağırlığını gösterdi; 1433'ten sonra devlet bu ölçekte sefer düzenlemedi."
+      },
+      "date": {
+        "start": "1405",
+        "end": "1433"
+      },
+      "location": {
+        "name": {
+          "tr": "Nanjing (hareket noktası)"
+        },
+        "coordinates": [118.78, 32.06]
+      },
+      "importance": 4,
+      "category": "exploration",
+      "parties": ["ming-dynasty", "sultanate-of-malacca"],
+      "sources": [
+        {
+          "wikipedia": "Ming treasure voyages"
+        }
+      ]
+    },
+    {
+      "id": "gok-tapinagi-1406",
+      "title": {
+        "tr": "Pekin Cennet Tapınağı'nın inşası"
+      },
+      "summary": {
+        "tr": "Yongle İmparatoru, Pekin'in güneyinde imparatorun her yıl gökyüzüne sunu sunduğu büyük tapınak külliyesini yaptırdı. Külliye, Ming ve sonraki Qing dönemlerinde devletin başlıca ayin mekânı olarak kullanıldı."
+      },
+      "date": {
+        "start": "1406",
+        "end": "1420"
+      },
+      "location": {
+        "name": {
+          "tr": "Pekin (Cennet Tapınağı)"
+        },
+        "coordinates": [116.41, 39.88]
+      },
+      "importance": 1,
+      "category": "religion",
+      "parties": ["ming-dynasty"],
+      "sources": [
+        {
+          "wikipedia": "Temple of Heaven"
+        }
+      ]
+    },
+    {
+      "id": "yongle-ansiklopedisi-1408",
+      "title": {
+        "tr": "Yongle Ansiklopedisi tamamlanıyor"
+      },
+      "summary": {
+        "tr": "Yongle İmparatoru'nun emriyle toplanan binlerce bilgin, çok büyük bir ansiklopedi derledi. Yaklaşık 22.000 bölümden oluşan eser, kendi çağının en büyük ansiklopedik derlemesi sayılır; elyazması nüshaların büyük bölümü sonraki yüzyıllarda kayboldu."
+      },
+      "date": "1408",
+      "location": {
+        "name": {
+          "tr": "Nanjing"
+        },
+        "coordinates": [118.78, 32.06]
+      },
+      "importance": 2,
+      "category": "culture",
+      "parties": ["ming-dynasty"],
+      "sources": [
+        {
+          "wikipedia": "Yongle Encyclopedia"
+        }
+      ]
+    },
+    {
+      "id": "pekin-baskent-1421",
+      "title": {
+        "tr": "Başkent Pekin'e taşınıyor"
+      },
+      "summary": {
+        "tr": "Yasak Şehir'in tamamlanmasının ardından Ming başkenti resmen Nanjing'den Pekin'e taşındı. Kuzeye taşınma, Moğol tehdidine karşı sınır savunmasını güçlendirdi; Pekin sonraki yüzyıllarda Çin'in başlıca başkenti oldu."
+      },
+      "date": "1421-02-02",
+      "location": {
+        "name": {
+          "tr": "Pekin"
+        },
+        "coordinates": [116.4, 39.92]
+      },
+      "importance": 4,
+      "category": "politics",
+      "parties": ["ming-dynasty"],
+      "sources": [
+        {
+          "wikipedia": "Forbidden City"
+        }
+      ]
+    },
+    {
+      "id": "tumu-1449",
+      "title": {
+        "tr": "Tumu Olayı"
+      },
+      "summary": {
+        "tr": "Zhengtong İmparatoru, Esen Taişi komutasındaki Oyrat ordusuna karşı bizzat sefere çıktı; ordu Tumu Kalesi yakınında bozguna uğradı ve imparator esir alındı. Ming sarayı kardeşini tahta çıkardı; Pekin'in savunması başarıyla yapıldı."
+      },
+      "date": "1449-09-01",
+      "location": {
+        "name": {
+          "tr": "Tumu Kalesi"
+        },
+        "coordinates": [115.6, 40.35]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["ming-dynasty", "four-oirats"],
+      "sources": [
+        {
+          "wikipedia": "Tumu Crisis"
+        }
+      ]
+    },
+    {
+      "id": "hongzhi-1487",
+      "title": {
+        "tr": "Hongzhi İmparatoru tahta çıkıyor"
+      },
+      "summary": {
+        "tr": "Hongzhi dönemi (1487–1505), Ming'in görece sakin ve istikrarlı yıllarından biri sayılır. İmparator, yalnızca bir eşi olan nadir Çin imparatorlarındandır ve devlet işlerine bizzat ilgi göstermesiyle bilinir."
+      },
+      "date": "1487",
+      "location": {
+        "name": {
+          "tr": "Pekin"
+        },
+        "coordinates": [116.4, 39.92]
+      },
+      "importance": 2,
+      "category": "politics",
+      "parties": ["ming-dynasty"],
+      "sources": [
+        {
+          "wikipedia": "Hongzhi Emperor"
+        }
+      ]
+    },
+    {
+      "id": "zhengde-1505",
+      "title": {
+        "tr": "Zhengde İmparatoru tahta çıkıyor"
+      },
+      "summary": {
+        "tr": "Hongzhi'nin ardından genç yaşta tahta çıkan Zhengde (1505–1521), saray eğlencelerine düşkünlüğü ve saray hadımlarından Liu Jin'in sarayda sözü geçer hâle gelmesiyle anılır. Dönem, merkezî yönetimin zayıfladığı yıllar olarak değerlendirilir."
+      },
+      "date": "1505",
+      "location": {
+        "name": {
+          "tr": "Pekin"
+        },
+        "coordinates": [116.4, 39.92]
+      },
+      "importance": 2,
+      "category": "politics",
+      "parties": ["ming-dynasty"],
+      "sources": [
+        {
+          "wikipedia": "Zhengde Emperor"
+        }
+      ]
+    },
+    {
+      "id": "portekiz-guangzhou-1517",
+      "title": {
+        "tr": "İlk Portekiz heyeti Guangzhou'da"
+      },
+      "summary": {
+        "tr": "Portekiz filosu, elçi Tomé Pires ile birlikte Güney Çin kıyısındaki Guangzhou açıklarına ulaştı; Pires 1520'de Pekin'e doğru yola çıktı. Avrupa ile Ming Çin'i arasındaki ilk doğrudan diplomatik temas kısa süre sonra çatışmayla gölgelendi."
+      },
+      "date": "1517",
+      "location": {
+        "name": {
+          "tr": "Guangzhou"
+        },
+        "coordinates": [113.26, 23.13]
+      },
+      "importance": 2,
+      "category": "exploration",
+      "parties": ["ming-dynasty", "kingdom-of-portugal"],
+      "sources": [
+        {
+          "wikipedia": "Tomé Pires"
+        }
+      ]
+    },
+    {
+      "id": "ning-isyani-1519",
+      "title": {
+        "tr": "Ning Prensi'nin isyanı"
+      },
+      "summary": {
+        "tr": "İmparatorluk ailesinden Ning Prensi Zhu Chenhao, Zhengde İmparatoru'na karşı ayaklandı. Düşünür ve komutan Wang Yangming isyanı birkaç hafta içinde bastırdı."
+      },
+      "date": "1519",
+      "location": {
+        "name": {
+          "tr": "Nanchang"
+        },
+        "coordinates": [115.86, 28.68]
+      },
+      "importance": 2,
+      "category": "military",
+      "parties": ["ming-dynasty"],
+      "sources": [
+        {
+          "wikipedia": "Prince of Ning rebellion"
+        }
+      ]
+    },
+    {
+      "id": "tunmen-1521",
+      "title": {
+        "tr": "Tunmen Muharebesi"
+      },
+      "summary": {
+        "tr": "Ming donanması, İnci Nehri (Zhujiang) ağzındaki Tunmen Adası'nda yerleşen Portekizli gemileri yendi. Sonuç olarak Portekiz'in Çin ile resmî ticaret girişimi akamete uğradı; Portekizliler ancak yaklaşık otuz beş yıl sonra Makao'da kalıcı bir üs elde edebildi."
+      },
+      "date": "1521",
+      "location": {
+        "name": {
+          "tr": "Tunmen (İnci Nehri ağzı)"
+        },
+        "coordinates": [113.8, 22.4]
+      },
+      "importance": 2,
+      "category": "military",
+      "parties": ["ming-dynasty", "kingdom-of-portugal"],
+      "sources": [
+        {
+          "wikipedia": "Battle of Tunmen"
+        }
+      ]
+    },
+    {
+      "id": "altan-han-pekin-1550",
+      "title": {
+        "tr": "Altan Han Pekin önlerinde"
+      },
+      "summary": {
+        "tr": "Tümet Moğollarının lideri Altan Han, Çin Seddi'ni aşıp Pekin çevresini yağmaladı ve şehri tehdit etti. Ming, olaydan sonra sınır savunmasını güçlendirdi ve 1571'de Altan Han ile ticaret ve barış anlaşması yaptı."
+      },
+      "date": "1550-09",
+      "location": {
+        "name": {
+          "tr": "Pekin"
+        },
+        "coordinates": [116.4, 39.92]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["ming-dynasty", "tumed"],
+      "sources": [
+        {
+          "wikipedia": "Altan Khan"
+        }
+      ]
+    },
+    {
+      "id": "wokou-1553",
+      "title": {
+        "tr": "Wokou korsan akınları"
+      },
+      "summary": {
+        "tr": "Çinli, Japon ve diğer kökenli korsan ve kaçakçı gruplarının Çin'in güneydoğu kıyılarını yağmaladığı akınlar 1550'lerde zirveye çıktı. Hu Zongxian'ın 1550'lerin sonundaki, Qi Jiguang ve Yu Dayou'nun 1560'lardaki harekâtı tehdidi büyük ölçüde bastırdı."
+      },
+      "date": {
+        "start": "1553",
+        "end": "1565",
+        "approximate": true
+      },
+      "location": {
+        "name": {
+          "tr": "Zhejiang kıyısı (Ningbo)"
+        },
+        "coordinates": [121.55, 29.87]
+      },
+      "importance": 2,
+      "category": "military",
+      "parties": ["ming-dynasty", "warring-states-japan"],
+      "sources": [
+        {
+          "wikipedia": "Jiajing wokou raids"
+        }
+      ]
+    },
+    {
+      "id": "shaanxi-depremi-1556",
+      "title": {
+        "tr": "Shaanxi depremi"
+      },
+      "summary": {
+        "tr": "Shaanxi, Shanxi ve Henan eyaletlerini vuran deprem, kayıtlara geçmiş en ölümcül deprem olarak kabul edilir; yaklaşık 830.000 kişinin öldüğü tahmin edilir. Lös yamaçlarına oyulmuş evlerin çökmesi can kaybını büyük ölçüde artırdı."
+      },
+      "date": "1556-01-23",
+      "location": {
+        "name": {
+          "tr": "Huaxian (Shaanxi)"
+        },
+        "coordinates": [109.77, 34.5]
+      },
+      "importance": 3,
+      "category": "disaster",
+      "parties": ["ming-dynasty"],
+      "sources": [
+        {
+          "wikipedia": "1556 Shaanxi earthquake"
+        }
+      ]
+    },
+    {
+      "id": "makao-1557",
+      "title": {
+        "tr": "Portekizliler Makao'ya yerleşiyor"
+      },
+      "summary": {
+        "tr": "Portekizli tüccarlar, Ming yetkililerinin izniyle Güney Çin kıyısındaki Makao yarımadasında kalıcı bir ticaret üssü kurdu. Makao, Çin ile Japonya ve Avrupa arasındaki gümüş ve ipek ticaretinin önemli bir durağı hâline geldi."
+      },
+      "date": "1557",
+      "location": {
+        "name": {
+          "tr": "Makao"
+        },
+        "coordinates": [113.55, 22.19]
+      },
+      "importance": 3,
+      "category": "exploration",
+      "parties": ["ming-dynasty", "portuguese-empire"],
+      "sources": [
+        {
+          "wikipedia": "History of Macau"
+        }
+      ]
+    },
+    {
+      "id": "longqing-ticaret-1567",
+      "title": {
+        "tr": "Deniz ticaret yasağının gevşetilmesi"
+      },
+      "summary": {
+        "tr": "Longqing İmparatoru döneminde, Ming'in yüzyıllardır uyguladığı deniz ticaret yasağı sınırlı biçimde gevşetildi ve Fujian'daki Yuegang limanı özel tüccarlara açıldı. Kaçakçılığın ve korsanlığın en önemli nedenlerinden biri böylece azaltılmaya çalışıldı."
+      },
+      "date": "1567",
+      "location": {
+        "name": {
+          "tr": "Yuegang (Haicheng, Fujian)"
+        },
+        "coordinates": [117.8, 24.4]
+      },
+      "importance": 2,
+      "category": "politics",
+      "parties": ["ming-dynasty"],
+      "sources": [
+        {
+          "wikipedia": "Haijin"
+        }
+      ]
+    },
+    {
+      "id": "tek-kirbac-1581",
+      "title": {
+        "tr": "Tek Kırbaç Reformu"
+      },
+      "summary": {
+        "tr": "Baş Büyük Sekreter (fiilî başbakan) Zhang Juzheng'in öncülüğünde çok sayıda vergi ve angarya tek bir gümüş ödemesinde birleştirildi. Düzenleme, Çin ekonomisinin gümüşe dayalı hâle gelmesini hızlandırdı."
+      },
+      "date": "1581",
+      "location": {
+        "name": {
+          "tr": "Pekin"
+        },
+        "coordinates": [116.4, 39.92]
+      },
+      "importance": 2,
+      "category": "politics",
+      "parties": ["ming-dynasty"],
+      "sources": [
+        {
+          "wikipedia": "Single whip law"
+        }
+      ]
+    },
+    {
+      "id": "imjin-savasi-1592",
+      "title": {
+        "tr": "Imjin Savaşı: Kore'nin Japon işgali"
+      },
+      "summary": {
+        "tr": "Toyotomi Hideyoshi'nin orduları Kore'yi istila etti; Joseon, Ming'in gönderdiği askerî yardım ve Amiral Yi Sun-sin'in deniz zaferleri sayesinde işgale direndi. Yedi yıl süren savaş üç ülkenin de büyük kayıplar vermesine yol açtı ve Ming'in mali gücünü zayıflattı."
+      },
+      "date": {
+        "start": "1592-05",
+        "end": "1598-12"
+      },
+      "location": {
+        "name": {
+          "tr": "Busan"
+        },
+        "coordinates": [129.04, 35.1]
+      },
+      "importance": 4,
+      "category": "military",
+      "parties": ["joseon", "ming-dynasty", "warring-states-japan"],
+      "sources": [
+        {
+          "wikipedia": "Imjin War"
+        }
+      ]
+    }
+  ]
+}

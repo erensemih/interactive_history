@@ -1,0 +1,7 @@
+dist
+node_modules
+.cache
+public/data/borders/cliopatria-*.json
+public/data/borders/polities.json
+public/data/geo/land.json
+package-lock.json

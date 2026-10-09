@@ -1,0 +1,46 @@
+AYNI ZAMANDA · ATIF VE ÜÇÜNCÜ TARAF LİSANSLARI
+=================================================
+
+Bu uygulama, aşağıdaki açık veri setleri ve yazılımlarla çalışır.
+
+1) Siyasi sınırlar: Seshat Cliopatria
+-------------------------------------
+Ad       : Cliopatria (Seshat Global History Databank), "polities only" dosyası (cliopatria_polities_only_v021)
+Kaynak   : https://github.com/Seshat-Global-History-Databank/cliopatria
+Lisans   : Creative Commons Atıf 4.0 Uluslararası (CC BY 4.0)
+           https://creativecommons.org/licenses/by/4.0/
+Atıf     : Bennett, J. S. ve ark. (2025). Cliopatria: a geospatial database of world-wide political
+           entities from 3400BCE to 2024CE. Scientific Data. doi:10.1038/s41597-025-04516-9
+
+DEĞİŞİKLİKLER (CC BY 4.0 gereği belirtilmiştir):
+  - Yalnızca 1400–1600 yıllarıyla örtüşen kayıtlar alındı.
+  - Parantezli "şemsiye" kayıtlar (ör. "(Holy Roman Empire)") çizilmez; bunlar, bileşenlerinin birleşimidir.
+    Bileşenlerin üst yapısı ("MemberOf") korunmuş ve eksik olduğu satırlarda, sonradan belirtilen bir üyelik
+    yoksa sonraki dönemlere taşınmıştır.
+  - Poligonlar Natural Earth 1:50m kıyı çizgisine kırpıldı; iki kaynağın kıyı çizgileri arasındaki dar
+    boşluklar (en çok ~6 km) dolduruldu.
+  - Koordinatlar 0,01 dereceye yuvarlandı ve geometri hafifçe sadeleştirildi.
+  - Her devlet için, komşuların farklı renkte görünmesi için bir "ton" numarası hesaplandı.
+  Veri setinin kendi uyarısı geçerlidir: sınırlar, bir tarihsel yorumun yalnızca bir sürümüdür.
+
+2) Kıyı çizgisi ve göller: Natural Earth
+----------------------------------------
+Kaynak   : https://www.naturalearthdata.com/  (1:50m land, lakes)
+Lisans   : Kamu malı (Public Domain)
+
+3) Yazı tipleri (uygulama ile birlikte paketlenir)
+--------------------------------------------------
+Newsreader (Production Type) ve Instrument Sans (Instrument)  ·  SIL Open Font License 1.1
+Fontsource paketleri aracılığıyla: https://fontsource.org/
+
+4) Yazılım kütüphaneleri
+------------------------
+MapLibre GL JS  ·  BSD-3-Clause   ·  https://maplibre.org/
+lit-html        ·  BSD-3-Clause   ·  https://lit.dev/
+
+5) Olay ve devlet metinleri
+---------------------------
+public/data/events/*.json ve public/data/entities.json içindeki Türkçe başlık, özet ve devlet
+tanımları bu projede yazılmıştır. Her olayın kaynağı kendi kaydında (Vikipedi makalesi) gösterilir;
+Vikipedi içeriği CC BY-SA 4.0 altındadır, buradaki özetler özgün anlatımla yazılmıştır.
+Devletlerin Vikipedi/Vikiveri bağlantıları Cliopatria veri setinden gelir.

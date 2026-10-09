@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist-standalone/
+.cache/
+.venv/
+__pycache__/
+*.log
+.DS_Store
