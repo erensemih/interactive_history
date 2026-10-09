@@ -3,7 +3,7 @@ import { loadData, type AppData } from './data/load';
 import { MapView } from './map/mapView';
 import { deriveView, type ViewModel } from './state/derive';
 import { DEFAULT_STATE, Store, type AppState } from './state/store';
-import { hashToPartialState, stateToHash } from './state/url';
+import { hashToPartialState, parseCamera, stateToHash } from './state/url';
 import { InfoPanel } from './ui/infoPanel';
 import { MapChrome } from './ui/mapChrome';
 import { Ruler } from './ui/ruler';
@@ -142,8 +142,15 @@ export async function startApp(root: HTMLElement): Promise<void> {
     timeline.render(vm);
     renderFunnel(vm);
 
+    scheduleHash();
+  }
+
+  function scheduleHash() {
     window.clearTimeout(hashTimer);
-    hashTimer = window.setTimeout(() => history.replaceState(null, '', stateToHash(state)), 200);
+    hashTimer = window.setTimeout(() => {
+      const c = mapView.map.getCenter();
+      history.replaceState(null, '', stateToHash(store.state, { lng: c.lng, lat: c.lat, zoom: mapView.map.getZoom() }));
+    }, 250);
   }
 
   function renderFunnel(v: ViewModel) {
@@ -167,7 +174,12 @@ export async function startApp(root: HTMLElement): Promise<void> {
 
   store.subscribe((state: AppState, prev: AppState) => {
     if (state.selectedEventId && state.selectedEventId !== prev.selectedEventId) {
-      $('panel').scrollTo({ top: 0, behavior: 'smooth' });
+      if (window.matchMedia('(max-width: 900px)').matches) {
+        // single-column layout: the reading panel is below the map, bring the card into view
+        $('panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        $('panel').scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
     if (queued) return;
     queued = true;
@@ -188,42 +200,49 @@ export async function startApp(root: HTMLElement): Promise<void> {
   timeline.render(vm);
   renderFunnel(vm);
   await new Promise((r) => requestAnimationFrame(() => r(null)));
-  mapView = new MapView($('map'), data, {
-    onPlaceClick: (p) => {
-      toast(null);
-      store.selectPlace(p);
+  const initialView = parseCamera(location.hash);
+  mapView = new MapView(
+    $('map'),
+    data,
+    {
+      onPlaceClick: (p) => {
+        toast(null);
+        store.selectPlace(p);
+      },
+      onMarkerStats: ({ shown, total, thinned, offscreen }) => {
+        const el = $('map-stats');
+        el.hidden = total === 0;
+        // Say honestly why some events are not drawn: zoom/collision thinning, or simply out of view.
+        const hint =
+          thinned > 0
+            ? html`<span> · yakınlaştıkça artar</span>`
+            : offscreen > 0
+              ? html`<span> · kalanlar görünüm dışında</span>`
+              : '';
+        render(html`<b>${shown}</b> / ${total} olay haritada${hint}`, el);
+      },
+      onWaterClick: () => toast('Burası deniz. Bir kara parçasına tıklayın; harita yerinden oynamaz.'),
+      onHoverPolity: (id, x, y) => {
+        if (!id) return tip.hide();
+        const ent = data.entities.get(id);
+        tip.show(html`<div class="tip-polity">${ent?.name ?? id}</div>`, x, y, 'cursor');
+      },
+      onEventClick: (id) => store.selectEvent(store.state.selectedEventId === id ? null : id),
+      onEventHover: (id, el) => {
+        store.hoverEvent(id);
+        const ev = id ? data.eventsById.get(id) : null;
+        if (ev && el) {
+          const r = el.getBoundingClientRect();
+          tip.show(eventTip(ev, data), r.left + r.width / 2, r.top, 'above');
+        } else {
+          tip.hide();
+        }
+      },
     },
-    onMarkerStats: ({ shown, total, thinned, offscreen }) => {
-      const el = $('map-stats');
-      el.hidden = total === 0;
-      // Say honestly why some events are not drawn: zoom/collision thinning, or simply out of view.
-      const hint =
-        thinned > 0
-          ? html`<span> · yakınlaştıkça artar</span>`
-          : offscreen > 0
-            ? html`<span> · kalanlar görünüm dışında</span>`
-            : '';
-      render(html`<b>${shown}</b> / ${total} olay haritada${hint}`, el);
-    },
-    onWaterClick: () => toast('Burası deniz. Bir kara parçasına tıklayın; harita yerinden oynamaz.'),
-    onHoverPolity: (id, x, y) => {
-      if (!id) return tip.hide();
-      const ent = data.entities.get(id);
-      tip.show(html`<div class="tip-polity">${ent?.name ?? id}</div>`, x, y, 'cursor');
-    },
-    onEventClick: (id) => store.selectEvent(store.state.selectedEventId === id ? null : id),
-    onEventHover: (id, el) => {
-      store.hoverEvent(id);
-      const ev = id ? data.eventsById.get(id) : null;
-      if (ev && el) {
-        const r = el.getBoundingClientRect();
-        tip.show(eventTip(ev, data), r.left + r.width / 2, r.top, 'above');
-      } else {
-        tip.hide();
-      }
-    },
-  });
+    initialView,
+  );
 
+  mapView.map.on('moveend', scheduleHash);
   update();
   loadingText.textContent = 'Harita çiziliyor…';
   await mapView.whenDrawn();

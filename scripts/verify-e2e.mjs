@@ -14,7 +14,7 @@
  * Writes screenshots and a Turkish report to docs/verification/.
  */
 import { spawn, execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -23,6 +23,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'docs', 'verification');
 const PORT = Number(process.env.E2E_PORT ?? 4173);
 mkdirSync(OUT, { recursive: true });
+rmSync(join(OUT, 'hata.png'), { force: true }); // a failure screenshot from an earlier run must not linger
 
 const results = [];
 function check(name, ok, detail = '') {

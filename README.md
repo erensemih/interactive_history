@@ -15,6 +15,10 @@ Bu ilk prototip, görsel dili ve etkileşimi oturtmak içindir; veri bilerek kü
 
 ![Anadolu, 1500](docs/verification/02-anadolu-1500.png)
 
+| Çin seçili, aynı harita | Aralık 1450–1500 | Olay ayrıntısı |
+|---|---|---|
+| ![](docs/verification/03-cin-1500.png) | ![](docs/verification/04-aralik-1450-1500.png) | ![](docs/verification/05-olay-detayi.png) |
+
 ## Çalıştırma
 
 ```bash
@@ -47,7 +51,7 @@ Adres çubuğu durumu taşır (`#t=1450-1500&p=32.85,39.93&e=...`), bu yüzden b
 |---|---|
 | **MapLibre GL JS** (vektör, GPU) | Sürükleme/yakınlaştırma akıcı olmalı; sınırlar, vurgu ve katmanlar tek bir yerde çizilebilsin. Dış karo sunucusuna ihtiyaç yok: harita tamamen kendi verimizden çizilir. |
 | **Vite + TypeScript + lit-html** (React yok) | Arayüz küçük ve durum odaklı; bir bileşen çerçevesi gereksiz. Mantık (`src/domain`) arayüzden ayrıdır ve birim testlidir. |
-| **Sınır verisi: Seshat Cliopatria** (CC BY 4.0) | 1400–1600 arasında her devlet için 5–20 yıllık dönemlerle *her yıl* sınır verir; zaman sürükleyince sınırlar gerçekten kayar. Alternatif `historical-basemaps` bu aralıkta yalnızca 5 anlık görüntü (1400, 1492, 1500, 1530, 1600) sunuyor ve GPL-3.0. Cliopatria ayrıca her devlet için Wikipedia/Wikidata kimliği ve üst-alt (ör. Brandenburg → Kutsal Roma) ilişkisi taşır. Bedeli: yalnızca devletleri haritalar; devlet kaydı olmayan karalar noktalı "veri yok" zemini olarak gösterilir. |
+| **Sınır verisi: Seshat Cliopatria** (CC BY 4.0) | 1400–1600 arasında devletler için 5–20 yıllık kayıt dönemleriyle, çoğunlukla aralıksız sınır verir (yıl yıl seçilebilir); zaman sürükleyince sınırlar gerçekten kayar. Alternatif `historical-basemaps` bu aralıkta yalnızca 5 anlık görüntü (1400, 1492, 1500, 1530, 1600) sunuyor ve GPL-3.0. Cliopatria ayrıca her devlet için Wikipedia/Wikidata kimliği ve üst-alt (ör. Brandenburg → Kutsal Roma) ilişkisi taşır. Bedeli: yalnızca devletleri haritalar; devlet kaydı olmayan karalar noktalı "veri yok" zemini olarak gösterilir. |
 | **Yer = bir nokta, devlet = o noktanın o yıldaki sahibi** | Konya 1450'de Karamanoğulları, 1475'te Osmanlı'dır. Zaman çizelgesi, aralık boyunca o noktayı elinde tutan *tüm* devletlerin (ve üst yapılarının, bulunduğu bölgenin) olaylarını toplar; böylece "yerin tarihi" okunur. |
 | **Haritadaki olay sayısı: önem + yakınlaştırma bütçesi** | Önem 1–5. Haritada yalnızca ≥3 görünür; dünya görünümünde en önemliler, yakınlaştıkça daha fazlası (bütçe zoom ile artar), ekranda çakışanlar önem sırasına göre elenir. Sağ alttaki not kaç olayın çizildiğini ve geri kalanının neden görünmediğini söyler. Önem 1–2 olaylar yalnızca çizelgededir. |
 | **Aralık seçici: fırçalı cetvel + hazır uzunluklar + yazılan yıl + "sınır yılı" işareti** | Tek yıl da 100 yıl da aynı denetimle seçilir. 100 yıllık bir aralıkta tek bir sınır haritası yetmez; fırçanın içindeki işaret, o aralık içinde hangi yılın sınırlarının çizileceğini seçtirir ve arayüzde her zaman yazılı görünür. Cetvelden çizelgeye çizilen "büyüteç" bağlantısı, çizelgenin aralığın yakınlaştırılmış hâli olduğunu gösterir. |

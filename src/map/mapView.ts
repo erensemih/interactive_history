@@ -62,8 +62,10 @@ export class MapView {
     container: HTMLElement,
     private readonly data: AppData,
     private readonly cb: MapCallbacks,
+    initialView: { lng: number; lat: number; zoom: number } | null = null,
   ) {
     this.theme = readTheme(data.tintCount);
+    const touchLayout = window.matchMedia('(max-width: 900px)').matches;
     this.map = new maplibregl.Map({
       container,
       style: {
@@ -71,8 +73,20 @@ export class MapView {
         sources: {},
         layers: [{ id: 'sea', type: 'background', paint: { 'background-color': this.theme.sea } }],
       },
-      bounds: INITIAL_BOUNDS,
-      fitBoundsOptions: { padding: { top: 56, bottom: 16, left: 16, right: 16 }, animate: false },
+      // First placement only: either the view from the address bar or the dataset's whole extent.
+      ...(initialView
+        ? { center: [initialView.lng, initialView.lat] as [number, number], zoom: initialView.zoom }
+        : {
+            bounds: INITIAL_BOUNDS,
+            fitBoundsOptions: { padding: { top: 56, bottom: 16, left: 16, right: 16 }, animate: false },
+          }),
+      // On phones the map sits inside a scrolling page: one finger scrolls the page, two move the map.
+      cooperativeGestures: touchLayout,
+      locale: {
+        'CooperativeGesturesHandler.WindowsHelpText': 'Haritayı yakınlaştırmak için Ctrl + fare tekerleğini kullanın',
+        'CooperativeGesturesHandler.MacHelpText': 'Haritayı yakınlaştırmak için ⌘ + fare tekerleğini kullanın',
+        'CooperativeGesturesHandler.MobileHelpText': 'Haritayı kaydırmak için iki parmak kullanın',
+      },
       minZoom: 1.1,
       maxZoom: 9,
       // Strictly inside ±180°: MapLibre 5.24 throws on a full-world maxBounds.

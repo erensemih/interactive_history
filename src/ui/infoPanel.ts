@@ -233,6 +233,13 @@ export class InfoPanel {
         <button type="button" class="btn" @click=${() => this.store.focusYear(ev.year, span)}>
           Haritayı ${ev.year} yılına getir
         </button>
+        <button
+          type="button"
+          class="link only-narrow"
+          @click=${() => document.querySelector('.map-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+        >
+          ↑ Haritaya dön
+        </button>
       </div>
     </section>`;
   }

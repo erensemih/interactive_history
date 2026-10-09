@@ -399,7 +399,6 @@
   text-transform: uppercase;
   color: var(--accent-ink);
   white-space: nowrap;
-  opacity: 0.85;
 }
 
 .tl-axis {
@@ -479,18 +478,21 @@
 }
 
 .tl-ev.is-context,
-.tl-label.is-context,
 .tl-stem.is-context {
   opacity: 0.5;
 }
 
 .tl-ev.is-context:hover,
 .tl-ev.is-context.is-hover,
-.tl-ev.is-context.is-selected,
-.tl-label.is-context:hover,
-.tl-label.is-context.is-hover,
-.tl-label.is-context.is-selected {
+.tl-ev.is-context.is-selected {
   opacity: 1;
+}
+
+/* faded context labels stay readable (text is never dimmed with opacity, only recoloured) */
+.tl-label.is-context {
+  color: var(--ink-3);
+  font-weight: 560;
+  background: rgb(245 240 228 / 0.7);
 }
 
 .tl-stem {

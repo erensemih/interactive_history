@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_STATE, Store } from '../src/state/store';
-import { hashToPartialState, stateToHash } from '../src/state/url';
+import { hashToPartialState, parseCamera, stateToHash } from '../src/state/url';
 
 const extent = { from: 1400, to: 1600 };
 const make = (patch = {}) => new Store({ ...DEFAULT_STATE, ...patch }, extent);
@@ -77,5 +77,17 @@ describe('url state', () => {
     expect(stateToHash({ ...DEFAULT_STATE, range: { from: 1500, to: 1500 } })).toBe('#t=1500');
     expect(hashToPartialState('#t=abc&p=x,y&c=zzz', extent)).toEqual({});
     expect(hashToPartialState('#t=1200-2000', extent).range).toEqual({ from: 1400, to: 1600 });
+  });
+
+  it('carries the map camera in `v` and rejects nonsense', () => {
+    const hash = stateToHash(
+      { ...DEFAULT_STATE, range: { from: 1500, to: 1500 } },
+      { zoom: 1.4234, lat: 32.2243, lng: 19 },
+    );
+    expect(hash).toBe('#t=1500&v=1.42/32.224/19.000');
+    expect(parseCamera(hash)).toEqual({ zoom: 1.42, lat: 32.224, lng: 19 });
+    expect(parseCamera('#v=abc')).toBeNull();
+    expect(parseCamera('#v=40/99/0')).toBeNull();
+    expect(parseCamera('#t=1500')).toBeNull();
   });
 });

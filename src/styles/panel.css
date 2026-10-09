@@ -437,3 +437,21 @@
   text-decoration-color: color-mix(in oklab, var(--accent) 40%, transparent);
   text-underline-offset: 3px;
 }
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+}
+
+/* shown only where the reading panel sits below the map */
+.only-narrow {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .only-narrow {
+    display: inline;
+  }
+}
