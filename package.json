@@ -9,6 +9,7 @@
     "prebuild": "node scripts/validate-data.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "build:standalone": "node scripts/validate-data.mjs && node scripts/build-standalone.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "data:validate": "node scripts/validate-data.mjs",

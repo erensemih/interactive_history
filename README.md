@@ -21,6 +21,20 @@ Bu ilk prototip, görsel dili ve etkileşimi oturtmak içindir; veri bilerek kü
 
 ## Çalıştırma
 
+En kolay yol **tek dosya sürümüdür**: sunucu da, kurulum da gerekmez.
+
+```bash
+npm install
+npm run build:standalone   # → dist-standalone/ayni-zamanda.html (~11 MB)
+```
+
+`ayni-zamanda.html` dosyasını tarayıcıda açmak (çift tıklamak) yeterlidir. Betik, stil, yazı tipleri ve tüm veri dosyanın
+içindedir; hiçbir ağ isteği yapmaz, çevrimdışı çalışır ve her statik barındırmaya tek dosya olarak yüklenebilir.
+(`ayni-zamanda.fragment.html`, kendi `<html>` kabuğunu ekleyen barındırıcılar için aynı sayfanın gövdesidir. Bu sürümde
+"Atıf ve lisanslar" bağlantısı, dosyanın yanında NOTICE.txt olmadığı için depodaki dosyaya gider.)
+
+Geliştirme için:
+
 ```bash
 npm install
 npm run dev          # http://127.0.0.1:5173

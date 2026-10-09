@@ -25,17 +25,20 @@ declare global {
   }
 }
 
+/** The licence notice: a file next to the page, or (in the single-file build) its place in the repository. */
+const NOTICE_URL: string = import.meta.env.VITE_NOTICE_URL || './NOTICE.txt';
+
 const SHELL = `
   <a class="skip" href="#dock-ruler">Zaman denetimine geç</a>
   <a class="skip" href="#panel">Bilgi paneline geç</a>
   <header class="topbar">
-    <a class="brand" href="./" aria-label="Aynı Zamanda, ana sayfa">
+    <div class="brand">
       <svg class="brand-mark" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
         <circle cx="16" cy="16" r="11" fill="none" stroke="currentColor" stroke-width="2"/>
         <path d="M16 8.5V16l5.2 3.2" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       <span class="brand-name">Aynı Zamanda</span>
-    </a>
+    </div>
     <p class="tagline">Aynı sırada, başka yerlerde ne oluyordu?</p>
     <p class="credits" id="credits"></p>
   </header>
@@ -131,7 +134,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
         >${data.sources.borders.license}</a
       >, kırpılıp sadeleştirildi) · Kıyı:
       <a href=${data.sources.coast.url} target="_blank" rel="noopener noreferrer">Natural Earth</a> ·
-      <a href="./NOTICE.txt" target="_blank" rel="noopener">Atıf ve lisanslar</a>`,
+      <a href=${NOTICE_URL} target="_blank" rel="noopener noreferrer">Atıf ve lisanslar</a>`,
     credits,
   );
 
@@ -269,8 +272,12 @@ export async function startApp(root: HTMLElement): Promise<void> {
         camera = { lng: c.lng, lat: c.lat, zoom: mapView.map.getZoom() };
       }
       const next = stateToHash(store.state, camera);
-      if (next !== location.hash) history.replaceState(null, '', next);
-      lastHash = next;
+      try {
+        if (next !== location.hash) history.replaceState(null, '', next);
+        lastHash = next;
+      } catch {
+        /* a sandboxed frame may refuse to touch the address: the link is a convenience, not a requirement */
+      }
     }, 250);
   }
 

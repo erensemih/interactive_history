@@ -74,6 +74,9 @@ interface EntitiesDoc {
 const dataUrl = (path: string) => `${import.meta.env.BASE_URL}data/${path}`;
 
 async function getJson<T>(path: string): Promise<T> {
+  // The single-file build (scripts/build-standalone.mjs) carries its data inside the page.
+  const inline = document.getElementById(`data:${path}`);
+  if (inline) return JSON.parse(inline.textContent ?? 'null') as T;
   const res = await fetch(dataUrl(path));
   if (!res.ok) throw new Error(`${path} yüklenemedi (HTTP ${res.status})`);
   return (await res.json()) as T;

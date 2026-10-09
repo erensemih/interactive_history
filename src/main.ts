@@ -9,6 +9,10 @@ import './styles/panel.css';
 import './styles/dock.css';
 import { startApp } from './app';
 
+// Turkish casing (dotted İ, dotless ı) in CSS `text-transform` follows the document language, also when a
+// host page supplies its own <html>.
+document.documentElement.lang = 'tr';
+
 startApp(document.getElementById('app')!).catch((err) => {
   console.error(err);
 });
