@@ -79,9 +79,9 @@
             "minProperties": 1,
             "properties": {
               "wikipedia": { "type": "string", "description": "Makale başlığı (varsayılan dil: en)" },
-              "lang": { "type": "string" },
+              "lang": { "type": "string", "pattern": "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)?$" },
               "wikidata": { "type": "string", "pattern": "^Q\\d+$" },
-              "url": { "type": "string" },
+              "url": { "type": "string", "pattern": "^https?://" },
               "title": { "type": "string" }
             }
           }

@@ -59,7 +59,7 @@
       "id": "istanbul-fethi-1453",
       "title": { "tr": "İstanbul'un Fethi" },
       "summary": {
-        "tr": "II. Mehmed komutasındaki Osmanlı ordusu, 53 günlük kuşatmanın ardından Konstantinopolis'i aldı. Bizans İmparatorluğu sona erdi, şehir Osmanlı başkenti oldu; olay genellikle Orta Çağ'ın sonu ve Yeniçağ'ın başlangıcı olarak anılır."
+        "tr": "II. Mehmed komutasındaki Osmanlı ordusu, 53 günlük kuşatmanın ardından Konstantinopolis'i aldı. Bizans İmparatorluğu sona erdi, şehir Osmanlı başkenti oldu; olay genellikle Ortaçağ'ın sonu ve Yeniçağ'ın başlangıcı olarak anılır."
       },
       "date": { "start": "1453-04-06", "end": "1453-05-29" },
       "location": { "name": { "tr": "İstanbul" }, "coordinates": [28.94, 41.01] },
@@ -72,14 +72,14 @@
       "id": "trabzon-1461",
       "title": { "tr": "Trabzon İmparatorluğu'nun sonu" },
       "summary": {
-        "tr": "Fatih Sultan Mehmed, kısa süren bir kuşatmanın ardından Trabzon İmparatoru David Komnenos'un teslimini kabul etti. Karadeniz kıyısındaki son Rum devleti de ortadan kalktı."
+        "tr": "Fatih Sultan Mehmed, kısa süren bir kuşatmanın ardından Trabzon İmparatoru David Komnenos'un teslimini kabul etti. Bizans'ın mirasçı devletlerinin sonuncusu olan Trabzon İmparatorluğu böylece ortadan kalktı."
       },
       "date": "1461-08-15",
       "location": { "name": { "tr": "Trabzon" }, "coordinates": [39.72, 41.0] },
       "importance": 2,
       "category": "military",
       "parties": ["ottoman-empire", "empire-of-trebizond"],
-      "sources": [{ "wikipedia": "Empire of Trebizond" }]
+      "sources": [{ "wikipedia": "Siege of Trebizond (1461)" }]
     },
     {
       "id": "bedesten-1461",
@@ -118,20 +118,20 @@
       "importance": 2,
       "category": "military",
       "parties": ["ottoman-empire", "republic-of-genoa", "crimean-khanate"],
-      "sources": [{ "wikipedia": "Crimean Khanate" }]
+      "sources": [{ "wikipedia": "Siege of Caffa (1475)" }]
     },
     {
       "id": "sefarad-gocu-1492",
       "title": { "tr": "Sefarad Yahudileri Osmanlı'ya sığınıyor" },
       "summary": {
-        "tr": "İspanya'dan sürülen Yahudiler, II. Bayezid'in daveti ve himayesiyle Selanik, İstanbul ve Edirne gibi Osmanlı şehirlerine yerleşti. Göç, imparatorluğun şehir ekonomisine ve basımcılığa önemli katkılar yaptı."
+        "tr": "İspanya'dan sürülen Yahudiler, II. Bayezid'in izni ve himayesiyle Selanik, İstanbul ve Edirne gibi Osmanlı şehirlerine yerleşti. Göç, imparatorluğun şehir ekonomisine ve basımcılığa önemli katkılar yaptı."
       },
       "date": "1492",
       "location": { "name": { "tr": "Selanik" }, "coordinates": [22.94, 40.64] },
       "importance": 3,
       "category": "politics",
       "parties": ["ottoman-empire", "crown-of-castile", "crown-of-aragon"],
-      "sources": [{ "wikipedia": "Alhambra Decree" }]
+      "sources": [{ "wikipedia": "Alhambra Decree" }, { "wikipedia": "History of the Jews in the Ottoman Empire" }]
     },
     {
       "id": "venedik-savasi-1499",
@@ -202,7 +202,7 @@
       "id": "mohac-1526",
       "title": { "tr": "Mohaç Muharebesi" },
       "summary": {
-        "tr": "Kanuni Sultan Süleyman'ın ordusu, Macar Kralı II. Lajos'un ordusunu yaklaşık iki saatte yok etti; kral kaçarken boğuldu. Macaristan'ın büyük bölümü sonraki on yıllarda Osmanlı ve Habsburglar arasında bölüşüldü."
+        "tr": "Kanuni Sultan Süleyman'ın ordusu, Macar Kralı II. Lajos'un ordusunu yaklaşık iki saatte yok etti; kral kaçarken boğuldu. Macaristan sonraki on yıllarda Osmanlı, Habsburglar ve Erdel'deki Doğu Macar Krallığı arasında üçe bölündü."
       },
       "date": "1526-08-29",
       "location": { "name": { "tr": "Mohaç" }, "coordinates": [18.68, 45.99] },
@@ -215,14 +215,14 @@
       "id": "viyana-1529",
       "title": { "tr": "Birinci Viyana Kuşatması" },
       "summary": {
-        "tr": "Kanuni Sultan Süleyman'ın ordusu Habsburg başkenti Viyana'yı kuşattı; mevsimin ilerlemesi, kötü hava ve ikmal sıkıntısı yüzünden kuşatma kaldırıldı. Osmanlı'nın Orta Avrupa'daki ilerleyişi bu hat üzerinde durdu."
+        "tr": "Kanuni Sultan Süleyman'ın ordusu Habsburg başkenti Viyana'yı kuşattı; mevsimin ilerlemesi, kötü hava ve ikmal sıkıntısı yüzünden kuşatma kaldırıldı. Osmanlı'nın Orta Avrupa'daki ilerleyişi Viyana önünde durdu; Macaristan'daki hâkimiyeti ise sürdü."
       },
       "date": { "start": "1529-09-27", "end": "1529-10-15" },
       "location": { "name": { "tr": "Viyana" }, "coordinates": [16.37, 48.21] },
       "importance": 4,
       "category": "military",
       "parties": ["ottoman-empire", "habsburg-monarchy", "holy-roman-empire"],
-      "sources": [{ "wikipedia": "Siege of Vienna" }]
+      "sources": [{ "wikipedia": "Siege of Vienna (1529)" }]
     },
     {
       "id": "preveze-1538",
@@ -265,12 +265,12 @@
     },
     {
       "id": "szigetvar-1566",
-      "title": { "tr": "Szigetvár Kuşatması" },
+      "title": { "tr": "Zigetvar Kuşatması" },
       "summary": {
-        "tr": "Kanuni Sultan Süleyman'ın son seferinde Osmanlı ordusu Szigetvár Kalesi'ni aldı; sultan kuşatma sırasında hayatını kaybetti. Ölümü, ordudan bir süre gizli tutuldu."
+        "tr": "Kanuni Sultan Süleyman'ın son seferinde Osmanlı ordusu Zigetvar Kalesi'ni aldı; sultan kuşatma sırasında hayatını kaybetti. Ölümü, ordudan bir süre gizli tutuldu."
       },
       "date": { "start": "1566-08-06", "end": "1566-09-08" },
-      "location": { "name": { "tr": "Szigetvár" }, "coordinates": [17.8, 46.05] },
+      "location": { "name": { "tr": "Zigetvar (Szigetvár)" }, "coordinates": [17.8, 46.05] },
       "importance": 2,
       "category": "military",
       "parties": ["ottoman-empire", "habsburg-monarchy"],
@@ -280,20 +280,20 @@
       "id": "kibris-1570",
       "title": { "tr": "Kıbrıs'ın fethi" },
       "summary": {
-        "tr": "Osmanlı ordusu, Lefkoşa'nın ardından uzun süren Mağusa kuşatmasından sonra Kıbrıs'ı Venedik'ten aldı. Adanın kaybı, Venedik'in Doğu Akdeniz'deki konumunu zayıflattı ve Kutsal İttifak'ın kurulmasına yol açtı."
+        "tr": "Osmanlı ordusu, Lefkoşa'nın ardından uzun süren Mağusa kuşatmasından sonra Kıbrıs'ı Venedik'ten aldı. Adanın işgali ve Lefkoşa'nın düşmesi Kutsal İttifak'ın (1571) kurulmasına yol açtı; Mağusa'nın teslimiyle Venedik, Doğu Akdeniz'deki önemli bir kolonisini yitirdi."
       },
       "date": { "start": "1570-07", "end": "1571-08" },
       "location": { "name": { "tr": "Mağusa" }, "coordinates": [33.94, 35.12] },
       "importance": 2,
       "category": "military",
       "parties": ["ottoman-empire", "republic-of-venice"],
-      "sources": [{ "wikipedia": "Ottoman conquest of Cyprus" }]
+      "sources": [{ "wikipedia": "Ottoman–Venetian War (1570–1573)" }]
     },
     {
       "id": "inebahti-1571",
       "title": { "tr": "İnebahtı Deniz Savaşı" },
       "summary": {
-        "tr": "Venedik, İspanya ve Papalık'ın oluşturduğu Kutsal İttifak donanması, Osmanlı donanmasını İnebahtı Körfezi'nde ağır bir yenilgiye uğrattı. Osmanlı bir yıl içinde yeni bir donanma kurup denizlerdeki üstünlüğünü yeniden kazandı; yine de savaş, Batı'nın büyük bir moral zaferi sayıldı."
+        "tr": "Venedik, İspanya ve Papalık'ın oluşturduğu Kutsal İttifak donanması, Osmanlı donanmasını İnebahtı Körfezi'nde ağır bir yenilgiye uğrattı. Osmanlı bir yıl içinde donanmasını yeniden kurdu, Kıbrıs'ı elinde tuttu ve 1574'te Tunus'u geri aldı; yine de savaş, Batı'nın büyük bir moral zaferi sayıldı."
       },
       "date": "1571-10-07",
       "location": { "name": { "tr": "İnebahtı Körfezi" }, "coordinates": [21.0, 38.35] },
@@ -312,7 +312,7 @@
       "location": { "name": { "tr": "Mezőkeresztes (Haçova)" }, "coordinates": [20.69, 47.83] },
       "importance": 2,
       "category": "military",
-      "parties": ["ottoman-empire", "habsburg-monarchy"],
+      "parties": ["ottoman-empire", "habsburg-monarchy", "principality-of-transylvania"],
       "sources": [{ "wikipedia": "Battle of Keresztes" }]
     },
     {

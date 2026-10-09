@@ -67,6 +67,16 @@ export function validateAll(root = DEFAULT_ROOT) {
     if (e.kind !== 'polity' && e.kind !== 'region') errors.push(`entities.${id}: kind "polity" veya "region" olmalı`);
     if (!e.name?.tr || !String(e.name.tr).trim()) errors.push(`entities.${id}: Türkçe ad (name.tr) eksik`);
     if (e.summary && !String(e.summary.tr ?? '').trim()) errors.push(`entities.${id}: summary.tr boş`);
+    if (e.sameAs !== undefined) {
+      if (!entities[e.sameAs] || e.sameAs === id || entities[e.sameAs].sameAs)
+        errors.push(`entities.${id}: sameAs "${e.sameAs}" geçerli, kendisi olmayan ve takma ad olmayan bir kayıt olmalı`);
+    }
+    for (const key of ['wikipedia', 'wikidata']) {
+      if (e[key] !== undefined && e[key] !== null && typeof e[key] !== 'string')
+        errors.push(`entities.${id}: ${key} metin ya da null olmalı`);
+    }
+    if (typeof e.wikidata === 'string' && !/^Q\d+$/.test(e.wikidata))
+      errors.push(`entities.${id}: geçersiz Wikidata kimliği "${e.wikidata}"`);
     if (e.kind === 'region') {
       const b = e.bounds;
       if (!Array.isArray(b) || b.length !== 4 || b.some((n) => typeof n !== 'number') || b[0] >= b[2] || b[1] >= b[3]) {
@@ -178,6 +188,9 @@ export function validateAll(root = DEFAULT_ROOT) {
         for (const src of ev.sources) {
           if (!src.wikipedia && !src.wikidata && !src.url) err(`kaynak geçersiz: ${JSON.stringify(src)}`);
           if (src.wikidata && !/^Q\d+$/.test(src.wikidata)) err(`geçersiz Wikidata kimliği "${src.wikidata}"`);
+          if (src.lang !== undefined && !/^[a-z]{2,3}(-[a-z0-9]+)?$/i.test(String(src.lang)))
+            err(`geçersiz dil kodu "${src.lang}"`);
+          if (src.url && !/^https?:\/\//i.test(src.url)) err(`kaynak adresi http(s) olmalı: "${src.url}"`);
         }
       }
     }

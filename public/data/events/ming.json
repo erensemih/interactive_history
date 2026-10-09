@@ -52,14 +52,14 @@
       "parties": ["ming-dynasty", "sultanate-of-malacca"],
       "sources": [
         {
-          "wikipedia": "Zheng He"
+          "wikipedia": "Ming treasure voyages"
         }
       ]
     },
     {
       "id": "gok-tapinagi-1406",
       "title": {
-        "tr": "Pekin Gök Tapınağı'nın inşası"
+        "tr": "Pekin Cennet Tapınağı'nın inşası"
       },
       "summary": {
         "tr": "Yongle İmparatoru, Pekin'in güneyinde imparatorun her yıl gökyüzüne sunu sunduğu büyük tapınak külliyesini yaptırdı. Külliye, Ming ve sonraki Qing dönemlerinde devletin başlıca ayin mekânı olarak kullanıldı."
@@ -70,7 +70,7 @@
       },
       "location": {
         "name": {
-          "tr": "Pekin (Gök Tapınağı)"
+          "tr": "Pekin (Cennet Tapınağı)"
         },
         "coordinates": [116.41, 39.88]
       },
@@ -185,7 +185,7 @@
         "tr": "Zhengde İmparatoru tahta çıkıyor"
       },
       "summary": {
-        "tr": "Hongzhi'nin ardından genç yaşta tahta çıkan Zhengde (1505–1521), saray eğlencelerine düşkünlüğü ve hadım ağası Liu Jin'in sarayda sözü geçer hâle gelmesiyle anılır. Dönem, merkezî yönetimin zayıfladığı yıllar olarak değerlendirilir."
+        "tr": "Hongzhi'nin ardından genç yaşta tahta çıkan Zhengde (1505–1521), saray eğlencelerine düşkünlüğü ve saray hadımlarından Liu Jin'in sarayda sözü geçer hâle gelmesiyle anılır. Dönem, merkezî yönetimin zayıfladığı yıllar olarak değerlendirilir."
       },
       "date": "1505",
       "location": {
@@ -209,7 +209,7 @@
         "tr": "İlk Portekiz heyeti Guangzhou'da"
       },
       "summary": {
-        "tr": "Portekiz filosu, elçi Tomé Pires ile birlikte Güney Çin kıyısındaki Guangzhou açıklarına ulaştı; Pires 1520'de Pekin'e gitti. Avrupa ile Ming Çin'i arasındaki ilk doğrudan diplomatik temas kısa süre sonra çatışmayla gölgelendi."
+        "tr": "Portekiz filosu, elçi Tomé Pires ile birlikte Güney Çin kıyısındaki Guangzhou açıklarına ulaştı; Pires 1520'de Pekin'e doğru yola çıktı. Avrupa ile Ming Çin'i arasındaki ilk doğrudan diplomatik temas kısa süre sonra çatışmayla gölgelendi."
       },
       "date": "1517",
       "location": {
@@ -247,7 +247,7 @@
       "parties": ["ming-dynasty"],
       "sources": [
         {
-          "wikipedia": "Zhu Chenhao"
+          "wikipedia": "Prince of Ning rebellion"
         }
       ]
     },
@@ -257,12 +257,12 @@
         "tr": "Tunmen Muharebesi"
       },
       "summary": {
-        "tr": "Ming donanması, Pearl Nehri ağzındaki Tunmen Adası'nda yerleşen Portekizli gemileri yendi. Sonuç olarak Portekiz'in Çin ile resmî ticaret girişimi akamete uğradı; Portekizliler ancak yaklaşık otuz yıl sonra Makao'da kalıcı bir üs elde edebildi."
+        "tr": "Ming donanması, İnci Nehri (Zhujiang) ağzındaki Tunmen Adası'nda yerleşen Portekizli gemileri yendi. Sonuç olarak Portekiz'in Çin ile resmî ticaret girişimi akamete uğradı; Portekizliler ancak yaklaşık otuz beş yıl sonra Makao'da kalıcı bir üs elde edebildi."
       },
       "date": "1521",
       "location": {
         "name": {
-          "tr": "Tunmen (Pearl Nehri ağzı)"
+          "tr": "Tunmen (İnci Nehri ağzı)"
         },
         "coordinates": [113.8, 22.4]
       },
@@ -281,7 +281,7 @@
         "tr": "Altan Han Pekin önlerinde"
       },
       "summary": {
-        "tr": "Tümet Moğollarının lideri Altan Han, Büyük Sur'u aşıp Pekin çevresini yağmaladı ve şehri tehdit etti. Ming, olaydan sonra sınır savunmasını güçlendirdi ve 1571'de Altan Han ile ticaret ve barış anlaşması yaptı."
+        "tr": "Tümet Moğollarının lideri Altan Han, Çin Seddi'ni aşıp Pekin çevresini yağmaladı ve şehri tehdit etti. Ming, olaydan sonra sınır savunmasını güçlendirdi ve 1571'de Altan Han ile ticaret ve barış anlaşması yaptı."
       },
       "date": "1550-09",
       "location": {
@@ -305,7 +305,7 @@
         "tr": "Wokou korsan akınları"
       },
       "summary": {
-        "tr": "Çinli, Japon ve diğer kökenli korsan ve kaçakçı gruplarının Çin'in güneydoğu kıyılarını yağmaladığı akınlar 1550'lerde zirveye çıktı. Hu Zongxian ve Qi Jiguang gibi komutanlar 1560'larda tehdidi büyük ölçüde bastırdı."
+        "tr": "Çinli, Japon ve diğer kökenli korsan ve kaçakçı gruplarının Çin'in güneydoğu kıyılarını yağmaladığı akınlar 1550'lerde zirveye çıktı. Hu Zongxian'ın 1550'lerin sonundaki, Qi Jiguang ve Yu Dayou'nun 1560'lardaki harekâtı tehdidi büyük ölçüde bastırdı."
       },
       "date": {
         "start": "1553",
@@ -323,7 +323,7 @@
       "parties": ["ming-dynasty", "warring-states-japan"],
       "sources": [
         {
-          "wikipedia": "Wokou"
+          "wikipedia": "Jiajing wokou raids"
         }
       ]
     },
@@ -395,7 +395,7 @@
       "parties": ["ming-dynasty"],
       "sources": [
         {
-          "wikipedia": "Longqing Emperor"
+          "wikipedia": "Haijin"
         }
       ]
     },
@@ -405,7 +405,7 @@
         "tr": "Tek Kırbaç Reformu"
       },
       "summary": {
-        "tr": "Başbakan Zhang Juzheng'in öncülüğünde çok sayıda vergi ve angarya tek bir gümüş ödemesinde birleştirildi. Düzenleme, Çin ekonomisinin gümüşe dayalı hâle gelmesini hızlandırdı."
+        "tr": "Baş Büyük Sekreter (fiilî başbakan) Zhang Juzheng'in öncülüğünde çok sayıda vergi ve angarya tek bir gümüş ödemesinde birleştirildi. Düzenleme, Çin ekonomisinin gümüşe dayalı hâle gelmesini hızlandırdı."
       },
       "date": "1581",
       "location": {
@@ -419,7 +419,7 @@
       "parties": ["ming-dynasty"],
       "sources": [
         {
-          "wikipedia": "Zhang Juzheng"
+          "wikipedia": "Single whip law"
         }
       ]
     },

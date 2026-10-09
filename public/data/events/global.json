@@ -33,7 +33,7 @@
       "id": "jan-hus-1415",
       "title": { "tr": "Jan Hus'un yakılması" },
       "summary": {
-        "tr": "Bohemyalı din reformcusu Jan Hus, Konstanz Konsili'nde sapkınlıkla suçlanarak yakıldı. Ölümü, Bohemya'da Hus Savaşları'na yol açan geniş bir ayaklanmayı tetikledi ve Reform'un habercilerinden biri sayıldı."
+        "tr": "Bohemyalı din reformcusu Jan Hus, Konstanz Konsili'nde sapkınlıkla suçlanarak yakıldı. Ölümü, Bohemya'da Hus Savaşları'na yol açan geniş bir ayaklanmayı tetikledi; Hus, Reform'un habercilerinden biri sayılır."
       },
       "date": "1415-07-06",
       "location": { "name": { "tr": "Konstanz" }, "coordinates": [9.17, 47.66] },
@@ -53,7 +53,7 @@
       "importance": 3,
       "category": "exploration",
       "parties": ["kingdom-of-portugal", "marinid-sultanate"],
-      "sources": [{ "wikipedia": "Conquest of Ceuta" }]
+      "sources": [{ "wikipedia": "Portuguese conquest of Ceuta" }]
     },
     {
       "id": "ulug-bey-rasathanesi-1424",
@@ -72,7 +72,7 @@
       "id": "hangul-1443",
       "title": { "tr": "Hangul alfabesi" },
       "summary": {
-        "tr": "Kral Sejong ve saray bilginleri, Korece'yi doğrudan yazmak için fonetik bir alfabe geliştirdi; 1446'da Hunminjeongeum adıyla ilan edildi. Hangul, halkın okuryazarlığını kolaylaştırmak amacıyla tasarlandı ve bugün de Kore'nin yazı sistemidir."
+        "tr": "Kral Sejong'un öncülüğünde saray bilginleri, Korece'yi doğrudan yazmak için fonetik bir alfabe geliştirdi; 1446'da Hunminjeongeum adıyla ilan edildi. Hangul, halkın okuryazarlığını kolaylaştırmak amacıyla tasarlandı ve bugün de Kore'nin yazı sistemidir."
       },
       "date": { "start": "1443", "end": "1446" },
       "location": { "name": { "tr": "Hanyang (Seul)" }, "coordinates": [126.98, 37.57] },
@@ -85,10 +85,10 @@
       "id": "castillon-1453",
       "title": { "tr": "Castillon Muharebesi" },
       "summary": {
-        "tr": "Fransız ordusu, Castillon'da İngiliz kuvvetlerini yenerek Yüzyıl Savaşları'nı fiilen sona erdirdi. İstanbul'un düştüğü yıla denk gelmesiyle, 1453 genellikle Orta Çağ'ın sonu olarak anılır."
+        "tr": "Fransız ordusu, Castillon'da İngiliz kuvvetlerini yenerek Yüzyıl Savaşları'nı fiilen sona erdirdi. İstanbul'un düştüğü yıla denk gelmesiyle, 1453 genellikle Ortaçağ'ın sonu olarak anılır."
       },
       "date": "1453-07-17",
-      "location": { "name": { "tr": "Castillon-la-Bataille" }, "coordinates": [0.03, 44.85] },
+      "location": { "name": { "tr": "Castillon-la-Bataille" }, "coordinates": [-0.03, 44.85] },
       "importance": 3,
       "category": "military",
       "parties": ["kingdom-of-france", "kingdom-of-england"],
@@ -98,7 +98,7 @@
       "id": "gutenberg-incili-1455",
       "title": { "tr": "Gutenberg Kutsal Kitabı" },
       "summary": {
-        "tr": "Johannes Gutenberg, Mainz'da hareketli metal harflerle ilk büyük kitabı, Kutsal Kitap'ı bastı. Matbaa, bilginin yayılma hızını kökten değiştirdi ve Rönesans ile Reform'un en önemli teknik altyapılarından biri oldu."
+        "tr": "Johannes Gutenberg, Mainz'da Avrupa'da hareketli metal harflerle basılan ilk büyük kitabı, Kutsal Kitap'ı bastı. Matbaa, bilginin yayılma hızını kökten değiştirdi ve Rönesans ile Reform'un en önemli teknik altyapılarından biri oldu."
       },
       "date": { "start": "1454", "end": "1455" },
       "location": { "name": { "tr": "Mainz" }, "coordinates": [8.27, 50.0] },
@@ -111,7 +111,7 @@
       "id": "ugra-1480",
       "title": { "tr": "Ugra Nehri'nde karşılaşma" },
       "summary": {
-        "tr": "Moskova Büyük Prensi III. İvan ile Altın Orda Hanı Ahmed, Ugra Nehri kıyısında karşı karşıya geldi. Büyük bir savaşa girmeden geri çekilen Ahmed Han'ın ardından, Rus prensliklerinin Moğol hâkimiyetinden kurtuluşu kabul edilir."
+        "tr": "Moskova Büyük Prensi III. İvan ile Altın Orda'nın mirasçısı Büyük Orda'nın hanı Ahmed, Ugra Nehri kıyısında karşı karşıya geldi. Ahmed Han'ın büyük bir savaşa girmeden geri çekilmesi, Rus prensliklerinin Moğol hâkimiyetinden kurtuluşunun simgesi sayılır."
       },
       "date": { "start": "1480-10", "end": "1480-11" },
       "location": { "name": { "tr": "Ugra Nehri (Kaluga yakını)" }, "coordinates": [36.2, 54.55] },
@@ -137,14 +137,14 @@
       "id": "kongo-vaftiz-1491",
       "title": { "tr": "Kongo Kralı vaftiz oluyor" },
       "summary": {
-        "tr": "Kongo Kralı Nzinga a Nkuwu, Portekizli misyonerlerin etkisiyle vaftiz olarak João adını aldı. Hristiyanlık, oğlu I. Afonso (1509–1543) döneminde krallığın ağırlıklı dini hâline geldi ve Portekiz ile diplomatik ilişkiler kuruldu."
+        "tr": "Kongo Kralı Nzinga a Nkuwu, Portekizli misyonerlerin etkisiyle vaftiz olarak João adını aldı. Hristiyanlık, oğlu I. Afonso (1509–1542) döneminde krallığın ağırlıklı dini hâline geldi; Portekiz ile ilişkiler, 1480'lerde başlayan temasın ardından bu dönemde yoğunlaştı."
       },
       "date": "1491",
       "location": { "name": { "tr": "Mbanza Kongo" }, "coordinates": [14.25, -6.27] },
       "importance": 3,
       "category": "religion",
       "parties": ["kingdom-of-kongo", "kingdom-of-portugal"],
-      "sources": [{ "wikipedia": "Kingdom of Kongo" }]
+      "sources": [{ "wikipedia": "João I of Kongo" }]
     },
     {
       "id": "girnata-1492",
@@ -163,20 +163,20 @@
       "id": "kolomb-1492",
       "title": { "tr": "Kolomb Karayipler'de" },
       "summary": {
-        "tr": "Kastilya hizmetindeki Kristof Kolomb, Bahamalar'daki bir adaya ayak bastı. Batı'ya yelken açarak Asya'ya ulaşmayı umuyordu; bunun yerine Avrupa ile Amerika kıtaları arasında kalıcı bağlantıyı başlattı."
+        "tr": "Kastilya hizmetindeki Kristof Kolomb, Bahamalar'daki bir adaya ayak bastı. Batı'ya yelken açarak Asya'ya ulaşmayı umuyordu; bunun yerine Avrupa ile Amerika kıtaları arasında kalıcı bir bağlantı başlattı."
       },
       "date": "1492-10-12",
       "location": { "name": { "tr": "Guanahani (Bahamalar)" }, "coordinates": [-74.46, 24.06] },
       "importance": 5,
       "category": "exploration",
       "parties": ["crown-of-castile", "caribbean"],
-      "sources": [{ "wikipedia": "First voyage of Christopher Columbus" }]
+      "sources": [{ "wikipedia": "Voyages of Christopher Columbus" }]
     },
     {
       "id": "tordesillas-1494",
       "title": { "tr": "Tordesillas Antlaşması" },
       "summary": {
-        "tr": "Portekiz ve Kastilya, Avrupa dışında keşfedilecek toprakları aralarında bölüşmek üzere Cape Verde Adaları'nın batısından geçen bir meridyen belirledi. Antlaşma, Atlantik ötesinin Avrupa rekabetine nasıl açılacağını belirledi."
+        "tr": "Portekiz ve Kastilya, Avrupa dışında keşfedilecek toprakları aralarında bölüşmek üzere Yeşil Burun Adaları'nın batısından geçen bir meridyen belirledi. Antlaşma, Avrupa dışındaki dünyanın Portekiz ile Kastilya arasında paylaşılmasının temelini oluşturdu; öbür Avrupa devletleri bunu tanımadı."
       },
       "date": "1494-06-07",
       "location": { "name": { "tr": "Tordesillas" }, "coordinates": [-4.99, 41.5] },
@@ -189,14 +189,14 @@
       "id": "vasco-da-gama-1498",
       "title": { "tr": "Vasco da Gama Hindistan'da" },
       "summary": {
-        "tr": "Vasco da Gama komutasındaki Portekiz filosu, Ümit Burnu'nu dolaşıp Calicut'a ulaştı. Avrupa ile Hint Okyanusu arasında doğrudan deniz yolu açıldı ve baharat ticaretindeki aracı güçlerin konumu sarsıldı."
+        "tr": "Vasco da Gama komutasındaki Portekiz filosu, Ümit Burnu'nu dolaşıp Kalikut'a ulaştı. Avrupa ile Hint Okyanusu arasında doğrudan deniz yolu açıldı ve baharat ticaretindeki aracı güçlerin konumu sarsıldı."
       },
       "date": "1498-05-20",
-      "location": { "name": { "tr": "Calicut (Kozhikode)" }, "coordinates": [75.78, 11.25] },
+      "location": { "name": { "tr": "Kalikut (Kozhikode)" }, "coordinates": [75.78, 11.25] },
       "importance": 4,
       "category": "exploration",
       "parties": ["kingdom-of-portugal", "malabar"],
-      "sources": [{ "wikipedia": "Vasco da Gama" }]
+      "sources": [{ "wikipedia": "Portuguese discovery of the sea route to India" }]
     },
     {
       "id": "kabral-brezilya-1500",
@@ -209,7 +209,7 @@
       "importance": 4,
       "category": "exploration",
       "parties": ["kingdom-of-portugal", "brazil-coast"],
-      "sources": [{ "wikipedia": "Pedro Álvares Cabral" }]
+      "sources": [{ "wikipedia": "Discovery of Brazil" }]
     },
     {
       "id": "safevi-1501",
@@ -228,7 +228,7 @@
       "id": "malaka-1511",
       "title": { "tr": "Portekiz Malaka'yı alıyor" },
       "summary": {
-        "tr": "Afonso de Albuquerque komutasındaki Portekiz kuvvetleri, Hint Okyanusu ile Güney Çin Denizi arasındaki ticaretin anahtarı Malaka'yı ele geçirdi. Sultan Johor'a çekildi; Portekiz, Asya deniz ticaretinde kalıcı üsler kurmuş oldu."
+        "tr": "Afonso de Albuquerque komutasındaki Portekiz kuvvetleri, Hint Okyanusu ile Güney Çin Denizi arasındaki ticaretin anahtarı Malaka'yı ele geçirdi. Sultan Mahmud Şah önce Pahang'a, sonra Bintan'a çekildi; Portekiz, Asya deniz ticaretinde kalıcı bir üs kazandı."
       },
       "date": "1511-08-24",
       "location": { "name": { "tr": "Malaka" }, "coordinates": [102.25, 2.19] },
@@ -252,16 +252,16 @@
     },
     {
       "id": "magellan-elcano-1519",
-      "title": { "tr": "Magellan–Elcano seferi" },
+      "title": { "tr": "Macellan–Elcano seferi" },
       "summary": {
-        "tr": "İspanya adına yola çıkan Fernão de Magalhães'in filosu, Atlantik'ten Pasifik'e geçti. Magellan Filipinler'de öldü; Juan Sebastián Elcano komutasındaki tek gemi dünyayı dolaşarak 1522'de İspanya'ya döndü."
+        "tr": "İspanya adına yola çıkan Macellan'ın (Fernão de Magalhães) filosu, Atlantik'ten Pasifik'e geçti. Macellan Filipinler'de öldü; Juan Sebastián Elcano komutasındaki tek gemi dünyayı dolaşarak 1522'de İspanya'ya döndü."
       },
       "date": { "start": "1519-09-20", "end": "1522-09-06" },
       "location": { "name": { "tr": "Sanlúcar de Barrameda (hareket noktası)" }, "coordinates": [-6.35, 36.78] },
       "importance": 5,
       "category": "exploration",
       "parties": ["spanish-empire"],
-      "sources": [{ "wikipedia": "Ferdinand Magellan" }]
+      "sources": [{ "wikipedia": "Magellan expedition" }]
     },
     {
       "id": "tenochtitlan-1521",
@@ -319,10 +319,10 @@
       "id": "kopernik-1543",
       "title": { "tr": "Kopernik'in Güneş merkezli evreni" },
       "summary": {
-        "tr": "Nikolaus Kopernik, Dünya'nın ve gezegenlerin Güneş etrafında döndüğünü savunan eseri De revolutionibus'u yayımladı. Kitap, evrene bakışı kökten değiştiren Bilimsel Devrim'in başlangıç noktalarından biri sayılır."
+        "tr": "Nikolaus Kopernik, Dünya'nın ve gezegenlerin Güneş etrafında döndüğünü savunan eseri De revolutionibus'u Frombork'ta tamamladı; kitap 1543'te Nürnberg'de basıldı. Eser, evrene bakışı kökten değiştiren Bilimsel Devrim'in başlangıç noktalarından biri sayılır."
       },
       "date": "1543",
-      "location": { "name": { "tr": "Frombork" }, "coordinates": [19.68, 54.36] },
+      "location": { "name": { "tr": "Frombork (eserin yazıldığı yer)" }, "coordinates": [19.68, 54.36] },
       "importance": 4,
       "category": "culture",
       "parties": ["house-of-jagiellon"],

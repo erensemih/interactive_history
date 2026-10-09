@@ -15,7 +15,7 @@
         "tr": "Ahmednagar Sultanlığı"
       },
       "summary": {
-        "tr": "Bahmani Sultanlığı'nın dağılmasıyla 1490'da kurulan, Nizamşahlar'ın yönettiği Deccan sultanlığı. 1565'te Vicayanagara'ya karşı ittifakta yer aldı."
+        "tr": "Bahmani Sultanlığı'nın dağılmasıyla 1490'da kurulan, Nizamşahlar'ın yönettiği Dekkan sultanlığı. 1565'te Vicayanagara'ya karşı ittifakta yer aldı."
       }
     },
     "albanian-principalities": {
@@ -93,14 +93,20 @@
         "tr": "Bahmani Sultanlığı"
       },
       "summary": {
-        "tr": "Deccan'da 1347'de kurulan Müslüman sultanlık. 15. yüzyılın sonunda Ahmednagar, Bicapur, Golkonda, Berar ve Bidar sultanlıklarına bölündü."
+        "tr": "Dekkan'da 1347'de kurulan Müslüman sultanlık. 15. yüzyılın sonunda Ahmednagar, Bicapur, Golkonda, Berar ve Bidar sultanlıklarına bölündü."
       }
     },
     "bahrani-dynasty": {
       "kind": "polity",
       "name": {
-        "tr": "Bahrani Hanedanı"
-      }
+        "tr": "Ahsa ve Bahreyn (Cebrîler)"
+      },
+      "summary": {
+        "tr": "Doğu Arabistan'da Ahsa Vahası, Katif ve Bahreyn adalarına hâkim olan Bedevî hanedanlar; 15. yüzyılda bölgede Cebrîler egemendi. Portekizliler 1521'de Bahreyn'i ele geçirdi."
+      },
+      "wikipedia": "Jabrids",
+      "wikidata": null,
+      "note": "Kaynak veri setinde 'Bahrani Dynasty' etiketiyle geçer."
     },
     "balinese-kingdom": {
       "kind": "polity",
@@ -183,7 +189,7 @@
         "tr": "Bidar Sultanlığı"
       },
       "summary": {
-        "tr": "Bahmani'nin son başkenti Bidar çevresinde, Bereşahlar'ın yönettiği küçük Deccan sultanlığı."
+        "tr": "Bahmani'nin son başkenti Bidar çevresinde, Bereşahlar'ın yönettiği küçük Dekkan sultanlığı."
       }
     },
     "bijapur-sultanate": {
@@ -192,7 +198,7 @@
         "tr": "Bicapur Sultanlığı"
       },
       "summary": {
-        "tr": "Bahmani Sultanlığı'nın dağılması sırasında 1490'larda Yusuf Adil Şah'ın kurduğu Deccan sultanlığı (Adilşahlar). 1565'te Vicayanagara'ya karşı ittifakın başlıca üyelerindendi."
+        "tr": "Bahmani Sultanlığı'nın dağılması sırasında 1490'larda Yusuf Adil Şah'ın kurduğu Dekkan sultanlığı (Adilşahlar). 1565'te Vicayanagara'ya karşı ittifakın başlıca üyelerindendi."
       }
     },
     "blambangan-kingdom": {
@@ -282,8 +288,14 @@
     "county-of-bearn": {
       "kind": "polity",
       "name": {
-        "tr": "Béarn Kontluğu"
-      }
+        "tr": "Béarn Vikontluğu"
+      },
+      "summary": {
+        "tr": "Pireneler'in kuzeyinde, Fransa'nın güneybatısında, Fransa'dan fiilen bağımsız bir toprak. 1479'da Navarra Krallığı ile kişisel birliğe girdi; 1620'de Fransa'ya katıldı."
+      },
+      "wikipedia": "Viscounty of Béarn",
+      "wikidata": null,
+      "note": "Kaynak veri setinde 'County of Béarn' adıyla geçer; Béarn bir vikontluktur."
     },
     "county-of-blois": {
       "kind": "polity",
@@ -294,8 +306,14 @@
     "county-of-brabant": {
       "kind": "polity",
       "name": {
-        "tr": "Brabant Kontluğu"
-      }
+        "tr": "Brabant Dükalığı"
+      },
+      "summary": {
+        "tr": "Bugünkü Belçika'nın orta kesiminde ve Hollanda'nın güneyinde, Brüksel ve Leuven çevresindeki dükalık. 1430'da Burgonya Dükü İyi Philippe'in eline geçti."
+      },
+      "wikipedia": "Duchy of Brabant",
+      "wikidata": null,
+      "note": "Kaynak veri setinde 'County of Brabant' adıyla geçer; Brabant 1183'ten beri dükalıktır."
     },
     "county-of-foix": {
       "kind": "polity",
@@ -324,8 +342,14 @@
     "county-of-savoy": {
       "kind": "polity",
       "name": {
-        "tr": "Savoy Kontluğu"
-      }
+        "tr": "Savoy Dükalığı"
+      },
+      "summary": {
+        "tr": "Alpler'de, bugünkü Fransa, İtalya ve İsviçre sınırlarının kesiştiği bölgedeki devlet. 1416'da Kutsal Roma İmparatoru Sigismund, Savoy Kontu VIII. Amadeus'u dük yaptı; kontluk dükalığa yükseldi."
+      },
+      "wikipedia": "Duchy of Savoy",
+      "wikidata": null,
+      "note": "Kaynak veri setinde 'County of Savoy' adıyla geçer; 1416'dan sonra dükalıktır."
     },
     "county-of-touraine": {
       "kind": "polity",
@@ -363,7 +387,7 @@
         "tr": "Kastilya Tacı"
       },
       "summary": {
-        "tr": "İber Yarımadası'nın merkezini ve güneyini kapsayan krallık. Isabel'in 1469'daki evliliği ve 1474'te tahta çıkışıyla Aragon Tacı ile kişisel birliğe girdi. 1492'de Gırnata'yı aldı ve Kolomb'un seferini destekledi."
+        "tr": "İber Yarımadası'nın merkezini ve güneyini kapsayan krallık. Isabel'in 1469'daki evliliği, 1474'te tahta çıkışı ve Ferdinand'ın 1479'da Aragon tahtına geçmesiyle Aragon Tacı ile kişisel birliğe girdi. 1492'de Gırnata'yı aldı ve Kolomb'un seferini destekledi."
       }
     },
     "cuzco": {
@@ -630,7 +654,7 @@
     "germiyanids": {
       "kind": "polity",
       "name": {
-        "tr": "Germiyanoğulları"
+        "tr": "Germiyanoğulları Beyliği"
       },
       "summary": {
         "tr": "Kütahya merkezli Türkmen beyliği (Germiyanoğulları). 14. yüzyılda Batı Anadolu'nun en büyük beyliklerinden biriydi; II. Yakub'un ölümüyle (1429) toprakları vasiyet yoluyla Osmanlılara geçti."
@@ -648,7 +672,7 @@
         "tr": "Golkonda Sultanlığı"
       },
       "summary": {
-        "tr": "Bahmani mirasından doğan, Kutubşahlar'ın yönettiği Deccan sultanlığı. Golkonda Kalesi ve elmas ticaretiyle tanınır."
+        "tr": "Bahmani mirasından doğan, Kutubşahlar'ın yönettiği Dekkan sultanlığı. Golkonda Kalesi ve elmas ticaretiyle tanınır."
       }
     },
     "golden-horde": {
@@ -711,8 +735,12 @@
     "hashemite-arab-federation": {
       "kind": "polity",
       "name": {
-        "tr": "Haşimî Arap Federasyonu"
-      }
+        "tr": "Arap Irak'ı"
+      },
+      "summary": {
+        "tr": "Dicle ve Fırat boyunda, bugünkü Irak'ın büyük bölümünü kapsayan bölge; dönemin kaynaklarında “Irak-ı Arab” olarak anılır."
+      },
+      "note": "Kaynak veri setinde 'Hashemite Arab Federation' (1958 Irak–Ürdün birliği) etiketiyle geçer; Wikipedia bağlantısı 'Arab Iraq'tır."
     },
     "haudenosaunee": {
       "kind": "polity",
@@ -744,7 +772,7 @@
         "tr": "Kutsal Roma İmparatorluğu'nun küçük devletleri"
       },
       "summary": {
-        "tr": "Kutsal Roma İmparatorluğu içinde ayrıca adlandırılmamış çok sayıda küçük prenslik, piskoposluk, serbest şehir ve kont toprağı. Veri setinde tek bir bölge olarak gösterilir."
+        "tr": "Kutsal Roma İmparatorluğu içinde ayrıca adlandırılmamış çok sayıda küçük prenslik, piskoposluk, serbest şehir ve kont toprağı. Haritada tek bir bölge olarak gösterilir."
       }
     },
     "house-of-ascania": {
@@ -771,7 +799,7 @@
         "tr": "Jagiellon Hanedanı toprakları"
       },
       "summary": {
-        "tr": "Polonya, Litvanya, Bohemya ve Macaristan tahtlarında hüküm süren Jagiellon hanedanının hâkim olduğu geniş Orta ve Doğu Avrupa kuşağı. Veri setinde bu dönemde hanedanın doğrudan idaresindeki topraklar bu adla gösterilir."
+        "tr": "Polonya, Litvanya, Bohemya ve Macaristan tahtlarında hüküm süren Jagiellon hanedanının hâkim olduğu geniş Orta ve Doğu Avrupa kuşağı. Haritada bu ad, hanedanın doğrudan idaresindeki toprakları gösterir."
       }
     },
     "house-of-luxembourg": {
@@ -861,13 +889,13 @@
         "tr": "Jaunpur Sultanlığı"
       },
       "summary": {
-        "tr": "Gange Ovası'nda, Delhi Sultanlığı'ndan ayrılan Şarkîler'in sultanlığı. 1479'da Delhi'deki Lodi sultanı Behlül tarafından ele geçirildi."
+        "tr": "Ganj Ovası'nda, Delhi Sultanlığı'ndan ayrılan Şarkîler'in sultanlığı. 1479'da Delhi'deki Lodi sultanı Behlül tarafından ele geçirildi."
       }
     },
     "jesuit-reducciones": {
       "kind": "polity",
       "name": {
-        "tr": "Cizvit Reducciones'leri"
+        "tr": "Cizvit Misyon Köyleri (Reducciones)"
       }
     },
     "joseon": {
@@ -954,7 +982,7 @@
         "tr": "Khmer İmparatorluğu"
       },
       "summary": {
-        "tr": "Angkor merkezli büyük Güneydoğu Asya imparatorluğu. 15. yüzyılın başında Ayutthaya baskısı altında Angkor'u terk edip başkentini güneye taşıdı."
+        "tr": "Angkor merkezli büyük Güneydoğu Asya imparatorluğu. Ayutthaya'nın 1431'de Angkor'u ele geçirmesinin ardından, 15. yüzyılın ortalarında başkentini güneye (Phnom Penh çevresine) taşıdı."
       }
     },
     "khoshut-khanate": {
@@ -969,7 +997,7 @@
         "tr": "Bohemya Krallığı"
       },
       "summary": {
-        "tr": "Bohemya Krallığı. 1415'te Jan Hus'un yakılmasının ardından Hus Savaşları (1419–1434) yaşandı; 1526'da Habsburg hanedanına geçti."
+        "tr": "Orta Avrupa'da Bohemya (Çek) krallığı. 1415'te Jan Hus'un yakılmasının ardından Hus Savaşları (1419–1434) yaşandı; 1526'da Habsburg hanedanına geçti."
       }
     },
     "kingdom-of-bosnia": {
@@ -978,7 +1006,7 @@
         "tr": "Bosna Krallığı"
       },
       "summary": {
-        "tr": "Balkanlar'da Bosna krallığı; 1463'te Osmanlılar tarafından fethedildi."
+        "tr": "Balkanlar'da, bugünkü Bosna-Hersek çevresindeki krallık; 1463'te Osmanlılar tarafından fethedildi."
       }
     },
     "kingdom-of-cyprus": {
@@ -1002,7 +1030,7 @@
         "tr": "İngiltere Krallığı"
       },
       "summary": {
-        "tr": "Yüzyıl Savaşları'nı kaybedip kıta topraklarını yitirdikten sonra Güller Savaşı (1455–1487) ile uğraştı; 1485'te Tudor Hanedanı iktidara geldi. VIII. Henry döneminde Roma'dan koptu (1534); I. Elizabeth döneminde (1558–1603) denizde güçlenip 1588'de İspanyol Armadası'nı karşıladı."
+        "tr": "Yüzyıl Savaşları'nı kaybedip kıta topraklarını yitirdikten sonra Güller Savaşı (1455–1487) ile uğraştı; 1485'te Tudor Hanedanı iktidara geldi. VIII. Henry döneminde Roma'dan koptu (1534); I. Elizabeth döneminde (1558–1603) denizde güçlenip 1588'de İspanyol Armadası'nı püskürttü."
       }
     },
     "kingdom-of-france": {
@@ -1020,7 +1048,7 @@
         "tr": "Gürcistan Krallığı"
       },
       "summary": {
-        "tr": "Güney Kafkasya'nın Hristiyan krallığı. 15. yüzyılda Timur akınları ve Osmanlı-Safevî rekabeti yüzünden Kartli, Kaheti ve İmereti krallıklarına bölündü."
+        "tr": "Güney Kafkasya'nın Hristiyan krallığı. 15. yüzyılda Timur akınları, Akkoyunlu baskısı, İstanbul'un düşüşüyle Avrupa'dan kopuş ve iç çekişmeler yüzünden Kartli, Kaheti ve İmereti krallıklarına bölündü."
       }
     },
     "kingdom-of-hungary": {
@@ -1029,7 +1057,7 @@
         "tr": "Macaristan Krallığı"
       },
       "summary": {
-        "tr": "Orta Avrupa'nın büyük krallığı. Hunyadi János ve oğlu Matyas Corvinus (1458–1490) döneminde güç zirvesine ulaştı; 1526'da Mohaç'ta Osmanlı'ya yenilince üçe bölündü."
+        "tr": "Orta Avrupa'nın büyük krallığı. Hunyadi János ve oğlu Mátyás Corvinus (1458–1490) döneminde güç zirvesine ulaştı; 1526'da Mohaç'ta Osmanlı'ya yenilince üçe bölündü."
       }
     },
     "kingdom-of-imereti": {
@@ -1080,7 +1108,7 @@
         "tr": "Napoli Krallığı"
       },
       "summary": {
-        "tr": "Güney İtalya krallığı. 1442'de Aragon Tacı'na, 1504'te İspanya'ya geçti."
+        "tr": "Güney İtalya krallığı. 1442'de Aragonlu V. Alfonso'nun eline geçti; 1458'den sonra Napoli'deki Trastámara kolu tarafından ayrı bir krallık olarak yönetildi ve 1504'te İspanya'ya katıldı."
       }
     },
     "kingdom-of-navarre": {
@@ -1092,8 +1120,14 @@
     "kingdom-of-pajana": {
       "kind": "polity",
       "name": {
-        "tr": "Pajana Krallığı"
-      }
+        "tr": "Pajang Sultanlığı"
+      },
+      "summary": {
+        "tr": "Orta Java'da, Surakarta yakınlarında 1568'de Hadiwijaya (Jaka Tingkir) tarafından kurulan, Demak'ın mirasçısı sultanlık. 1580'lerde Mataram'a boyun eğdi."
+      },
+      "wikipedia": "Pajang",
+      "wikidata": null,
+      "note": "Kaynak veri setinde 'Kingdom of Pajana' etiketiyle geçer (bağlantısı 'Lontara script' makalesine gidiyordu); poligon Orta Java'dadır."
     },
     "kingdom-of-poland": {
       "kind": "polity",
@@ -1110,7 +1144,7 @@
         "tr": "Portekiz Krallığı"
       },
       "summary": {
-        "tr": "Atlantik'te keşif seferlerinin öncüsü. 1415'te Ceuta'yı alarak Afrika kıyıları boyunca ilerledi; Bartolomeu Dias (1488) ve Vasco da Gama (1498) ile Hint Okyanusu yolunu açtı. 1580'de Kral Sebastião'nun ölümünden sonra İspanya Kralı II. Felipe'nin yönetimine girdi."
+        "tr": "Atlantik'te keşif seferlerinin öncüsü. 1415'te Ceuta'yı alarak Afrika kıyıları boyunca ilerledi; Bartolomeu Dias (1488) ve Vasco da Gama (1498) ile Hint Okyanusu yolunu açtı. Kral Sebastião'nun 1578'de Alcácer Quibir'de ölmesinin ardından çıkan veraset krizinde 1580'de İspanya Kralı II. Felipe'nin yönetimine girdi."
       }
     },
     "kingdom-of-scotland": {
@@ -1119,7 +1153,7 @@
         "tr": "İskoçya Krallığı"
       },
       "summary": {
-        "tr": "İskoçya Krallığı. 1513'te Flodden'da İngiltere'ye yenildi, 1560'ta Reform'u benimsedi; 1603'te Kral VI. James'in İngiltere tahtına geçmesiyle taç birliği kuruldu."
+        "tr": "Britanya'nın kuzeyindeki krallık. 1513'te Flodden'da İngiltere'ye yenildi, 1560'ta Reform'u benimsedi; 1603'te Kral VI. James'in İngiltere tahtına geçmesiyle taç birliği kuruldu."
       }
     },
     "kingdom-of-singapura": {
@@ -1149,8 +1183,10 @@
     "lan-na": {
       "kind": "polity",
       "name": {
-        "tr": "Lan Na"
-      }
+        "tr": "Lan Na Krallığı"
+      },
+      "sameAs": "lan-na-kingdom",
+      "note": "Veri setinde aynı devletin 1600 yılı kaydı ayrı adla geçer (aynı Vikiveri kimliği)."
     },
     "lan-na-kingdom": {
       "kind": "polity",
@@ -1203,8 +1239,14 @@
     "mahdids": {
       "kind": "polity",
       "name": {
-        "tr": "Mehdîler"
-      }
+        "tr": "Umman (Nebhânîler)"
+      },
+      "summary": {
+        "tr": "Umman'ın iç bölgelerinde, Nizva ve Bahla çevresinde hüküm süren Nebhânî hanedanı (12.–17. yüzyıl). İmamlarla yerel hanedanlar arasındaki çekişme dönemin özelliğiydi; 1507'de Portekizliler kıyıdaki Maskat'ı ele geçirdi."
+      },
+      "wikipedia": "Nabhani dynasty",
+      "wikidata": null,
+      "note": "Kaynak veri setinde 'Mahdids' (Yemen'deki 12. yüzyıl hanedanı) etiketiyle geçer; poligon Umman'ın iç kesimindedir (Nizva)."
     },
     "majapahit": {
       "kind": "polity",
@@ -1218,8 +1260,10 @@
     "makuria": {
       "kind": "polity",
       "name": {
-        "tr": "Makuria"
-      }
+        "tr": "Makuria Krallığı"
+      },
+      "sameAs": "makuria-kingdom",
+      "note": "Veri setinde aynı devletin 1400–1414 kaydı ayrı adla geçer (aynı Vikiveri kimliği)."
     },
     "makuria-kingdom": {
       "kind": "polity",
@@ -1263,7 +1307,7 @@
         "tr": "Merînî Sultanlığı"
       },
       "summary": {
-        "tr": "Fas'ın Merînî sultanlığı; 15. yüzyılda zayıflayıp Vattasîlere geçti."
+        "tr": "Fas'ı yöneten Merînî hanedanı; 15. yüzyılda zayıflayıp yerini Vattasîlere bıraktı."
       }
     },
     "mataram-sultanate": {
@@ -1293,7 +1337,7 @@
         "tr": "Ming Hanedanı"
       },
       "summary": {
-        "tr": "1368'de Moğol Yuan hanedanını devirerek kurulan Han Çinlilerinin hanedanı. 1400–1600 arasında başkent Nanjing'den Pekin'e taşındı (1421), Zheng He'nin denizaşırı seferleri yapıldı, Büyük Sur güçlendirildi ve Amerika ile Japonya'dan gelen gümüş ekonomiyi paraya dayalı hale getirdi. Kuzeyde Moğol akınları, kıyılarda korsanlar ve Kore'deki Japon işgali (1592–1598) devleti uzun süre zorladı."
+        "tr": "1368'de Moğol Yuan hanedanını devirerek kurulan Han Çinlilerinin hanedanı. 1400–1600 arasında başkent Nanjing'den Pekin'e taşındı (1421), Zheng He'nin denizaşırı seferleri yapıldı, Çin Seddi güçlendirildi ve Amerika ile Japonya'dan gelen gümüş ekonomiyi paraya dayalı hâle getirdi. Kuzeyde Moğol akınları, kıyılarda korsanlar ve Kore'deki Japon işgali (1592–1598) devleti uzun süre zorladı."
       }
     },
     "moghulistan": {
@@ -1344,14 +1388,20 @@
     "nayaks-of-thanjavur": {
       "kind": "polity",
       "name": {
-        "tr": "Tançavur Nayakları"
+        "tr": "Tancavur Nayakları"
       }
     },
     "ngo-dynasty": {
       "kind": "polity",
       "name": {
-        "tr": "Ngô Hanedanı"
-      }
+        "tr": "Hồ Hanedanı (Đại Ngu)"
+      },
+      "summary": {
+        "tr": "Vietnam'da 1400'de Hồ Quý Ly'nin Trần hanedanının yerine geçerek kurduğu, adını Đại Ngu olarak değiştirdiği devlet. 1407'de Ming ordularının işgaliyle yıkıldı."
+      },
+      "wikipedia": "Hồ Quý Ly",
+      "wikidata": null,
+      "note": "Kaynak veri setinde 'Ngô Dynasty' (10. yüzyıl) etiketiyle geçer; 1400–1406 için Hồ hanedanı doğrudur."
     },
     "nguyen-lords": {
       "kind": "polity",
@@ -1398,7 +1448,7 @@
         "tr": "Osmanlı İmparatorluğu"
       },
       "summary": {
-        "tr": "Osman Bey'in 13. yüzyılın sonunda Batı Anadolu'da kurduğu beylikten doğan devlet, 1400–1600 arasında Anadolu ve Balkanlar'ın yanında 1517'den sonra Mısır, Suriye ve Hicaz'ı da kapsayan çok uluslu bir imparatorluğa dönüştü. 1402'de Ankara'da Timur'a yenilip on yıl süren bir taht mücadelesine girdi; 1453'te İstanbul'u alarak başkentini Bizans'ın eski merkezine taşıdı. Kanuni Sultan Süleyman döneminde (1520–1566) Akdeniz'den Orta Avrupa'ya, Kızıldeniz ve Basra Körfezi'ne uzanan en geniş güç alanına ulaştı."
+        "tr": "Osman Bey'in 13. yüzyılın sonunda Kuzeybatı Anadolu'da kurduğu beylikten doğan devlet, 1400–1600 arasında Anadolu ve Balkanlar'ın yanında 1517'den sonra Mısır, Suriye ve Hicaz'ı da kapsayan çok uluslu bir imparatorluğa dönüştü. 1402'de Ankara'da Timur'a yenilip on bir yıl süren bir taht mücadelesine (Fetret Devri) girdi; 1453'te İstanbul'u alarak başkentini Bizans'ın eski merkezine taşıdı. Kanuni Sultan Süleyman döneminde (1520–1566) Akdeniz'den Orta Avrupa'ya, Kızıldeniz ve Basra Körfezi'ne uzanan geniş bir güç alanına ulaştı."
       }
     },
     "papal-states": {
@@ -1494,7 +1544,7 @@
         "tr": "Boğdan Prensliği"
       },
       "summary": {
-        "tr": "Karpatlar'ın doğusundaki Boğdan prensliği. Büyük Stefan (1457–1504) döneminde güçlendi; 1538'den sonra Osmanlı etkisi arttı."
+        "tr": "Karpatlar'ın doğusundaki Boğdan prensliği. Büyük Stefan (1457–1504) döneminde güçlendi; 1456'dan beri Osmanlı'ya haraç ödedi; 1538'den sonra Osmanlı denetimi sıkılaştı."
       }
     },
     "principality-of-orange": {
@@ -1542,7 +1592,7 @@
         "tr": "Eflak Prensliği"
       },
       "summary": {
-        "tr": "Tuna'nın kuzeyinde, Osmanlı ile Macar Krallığı arasında kalan prenslik. III. Vlad (Kazıklı Voyvoda) 1456–1462 arasında hüküm sürdü; sonraki yüzyılda Osmanlı'ya haraç ödedi."
+        "tr": "Tuna'nın kuzeyinde, Osmanlı ile Macar Krallığı arasında kalan prenslik. III. Vlad (Kazıklı Voyvoda) 1456–1462 arasında hüküm sürdü; prenslik 1417 dolaylarından itibaren Osmanlı'ya haraç ödedi."
       }
     },
     "prome-kingdom": {
@@ -1743,7 +1793,7 @@
     "small-horde": {
       "kind": "polity",
       "name": {
-        "tr": "Küçük Orda"
+        "tr": "Küçük Nogay Ordası"
       }
     },
     "songhai-empire": {
@@ -1797,7 +1847,7 @@
         "tr": "Bengal Sultanlığı"
       },
       "summary": {
-        "tr": "Gange Deltası'nda bağımsız Müslüman sultanlık; ticareti ve Bengalce edebiyatın gelişmesiyle tanınır. 1538'de Şir Şah'ın Sûr İmparatorluğu'na, sonra Babürlere geçti."
+        "tr": "Ganj Deltası'nda bağımsız Müslüman sultanlık; ticareti ve Bengalce edebiyatın gelişmesiyle tanınır. 1538'de Şir Şah'ın Sûr İmparatorluğu'na, sonra Babürlere geçti."
       }
     },
     "sultanate-of-bone": {
@@ -1854,7 +1904,7 @@
         "tr": "Malaka Sultanlığı"
       },
       "summary": {
-        "tr": "Malay Yarımadası'nın güneybatısında Malaka Boğazı'nı denetleyen, Hint Okyanusu ticaretinin en önemli limanı. 1511'de Portekizliler tarafından ele geçirildi; sultanlar Johor'a çekildi."
+        "tr": "Malay Yarımadası'nın güneybatısında Malaka Boğazı'nı denetleyen, Hint Okyanusu ticaretinin en önemli limanlarından biri. 1511'de Portekizliler tarafından ele geçirildi; son sultan Mahmud Şah önce Pahang'a, sonra Bintan'a çekildi; oğlu 1528'de Johor Sultanlığı'nı kurdu."
       }
     },
     "sultanate-of-palembang": {
@@ -1950,7 +2000,7 @@
         "tr": "Tokugawa Şogunluğu"
       },
       "summary": {
-        "tr": "1600'deki Sekigahara Muharebesi'nin ardından Tokugawa Ieyasu'nun kurduğu şogunluk (1603'te resmen). Veri setinde yalnızca 1600 yılında görünür."
+        "tr": "1600'deki Sekigahara Muharebesi'nin ardından Tokugawa Ieyasu'nun kurduğu şogunluk (1603'te resmen). Haritada yalnızca 1600 yılında görünür."
       }
     },
     "tondo": {
@@ -2013,7 +2063,7 @@
         "tr": "Vicayanagara İmparatorluğu"
       },
       "summary": {
-        "tr": "Güney Hindistan'da Tungabhadra Nehri kıyısında, Hampi merkezli Hindu imparatorluk. Deccan sultanlıklarının 1565'teki Talikota Savaşı'nda yenmesiyle başkenti yağmalandı ve imparatorluk güç kaybetti."
+        "tr": "Güney Hindistan'da Tungabhadra Nehri kıyısında, Hampi merkezli Hindu imparatorluk. Dekkan sultanlıkları 1565'teki Talikota Savaşı'nda imparatorluğu yenince başkenti yağmalandı ve imparatorluk güç kaybetti."
       }
     },
     "warring-states-japan": {
@@ -2062,7 +2112,7 @@
         "tr": "Malabar Kıyısı"
       },
       "summary": {
-        "tr": "Hindistan'ın güneybatı kıyısı; Calicut (Kozhikode) ve Cochin gibi baharat ticareti limanlarına sahipti. 1498'de Vasco da Gama'nın gelişi, Avrupa'nın Hint Okyanusu ticaretine doğrudan girişini başlattı."
+        "tr": "Hindistan'ın güneybatı kıyısı; Kalikut (Kozhikode) ve Cochin gibi baharat ticareti limanlarına sahipti. 1498'de Vasco da Gama'nın gelişi, Avrupa'nın Hint Okyanusu ticaretine doğrudan girişini başlattı."
       },
       "bounds": [74.5, 8, 77.5, 13.5]
     },
