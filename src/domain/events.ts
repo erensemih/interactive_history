@@ -53,6 +53,7 @@ export function normalizeEvent(raw: RawEvent, set: string): HistoricalEvent {
     start: startAt,
     end: endAt,
     approximate,
+    range: end !== null,
     dateLabel: formatDateRange(start, end, approximate),
     year: start.year,
     location: { name: raw.location.name.tr, lon: raw.location.coordinates[0], lat: raw.location.coordinates[1] },
@@ -78,7 +79,7 @@ export function mapEventsInRange(events: HistoricalEvent[], range: YearRange): H
 
 /** How many markers the map may carry at a zoom level: world view stays calm, zooming in adds more. */
 export function markerBudget(zoom: number): number {
-  return Math.max(4, Math.round(7 * 2 ** (0.85 * (zoom - 2))));
+  return Math.max(6, Math.round(10 * 2 ** (0.8 * (zoom - 1.8))));
 }
 
 /** Importance first, then closeness to the displayed border year, then id (stable). */
@@ -99,11 +100,7 @@ export function pickMarkers(
 }
 
 /** Events on a place's timeline: any party in the place's lineage, inside the window. No distance test. */
-export function timelineEvents(
-  events: HistoricalEvent[],
-  lineage: Set<string>,
-  window: YearRange,
-): HistoricalEvent[] {
+export function timelineEvents(events: HistoricalEvent[], lineage: Set<string>, window: YearRange): HistoricalEvent[] {
   const [a, b] = rangeInterval(window);
   return events
     .filter((e) => overlaps(e.start, e.end, a, b) && e.parties.some((p) => lineage.has(p)))

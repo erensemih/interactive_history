@@ -78,6 +78,8 @@ export interface HistoricalEvent {
   start: number;
   end: number;
   approximate: boolean;
+  /** True when the data gives an explicit end date (draws a duration bar on timelines). */
+  range: boolean;
   /** Human readable Turkish date, e.g. "6 Nisan – 29 Mayıs 1453". */
   dateLabel: string;
   /** The year used when the UI needs a single year for the event (start). */

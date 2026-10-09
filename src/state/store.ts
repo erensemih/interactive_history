@@ -22,7 +22,10 @@ export class Store {
   private current: AppState;
   private listeners = new Set<Listener>();
 
-  constructor(initial: AppState, private readonly extent: YearRange) {
+  constructor(
+    initial: AppState,
+    private readonly extent: YearRange,
+  ) {
     this.current = initial;
   }
 
@@ -46,6 +49,11 @@ export class Store {
     if ((Object.keys(patch) as (keyof AppState)[]).every((k) => Object.is(prev[k], next[k]))) return;
     this.current = next;
     for (const fn of this.listeners) fn(next, prev);
+  }
+
+  /** Re-notify listeners without changing state (for purely visual, view-local toggles). */
+  refresh() {
+    for (const fn of this.listeners) fn(this.current, this.current);
   }
 
   /* ------------------------------------------------------------- actions */

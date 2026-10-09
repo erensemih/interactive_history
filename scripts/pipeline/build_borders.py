@@ -256,6 +256,23 @@ def build_borders(args, land: BaseGeometry):
         )
     print(f"rows kept: {len(rows)} (skipped empty after clipping: {skipped})")
 
+    # Cliopatria lists `MemberOf` on only some of an entity's rows (e.g. Saxony: 1400-1428 only).
+    # Membership is assumed to continue until another membership is stated: carry it forward in time.
+    carried = 0
+    by_entity = defaultdict(list)
+    for r in rows:
+        by_entity[r["id"]].append(r)
+    for rs in by_entity.values():
+        rs.sort(key=lambda r: r["from"])
+        last = []
+        for r in rs:
+            if r["up"]:
+                last = r["up"]
+            elif last:
+                r["up"] = list(last)
+                carried += 1
+    print(f"membership carried forward on {carried} rows")
+
     tints = assign_tints(rows)
     rows.sort(key=lambda r: (-r["area"], r["id"], r["from"]))  # big first -> small drawn on top
 

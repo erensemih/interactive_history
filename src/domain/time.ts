@@ -79,7 +79,10 @@ export function formatParsed(p: ParsedDate, opts: { omitYear?: boolean } = {}): 
 /** Turkish label for an event's date (single date or range), e.g. "6 Nisan – 29 Mayıs 1453". */
 export function formatDateRange(start: ParsedDate, end: ParsedDate | null, approximate: boolean): string {
   const prefix = approximate ? 'yak. ' : '';
-  if (!end || (end.year === start.year && end.month === start.month && end.day === start.day && end.precision === start.precision)) {
+  if (
+    !end ||
+    (end.year === start.year && end.month === start.month && end.day === start.day && end.precision === start.precision)
+  ) {
     return prefix + formatParsed(start);
   }
   if (start.year === end.year) {
@@ -178,7 +181,8 @@ export function axisTicks(lo: number, hi: number, width: number, minGap = 64): {
     }
   }
   const out: { year: number; major: boolean }[] = [];
-  const majorEvery = step >= 50 ? step : step * (step === 1 ? 5 : step === 2 ? 5 : step === 5 ? 2 : step === 10 ? 5 : 2);
+  const majorEvery =
+    step >= 50 ? step : step * (step === 1 ? 5 : step === 2 ? 5 : step === 5 ? 2 : step === 10 ? 5 : 2);
   for (let y = Math.ceil(lo / step) * step; y <= hi + 1; y += step) {
     out.push({ year: y, major: y % majorEvery === 0 });
   }

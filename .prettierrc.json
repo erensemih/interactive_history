@@ -1,0 +1,8 @@
+{
+  "singleQuote": true,
+  "printWidth": 120,
+  "trailingComma": "all",
+  "overrides": [
+    { "files": "public/data/**/*.json", "options": { "printWidth": 140 } }
+  ]
+}

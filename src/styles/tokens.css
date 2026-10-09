@@ -1,0 +1,55 @@
+/*
+ * Design tokens. A printed-atlas palette: warm paper, brown-black ink, quiet pastel polity tints,
+ * and exactly one loud colour (vermilion) that always means "this is what you chose".
+ * Marker colours live in src/domain/categories.ts (validated for colour-blind separation).
+ */
+:root {
+  color-scheme: light;
+
+  --font-serif: 'Newsreader Variable', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* paper and ink */
+  --paper: #f5f0e4;
+  --paper-2: #eee7d9;
+  --paper-3: #e4dbca;
+  --paper-4: #d9cfba;
+  --ink: #1f1b16;
+  --ink-2: #4a4339;
+  --ink-3: #665d4f; /* muted text, 5.7:1 on paper */
+  --rule: #d8ceb9;
+  --rule-strong: #bdb097;
+
+  /* map */
+  --sea: #bdd0d5;
+  --sea-deep: #acc2c8;
+  --land-nodata: #ebe6d9;
+  --coast: #3a3128;
+  --border-ink: #5d4d3b;
+  --halo: rgb(245 240 228 / 0.92);
+
+  /* selection accent (vermilion): reserved for the user's own choices */
+  --accent: #cf3a21;
+  --accent-ink: #a5301d; /* text on paper, 6:1 */
+  --accent-wash: rgb(207 58 33 / 0.12);
+
+  /* nine polity tints: graph-coloured at build time so neighbours differ; identity is carried
+     by labels and borders, never by colour alone */
+  --tint-0: #e7dbc4;
+  --tint-1: #cfdecb;
+  --tint-2: #efd4cc;
+  --tint-3: #c4dddd;
+  --tint-4: #ded4ea;
+  --tint-5: #f1d9c5;
+  --tint-6: #d7dac1;
+  --tint-7: #c9d8e7;
+  --tint-8: #ead4db;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow-float: 0 1px 0 rgb(60 45 20 / 0.06), 0 8px 22px -10px rgb(60 45 20 / 0.35);
+
+  --panel-w: 410px;
+  --topbar-h: 46px;
+  --gutter: 24px;
+}

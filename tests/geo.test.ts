@@ -3,7 +3,13 @@ import { boundsOf, pointInPolygon, primaryAt, resolvePlace, rowContains, soverei
 import type { BorderRow, Entity, PolygonCoords } from '../src/domain/types';
 
 const square = (x: number, y: number, s: number): PolygonCoords => [
-  [[x, y], [x + s, y], [x + s, y + s], [x, y + s], [x, y]],
+  [
+    [x, y],
+    [x + s, y],
+    [x + s, y + s],
+    [x, y + s],
+    [x, y],
+  ],
 ];
 
 function row(id: string, from: number, to: number, area: number, poly: PolygonCoords, up: string[] = []): BorderRow {
@@ -12,8 +18,20 @@ function row(id: string, from: number, to: number, area: number, poly: PolygonCo
 
 describe('point in polygon', () => {
   const donut: PolygonCoords = [
-    [[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]],
-    [[4, 4], [6, 4], [6, 6], [4, 6], [4, 4]],
+    [
+      [0, 0],
+      [10, 0],
+      [10, 10],
+      [0, 10],
+      [0, 0],
+    ],
+    [
+      [4, 4],
+      [6, 4],
+      [6, 6],
+      [4, 6],
+      [4, 4],
+    ],
   ];
   it('respects holes', () => {
     expect(pointInPolygon(2, 2, donut)).toBe(true);

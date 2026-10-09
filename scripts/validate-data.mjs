@@ -94,8 +94,10 @@ export function validateAll(root = DEFAULT_ROOT) {
       const p = f.properties ?? {};
       if (!p.id || !entities[p.id]) errors.push(`borders: "${p.id}" için entities.json kaydı yok`);
       if (!(p.from <= p.to)) errors.push(`borders: ${p.id} from/to geçersiz`);
-      for (const up of p.up ?? []) if (!entities[up]) errors.push(`borders: ${p.id} üst yapısı "${up}" entities.json'da yok`);
-      if (!f.geometry || !['Polygon', 'MultiPolygon'].includes(f.geometry.type)) errors.push(`borders: ${p.id} geometrisi geçersiz`);
+      for (const up of p.up ?? [])
+        if (!entities[up]) errors.push(`borders: ${p.id} üst yapısı "${up}" entities.json'da yok`);
+      if (!f.geometry || !['Polygon', 'MultiPolygon'].includes(f.geometry.type))
+        errors.push(`borders: ${p.id} geometrisi geçersiz`);
     }
     stats.borderRows = n;
   }
@@ -149,11 +151,13 @@ export function validateAll(root = DEFAULT_ROOT) {
       // location
       const c = ev.location?.coordinates;
       if (!ev.location?.name?.tr) err('location.name.tr eksik');
-      if (!Array.isArray(c) || c.length !== 2 || c.some((n) => typeof n !== 'number')) err('location.coordinates [boylam, enlem] olmalı');
+      if (!Array.isArray(c) || c.length !== 2 || c.some((n) => typeof n !== 'number'))
+        err('location.coordinates [boylam, enlem] olmalı');
       else if (Math.abs(c[0]) > 180 || Math.abs(c[1]) > 90) err(`koordinat aralık dışı: ${JSON.stringify(c)}`);
 
       // importance / category
-      if (!Number.isInteger(ev.importance) || ev.importance < 1 || ev.importance > 5) err('importance 1–5 arası tamsayı olmalı');
+      if (!Number.isInteger(ev.importance) || ev.importance < 1 || ev.importance > 5)
+        err('importance 1–5 arası tamsayı olmalı');
       else byImportance[ev.importance]++;
       if (!categoryIds.has(ev.category)) err(`bilinmeyen kategori "${ev.category}"`);
 
@@ -168,7 +172,8 @@ export function validateAll(root = DEFAULT_ROOT) {
       }
 
       // sources
-      if (!Array.isArray(ev.sources) || ev.sources.length === 0) err('kaynak yok (Vikipedi bağlantısı ya da Wikidata kimliği gerekli)');
+      if (!Array.isArray(ev.sources) || ev.sources.length === 0)
+        err('kaynak yok (Vikipedi bağlantısı ya da Wikidata kimliği gerekli)');
       else {
         for (const src of ev.sources) {
           if (!src.wikipedia && !src.wikidata && !src.url) err(`kaynak geçersiz: ${JSON.stringify(src)}`);
@@ -195,7 +200,9 @@ function main() {
   console.log('İstatistik:', JSON.stringify(stats, null, 1));
   for (const w of warnings) console.warn('  uyarı:', w);
   for (const e of errors) console.error('  HATA:', e);
-  console.log(errors.length ? `\n${errors.length} hata, ${warnings.length} uyarı` : `\nVeri geçerli (${warnings.length} uyarı)`);
+  console.log(
+    errors.length ? `\n${errors.length} hata, ${warnings.length} uyarı` : `\nVeri geçerli (${warnings.length} uyarı)`,
+  );
   process.exit(errors.length ? 1 : 0);
 }
 

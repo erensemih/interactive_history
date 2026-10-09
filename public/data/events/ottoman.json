@@ -6,7 +6,9 @@
     {
       "id": "ankara-muharebesi-1402",
       "title": { "tr": "Ankara Muharebesi" },
-      "summary": { "tr": "Timur'un ordusu, I. Bayezid komutasındaki Osmanlı ordusunu Ankara yakınlarında bozguna uğrattı; Bayezid esir düştü. Yenilgi, Osmanlı Devleti'ni 1413'e kadar süren Fetret Devri'ne sürükledi." },
+      "summary": {
+        "tr": "Timur'un ordusu, I. Bayezid komutasındaki Osmanlı ordusunu Ankara yakınlarında bozguna uğrattı; Bayezid esir düştü. Yenilgi, Osmanlı Devleti'ni 1413'e kadar süren Fetret Devri'ne sürükledi."
+      },
       "date": "1402-07-28",
       "location": { "name": { "tr": "Çubuk Ovası (Ankara)" }, "coordinates": [33.0, 40.2] },
       "importance": 4,
@@ -17,7 +19,9 @@
     {
       "id": "fetret-sonu-1413",
       "title": { "tr": "Fetret Devri'nin sonu" },
-      "summary": { "tr": "Bayezid'in oğulları arasındaki on bir yıllık taht mücadelesini I. Mehmed (Çelebi) kazandı ve devletin tek hükümdarı oldu. Osmanlı Devleti parçalanma tehlikesini atlatarak yeniden toparlandı." },
+      "summary": {
+        "tr": "Bayezid'in oğulları arasındaki on bir yıllık taht mücadelesini I. Mehmed (Çelebi) kazandı ve devletin tek hükümdarı oldu. Osmanlı Devleti parçalanma tehlikesini atlatarak yeniden toparlandı."
+      },
       "date": "1413",
       "location": { "name": { "tr": "Edirne" }, "coordinates": [26.56, 41.68] },
       "importance": 2,
@@ -28,7 +32,9 @@
     {
       "id": "istanbul-kusatmasi-1422",
       "title": { "tr": "II. Murad İstanbul önünde" },
-      "summary": { "tr": "II. Murad, Bizans'ın Osmanlı tahtı için rakip bir şehzadeyi desteklemesine karşılık İstanbul'u kuşattı. Surlar aşılamadı ve kuşatma kaldırıldı; İstanbul bir kuşak daha Bizans'ın elinde kaldı." },
+      "summary": {
+        "tr": "II. Murad, Bizans'ın Osmanlı tahtı için rakip bir şehzadeyi desteklemesine karşılık İstanbul'u kuşattı. Surlar aşılamadı ve kuşatma kaldırıldı; İstanbul bir kuşak daha Bizans'ın elinde kaldı."
+      },
       "date": { "start": "1422-06", "end": "1422-09" },
       "location": { "name": { "tr": "İstanbul" }, "coordinates": [28.94, 41.01] },
       "importance": 2,
@@ -39,7 +45,9 @@
     {
       "id": "varna-1444",
       "title": { "tr": "Varna Muharebesi" },
-      "summary": { "tr": "Polonya ve Macaristan Kralı III. Władysław ile Hunyadi János'un önderliğindeki haçlı ordusu, II. Murad'ın ordusuna Varna önlerinde yenildi; kral savaşta öldü. Balkanlar'da Osmanlı ilerleyişini durdurmaya yönelik son büyük haçlı girişimi sayılır." },
+      "summary": {
+        "tr": "Polonya ve Macaristan Kralı III. Władysław ile Hunyadi János'un önderliğindeki haçlı ordusu, II. Murad'ın ordusuna Varna önlerinde yenildi; kral savaşta öldü. Balkanlar'da Osmanlı ilerleyişini durdurmaya yönelik son büyük haçlı girişimi sayılır."
+      },
       "date": "1444-11-10",
       "location": { "name": { "tr": "Varna" }, "coordinates": [27.91, 43.21] },
       "importance": 3,
@@ -50,7 +58,9 @@
     {
       "id": "istanbul-fethi-1453",
       "title": { "tr": "İstanbul'un Fethi" },
-      "summary": { "tr": "II. Mehmed komutasındaki Osmanlı ordusu, 53 günlük kuşatmanın ardından Konstantinopolis'i aldı. Bizans İmparatorluğu sona erdi, şehir Osmanlı başkenti oldu; olay genellikle Orta Çağ'ın sonu ve Yeniçağ'ın başlangıcı olarak anılır." },
+      "summary": {
+        "tr": "II. Mehmed komutasındaki Osmanlı ordusu, 53 günlük kuşatmanın ardından Konstantinopolis'i aldı. Bizans İmparatorluğu sona erdi, şehir Osmanlı başkenti oldu; olay genellikle Orta Çağ'ın sonu ve Yeniçağ'ın başlangıcı olarak anılır."
+      },
       "date": { "start": "1453-04-06", "end": "1453-05-29" },
       "location": { "name": { "tr": "İstanbul" }, "coordinates": [28.94, 41.01] },
       "importance": 5,
@@ -61,7 +71,9 @@
     {
       "id": "trabzon-1461",
       "title": { "tr": "Trabzon İmparatorluğu'nun sonu" },
-      "summary": { "tr": "Fatih Sultan Mehmed, kısa süren bir kuşatmanın ardından Trabzon İmparatoru David Komnenos'un teslimini kabul etti. Karadeniz kıyısındaki son Rum devleti de ortadan kalktı." },
+      "summary": {
+        "tr": "Fatih Sultan Mehmed, kısa süren bir kuşatmanın ardından Trabzon İmparatoru David Komnenos'un teslimini kabul etti. Karadeniz kıyısındaki son Rum devleti de ortadan kalktı."
+      },
       "date": "1461-08-15",
       "location": { "name": { "tr": "Trabzon" }, "coordinates": [39.72, 41.0] },
       "importance": 2,
@@ -72,7 +84,9 @@
     {
       "id": "bedesten-1461",
       "title": { "tr": "Kapalıçarşı'nın çekirdeği: İç Bedesten" },
-      "summary": { "tr": "Fatih Sultan Mehmed, fethedilen İstanbul'un ticaretini canlandırmak için şehrin merkezinde değerli eşyaların saklandığı ve satıldığı taş bir bedesten yaptırdı. Çevresine eklenen hanlar ve sokaklarla zamanla bugünkü Kapalıçarşı'ya dönüştü." },
+      "summary": {
+        "tr": "Fatih Sultan Mehmed, fethedilen İstanbul'un ticaretini canlandırmak için şehrin merkezinde değerli eşyaların saklandığı ve satıldığı taş bir bedesten yaptırdı. Çevresine eklenen hanlar ve sokaklarla zamanla bugünkü Kapalıçarşı'ya dönüştü."
+      },
       "date": { "start": "1455", "end": "1461", "approximate": true },
       "location": { "name": { "tr": "İstanbul (Kapalıçarşı)" }, "coordinates": [28.968, 41.011] },
       "importance": 1,
@@ -83,7 +97,9 @@
     {
       "id": "otlukbeli-1473",
       "title": { "tr": "Otlukbeli Muharebesi" },
-      "summary": { "tr": "Fatih Sultan Mehmed, Doğu Anadolu ve İran'a hükmeden Akkoyunlu Hükümdarı Uzun Hasan'ı Otlukbeli'nde yendi. Zafer, Anadolu'nun doğu kapılarını Osmanlı için güvenceye aldı." },
+      "summary": {
+        "tr": "Fatih Sultan Mehmed, Doğu Anadolu ve İran'a hükmeden Akkoyunlu Hükümdarı Uzun Hasan'ı Otlukbeli'nde yendi. Zafer, Anadolu'nun doğu kapılarını Osmanlı için güvenceye aldı."
+      },
       "date": "1473-08-11",
       "location": { "name": { "tr": "Otlukbeli (Tercan)" }, "coordinates": [40.4, 39.78] },
       "importance": 2,
@@ -94,7 +110,9 @@
     {
       "id": "kefe-1475",
       "title": { "tr": "Kefe'nin alınması ve Kırım Hanlığı" },
-      "summary": { "tr": "Gedik Ahmed Paşa komutasındaki Osmanlı donanması, Ceneviz'in Karadeniz'deki başlıca kolonisi Kefe'yi aldı. Kırım Hanlığı Osmanlı'nın vasalı oldu ve Karadeniz fiilen bir Osmanlı gölüne dönüşmeye başladı." },
+      "summary": {
+        "tr": "Gedik Ahmed Paşa komutasındaki Osmanlı donanması, Ceneviz'in Karadeniz'deki başlıca kolonisi Kefe'yi aldı. Kırım Hanlığı Osmanlı'nın vasalı oldu ve Karadeniz fiilen bir Osmanlı gölüne dönüşmeye başladı."
+      },
       "date": "1475-06",
       "location": { "name": { "tr": "Kefe (Feodosiya)" }, "coordinates": [35.38, 45.03] },
       "importance": 2,
@@ -105,7 +123,9 @@
     {
       "id": "sefarad-gocu-1492",
       "title": { "tr": "Sefarad Yahudileri Osmanlı'ya sığınıyor" },
-      "summary": { "tr": "İspanya'dan sürülen Yahudiler, II. Bayezid'in daveti ve himayesiyle Selanik, İstanbul ve Edirne gibi Osmanlı şehirlerine yerleşti. Göç, imparatorluğun şehir ekonomisine ve basımcılığa önemli katkılar yaptı." },
+      "summary": {
+        "tr": "İspanya'dan sürülen Yahudiler, II. Bayezid'in daveti ve himayesiyle Selanik, İstanbul ve Edirne gibi Osmanlı şehirlerine yerleşti. Göç, imparatorluğun şehir ekonomisine ve basımcılığa önemli katkılar yaptı."
+      },
       "date": "1492",
       "location": { "name": { "tr": "Selanik" }, "coordinates": [22.94, 40.64] },
       "importance": 3,
@@ -116,7 +136,9 @@
     {
       "id": "venedik-savasi-1499",
       "title": { "tr": "Osmanlı–Venedik Savaşı" },
-      "summary": { "tr": "Osmanlı donanması Zonchio'da (Navarin) Venedik'i yendi ve Mora'daki Modon, Koron gibi Venedik limanlarını aldı. Savaş, Osmanlı'nın Doğu Akdeniz'de deniz gücü olarak yükselişini gösterdi." },
+      "summary": {
+        "tr": "Osmanlı donanması Zonchio'da (Navarin) Venedik'i yendi ve Mora'daki Modon, Koron gibi Venedik limanlarını aldı. Savaş, Osmanlı'nın Doğu Akdeniz'de deniz gücü olarak yükselişini gösterdi."
+      },
       "date": { "start": "1499", "end": "1503" },
       "location": { "name": { "tr": "Zonchio (Navarin)" }, "coordinates": [21.7, 36.91] },
       "importance": 2,
@@ -127,7 +149,9 @@
     {
       "id": "caldiran-1514",
       "title": { "tr": "Çaldıran Muharebesi" },
-      "summary": { "tr": "Yavuz Sultan Selim'in ordusu, ateşli silahları ve topçusuyla Şah İsmail'in Safevî ordusunu yendi. Zafer, Doğu Anadolu ve Kuzey Irak'ın Osmanlı'ya geçmesinin yolunu açtı; Osmanlı–Safevî rekabeti yüzyıllarca sürdü." },
+      "summary": {
+        "tr": "Yavuz Sultan Selim'in ordusu, ateşli silahları ve topçusuyla Şah İsmail'in Safevî ordusunu yendi. Zafer, Doğu Anadolu ve Kuzey Irak'ın Osmanlı'ya geçmesinin yolunu açtı; Osmanlı–Safevî rekabeti yüzyıllarca sürdü."
+      },
       "date": "1514-08-23",
       "location": { "name": { "tr": "Çaldıran" }, "coordinates": [44.0, 39.14] },
       "importance": 4,
@@ -138,7 +162,9 @@
     {
       "id": "ridaniye-1517",
       "title": { "tr": "Ridaniye Savaşı ve Mısır'ın fethi" },
-      "summary": { "tr": "Yavuz Sultan Selim, Mercidabık'ta (1516) açılan seferin devamında Kahire yakınlarında Memlük ordusunu yok etti. Mısır, Suriye ve Hicaz Osmanlı'ya geçti; Mekke ve Medine'nin korunması Osmanlı sultanının sorumluluğuna girdi." },
+      "summary": {
+        "tr": "Yavuz Sultan Selim, Mercidabık'ta (1516) açılan seferin devamında Kahire yakınlarında Memlük ordusunu yok etti. Mısır, Suriye ve Hicaz Osmanlı'ya geçti; Mekke ve Medine'nin korunması Osmanlı sultanının sorumluluğuna girdi."
+      },
       "date": "1517-01-22",
       "location": { "name": { "tr": "Kahire (Ridaniye)" }, "coordinates": [31.25, 30.07] },
       "importance": 4,
@@ -149,7 +175,9 @@
     {
       "id": "belgrad-1521",
       "title": { "tr": "Belgrad'ın fethi" },
-      "summary": { "tr": "Kanuni Sultan Süleyman, Tuna ile Sava'nın birleştiği stratejik kale Belgrad'ı aldı. Macaristan'a açılan bu kapı, beş yıl sonraki Mohaç Savaşı'nın yolunu açtı." },
+      "summary": {
+        "tr": "Kanuni Sultan Süleyman, Tuna ile Sava'nın birleştiği stratejik kale Belgrad'ı aldı. Macaristan'a açılan bu kapı, beş yıl sonraki Mohaç Savaşı'nın yolunu açtı."
+      },
       "date": "1521-08-29",
       "location": { "name": { "tr": "Belgrad" }, "coordinates": [20.45, 44.82] },
       "importance": 2,
@@ -160,7 +188,9 @@
     {
       "id": "rodos-1522",
       "title": { "tr": "Rodos'un fethi" },
-      "summary": { "tr": "Kanuni Sultan Süleyman'ın ordusu, aylar süren kuşatmanın ardından Rodos'u Aziz Yuhanna Şövalyeleri'nden aldı. Doğu Akdeniz'deki Hristiyan üssünün kaybı, Osmanlı'nın Mısır ile İstanbul arasındaki deniz yolunu güvence altına aldı." },
+      "summary": {
+        "tr": "Kanuni Sultan Süleyman'ın ordusu, aylar süren kuşatmanın ardından Rodos'u Aziz Yuhanna Şövalyeleri'nden aldı. Doğu Akdeniz'deki Hristiyan üssünün kaybı, Osmanlı'nın Mısır ile İstanbul arasındaki deniz yolunu güvence altına aldı."
+      },
       "date": { "start": "1522-06-26", "end": "1522-12-22" },
       "location": { "name": { "tr": "Rodos" }, "coordinates": [28.23, 36.43] },
       "importance": 3,
@@ -171,7 +201,9 @@
     {
       "id": "mohac-1526",
       "title": { "tr": "Mohaç Muharebesi" },
-      "summary": { "tr": "Kanuni Sultan Süleyman'ın ordusu, Macar Kralı II. Lajos'un ordusunu yaklaşık iki saatte yok etti; kral kaçarken boğuldu. Macaristan'ın büyük bölümü sonraki on yıllarda Osmanlı ve Habsburglar arasında bölüşüldü." },
+      "summary": {
+        "tr": "Kanuni Sultan Süleyman'ın ordusu, Macar Kralı II. Lajos'un ordusunu yaklaşık iki saatte yok etti; kral kaçarken boğuldu. Macaristan'ın büyük bölümü sonraki on yıllarda Osmanlı ve Habsburglar arasında bölüşüldü."
+      },
       "date": "1526-08-29",
       "location": { "name": { "tr": "Mohaç" }, "coordinates": [18.68, 45.99] },
       "importance": 4,
@@ -182,7 +214,9 @@
     {
       "id": "viyana-1529",
       "title": { "tr": "Birinci Viyana Kuşatması" },
-      "summary": { "tr": "Kanuni Sultan Süleyman'ın ordusu Habsburg başkenti Viyana'yı kuşattı; mevsimin ilerlemesi, kötü hava ve ikmal sıkıntısı yüzünden kuşatma kaldırıldı. Osmanlı'nın Orta Avrupa'daki ilerleyişi bu hat üzerinde durdu." },
+      "summary": {
+        "tr": "Kanuni Sultan Süleyman'ın ordusu Habsburg başkenti Viyana'yı kuşattı; mevsimin ilerlemesi, kötü hava ve ikmal sıkıntısı yüzünden kuşatma kaldırıldı. Osmanlı'nın Orta Avrupa'daki ilerleyişi bu hat üzerinde durdu."
+      },
       "date": { "start": "1529-09-27", "end": "1529-10-15" },
       "location": { "name": { "tr": "Viyana" }, "coordinates": [16.37, 48.21] },
       "importance": 4,
@@ -193,7 +227,9 @@
     {
       "id": "preveze-1538",
       "title": { "tr": "Preveze Deniz Muharebesi" },
-      "summary": { "tr": "Barbaros Hayreddin Paşa komutasındaki Osmanlı donanması, Papalık, Venedik ve İspanya'nın oluşturduğu Kutsal İttifak donanmasını Preveze açıklarında yendi. Osmanlı, Akdeniz'de yaklaşık otuz yıl denizlerin hâkimi kaldı." },
+      "summary": {
+        "tr": "Barbaros Hayreddin Paşa komutasındaki Osmanlı donanması, Papalık, Venedik ve İspanya'nın oluşturduğu Kutsal İttifak donanmasını Preveze açıklarında yendi. Osmanlı, Akdeniz'de yaklaşık otuz yıl denizlerin hâkimi kaldı."
+      },
       "date": "1538-09-28",
       "location": { "name": { "tr": "Preveze" }, "coordinates": [20.72, 38.96] },
       "importance": 3,
@@ -204,7 +240,9 @@
     {
       "id": "suleymaniye-1550",
       "title": { "tr": "Süleymaniye Camii'nin inşası" },
-      "summary": { "tr": "Mimar Sinan, Kanuni Sultan Süleyman adına İstanbul'un siluetine hâkim büyük külliyeyi inşa etti. Cami ve çevresindeki medreseler, hastane ve imaretler, klasik Osmanlı mimarisinin başyapıtlarından biri sayılır." },
+      "summary": {
+        "tr": "Mimar Sinan, Kanuni Sultan Süleyman adına İstanbul'un siluetine hâkim büyük külliyeyi inşa etti. Cami ve çevresindeki medreseler, hastane ve imaretler, klasik Osmanlı mimarisinin başyapıtlarından biri sayılır."
+      },
       "date": { "start": "1550", "end": "1557" },
       "location": { "name": { "tr": "İstanbul (Süleymaniye)" }, "coordinates": [28.964, 41.016] },
       "importance": 3,
@@ -215,7 +253,9 @@
     {
       "id": "malta-1565",
       "title": { "tr": "Malta Kuşatması" },
-      "summary": { "tr": "Osmanlı donanması ve ordusu, Aziz Yuhanna Şövalyeleri'nin elindeki Malta'yı kuşattı. Aylarca süren kuşatma, Sicilya'dan gelen yardım kuvvetleriyle kaldırıldı ve Osmanlı'nın Batı Akdeniz'deki ilerleyişi sınırlandı." },
+      "summary": {
+        "tr": "Osmanlı donanması ve ordusu, Aziz Yuhanna Şövalyeleri'nin elindeki Malta'yı kuşattı. Aylarca süren kuşatma, Sicilya'dan gelen yardım kuvvetleriyle kaldırıldı ve Osmanlı'nın Batı Akdeniz'deki ilerleyişi sınırlandı."
+      },
       "date": { "start": "1565-05-18", "end": "1565-09-11" },
       "location": { "name": { "tr": "Malta" }, "coordinates": [14.51, 35.9] },
       "importance": 3,
@@ -226,7 +266,9 @@
     {
       "id": "szigetvar-1566",
       "title": { "tr": "Szigetvár Kuşatması" },
-      "summary": { "tr": "Kanuni Sultan Süleyman'ın son seferinde Osmanlı ordusu Szigetvár Kalesi'ni aldı; sultan kuşatma sırasında hayatını kaybetti. Ölümü, ordudan bir süre gizli tutuldu." },
+      "summary": {
+        "tr": "Kanuni Sultan Süleyman'ın son seferinde Osmanlı ordusu Szigetvár Kalesi'ni aldı; sultan kuşatma sırasında hayatını kaybetti. Ölümü, ordudan bir süre gizli tutuldu."
+      },
       "date": { "start": "1566-08-06", "end": "1566-09-08" },
       "location": { "name": { "tr": "Szigetvár" }, "coordinates": [17.8, 46.05] },
       "importance": 2,
@@ -237,7 +279,9 @@
     {
       "id": "kibris-1570",
       "title": { "tr": "Kıbrıs'ın fethi" },
-      "summary": { "tr": "Osmanlı ordusu, Lefkoşa'nın ardından uzun süren Mağusa kuşatmasından sonra Kıbrıs'ı Venedik'ten aldı. Adanın kaybı, Venedik'in Doğu Akdeniz'deki konumunu zayıflattı ve Kutsal İttifak'ın kurulmasına yol açtı." },
+      "summary": {
+        "tr": "Osmanlı ordusu, Lefkoşa'nın ardından uzun süren Mağusa kuşatmasından sonra Kıbrıs'ı Venedik'ten aldı. Adanın kaybı, Venedik'in Doğu Akdeniz'deki konumunu zayıflattı ve Kutsal İttifak'ın kurulmasına yol açtı."
+      },
       "date": { "start": "1570-07", "end": "1571-08" },
       "location": { "name": { "tr": "Mağusa" }, "coordinates": [33.94, 35.12] },
       "importance": 2,
@@ -248,7 +292,9 @@
     {
       "id": "inebahti-1571",
       "title": { "tr": "İnebahtı Deniz Savaşı" },
-      "summary": { "tr": "Venedik, İspanya ve Papalık'ın oluşturduğu Kutsal İttifak donanması, Osmanlı donanmasını İnebahtı Körfezi'nde ağır bir yenilgiye uğrattı. Osmanlı bir yıl içinde yeni bir donanma kurup denizlerdeki üstünlüğünü yeniden kazandı; yine de savaş, Batı'nın büyük bir moral zaferi sayıldı." },
+      "summary": {
+        "tr": "Venedik, İspanya ve Papalık'ın oluşturduğu Kutsal İttifak donanması, Osmanlı donanmasını İnebahtı Körfezi'nde ağır bir yenilgiye uğrattı. Osmanlı bir yıl içinde yeni bir donanma kurup denizlerdeki üstünlüğünü yeniden kazandı; yine de savaş, Batı'nın büyük bir moral zaferi sayıldı."
+      },
       "date": "1571-10-07",
       "location": { "name": { "tr": "İnebahtı Körfezi" }, "coordinates": [21.0, 38.35] },
       "importance": 4,
@@ -259,7 +305,9 @@
     {
       "id": "hacova-1596",
       "title": { "tr": "Haçova Muharebesi" },
-      "summary": { "tr": "III. Mehmed'in bizzat katıldığı sefer, Haçova'da Habsburg ve Erdel ordularını yendi. Savaş, Osmanlı'nın Uzun Savaş (1593–1606) olarak anılan Habsburg ile mücadelesinin en büyük meydan muharebesiydi." },
+      "summary": {
+        "tr": "III. Mehmed'in bizzat katıldığı sefer, Haçova'da Habsburg ve Erdel ordularını yendi. Savaş, Osmanlı'nın Uzun Savaş (1593–1606) olarak anılan Habsburg ile mücadelesinin en büyük meydan muharebesiydi."
+      },
       "date": { "start": "1596-10-24", "end": "1596-10-26" },
       "location": { "name": { "tr": "Mezőkeresztes (Haçova)" }, "coordinates": [20.69, 47.83] },
       "importance": 2,
@@ -270,7 +318,9 @@
     {
       "id": "celali-isyanlari-1596",
       "title": { "tr": "Celâlî isyanları" },
-      "summary": { "tr": "Vergi yükü, işsiz kalan askerî birlikler ve geçim sıkıntısı yüzünden Anadolu'da başlayan silahlı isyanlar, devleti on yıllarca uğraştırdı. Köylüler büyük ölçüde yerlerini terk ederek şehirlere ve dağlık bölgelere göç etti." },
+      "summary": {
+        "tr": "Vergi yükü, işsiz kalan askerî birlikler ve geçim sıkıntısı yüzünden Anadolu'da başlayan silahlı isyanlar, devleti on yıllarca uğraştırdı. Köylüler büyük ölçüde yerlerini terk ederek şehirlere ve dağlık bölgelere göç etti."
+      },
       "date": { "start": "1596", "end": "1610" },
       "location": { "name": { "tr": "Orta ve Doğu Anadolu" }, "coordinates": [37.02, 39.75] },
       "importance": 2,

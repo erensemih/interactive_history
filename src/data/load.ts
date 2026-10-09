@@ -53,7 +53,12 @@ interface PolitiesIndex {
 interface EntitiesDoc {
   entities: Record<
     string,
-    { kind: 'polity' | 'region'; name: { tr: string }; summary?: { tr: string }; bounds?: [number, number, number, number] }
+    {
+      kind: 'polity' | 'region';
+      name: { tr: string };
+      summary?: { tr: string };
+      bounds?: [number, number, number, number];
+    }
   >;
 }
 
@@ -82,9 +87,9 @@ export async function loadData(onProgress?: (label: string) => void): Promise<Ap
   ]);
   const [from, to] = index.meta.range;
   onProgress?.('Sınırlar yükleniyor…');
-  const bordersRaw = await getJson<FeatureCollection<Geometry, BorderProps> & { meta?: { coast?: SourceInfo; source?: SourceInfo } }>(
-    `borders/cliopatria-${from}-${to}.json`,
-  );
+  const bordersRaw = await getJson<
+    FeatureCollection<Geometry, BorderProps> & { meta?: { coast?: SourceInfo; source?: SourceInfo } }
+  >(`borders/cliopatria-${from}-${to}.json`);
 
   /* entities: authored Turkish content + facts derived from the border dataset */
   const entities = new Map<string, Entity>();
@@ -144,11 +149,12 @@ export async function loadData(onProgress?: (label: string) => void): Promise<Ap
     tintCount: index.meta.tintCount,
     sources: {
       borders: index.meta.source,
-      coast: bordersRaw.meta?.coast ?? land.meta?.source ?? {
-        name: 'Natural Earth',
-        url: 'https://www.naturalearthdata.com/',
-        license: 'Kamu malı',
-      },
+      coast: bordersRaw.meta?.coast ??
+        land.meta?.source ?? {
+          name: 'Natural Earth',
+          url: 'https://www.naturalearthdata.com/',
+          license: 'Kamu malı',
+        },
     },
   };
 }

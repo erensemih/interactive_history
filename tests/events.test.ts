@@ -36,7 +36,10 @@ describe('normalizeEvent', () => {
   it('builds Turkish date labels, source links and fractional intervals', () => {
     const e = events[0]!;
     expect(e.dateLabel).toBe('6 Nisan – 29 Mayıs 1453');
-    expect(e.sources[0]).toMatchObject({ kind: 'wikipedia', url: 'https://en.wikipedia.org/wiki/Fall_of_Constantinople' });
+    expect(e.sources[0]).toMatchObject({
+      kind: 'wikipedia',
+      url: 'https://en.wikipedia.org/wiki/Fall_of_Constantinople',
+    });
     expect(e.end).toBeGreaterThan(e.start);
   });
 });
