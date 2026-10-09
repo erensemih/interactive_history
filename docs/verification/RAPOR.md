@@ -1,8 +1,8 @@
 # Doğrulama raporu
 
-Çalıştırma: 2026-10-09T15:03:13.866Z · Chromium (başsız) · 1440×900
+Çalıştırma: 2026-10-09T15:18:01.435Z · Chromium (başsız) · 1440×900
 
-**48/48 denetim geçti.**
+**54/54 denetim geçti.**
 
 | Durum | Denetim | Ayrıntı |
 |---|---|---|
@@ -21,6 +21,7 @@
 | ✓ | Harita içeriği yere bağlı değil: işaretçiler aynı |  |
 | ✓ | Harita olay kümesi aynı |  |
 | ✓ | Düzen kaymadı (harita/panel/alt bölüm aynı boyutta) |  |
+| ✓ | Seçilen noktada yer iğnesi var |  |
 | ✓ | Başlık: Ming Hanedanı | Ming Hanedanı |
 | ✓ | Ming poligonu vurgulandı |  |
 | ✓ | Çizelgede yalnızca Ming olayları var | hongzhi-1487, zhengde-1505 |
@@ -44,13 +45,18 @@
 | ✓ | Aralık 1450–1500 iken Anadolu → Osmanlı |  |
 | ✓ | Çizelge düğümü tıklaması olayı açar | varna-1444 |
 | ✓ | Çizelge tıklaması haritayı oynatmadı |  |
+| ✓ | Çizelgeden seçilen yerel olay haritada önizlenir ama haritanın kendi kümesine girmez | bedesten-1461 |
+| ✓ | Önizleme haritayı oynatmadı |  |
 | ✓ | Denize tıklamak seçimi değiştirmez, harita oynamaz |  |
 | ✓ | Deniz tıklaması kullanıcıya açıklanır |  |
 | ✓ | "25 yıl" hazır ayarı aralığı 25 yıla getirir, merkezi korur | {"from":1463,"to":1487} |
 | ✓ | Klavye: bitiş tutamacı +1 yıl | {"from":1463,"to":1488} |
 | ✓ | Cetvelde fırçayı sürüklemek aralığı kaydırır, uzunluk korunur | {"from":1480,"to":1505} |
+| ✓ | ▾ işaretini sürüklemek haritanın sınır yılını değiştirir, aralığa dokunmaz | 1493 → 1499 |
 | ✓ | Zaman denetimleri haritayı oynatmadı |  |
 | ✓ | Adres çubuğu durumu taşır (#t=…&p=…) |  |
+| ✓ | Esc önce olayı, sonra yeri kapatır |  |
+| ✓ | Seçimi kaldırmak haritayı oynatmadı |  |
 | ✓ | Kullanıcı sürüklemesi haritayı gerçekten hareket ettirir |  |
 | ✓ | Fare tekerleği yakınlaştırır |  |
 | ✓ | Sayfada konsol/sayfa hatası yok |  |

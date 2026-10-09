@@ -58,21 +58,16 @@ export class Store {
 
   /* ------------------------------------------------------------- actions */
 
-  /** Sets the range; `keepYear` keeps the displayed border year inside the new range when possible. */
-  setRange(range: YearRange, opts: { keepCursor?: boolean } = {}) {
+  /** Sets the range (clamped to the dataset). The cursor keeps its relative place inside the window. */
+  setRange(range: YearRange) {
     const next = normalizeRange(range, this.extent);
     const prev = this.current;
     if (next.from === prev.range.from && next.to === prev.range.to) return;
-    let cursor = prev.cursor;
-    if (!opts.keepCursor) {
-      // Keep the shown year's relative place inside the window when it is dragged or resized.
-      cursor = next.from === next.to ? 0.5 : prev.cursor;
-    }
-    this.set({ range: next, cursor });
+    this.set({ range: next, cursor: next.from === next.to ? 0.5 : prev.cursor });
   }
 
   shiftBy(deltaYears: number) {
-    this.setRange(shiftRange(this.current.range, deltaYears, this.extent), { keepCursor: true });
+    this.setRange(shiftRange(this.current.range, deltaYears, this.extent));
   }
 
   setPreset(spanYears: number) {

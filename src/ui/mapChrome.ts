@@ -1,7 +1,7 @@
 import { html, render, type TemplateResult } from 'lit-html';
 import { unsafeSVG } from 'lit-html/directives/unsafe-svg.js';
 import type { AppData } from '../data/load';
-import { MARKER_SIZE, styleFor } from '../domain/categories';
+import { MARKER_SIZE } from '../domain/categories';
 import type { ViewModel } from '../state/derive';
 import { formatRange } from './format';
 import { markerSvg } from './markerShapes';
@@ -80,10 +80,5 @@ export class MapChrome {
         </div>
       </div>
     </details>`;
-  }
-
-  /** Category colour swatch helper for external users (legend in other places). */
-  static colorOf(category: string) {
-    return styleFor(category).color;
   }
 }

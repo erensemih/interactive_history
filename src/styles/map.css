@@ -508,3 +508,65 @@
     display: none;
   }
 }
+
+/* ------------------------------------------------------------- place pin */
+.pin-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  will-change: transform;
+}
+
+.pin[hidden] {
+  display: none;
+}
+
+.pin i {
+  position: absolute;
+  left: -9px;
+  top: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid var(--accent);
+  background: rgb(245 240 228 / 0.55);
+  box-shadow:
+    0 0 0 2px var(--paper),
+    0 2px 6px rgb(60 20 10 / 0.35);
+}
+
+.pin i::after {
+  content: '';
+  position: absolute;
+  inset: 3.5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.pin.is-new i {
+  animation: pin-drop 0.38s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+@keyframes pin-drop {
+  from {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* an event the user picked that the map itself would not show */
+.evt.is-preview .evt-mark::after {
+  border-style: dashed;
+  opacity: 1;
+  transform: scale(1);
+}

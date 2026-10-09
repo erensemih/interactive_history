@@ -4,12 +4,13 @@ import type { AppData } from '../data/load';
 import { isLand, primaryAt, rowsContaining } from '../domain/geo';
 import type { HistoricalEvent, PlacePoint } from '../domain/types';
 import { PolityLabels } from './labels';
-import { EventMarkers } from './markers';
+import { EventMarkers, type MarkerStats } from './markers';
+import { PlacePins } from './pin';
 import { hatchImage, readTheme, stippleImage, type MapTheme } from './theme';
 
 export interface MapCallbacks {
-  /** Markers drawn vs. map events in the range (the rest appear as the user zooms in). */
-  onMarkerStats?(shown: number, total: number): void;
+  /** Markers drawn vs. map events in the range, and why the rest are not drawn. */
+  onMarkerStats?(stats: MarkerStats): void;
   /** A click on land. Never moves the map. */
   onPlaceClick(point: PlacePoint): void;
   /** A click on open water or outside any land. */
@@ -49,6 +50,7 @@ export class MapView {
   private readonly theme: MapTheme;
   private readonly labels: PolityLabels;
   private readonly markers: EventMarkers;
+  private readonly pins: PlacePins;
   private year = 0;
   private selectedId: string | null = null;
   private hoverId: string | null = null;
@@ -91,10 +93,11 @@ export class MapView {
 
     const canvasContainer = this.map.getCanvasContainer();
     this.labels = new PolityLabels(this.map, canvasContainer, data);
+    this.pins = new PlacePins(this.map, canvasContainer);
     this.markers = new EventMarkers(this.map, canvasContainer, {
       onClick: (id) => cb.onEventClick(id),
       onHover: (id, el) => cb.onEventHover(id, el),
-      onStats: (shown, total) => cb.onMarkerStats?.(shown, total),
+      onStats: (stats) => cb.onMarkerStats?.(stats),
     });
 
     this.map.on('load', () => this.onLoad());
@@ -269,6 +272,7 @@ export class MapView {
 
   private layoutOverlays(force = false) {
     this.labels.layout(force);
+    this.pins.layout();
     this.markers.layout(force);
   }
 
@@ -290,9 +294,18 @@ export class MapView {
     this.applyHover();
   }
 
-  /** Events eligible for the map (range-only, never place-dependent). */
-  setEvents(events: HistoricalEvent[], focusYear: number) {
-    this.markers.setEvents(events, focusYear);
+  /**
+   * Events eligible for the map (range-only, never place-dependent). `preview` is an event the user
+   * picked elsewhere (e.g. a local event on a timeline) that is not part of that set: it is drawn
+   * with a dashed ring so its location is visible, without changing what the map contains.
+   */
+  setEvents(events: HistoricalEvent[], focusYear: number, preview: HistoricalEvent | null = null) {
+    this.markers.setEvents(events, focusYear, preview);
+  }
+
+  /** The selected places, drawn as pins. */
+  setPlaces(points: PlacePoint[]) {
+    this.pins.setPoints(points);
   }
 
   setSelectedEvent(id: string | null) {

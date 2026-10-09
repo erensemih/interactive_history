@@ -94,9 +94,11 @@ export async function startApp(root: HTMLElement): Promise<void> {
   render(
     html`Sınırlar:
       <a href=${data.sources.borders.url} target="_blank" rel="noopener noreferrer">Seshat Cliopatria</a>
-      (${data.sources.borders.license}) · Kıyı çizgisi:
+      (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer"
+        >${data.sources.borders.license}</a
+      >, kırpılıp sadeleştirildi) · Kıyı:
       <a href=${data.sources.coast.url} target="_blank" rel="noopener noreferrer">Natural Earth</a> ·
-      <span class="proto">Prototip: sınırlar ve olaylar sınırlı veriyle gösterilir</span>`,
+      <a href="./NOTICE.txt" target="_blank" rel="noopener">Atıf ve lisanslar</a>`,
     credits,
   );
 
@@ -128,8 +130,9 @@ export async function startApp(root: HTMLElement): Promise<void> {
     // The map's content: time only. Selected place only changes the highlight.
     if (!mapView) return;
     mapView.setYear(vm.year);
-    mapView.setEvents(vm.mapEvents, vm.year);
+    mapView.setEvents(vm.mapEvents, vm.year, vm.selectedEvent);
     mapView.setSelectedPolity(selectedPolity);
+    mapView.setPlaces(state.places);
     mapView.setSelectedEvent(state.selectedEventId);
     mapView.setHoverEvent(state.hoverEventId);
 
@@ -190,13 +193,17 @@ export async function startApp(root: HTMLElement): Promise<void> {
       toast(null);
       store.selectPlace(p);
     },
-    onMarkerStats: (shown, total) => {
+    onMarkerStats: ({ shown, total, thinned, offscreen }) => {
       const el = $('map-stats');
       el.hidden = total === 0;
-      render(
-        html`<b>${shown}</b> / ${total} olay haritada${shown < total ? html`<span> · yakınlaştıkça artar</span>` : ''}`,
-        el,
-      );
+      // Say honestly why some events are not drawn: zoom/collision thinning, or simply out of view.
+      const hint =
+        thinned > 0
+          ? html`<span> · yakınlaştıkça artar</span>`
+          : offscreen > 0
+            ? html`<span> · kalanlar görünüm dışında</span>`
+            : '';
+      render(html`<b>${shown}</b> / ${total} olay haritada${hint}`, el);
     },
     onWaterClick: () => toast('Burası deniz. Bir kara parçasına tıklayın; harita yerinden oynamaz.'),
     onHoverPolity: (id, x, y) => {

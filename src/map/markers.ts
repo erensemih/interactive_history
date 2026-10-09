@@ -7,8 +7,17 @@ import { markerBox, markerSvg } from '../ui/markerShapes';
 export interface MarkerCallbacks {
   onClick(id: string): void;
   onHover(id: string | null, el: HTMLElement | null): void;
-  /** How many of the range's map events are currently drawn. */
-  onStats?(shown: number, total: number): void;
+  /** What is drawn of the range's map events, and why the rest is not. */
+  onStats?(stats: MarkerStats): void;
+}
+
+export interface MarkerStats {
+  shown: number;
+  total: number;
+  /** Left out by the zoom-dependent budget or by collisions: zooming in reveals them. */
+  thinned: number;
+  /** Outside the current viewport: panning reveals them. */
+  offscreen: number;
 }
 
 interface Box {
@@ -32,6 +41,7 @@ export class EventMarkers {
   private hoverId: string | null = null;
   private lastKey = '';
   private lastStats = '';
+  private previewId: string | null = null;
   private readonly cb: MarkerCallbacks;
 
   constructor(
@@ -45,17 +55,19 @@ export class EventMarkers {
     container.appendChild(this.host);
   }
 
-  setEvents(events: HistoricalEvent[], focusYear: number) {
-    this.events = events;
+  setEvents(events: HistoricalEvent[], focusYear: number, preview: HistoricalEvent | null = null) {
+    this.previewId = preview && !events.some((e) => e.id === preview.id) ? preview.id : null;
+    this.events = this.previewId && preview ? [...events, preview] : events;
     this.focusYear = focusYear;
-    const ids = new Set(events.map((e) => e.id));
+    const ids = new Set(this.events.map((e) => e.id));
     for (const [id, el] of this.elements) {
       if (!ids.has(id)) {
         el.remove();
         this.elements.delete(id);
       }
     }
-    for (const ev of events) if (!this.elements.has(ev.id)) this.create(ev);
+    for (const ev of this.events) if (!this.elements.has(ev.id)) this.create(ev);
+    for (const [id, el] of this.elements) el.classList.toggle('is-preview', id === this.previewId);
     this.lastKey = '';
     this.layout();
   }
@@ -123,21 +135,33 @@ export class EventMarkers {
 
     const W = canvas.clientWidth;
     const H = canvas.clientHeight;
-    const budgeted = pickMarkers(this.events, { zoom, focusYear: this.focusYear });
+    const budgeted = pickMarkers(
+      this.events.filter((e) => e.id !== this.previewId),
+      { zoom, focusYear: this.focusYear },
+    );
     const selected = this.selectedId ? this.events.find((e) => e.id === this.selectedId) : undefined;
+    const realTotal = this.events.length - (this.previewId ? 1 : 0);
     const order = selected && !budgeted.includes(selected) ? [selected, ...budgeted] : budgeted;
     order.sort((a, b) => (a === selected ? -1 : b === selected ? 1 : markerPriority(a, b, this.focusYear)));
 
     const placed: Box[] = [];
     const shown = new Set<string>();
+    let offscreen = 0;
+    let collided = 0;
     for (const ev of order) {
       const p = map.project([ev.location.lon, ev.location.lat]);
       const box = markerBox(ev.importance);
       const d = MARKER_SIZE[ev.importance] ?? 14;
-      if (p.x < -20 || p.y < -20 || p.x > W + 20 || p.y > H + 20) continue;
+      if (p.x < -20 || p.y < -20 || p.x > W + 20 || p.y > H + 20) {
+        offscreen++;
+        continue;
+      }
       const b: Box = { x: p.x - d / 2 - 3, y: p.y - d / 2 - 3, w: d + 6 + 34, h: d + 6 }; // + year label
       const clash = placed.some((o) => b.x < o.x + o.w && o.x < b.x + b.w && b.y < o.y + o.h && o.y < b.y + b.h);
-      if (clash && ev !== selected) continue;
+      if (clash && ev !== selected) {
+        collided++;
+        continue;
+      }
       placed.push(b);
       shown.add(ev.id);
       const el = this.elements.get(ev.id);
@@ -147,10 +171,16 @@ export class EventMarkers {
       el.style.zIndex = String(10 + ev.importance + (ev === selected ? 10 : 0));
       el.classList.remove('is-hidden');
     }
-    const stats = `${shown.size}/${this.events.length}`;
-    if (stats !== this.lastStats) {
-      this.lastStats = stats;
-      this.cb.onStats?.(shown.size, this.events.length);
+    const stats: MarkerStats = {
+      shown: shown.size - (this.previewId && shown.has(this.previewId) ? 1 : 0),
+      total: realTotal,
+      thinned: realTotal - budgeted.length + collided,
+      offscreen,
+    };
+    const statsKey = `${stats.shown}/${stats.total}/${stats.thinned}/${stats.offscreen}`;
+    if (statsKey !== this.lastStats) {
+      this.lastStats = statsKey;
+      this.cb.onStats?.(stats);
     }
     for (const [id, el] of this.elements) {
       if (!shown.has(id)) {
