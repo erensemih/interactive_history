@@ -13,6 +13,9 @@
       "kind": "polity",
       "name": {
         "tr": "Ahmednagar Sultanlığı"
+      },
+      "summary": {
+        "tr": "Bahmani Sultanlığı'nın dağılmasıyla 1490'da kurulan, Nizamşahlar'ın yönettiği Deccan sultanlığı. 1565'te Vicayanagara'ya karşı ittifakta yer aldı."
       }
     },
     "albanian-principalities": {
@@ -55,6 +58,9 @@
       "kind": "polity",
       "name": {
         "tr": "Astrahan Hanlığı"
+      },
+      "summary": {
+        "tr": "Volga'nın denize döküldüğü yerde, Astrahan merkezli han devleti. 1556'da Moskova Çarlığı tarafından ele geçirildi."
       }
     },
     "ava-kingdom": {
@@ -112,18 +118,27 @@
       "kind": "polity",
       "name": {
         "tr": "Aydınoğulları Beyliği"
+      },
+      "summary": {
+        "tr": "Birgi, Ayasuluk (Selçuk) ve Tire çevresinde, Ege kıyısında hüküm süren beylik (Aydınoğulları). Denizcilik ve ticaretle tanınırdı; 1420'li yıllarda Osmanlı'ya katıldı."
       }
     },
     "beylik-of-dulkadir": {
       "kind": "polity",
       "name": {
         "tr": "Dulkadiroğulları Beyliği"
+      },
+      "summary": {
+        "tr": "Elbistan ve Maraş çevresinde hüküm süren Türkmen beyliği (Dulkadiroğulları). Osmanlı ile Memlük Sultanlığı arasında tampon bir devlet olarak varlığını sürdürdü; 1515'te Osmanlı topraklarına katıldı."
       }
     },
     "beylik-of-isfendiyar": {
       "kind": "polity",
       "name": {
         "tr": "İsfendiyaroğulları Beyliği"
+      },
+      "summary": {
+        "tr": "Kastamonu ve Sinop çevresinde, Karadeniz kıyısında hüküm süren beylik (İsfendiyaroğulları ya da Candaroğulları). 1461'de Fatih Sultan Mehmed tarafından Osmanlı topraklarına katıldı."
       }
     },
     "beylik-of-karaman": {
@@ -139,30 +154,45 @@
       "kind": "polity",
       "name": {
         "tr": "Menteşeoğulları Beyliği"
+      },
+      "summary": {
+        "tr": "Muğla çevresinde, Ege'nin güneybatı kıyısında hüküm süren beylik (Menteşeoğulları). Denizcilik ve ticaretle uğraştı; 15. yüzyılın başlarında Osmanlı'ya katıldı."
       }
     },
     "beylik-of-saruhan": {
       "kind": "polity",
       "name": {
         "tr": "Saruhanoğulları Beyliği"
+      },
+      "summary": {
+        "tr": "Manisa merkezli Ege beyliği (Saruhanoğulları). 15. yüzyılın başında Osmanlı topraklarına katıldı."
       }
     },
     "beylik-of-teke": {
       "kind": "polity",
       "name": {
         "tr": "Teke Beyliği"
+      },
+      "summary": {
+        "tr": "Antalya çevresinde, Akdeniz kıyısında hüküm süren beylik (Tekeoğulları). 15. yüzyılın ilk yarısında Osmanlı topraklarına katıldı."
       }
     },
     "bidar-sultanate": {
       "kind": "polity",
       "name": {
         "tr": "Bidar Sultanlığı"
+      },
+      "summary": {
+        "tr": "Bahmani'nin son başkenti Bidar çevresinde, Bereşahlar'ın yönettiği küçük Deccan sultanlığı."
       }
     },
     "bijapur-sultanate": {
       "kind": "polity",
       "name": {
         "tr": "Bicapur Sultanlığı"
+      },
+      "summary": {
+        "tr": "Bahmani Sultanlığı'nın dağılması sırasında 1490'larda Yusuf Adil Şah'ın kurduğu Deccan sultanlığı (Adilşahlar). 1565'te Vicayanagara'ya karşı ittifakın başlıca üyelerindendi."
       }
     },
     "blambangan-kingdom": {
@@ -202,6 +232,9 @@
       "kind": "polity",
       "name": {
         "tr": "Çağatay Hanlığı"
+      },
+      "summary": {
+        "tr": "Cengiz Han'ın ikinci oğlu Çağatay'ın soyundan gelen hanların Orta Asya'daki devleti. 14. yüzyılın ortasında Timur'un yükseldiği Mâverâünnehir ile doğudaki Moğulistan olarak ikiye ayrıldı; doğu kolu 15.–16. yüzyıllarda Tanrı Dağları çevresinde sürdü."
       }
     },
     "champa": {
@@ -361,6 +394,9 @@
       "kind": "polity",
       "name": {
         "tr": "Demak Sultanlığı"
+      },
+      "summary": {
+        "tr": "Java'nın kuzey kıyısında, Majapahit'in yerini alarak 16. yüzyılın başında yükselen, Java'nın ilk büyük İslam sultanlığı."
       }
     },
     "denmark-norway": {
@@ -556,6 +592,9 @@
       "kind": "polity",
       "name": {
         "tr": "Birinci Taungu İmparatorluğu"
+      },
+      "summary": {
+        "tr": "Birmanya'da Taungu hanedanının 16. yüzyılın ortasında Pegu, Ava ve Şan devletlerini birleştirerek kurduğu geniş imparatorluk."
       }
     },
     "four-oirats": {
@@ -577,6 +616,9 @@
       "kind": "polity",
       "name": {
         "tr": "Funj Sultanlığı"
+      },
+      "summary": {
+        "tr": "Nil'in orta kesiminde, Sennar merkezli sultanlık. 1504 dolaylarında Alodia Krallığı'nın yerine kuruldu ve 16. yüzyıl boyunca Sudan'ın büyük bölümüne egemen oldu."
       }
     },
     "galuh-kingdom": {
@@ -589,6 +631,9 @@
       "kind": "polity",
       "name": {
         "tr": "Germiyanoğulları"
+      },
+      "summary": {
+        "tr": "Kütahya merkezli Türkmen beyliği (Germiyanoğulları). 14. yüzyılda Batı Anadolu'nun en büyük beyliklerinden biriydi; II. Yakub'un ölümüyle (1429) toprakları vasiyet yoluyla Osmanlılara geçti."
       }
     },
     "giudicato-of-arborea": {
@@ -601,6 +646,9 @@
       "kind": "polity",
       "name": {
         "tr": "Golkonda Sultanlığı"
+      },
+      "summary": {
+        "tr": "Bahmani mirasından doğan, Kutubşahlar'ın yönettiği Deccan sultanlığı. Golkonda Kalesi ve elmas ticaretiyle tanınır."
       }
     },
     "golden-horde": {
@@ -811,6 +859,9 @@
       "kind": "polity",
       "name": {
         "tr": "Jaunpur Sultanlığı"
+      },
+      "summary": {
+        "tr": "Gange Ovası'nda, Delhi Sultanlığı'ndan ayrılan Şarkîler'in sultanlığı. 1479'da Delhi'deki Lodi sultanı Behlül tarafından ele geçirildi."
       }
     },
     "jesuit-reducciones": {
@@ -886,6 +937,9 @@
       "kind": "polity",
       "name": {
         "tr": "Hive Hanlığı"
+      },
+      "summary": {
+        "tr": "Amu Derya'nın aşağı kesiminde, Harezm'de 1511'de kurulan Özbek hanlığı. Başkent önce Ürgenç'ti; 16. yüzyılın sonlarında Hive'ye taşındı."
       }
     },
     "khanate-of-sibir": {
@@ -1009,6 +1063,9 @@
       "kind": "polity",
       "name": {
         "tr": "Mrauk-U Krallığı"
+      },
+      "summary": {
+        "tr": "Arakan'da (bugünkü Myanmar'ın batısı) Mrauk-U merkezli krallık. Bengal Körfezi ticaretinde ve Bengal ile ilişkilerde etkindi."
       }
     },
     "kingdom-of-mysore": {
@@ -1105,6 +1162,9 @@
       "kind": "polity",
       "name": {
         "tr": "Lan Xang Krallığı"
+      },
+      "summary": {
+        "tr": "Mekong boyunda, bugünkü Laos'un öncülü sayılan krallık; adı 'Bir Milyon Fil' anlamına gelir."
       }
     },
     "later-mayan-city-states": {
@@ -1303,6 +1363,9 @@
       "kind": "polity",
       "name": {
         "tr": "Nogay Ordası"
+      },
+      "summary": {
+        "tr": "Altın Orda'nın dağılmasından sonra Yayık (Ural) ile Volga arasındaki bozkırda yaşayan Türk-Moğol göçebe konfederasyonu. 16. yüzyılda Moskova ve Kırım Hanlığı ile kâh ittifak kâh çatışma içinde oldu."
       }
     },
     "northern-yuan": {
@@ -1492,6 +1555,9 @@
       "kind": "polity",
       "name": {
         "tr": "Pskov Cumhuriyeti"
+      },
+      "summary": {
+        "tr": "Novgorod gibi halk meclisiyle (veçe) yönetilen Rus şehir cumhuriyeti. 1510'da Moskova'ya katıldı."
       }
     },
     "qara-qoyunlu": {
@@ -1519,6 +1585,9 @@
       "kind": "polity",
       "name": {
         "tr": "Ramazanoğulları Beyliği"
+      },
+      "summary": {
+        "tr": "Çukurova'da (Adana ve Tarsus çevresi) hüküm süren Türkmen beyliği (Ramazanoğulları). Memlük Sultanlığı'na bağlıydı; Osmanlı'nın 1516–1517'deki Mısır seferinden sonra Osmanlı egemenliğini tanıdı."
       }
     },
     "rasulid-dynasty": {
@@ -1555,6 +1624,9 @@
       "kind": "polity",
       "name": {
         "tr": "Ragusa Cumhuriyeti"
+      },
+      "summary": {
+        "tr": "Adriyatik kıyısında Ragusa (Dubrovnik) şehir cumhuriyeti. Osmanlı'ya haraç ödeyerek bağımsızlığını ve geniş ticaret ayrıcalıklarını korudu."
       }
     },
     "republic-of-venice": {
@@ -1570,6 +1642,9 @@
       "kind": "polity",
       "name": {
         "tr": "Ryazan Prensliği"
+      },
+      "summary": {
+        "tr": "Moskova'nın güneydoğusunda Rus prensliği. 1521'de Moskova'ya katıldı."
       }
     },
     "ryukyu-kingdom": {
@@ -1603,6 +1678,9 @@
       "kind": "polity",
       "name": {
         "tr": "Samtshe Atabegliği"
+      },
+      "summary": {
+        "tr": "Güneybatı Gürcistan'da, Meşhet (Samtshe) bölgesinde Cakeli ailesinden atabeglerin yönettiği beylik. Osmanlı–Safevî rekabetinin ortasında kaldı; 1578'de Osmanlılarca ele geçirilip Çıldır Eyaleti'ne dönüştürüldü."
       }
     },
     "samudera-pasai-sultanate": {
@@ -1621,6 +1699,9 @@
       "kind": "polity",
       "name": {
         "tr": "Sırp Despotluğu"
+      },
+      "summary": {
+        "tr": "Kosova Savaşı'ndan (1389) sonra Osmanlı'ya haraç ödeyen bir devlet olarak başlayan, 1402'den itibaren despotluk unvanıyla anılan Sırp devleti. Macaristan ile Osmanlı arasında denge siyaseti izledi; Semendire'nin 1459'da Osmanlı'ya geçmesiyle sona erdi."
       }
     },
     "serbian-empire": {
@@ -1648,6 +1729,9 @@
       "kind": "polity",
       "name": {
         "tr": "Şirvan"
+      },
+      "summary": {
+        "tr": "Hazar Denizi'nin batısında, Şirvanşahlar'ın yönettiği devlet. Şah İsmail'in 1500–1501'deki seferiyle Safevî egemenliğine girdi; hanedan 1538'de I. Tahmasp tarafından ortadan kaldırıldı."
       }
     },
     "sind-samma-dynasty": {
@@ -1690,6 +1774,9 @@
       "kind": "polity",
       "name": {
         "tr": "Açe Sultanlığı"
+      },
+      "summary": {
+        "tr": "Sumatra'nın kuzey ucundaki sultanlık. Malaka'nın 1511'de Portekiz'e düşmesinden sonra Müslüman tüccarların uğrak yeri ve biber ticaretinin önemli bir merkezi olarak yükseldi."
       }
     },
     "sultanate-of-banjar": {
@@ -1798,6 +1885,9 @@
       "kind": "polity",
       "name": {
         "tr": "Sûr İmparatorluğu"
+      },
+      "summary": {
+        "tr": "Şir Şah'ın 1540'ta Humayun'u yenerek kurduğu Kuzey Hindistan devleti; yol ağı, vergi ve para düzenlemeleriyle tanınır. 1555'te Humayun Delhi'yi geri aldı."
       }
     },
     "swiss-confederation": {
@@ -1903,6 +1993,9 @@
       "kind": "polity",
       "name": {
         "tr": "Tver Prensliği"
+      },
+      "summary": {
+        "tr": "Volga'nın üst kesiminde, Moskova'ya rakip Rus prensliği. 1485'te Moskova'ya katıldı."
       }
     },
     "union-of-utrecht": {
