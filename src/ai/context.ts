@@ -17,8 +17,10 @@ export interface ContextPlace {
   /** Entity ids (holders, their parents, regions) whose events belong to this place. */
   lineage: string[];
   /**
-   * The time range this place is read in. Today every place shares the selected range; the list shape and
-   * this per-place field are what pins with a range of their own will fill in.
+   * The time range this place is read in. Today every place shares the selected range. The context is a
+   * list of places, each with its own range, so that more than one can be discussed: that will come through
+   * the conversation itself (the reader names another place or period in a question), not through anything
+   * placed on the map.
    */
   range: YearRange;
   /** Who held the point inside its range, oldest first. */

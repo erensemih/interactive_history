@@ -19,7 +19,7 @@ function setup() {
 describe('the map tools', () => {
   it('offer the small set the brief asked for, each described and with an object schema', () => {
     const { tools } = setup();
-    expect(tools.map((t) => t.name)).toEqual(['step', 'highlight', 'connect', 'mark', 'set_year', 'focus', 'clear']);
+    expect(tools.map((t) => t.name)).toEqual(['step', 'highlight', 'connect', 'show_event', 'mark', 'set_year']);
     for (const t of tools) {
       expect(t.description.length).toBeGreaterThan(20);
       expect(t.description.length).toBeLessThanOrEqual(1024);
@@ -94,12 +94,12 @@ describe('the map tools', () => {
 
   it('mark needs a point on the map and a label', () => {
     const { plan, tool } = setup();
-    expect(tool('mark').execute({ lon: 18.68, lat: 45.99, label: 'Mohaç' })).toBe('tamam');
-    expect(tool('mark').execute({ lon: '16,37', lat: '48.21', label: 'Viyana' })).toBe('tamam');
+    expect(tool('mark').execute({ lon: 32.48, lat: 37.87, label: 'Konya' })).toBe('tamam');
+    expect(tool('mark').execute({ lon: '35,48', lat: '38.73', label: 'Kayseri' })).toBe('tamam');
     expect(tool('mark').execute({ lon: 400, lat: 45, label: 'Dışarıda' })).toMatch(/^atlandı/);
     expect(tool('mark').execute({ lon: 18, lat: 45, label: '' })).toMatch(/^atlandı/);
     expect(tool('mark').execute({ lon: 'x', lat: 45, label: 'Y' })).toMatch(/^atlandı/);
-    expect(plan.drawingAt(1).marks.map((m) => m.label)).toEqual(['Mohaç', 'Viyana']);
+    expect(plan.drawingAt(1).marks.map((m) => m.label)).toEqual(['Konya', 'Kayseri']);
   });
 
   it('set_year takes a year inside the range and nothing else', () => {
@@ -108,32 +108,50 @@ describe('the map tools', () => {
     expect(tool('set_year').execute({ step: 2, year: 1600 })).toMatch(/^atlandı/);
     expect(tool('set_year').execute({ step: 2, year: 'bin' })).toMatch(/^atlandı/);
     expect(plan.drawingAt(1).year).toBe(1536);
-    expect(plan.drawingAt(2).year).toBe(1536);
+    expect(plan.drawingAt(2).year).toBeUndefined(); // a step owns its year: step 2 asked for none that was valid
   });
 
-  it('focus records what should be in view, from polities and points', () => {
-    const { plan, tool } = setup();
-    expect(
-      tool('focus').execute({
-        step: 1,
-        polities: ['ottoman-empire', 'x-yok'],
-        points: [
-          { lon: 16.37, lat: 48.21 },
-          { lon: 999, lat: 0 },
-        ],
-      }),
-    ).toContain('tamam');
-    expect(plan.focusAt(1)).toEqual({ polities: ['ottoman-empire'], points: [{ lon: 16.37, lat: 48.21 }] });
-    expect(tool('focus').execute({ polities: ['x-yok'] })).toMatch(/^atlandı/);
+  it('show_event takes an event of the app by id, or by a title that names exactly one', () => {
+    const { plan, tool, changes } = setup();
+    expect(tool('show_event').execute({ step: 1, event: 'caldiran-1514' })).toBe('tamam');
+    expect(tool('show_event').execute({ step: 2, event: 'Mohaç Muharebesi' })).toBe('tamam');
+    expect(tool('show_event').execute({ step: 3, event: 'Preveze' })).toBe('tamam'); // starts like exactly one title
+    expect(tool('show_event').execute({ step: 4, event: 'Caldiran-1514' })).toBe('tamam'); // case and accents do not matter
+    expect(tool('show_event').execute({ step: 5, event: 'yok-boyle-bir-olay' })).toMatch(/^atlandı/);
+    expect(tool('show_event').execute({ step: 5, event: '' })).toMatch(/^atlandı/);
+    expect(tool('show_event').execute({ step: 5 })).toMatch(/^atlandı/);
+    expect([1, 2, 3, 4, 5].map((n) => plan.drawingAt(n).events)).toEqual([
+      ['caldiran-1514'],
+      ['mohac-1526'],
+      ['preveze-1538'],
+      ['caldiran-1514'],
+      [],
+    ]);
+    expect(changes()).toBe(4);
   });
 
-  it('clear is a step action that empties what came before', () => {
+  it('a mark for something the app has an event for is shown as that event, not as a second marker', () => {
     const { plan, tool } = setup();
-    tool('highlight').execute({ step: 1, polities: ['ottoman-empire'] });
-    tool('clear').execute({ step: 2 });
-    tool('highlight').execute({ step: 2, polities: ['kingdom-of-france'] });
-    expect(plan.drawingAt(1).highlights).toEqual(['ottoman-empire']);
-    expect(plan.drawingAt(2).highlights).toEqual(['kingdom-of-france']);
+    const out = tool('mark').execute({ step: 1, lon: 44.0, lat: 39.14, label: 'Çaldıran' }) as string;
+    expect(out).toMatch(/^tamam/);
+    expect(out).toContain('Çaldıran Muharebesi');
+    expect(tool('mark').execute({ step: 1, lon: 18.68, lat: 45.99, label: 'Mohaç, 1526' })).toMatch(/^tamam/);
+    expect(plan.drawingAt(1)).toMatchObject({ events: ['caldiran-1514', 'mohac-1526'], marks: [] });
+  });
+
+  it('but a mark of a place the data has no event for stays a mark, and so does one at another place of that name', () => {
+    const { plan, tool } = setup();
+    tool('mark').execute({ step: 1, lon: 37.1, lat: 36.68, label: 'Mercidabık' }); // no such event in the data
+    tool('mark').execute({ step: 1, lon: 31.25, lat: 30.07, label: 'Kahire' }); // Ridaniye happened here, but this is the city
+    tool('mark').execute({ step: 1, lon: 2.35, lat: 48.85, label: 'Mohaç' }); // a long way from the event of that name
+    tool('mark').execute({ step: 1, lon: 18.68, lat: 45.99, label: 'Mohaç, 1683' }); // not the year of the event
+    expect(plan.drawingAt(1).events).toEqual([]);
+    expect(plan.drawingAt(1).marks.map((m) => m.label)).toEqual(['Mercidabık', 'Kahire', 'Mohaç', 'Mohaç, 1683']);
+  });
+
+  it('there is no clear and no focus: every step owns its map and the camera is the reader’s setting', () => {
+    const { tools } = setup();
+    expect(tools.some((t) => t.name === 'clear' || t.name === 'focus')).toBe(false);
   });
 
   it('reads the step from `step` or `n`, defaults to 1 and refuses nonsense', () => {
@@ -144,9 +162,8 @@ describe('the map tools', () => {
     expect(tool('highlight').execute({ step: 'ikinci', polities: ['ottoman-empire'] })).toMatch(/^atlandı/);
     expect(tool('highlight').execute({ step: 0, polities: ['venice'] })).toMatch(/^atlandı|tamam/);
     expect(plan.drawingAt(1).highlights).toContain('ottoman-empire');
-    expect(plan.drawingAt(3).highlights).toEqual(
-      expect.arrayContaining(['ottoman-empire', 'safavid-dynasty', 'kingdom-of-france']),
-    );
+    expect(plan.drawingAt(2).highlights).toEqual(['safavid-dynasty']);
+    expect(plan.drawingAt(3).highlights).toEqual(['kingdom-of-france']); // each step has only what it asked for
   });
 
   it('never throws on garbage input', () => {

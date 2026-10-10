@@ -1,7 +1,7 @@
 import { html, render } from 'lit-html';
 import { contextEvent, contextFromView, type AiContext } from './ai/context';
 import { Director } from './ai/director';
-import { describeDrawing, resolveDrawing } from './ai/drawing';
+import { describeDrawing, frameTargetOf, resolveDrawing } from './ai/drawing';
 import { errorCopy } from './ai/errorCopy';
 import { createMockProvider } from './ai/mockProvider';
 import { createMockScripts } from './ai/mockScripts';
@@ -11,8 +11,9 @@ import { createSampleProvider } from './ai/sampleProvider';
 import { AiSession, type AssistantItem } from './ai/session';
 import { readTier, writeTier } from './ai/settings';
 import { appEventsSource } from './ai/sources';
-import type { FocusTarget } from './ai/types';
+import type { Drawing } from './ai/types';
 import { loadData, type AppData } from './data/load';
+import { CameraWatch, type Camera } from './domain/camera';
 import type { HistoricalEvent } from './domain/types';
 import { MapView } from './map/mapView';
 import { deriveView, type ViewModel } from './state/derive';
@@ -21,6 +22,7 @@ import { hashToPartialState, parseCamera, stateToHash } from './state/url';
 import { ChatView } from './ui/chat/chatView';
 import { InfoPanel } from './ui/infoPanel';
 import { MapChrome, MapHead } from './ui/mapChrome';
+import { FollowPrompt } from './ui/followPrompt';
 import { formatRange } from './ui/format';
 import { scrollBehavior } from './ui/motion';
 import { PanelWidth } from './ui/panelWidth';
@@ -68,6 +70,7 @@ const SHELL = `
         <div class="map-chrome" id="map-chrome"></div>
         <div class="map-stats" id="map-stats" hidden></div>
         <div class="toast" id="toast" role="status" hidden></div>
+        <div id="follow-host"></div>
       </div>
     </main>
     <aside class="panel" aria-label="Bilgi paneli">
@@ -132,16 +135,31 @@ export async function startApp(root: HTMLElement): Promise<void> {
   // The camera goes into the link only once the user has moved the map themselves (or the link had one):
   // the automatic first framing is the same for everyone and does not belong in a shared address.
   let cameraTouched = parseCamera(location.hash) !== null;
+  // The +/− buttons move the map without a pointer or key event of the map's own: say so, so the move counts as the reader's
+  // (and forget it if the map did not move after all, at its widest or closest, so it cannot be taken for a later move's).
+  let readerMove = false;
+  let readerMoveTimer = 0;
+  function markReaderMove() {
+    readerMove = true;
+    window.clearTimeout(readerMoveTimer);
+    readerMoveTimer = window.setTimeout(() => (readerMove = false), 1500);
+  }
+  /** Where the page itself last left the camera (a step brought into view, an event revealed, a resize). */
+  const watch = new CameraWatch();
+  const cameraNow = (): Camera => {
+    const c = mapView.map.getCenter();
+    return { lng: c.lng, lat: c.lat, zoom: mapView.map.getZoom() };
+  };
   const head = new MapHead($('map-head'));
   new MapChrome($('map-chrome'), data, {
     zoomIn: () => {
       cameraTouched = true;
-      if (store.state.chatOpen) director.userMovedCamera();
+      markReaderMove();
       mapView.map.zoomIn();
     },
     zoomOut: () => {
       cameraTouched = true;
-      if (store.state.chatOpen) director.userMovedCamera();
+      markReaderMove();
       mapView.map.zoomOut();
     },
   });
@@ -157,20 +175,23 @@ export async function startApp(root: HTMLElement): Promise<void> {
     tier: readTier(),
     drawing: () => director.drawing,
   });
-  const director: Director = new Director(session, { focus: (target) => focusOn(target) });
+  const director: Director = new Director(session, { frame: (drawing) => frameDrawing(drawing) });
   /** What the reader is looking at, as the model will be told: set by every render. */
   let liveContext: AiContext = { range: store.state.range, year: 0, places: [], event: null };
 
-  /** Brings the places a step asks for into view, at the year that step shows. */
-  function focusOn(target: FocusTarget) {
-    if (!mapView) return;
+  const eventTitle = (id: string) => data.eventsById.get(id)?.title ?? id;
+  const describe = (drawing: Drawing) => describeDrawing(drawing, (id) => session.resolver.nameOf(id), eventTitle);
+
+  /**
+   * Brings what a step puts on the map into view, at the year that step shows (the camera follows the narration).
+   * When the drawing is already framed the camera stays, and that is where the reader's moves are measured from.
+   */
+  function frameDrawing(drawing: Drawing) {
+    if (!mapView || !store.state.chatOpen) return; // with the chat closed nothing of the AI's is on the map to bring into view
     const year = director.year ?? vm.year;
-    const points = [...target.points];
-    for (const id of target.polities) {
-      const at = session.resolver.anchorAt(id, year);
-      if (at) points.push(at);
-    }
-    mapView.focusOn(points);
+    const target = frameTargetOf(resolveDrawing(drawing, session.resolver, year), session.resolver, year);
+    if (target && mapView.frameTarget(target)) return; // moving: the reference is taken when the move ends
+    watch.settle(cameraNow());
   }
 
   /** One question at a time, about whatever is open; an open event card is closed once it is in the conversation. */
@@ -204,12 +225,14 @@ export async function startApp(root: HTMLElement): Promise<void> {
       dropEvent: () => store.selectEvent(null),
     },
   });
+  /** The small question over the map, after the reader has taken the map a long way while it was following. */
+  const followPrompt = new FollowPrompt($('follow-host'), { director, openSettings: () => chat.openSettings() });
   /** Pointing at a step is announced with what it puts on the map (reading on is not: that would be noise). */
   function announceStep(itemId: string, n: number) {
     const item = session.find(itemId);
     if (item?.kind !== 'assistant') return;
     const title = item.plan.titleOf(n);
-    const drawn = director.drawing ? describeDrawing(director.drawing, (id) => session.resolver.nameOf(id)) : '';
+    const drawn = director.drawing ? describe(director.drawing) : '';
     announce(`${title ? `Adım ${n}: ${title}. ` : `Adım ${n}. `}${drawn ? `Haritada: ${drawn}.` : ''}`);
   }
   function narrate() {
@@ -285,6 +308,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
   /** The year the AI asked for when `vm` was derived. */
   let vmAiYear: number | null = null;
   let drawnDrawing: unknown = null;
+  let chatWasOpen = store.state.chatOpen;
   let drawnYear = NaN;
   let queued = false;
   let hashTimer = 0;
@@ -334,20 +358,32 @@ export async function startApp(root: HTMLElement): Promise<void> {
     mapView.setHoverEvent(state.hoverEventId);
     revealIfNew(open);
 
-    // What the AI has drawn is shown while its chat is open, for the year shown, and never moves the map.
+    // While the chat is open the AI is the map's narrator: the event markers leave the map (they stay on the
+    // timeline) and only the opened event and the ones the AI talks about are drawn.
+    mapView.setNarrator(state.chatOpen);
+    // The chat comes back with a narration in it: its step's drawing returns to the map, and the camera follows it
+    // (once the panel has finished opening and the map has taken its new size).
+    if (state.chatOpen && !chatWasOpen && director.following && director.drawing) {
+      window.setTimeout(() => {
+        if (store.state.chatOpen && director.following && director.drawing) frameDrawing(director.drawing);
+      }, 420);
+    }
+    chatWasOpen = state.chatOpen;
+    // What the AI has drawn is shown while its chat is open, for the year shown.
     const drawing = state.chatOpen ? director.drawing : null;
     if (drawing !== drawnDrawing || vm.year !== drawnYear) {
       drawnDrawing = drawing;
       drawnYear = vm.year;
       mapView.setAiDrawing(
         drawing ? resolveDrawing(drawing, session.resolver, vm.year) : null,
-        drawing ? describeDrawing(drawing, (id) => session.resolver.nameOf(id)) : '',
+        drawing ? describe(drawing) : '',
       );
     }
 
     head.render(vm);
     // The panel's width changes first (once, smoothly), then its content is drawn for the new shape.
     panelWidth.sync(state.chatOpen);
+    followPrompt.update(state.chatOpen);
     panel.render(vm);
     if (state.chatOpen) chat.update();
     ruler.render(vm.year);
@@ -497,8 +533,14 @@ export async function startApp(root: HTMLElement): Promise<void> {
     if (last.status === 'done') announce('Yanıt hazır.');
     else if (last.status === 'failed' && last.error) announce(errorCopy(last.error.code).title);
   });
+  let wasAsking = false;
   director.subscribe(() => {
     chat.update();
+    followPrompt.update(store.state.chatOpen);
+    // A question the reader let pass starts the measure again from where the map is now: it comes back after
+    // another far move, not after a nudge of the map that already lies far from where the page left it.
+    if (wasAsking && !director.askingToRelease && director.following) watch.settle(cameraNow());
+    wasAsking = director.askingToRelease;
     store.refresh(); // the drawing, the year and the camera follow the active step
   });
 
@@ -522,17 +564,23 @@ export async function startApp(root: HTMLElement): Promise<void> {
           toast(null);
           store.selectPlace(p);
         },
-        onMarkerStats: ({ shown, total, thinned, offscreen }) => {
+        onMarkerStats: ({ shown, total, thinned, offscreen, narrator }) => {
           const el = $('map-stats');
           el.hidden = total === 0;
-          // Say honestly why some events are not drawn: zoom/collision thinning, or simply out of view.
-          const hint =
-            thinned > 0
-              ? html`<span> · yakınlaştıkça artar</span>`
-              : offscreen > 0
-                ? html`<span> · kalanlar görünüm dışında</span>`
-                : '';
-          render(html`<b>${shown}</b> / ${total} olay haritada${hint}`, el);
+          if (narrator) {
+            // The AI narrates: the others are on the timeline, and the note says where they went.
+            render(html`<b>${shown}</b> olay haritada <span> · gerisi çizelgede</span>`, el);
+          } else {
+            // Say honestly why some events are not drawn: zoom/collision thinning, or simply out of view.
+            const hint =
+              thinned > 0
+                ? html`<span> · yakınlaştıkça artar</span>`
+                : offscreen > 0
+                  ? html`<span> · kalanlar görünüm dışında</span>`
+                  : '';
+            render(html`<b>${shown}</b> / ${total} olay haritada${hint}`, el);
+          }
+          mapView?.controlsChanged(); // the note's size is what labels keep clear of
         },
         onWaterClick: () => toast('Burası deniz. Bir kara parçasına tıklayın; harita yerinden oynamaz.'),
         onHoverPolity: (id, x, y, noData) => {
@@ -581,12 +629,24 @@ export async function startApp(root: HTMLElement): Promise<void> {
   }
 
   mapView.map.on('movestart', (e) => {
-    if (e.originalEvent) {
-      cameraTouched = true; // the user's own drag, wheel, pinch or keys
-      if (store.state.chatOpen) director.userMovedCamera(); // and from now on the AI keeps its hands off the camera
-    }
+    if (e.originalEvent) cameraTouched = true; // the user's own drag, wheel, pinch or keys
   });
-  mapView.map.on('moveend', scheduleHash);
+  mapView.map.on('moveend', (e) => {
+    scheduleHash();
+    // A move the page made itself (a step brought into view, an event revealed, a resize) is where the camera now
+    // rests. A move of the reader's is measured against that: small ones are just looking around, a substantial
+    // one while the camera follows the narration makes the page ask whether it should let go.
+    const camera = cameraNow();
+    const reader = !!e.originalEvent || readerMove;
+    readerMove = false;
+    if (!reader) {
+      watch.settle(camera);
+      return;
+    }
+    if (!store.state.chatOpen) return;
+    const box = mapView.map.getCanvas();
+    director.userMovedCamera(watch.judge(camera, { width: box.clientWidth, height: box.clientHeight }));
+  });
   update();
   loadingText.textContent = 'Harita çiziliyor…';
   await mapView.whenDrawn();

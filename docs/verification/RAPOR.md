@@ -1,6 +1,6 @@
 # Doğrulama raporu
 
-Çalıştırma: 2026-10-10T11:55:01.924Z · Chromium (başsız) · 1440×900
+Çalıştırma: 2026-10-10T14:13:09.333Z · Chromium (başsız) · 1440×900
 
 **137/137 denetim geçti.**
 
@@ -116,8 +116,8 @@
 | ✓ | Çin'e yakınlaşılmış; Mohaç şu an görünümün dışında ve haritada çizili değil | yakınlaştırma 4.60 |
 | ✓ | Mohaç, Osmanlı çizelgesinde bir nokta olarak duruyor |  |
 | ✓ | Harita uzaklaştı (en az bir yakınlaştırma düzeyi) | 2.81 düzey |
-| ✓ | Hareket yumuşak: atlama yok, ara kareler var (tek karede en çok %45 yol) | 18 ara kare, en büyük adım 0.30 / 2.81 |
-| ✓ | Hareket takip edilebilecek kadar uzun sürer (≥ 0,8 sn) | 2059 ms |
+| ✓ | Hareket yumuşak: atlama yok, ara kareler var (tek karede en çok %45 yol) | 15 ara kare, en büyük adım 0.34 / 2.81 |
+| ✓ | Hareket takip edilebilecek kadar uzun sürer (≥ 0,8 sn) | 2061 ms |
 | ✓ | Yalnızca uzaklaşır: hareket sırasında geri yakınlaşma yok |  |
 | ✓ | Mohaç artık görünümde: kenarlardan uzakta, kontrollerin arkasında değil, işaretçisi çizili | 237,272 / 1030×710 |
 | ✓ | Önceki görünüm yeni görünümün içinde kalır (Çin hâlâ ekranda) | [97,24,127,41] ⊂ [-30,-35,180,72] |

@@ -100,6 +100,8 @@ export class ChatView {
   private sheet: TemplateResult | null = null;
   private queued = false;
   private menuOpen = false;
+  /** The question over the map sent the reader here: "Harita takibi" is marked for a moment so it is easy to find. */
+  private pointFollow = false;
   private seen = 0;
   private savedScroll = 0;
   /**
@@ -160,6 +162,18 @@ export class ChatView {
       if (scroller) scroller.scrollTop = this.savedScroll;
       if (focus) this.focusComposer();
     });
+  }
+
+  /** Opens the settings and marks "Harita takibi", which is where the question over the map sends the reader. */
+  openSettings() {
+    this.menuOpen = true;
+    this.pointFollow = true;
+    this.draw();
+    this.element.querySelector<HTMLInputElement>('[data-testid=chat-follow]')?.focus({ preventScroll: true });
+    window.setTimeout(() => {
+      this.pointFollow = false;
+      this.draw();
+    }, 3200);
   }
 
   focusComposer() {
@@ -312,10 +326,10 @@ export class ChatView {
                 type="button"
                 class="chat-free"
                 data-testid="chat-follow-off"
-                title="Harita sizin elinizde. Adımlar haritayı yeniden odaklasın."
+                title="Harita sizin elinizde. Adımlar haritayı yeniden izlesin."
                 @click=${() => actions.setFollowing(true)}
               >
-                Harita serbest · <span>adımı izlet</span>
+                Harita takibi kapalı · <span>aç</span>
               </button>`
             : nothing
         }
@@ -353,7 +367,10 @@ export class ChatView {
                       </label>`,
                   )}
                 </fieldset>
-                <label class="chat-opt chat-switch">
+                <label
+                  class=${clsx('chat-opt', 'chat-switch', this.pointFollow && 'is-pointed')}
+                  data-testid="chat-follow-row"
+                >
                   <input
                     type="checkbox"
                     role="switch"
@@ -361,7 +378,13 @@ export class ChatView {
                     .checked=${following}
                     @change=${(e: Event) => actions.setFollowing((e.target as HTMLInputElement).checked)}
                   />
-                  <span><b>Kamera adımı izlesin</b><small>Haritayı yalnızca siz oynatırsanız bu kapanır.</small></span>
+                  <span
+                    ><b>Harita takibi</b
+                    ><small
+                      >Açıkken harita, her adımın çizimlerini görünür kılacak biçimde yumuşakça kayar ve yakınlaşır.
+                      Küçük kaydırmalar bunu kapatmaz; haritayı çok uzağa götürürseniz size sorulur.</small
+                    ></span
+                  >
                 </label>
                 <button
                   type="button"
@@ -422,8 +445,10 @@ export class ChatView {
       </h2>
       <p class="prose">
         Bir yerin tarihini anlatmasını ya da sorunuzu yanıtlamasını isteyin. Anlatım ilerledikçe harita, anlatılanı
-        gösterir: devletleri vurgular, aralarındaki ilişkiyi çizer, yerleri işaretler. Siz okurken harita kendi kendine
-        bir yer seçmez; yalnızca bir adım gerektirirse, usulca uzaklaşarak o yeri görünür kılar.
+        gösterir: devletleri vurgular, aralarındaki ilişkiyi çizer, anlatılan olayı kendi işaretiyle koyar. Her adım
+        haritayı kendi çizimleriyle gösterir ve <i>Harita takibi</i> açıkken harita o çizimlere yumuşakça kayar. Bu
+        sırada olay işaretleri haritadan çekilir (çizelgede durur); bir olaya tıklarsanız ya da anlatım ondan söz ederse
+        haritada belirir.
       </p>
       <div class="chat-suggest">
         <button

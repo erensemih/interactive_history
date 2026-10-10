@@ -2,7 +2,7 @@ import type { PlacePoint } from '../domain/types';
 import { formatRange } from '../ui/format';
 import { subjectLabel, type AiContext, type Mode } from './context';
 import { describeDrawing } from './drawing';
-import type { CatalogEntry } from './resolve';
+import type { CatalogEntry, EventCatalogEntry } from './resolve';
 import type { SourceGroup } from './sources';
 import type { Drawing } from './types';
 
@@ -47,24 +47,22 @@ Haritaya yalnızca araçlarla çizersin. Çizim, anlattığını gösterir; meti
  1) Önce, HİÇ METİN YAZMADAN, ihtiyacın olan bütün araç çağrılarını TEK turda, birlikte (paralel) yap. ANLATIM'da her adım için bir \`step\` çağrısı (n ve kısa başlık) ve o adımın çizimleri, hepsi aynı \`step\` numarasıyla. SORU'da \`step\` çağırma; çizimleri doğrudan yap.
  2) Sonuçlar gelince başka araç çağırmadan nihai metni yaz.
 Çizim ilkeleri:
- • Az ve anlamlı çiz: adım başına en çok 3 \`highlight\` (vurgu), 2 \`connect\` (bağlantı), 3 \`mark\` (işaret). Her adım öncekinin çizimlerini devralır; temiz bir sayfa için \`clear\` çağır.
+ • HER ADIM HARİTANIN SAHİBİDİR. Bir adım etkin olunca harita yalnızca o adımın çizimlerini gösterir; öncekinin çizimleri kalkar, okur bir önceki adıma dönünce onunki aynen gelir. Bu yüzden her adım gereken her şeyi (vurgu, bağlantı, olay, işaret, yıl) KENDİ başına bildirmeli; bir önceki adımın haritada kalacağını varsayma.
+ • Az ve anlamlı çiz: adım başına en çok 3 \`highlight\` (vurgu), 2 \`connect\` (bağlantı) ve toplam 3 işaret (\`show_event\` ile \`mark\` birlikte).
  • Devlet kimliği gereken her yerde YALNIZCA POLİTİLER listesindeki kimlikleri kullan. Listede olmayanı çizme.
+ • OLAYLAR listesindeki bir olayı anlatıyorsan onu \`show_event\` ile göster: haritada olayın kendi işareti ve adı belirir. Aynı şey için ayrıca \`mark\` çizme. \`mark\` yalnızca OLAYLAR'da bulunmayan yerler içindir (bir kent, geçit, liman); yerini iyi bilmiyorsan işaretleme. Etiket en çok 24 karakter.
  • \`connect\`: iki devlet arasında war (savaş), alliance (ittifak), trade (ticaret) ya da treaty (antlaşma). Etiket en çok 24 karakter ("Mohaç, 1526").
- • \`mark\`: yerini iyi bildiğin kent ya da savaş alanı; ondalık derece (lon, lat). Emin değilsen işaretleme. Etiket en çok 24 karakter.
- • \`set_year\`: yalnızca seçili aralığın içinden bir yıl; sınırlar o yıla göre çizilir. Adımın anlattığı olay başka bir yıla düşüyorsa ayarla.
- • \`focus\`: harita kendi kendine oynamaz; yalnızca anlattığın yer ekranda olmayacaksa kullan, her adımda değil.
+ • \`set_year\`: adımın gösterdiği sınırların yılı; yalnızca seçili aralığın içinden bir yıl. Ayarlamazsan okurun kendi yılı görünür; adımın anlattığı olay belli bir yıla düşüyorsa ayarla.
+ • Kamerayı sen yönetmezsin: okur "Harita takibi"ni açık tuttukça harita, adımın çizimlerini görünür kılacak biçimde kendiliğinden kayar ve yakınlaşır. Bu yüzden bir adımda birbirinden çok uzak yerleri gereksiz yere çizme.
  • Bir araç "atlandı" derse önemli değil; metinde anma.
 
-ÖRNEK (üç adımlı ANLATIM)
- 1. tur, yalnızca araç çağrıları, hepsi birlikte: step{n:1,title:"Doğuda yeni bir komşu"} · highlight{step:1,polities:["ottoman-empire","safavid-dynasty"]} · set_year{step:1,year:1505} · step{n:2,title:"Çaldıran"} · connect{step:2,from:"ottoman-empire",to:"safavid-dynasty",relation:"war"} · set_year{step:2,year:1514} · step{n:3,title:"…"} · …
+ÖRNEK (iki adımlı ANLATIM)
+ 1. tur, yalnızca araç çağrıları, hepsi birlikte: step{n:1,title:"Doğuda yeni bir komşu"} · highlight{step:1,polities:["ottoman-empire","safavid-dynasty"]} · set_year{step:1,year:1505} · step{n:2,title:"Çaldıran"} · highlight{step:2,polities:["ottoman-empire","safavid-dynasty"]} · connect{step:2,from:"ottoman-empire",to:"safavid-dynasty",relation:"war"} · show_event{step:2,event:"caldiran-1514"} · set_year{step:2,year:1514}
  2. tur, yalnızca metin:
  ## 1. Doğuda yeni bir komşu
  (paragraf)
 
  ## 2. Çaldıran
- (paragraf)
-
- ## 3. …
  (paragraf)`
     : `HARİTA
 Bu ortamda haritaya çizim yapamazsın; yalnızca metin yaz.`;
@@ -105,7 +103,7 @@ export function describeContext(ctx: AiContext, previous: AiContext | null): str
   const ev = ctx.event;
   if (ev) {
     lines.push(
-      `Açık olay kartı: «${ev.title}», ${ev.dateLabel}, ${ev.placeName} (${dms(ev.point)}). Taraflar: ${ev.parties.join(', ') || '—'}. Kayıt: ${ev.summary}`,
+      `Açık olay kartı: «${ev.title}» (kimlik: ${ev.id}), ${ev.dateLabel}, ${ev.placeName} (${dms(ev.point)}). Taraflar: ${ev.parties.join(', ') || '—'}. Kayıt: ${ev.summary}`,
     );
   }
   if (previous)
@@ -113,6 +111,16 @@ export function describeContext(ctx: AiContext, previous: AiContext | null): str
       `Konu değişti: bir önceki istekte okur «${subjectLabel(previous)}» üzerindeydi; şimdi «${subjectLabel(ctx)}».`,
     );
   return lines.join('\n');
+}
+
+/** The most events the prompt lists; the app has far fewer, this only keeps a larger data set from swamping it. */
+const MAX_EVENT_LINES = 160;
+
+export function describeEvents(events: readonly EventCatalogEntry[]): string {
+  return events
+    .slice(0, MAX_EVENT_LINES)
+    .map((e) => `${e.id} | ${e.dateLabel} | ${e.title} | ${e.place}`)
+    .join('\n');
 }
 
 export function describeCatalog(catalog: readonly CatalogEntry[], range: { from: number; to: number }): string {
@@ -131,10 +139,13 @@ export interface PromptInput {
   /** The context of the previous request, when the subject has changed since. */
   previous: AiContext | null;
   catalog: readonly CatalogEntry[];
+  /** The app's events in the range, with the ids `show_event` takes (empty without tools). */
+  events: readonly EventCatalogEntry[];
   sources: readonly SourceGroup[];
   /** What the AI has already drawn on the map (null: nothing). */
   drawing: Drawing | null;
   nameOf: (id: string) => string;
+  eventTitleOf?: (id: string) => string;
   history: readonly HistoryTurn[];
   tools: boolean;
 }
@@ -147,13 +158,18 @@ function currentTurn(input: PromptInput, sources: readonly SourceGroup[]): strin
   const { context, mode } = input;
   const parts = [`BAĞLAM\n${describeContext(context, input.previous)}`];
   if (input.drawing) {
-    const drawn = describeDrawing(input.drawing, input.nameOf);
+    const drawn = describeDrawing(input.drawing, input.nameOf, input.eventTitleOf);
     if (drawn) parts.push(`Haritada şu an senin çizdiklerin var (${drawn}).`);
   }
   if (input.tools) {
     parts.push(
       `POLİTİLER (seçili aralıkta sınır verisinde bulunan devletler; kimlik | ad | yıllar, yalnızca aralığın bir kısmında varsa)\n${describeCatalog(input.catalog, context.range)}`,
     );
+    if (input.events.length) {
+      parts.push(
+        `OLAYLAR (uygulamanın seçili aralıktaki olayları; show_event bu kimlikleri alır. kimlik | tarih | ad | yer)\n${describeEvents(input.events)}`,
+      );
+    }
   }
   const found = sourcesText(sources);
   if (found) parts.push(`KAYITLAR\n${found}`);

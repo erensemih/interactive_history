@@ -53,16 +53,16 @@ const STEP_PROP = {
   type: 'integer',
   minimum: 1,
   maximum: LIMITS.steps,
-  description: 'Hangi adıma ait olduğu (varsayılan 1).',
+  description: 'Hangi adıma ait olduğu (varsayılan 1). Çizim yalnızca o adım etkinken haritada durur.',
 };
 
 /**
  * The page functions the model may call. They are the only way the AI touches the map. Each one checks
  * its references against the data and either records the request in the plan or declines it ("atlandı"),
  * and never throws: a declined drawing is not an error worth a round trip. They only record; what is
- * drawn, and when, is decided later by the step the reader is on.
+ * drawn, and when, is decided later by the step the reader is on (and each step shows only its own).
  *
- * Listed in the order they should be dropped from the end if a view allows fewer tools than seven.
+ * Listed in the order they should be dropped from the end if a view allows fewer tools than six.
  */
 export function createTools(env: ToolEnv): ToolSpec[] {
   const { resolver, range, plan } = env;
@@ -88,7 +88,7 @@ export function createTools(env: ToolEnv): ToolSpec[] {
     {
       name: 'step',
       description:
-        'ANLATIM için bir adımı bildirir: numarası ve kısa başlığı. Her adım için bir kez, ilk turda diğer araçlarla birlikte çağır. Metni burada yazma; metin sonra, nihai yanıtta gelir. Dönüş: "tamam".',
+        'ANLATIM için bir adımı bildirir: numarası ve kısa başlığı. Her adım için bir kez, ilk turda diğer araçlarla birlikte çağır. Her adım haritanın sahibidir: etkin olduğunda harita yalnızca o adımın çizimlerini gösterir. Metni burada yazma; metin sonra, nihai yanıtta gelir. Dönüş: "tamam".',
       inputSchema: {
         type: 'object',
         properties: {
@@ -111,7 +111,7 @@ export function createTools(env: ToolEnv): ToolSpec[] {
     {
       name: 'highlight',
       description:
-        'Haritada devletleri vurgular (taramalı). Kimlikler yalnızca POLİTİLER listesinden olmalı; listede olmayan atlanır. Harita oynamaz. Dönüş: "tamam" ya da neden atlandığı.',
+        'Haritada devletleri vurgular (taramalı). Kimlikler yalnızca POLİTİLER listesinden olmalı; listede olmayan atlanır. Dönüş: "tamam" ya da neden atlandığı.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -131,7 +131,7 @@ export function createTools(env: ToolEnv): ToolSpec[] {
     {
       name: 'connect',
       description:
-        'İki devlet arasına ilişki çizgisi çizer: war (savaş), alliance (ittifak), trade (ticaret), treaty (antlaşma). İki kimlik de POLİTİLER listesinden olmalı. Harita oynamaz. Dönüş: "tamam" ya da neden atlandığı.',
+        'İki devlet arasına ilişki çizgisi çizer: war (savaş), alliance (ittifak), trade (ticaret), treaty (antlaşma). İki kimlik de POLİTİLER listesinden olmalı. Dönüş: "tamam" ya da neden atlandığı.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -155,9 +155,30 @@ export function createTools(env: ToolEnv): ToolSpec[] {
       },
     },
     {
+      name: 'show_event',
+      description:
+        'Uygulamanın OLAYLAR listesindeki bir olayı haritada KENDİ işaretiyle gösterir (adı yanında durur). Anlattığın şey listede bir olaysa (savaş, kuşatma, antlaşma…) işaret çizmek yerine bunu kullan. Kimlik listeden olmalı. Dönüş: "tamam" ya da neden atlandığı.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          step: STEP_PROP,
+          event: { type: 'string', description: 'OLAYLAR listesindeki olay kimliği (örn. "caldiran-1514").' },
+        },
+        required: ['event'],
+      },
+      execute(input) {
+        const step = stepOf(input);
+        if (step === null) return 'atlandı: adım numarası 1 ile 12 arasında olmalı';
+        const ev = resolver.event(input.event ?? input.id ?? input.title);
+        if (!ev)
+          return 'atlandı: bu kimlikte bir olay yok; OLAYLAR listesindeki kimliği yaz, listede yoksa mark kullan';
+        return accept({ kind: 'event', step, id: ev.id });
+      },
+    },
+    {
       name: 'mark',
       description:
-        'Haritada bir noktayı kısa bir etiketle işaretler (kent, savaş alanı, liman). Koordinatı iyi bilmiyorsan çağırma. Harita oynamaz. Dönüş: "tamam" ya da neden atlandığı.',
+        'Haritada, OLAYLAR listesinde BULUNMAYAN bir noktayı (kent, geçit, liman, savaş alanı) kısa bir etiketle işaretler. Listedeki bir olay için kullanma: show_event kullan. Koordinatı iyi bilmiyorsan çağırma. Dönüş: "tamam" ya da neden atlandığı.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -175,13 +196,19 @@ export function createTools(env: ToolEnv): ToolSpec[] {
         if (!point) return 'atlandı: koordinat haritanın dışında';
         const label = cleanLabel(input.label, LIMITS.label);
         if (!label) return 'atlandı: etiket gerekli';
+        // A place the app already has an event for is shown by that event's own marker, never by a second one.
+        const known = resolver.eventFor(label, point, range);
+        if (known) {
+          accept({ kind: 'event', step, id: known.id });
+          return `tamam: «${known.title}» uygulamanın olay kaydı; kendi işaretiyle gösterildi (böyle olaylar için show_event kullan)`;
+        }
         return accept({ kind: 'mark', step, point, label });
       },
     },
     {
       name: 'set_year',
       description:
-        'Haritanın sınır yılını ayarlar. Yıl seçili aralığın içinde olmalı; dışındaysa atlanır. Dönüş: "tamam" ya da neden atlandığı.',
+        'Adımın gösterdiği harita sınırlarının yılını ayarlar. Yıl seçili aralığın içinde olmalı; dışındaysa atlanır. Ayarlamayan adımda yılı okur belirler. Dönüş: "tamam" ya da neden atlandığı.',
       inputSchema: {
         type: 'object',
         properties: { step: STEP_PROP, year: { type: 'integer', description: 'Yıl.' } },
@@ -193,59 +220,6 @@ export function createTools(env: ToolEnv): ToolSpec[] {
         const year = resolver.year(input.year, range);
         if (year === null) return `atlandı: yıl ${range.from}–${range.to} aralığında olmalı`;
         return accept({ kind: 'set_year', step, year });
-      },
-    },
-    {
-      name: 'focus',
-      description:
-        'Kamerayı, verilen devletler ve noktalar görünür olsun diye, yumuşakça ve olabildiğince az oynatır. Yalnızca anlattığın yer şu an ekranda olmayacaksa kullan. Dönüş: "tamam" ya da neden atlandığı.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          step: STEP_PROP,
-          polities: {
-            type: 'array',
-            items: { type: 'string' },
-            maxItems: 4,
-            description: 'Görünmesi gereken devlet kimlikleri.',
-          },
-          points: {
-            type: 'array',
-            maxItems: 4,
-            items: {
-              type: 'object',
-              properties: { lon: { type: 'number' }, lat: { type: 'number' } },
-              required: ['lon', 'lat'],
-            },
-            description: 'Görünmesi gereken noktalar.',
-          },
-        },
-      },
-      execute(input) {
-        const step = stepOf(input);
-        if (step === null) return 'atlandı: adım numarası 1 ile 12 arasında olmalı';
-        const { ids, skipped } = polities(listOf(input.polities).slice(0, 4));
-        const points = listOf(input.points)
-          .slice(0, 4)
-          .map((p) =>
-            p && typeof p === 'object'
-              ? resolver.point((p as Record<string, unknown>).lon, (p as Record<string, unknown>).lat)
-              : null,
-          )
-          .filter((p): p is NonNullable<typeof p> => !!p);
-        if (!ids.length && !points.length) return `atlandı: görünecek bir şey tanınmadı${note(skipped)}`;
-        return accept({ kind: 'focus', step, polities: ids, points }) + note(skipped);
-      },
-    },
-    {
-      name: 'clear',
-      description:
-        'Bu adıma kadar çizilen her şeyi siler ve sınır yılını okura geri verir. Yeni bir konuya geçerken kullan.',
-      inputSchema: { type: 'object', properties: { step: STEP_PROP } },
-      execute(input) {
-        const step = stepOf(input);
-        if (step === null) return 'atlandı: adım numarası 1 ile 12 arasında olmalı';
-        return accept({ kind: 'clear', step });
       },
     },
   ];

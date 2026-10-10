@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { applyStep, describeDrawing, emptyDrawing, isEmptyDrawing, resolveDrawing, TurnPlan } from '../src/ai/drawing';
+import {
+  describeDrawing,
+  drawingOf,
+  emptyDrawing,
+  frameTargetOf,
+  isEmptyDrawing,
+  resolveDrawing,
+  TurnPlan,
+} from '../src/ai/drawing';
 import { Resolver } from '../src/ai/resolve';
 import type { MapAction } from '../src/ai/types';
 import { shippedData } from './helpers/shipped';
@@ -25,58 +33,55 @@ const mark = (step: number, lon: number, lat: number, label: string): MapAction 
   point: { lon, lat },
   label,
 });
+const event = (step: number, id: string): MapAction => ({ kind: 'event', step, id });
 const year = (step: number, y: number): MapAction => ({ kind: 'set_year', step, year: y });
 
-describe('applyStep', () => {
-  it('adds to what the step inherits, without repeating a polity or a link', () => {
-    const a = applyStep(emptyDrawing(), [hl(1, 'a', 'b'), link(1, 'a', 'b')]);
-    const b = applyStep(a, [hl(2, 'b', 'c'), link(2, 'b', 'a', 'war', 'Yeni etiket')]);
-    expect(b.highlights).toEqual(['a', 'b', 'c']);
-    expect(b.links).toEqual([{ from: 'b', to: 'a', relation: 'war', label: 'Yeni etiket' }]); // same pair and kind: replaced
-    expect(a.highlights).toEqual(['a', 'b']); // the earlier state is not touched
+describe('drawingOf', () => {
+  it('is what the actions ask for, without repeating a polity, a link, a mark or an event', () => {
+    const d = drawingOf([
+      hl(1, 'a', 'b'),
+      hl(1, 'b', 'c'),
+      link(1, 'a', 'b'),
+      link(1, 'b', 'a', 'war', 'Yeni etiket'),
+      event(1, 'x'),
+      event(1, 'x'),
+      mark(1, 28.97, 41.01, 'İstanbul'),
+      mark(1, 28.98, 41.02, 'istanbul'),
+    ]);
+    expect(d.highlights).toEqual(['a', 'b', 'c']);
+    expect(d.links).toEqual([{ from: 'b', to: 'a', relation: 'war', label: 'Yeni etiket' }]); // same pair and kind: replaced
+    expect(d.events).toEqual(['x']);
+    expect(d.marks).toHaveLength(1);
   });
 
   it('keeps links of different kinds between the same two polities', () => {
-    const d = applyStep(emptyDrawing(), [link(1, 'a', 'b', 'war'), link(1, 'a', 'b', 'trade')]);
+    const d = drawingOf([link(1, 'a', 'b', 'war'), link(1, 'a', 'b', 'trade')]);
     expect(d.links.map((l) => l.relation)).toEqual(['war', 'trade']);
   });
 
-  it('a clear empties everything first, whatever the order of the actions in the step', () => {
-    const before = applyStep(emptyDrawing(), [hl(1, 'a'), mark(1, 10, 10, 'X'), year(1, 1520)]);
-    const clearFirst = applyStep(before, [{ kind: 'clear', step: 2 }, hl(2, 'b')]);
-    const clearLast = applyStep(before, [hl(2, 'b'), { kind: 'clear', step: 2 }]);
-    expect(clearFirst).toEqual(clearLast);
-    expect(clearFirst.highlights).toEqual(['b']);
-    expect(clearFirst.marks).toEqual([]);
-    expect(clearFirst.year).toBeUndefined(); // the year goes back to the reader
-  });
-
-  it('the last year asked for in a step wins, and a clear does not stop a year asked in the same step', () => {
-    const d = applyStep(emptyDrawing(), [year(1, 1510), year(1, 1520)]);
-    expect(d.year).toBe(1520);
-    expect(applyStep(d, [{ kind: 'clear', step: 2 }, year(2, 1530)]).year).toBe(1530);
+  it('the last year asked for wins', () => {
+    expect(drawingOf([year(1, 1510), year(1, 1520)]).year).toBe(1520);
+    expect(drawingOf([hl(1, 'a')]).year).toBeUndefined();
   });
 
   it('keeps a map readable: only the newest of too many', () => {
     const many = Array.from({ length: 20 }, (_, i) => `p${i}`);
-    const d = applyStep(emptyDrawing(), [hl(1, ...many)]);
+    const d = drawingOf([hl(1, ...many)]);
     expect(d.highlights).toHaveLength(8);
     expect(d.highlights.at(-1)).toBe('p19');
-    const marks = applyStep(
-      emptyDrawing(),
-      Array.from({ length: 12 }, (_, i) => mark(1, i * 10, 10, `M${i}`)),
-    );
-    expect(marks.marks).toHaveLength(8);
+    expect(drawingOf(Array.from({ length: 12 }, (_, i) => mark(1, i * 10, 10, `M${i}`))).marks).toHaveLength(8);
+    expect(drawingOf(Array.from({ length: 12 }, (_, i) => event(1, `e${i}`))).events).toHaveLength(6);
   });
 
-  it('does not draw the same label on the same spot twice', () => {
-    const d = applyStep(emptyDrawing(), [mark(1, 28.97, 41.01, 'İstanbul'), mark(1, 28.98, 41.02, 'istanbul')]);
-    expect(d.marks).toHaveLength(1);
+  it('nothing in, nothing out', () => {
+    expect(drawingOf([])).toEqual(emptyDrawing());
+    expect(isEmptyDrawing(drawingOf([]))).toBe(true);
+    expect(isEmptyDrawing(drawingOf([event(1, 'x')]))).toBe(false);
   });
 });
 
 describe('TurnPlan', () => {
-  it('a step builds on the one before it, so going back gives exactly what the step showed', () => {
+  it('a step shows only its own drawing: nothing from the step before, and nothing left for the one after', () => {
     const plan = new TurnPlan();
     plan.declare(1, 'Doğuda yeni bir komşu');
     plan.declare(2, 'Çaldıran');
@@ -87,9 +92,24 @@ describe('TurnPlan', () => {
     const one = plan.drawingAt(1);
     const two = plan.drawingAt(2);
     expect(one).toMatchObject({ highlights: ['ottoman-empire'], links: [], year: 1505 });
-    expect(two).toMatchObject({ highlights: ['ottoman-empire'], year: 1514 });
+    // step 2 did not ask for the Ottoman highlight, so it is not on the map while step 2 is
+    expect(two.highlights).toEqual([]);
     expect(two.links).toHaveLength(1);
-    expect(plan.drawingAt(1)).toEqual(one); // and again after step 2 exists
+    expect(two.year).toBe(1514);
+    expect(plan.drawingAt(1)).toEqual(one); // going back gives exactly what step 1 showed
+  });
+
+  it('a step that sets no year leaves the year to the reader, whatever the step before set', () => {
+    const plan = new TurnPlan();
+    plan.add(year(1, 1505));
+    plan.add(hl(2, 'a'));
+    expect(plan.drawingAt(2).year).toBeUndefined();
+  });
+
+  it('a step the plan does not know is an empty map', () => {
+    const plan = new TurnPlan();
+    plan.add(hl(1, 'a'));
+    expect(isEmptyDrawing(plan.drawingAt(7))).toBe(true);
   });
 
   it('does not depend on the order the tool calls of one round arrived in', () => {
@@ -99,7 +119,7 @@ describe('TurnPlan', () => {
       year(2, 1510),
       hl(2, 'b'),
       mark(1, 5, 5, 'Y'),
-      { kind: 'clear', step: 3 } as MapAction,
+      event(3, 'e'),
       hl(3, 'z'),
     ];
     const forward = new TurnPlan();
@@ -128,15 +148,6 @@ describe('TurnPlan', () => {
     expect(plan.drawingAt(1).links).toHaveLength(1);
   });
 
-  it('the camera is the step own business: focus is not inherited and several are merged', () => {
-    const plan = new TurnPlan();
-    plan.add({ kind: 'focus', step: 1, polities: ['a'], points: [] });
-    plan.add({ kind: 'focus', step: 1, polities: ['b', 'a'], points: [{ lon: 1, lat: 2 }] });
-    plan.add(hl(2, 'c'));
-    expect(plan.focusAt(1)).toEqual({ polities: ['a', 'b'], points: [{ lon: 1, lat: 2 }] });
-    expect(plan.focusAt(2)).toBeNull();
-  });
-
   it('counts changes', () => {
     const plan = new TurnPlan();
     const v = plan.version;
@@ -145,24 +156,27 @@ describe('TurnPlan', () => {
   });
 });
 
-describe('resolveDrawing (shipped borders)', () => {
+describe('resolveDrawing and frameTargetOf (shipped data)', () => {
   const data = shippedData();
   const resolver = new Resolver(data);
 
-  it('turns polities into places for the year shown', () => {
-    const drawing = applyStep(emptyDrawing(), [
+  it('turns polities into places for the year shown, and events into their own markers', () => {
+    const drawing = drawingOf([
       hl(1, 'ottoman-empire', 'kingdom-of-france'),
       link(1, 'ottoman-empire', 'kingdom-of-france', 'alliance', 'İttifak, 1536'),
+      event(1, 'mohac-1526'),
+      event(1, 'yok-boyle-bir-olay'),
     ]);
     const r = resolveDrawing(drawing, resolver, 1536);
     expect(r.highlightIds).toEqual(['ottoman-empire', 'kingdom-of-france']);
     expect(r.links).toHaveLength(1);
     expect(r.links[0]).toMatchObject({ relation: 'alliance', label: 'İttifak, 1536' });
     expect(r.links[0]!.a.lon).toBeGreaterThan(r.links[0]!.b.lon); // the Ottoman anchor lies east of France
+    expect(r.events).toEqual([{ id: 'mohac-1526', title: 'Mohaç Muharebesi', point: { lon: 18.68, lat: 45.99 } }]);
   });
 
   it('leaves out what has no borders that year, but keeps it in the drawing for another year', () => {
-    const drawing = applyStep(emptyDrawing(), [
+    const drawing = drawingOf([
       hl(1, 'mamluk-sultanate', 'ottoman-empire'),
       link(1, 'mamluk-sultanate', 'ottoman-empire'),
     ]);
@@ -173,19 +187,43 @@ describe('resolveDrawing (shipped borders)', () => {
     expect(late.highlightIds).toEqual(['ottoman-empire']);
     expect(late.links).toHaveLength(0);
   });
+
+  it('the camera target is everything the step shows: the polities boxes, link ends, marks and events', () => {
+    const drawing = drawingOf([
+      hl(1, 'ottoman-empire', 'safavid-dynasty'),
+      link(1, 'ottoman-empire', 'safavid-dynasty'),
+      mark(1, 37.1, 36.68, 'Mercidabık'),
+      event(1, 'caldiran-1514'),
+    ]);
+    const target = frameTargetOf(resolveDrawing(drawing, resolver, 1514), resolver, 1514)!;
+    expect(target.boxes).toHaveLength(2);
+    expect(target.points).toHaveLength(2 + 1 + 1);
+    expect(target.points).toContainEqual({ lon: 44.0, lat: 39.14 }); // Çaldıran, by its own record
+    for (const b of target.boxes) expect(b[0]).toBeLessThan(b[2]);
+  });
+
+  it('a step that puts nothing on the map has nothing to bring into view', () => {
+    expect(frameTargetOf(resolveDrawing(drawingOf([year(1, 1520)]), resolver, 1520), resolver, 1520)).toBeNull();
+    expect(frameTargetOf(resolveDrawing(emptyDrawing(), resolver, 1520), resolver, 1520)).toBeNull();
+    // a polity without borders that year cannot be drawn and so cannot be framed either
+    expect(
+      frameTargetOf(resolveDrawing(drawingOf([hl(1, 'mamluk-sultanate')]), resolver, 1530), resolver, 1530),
+    ).toBeNull();
+  });
 });
 
 describe('describeDrawing', () => {
   const name = (id: string) => ({ a: 'Alfa', b: 'Beta' })[id] ?? id;
   it('says what is drawn, for the model and for screen readers', () => {
-    const d = applyStep(emptyDrawing(), [
+    const d = drawingOf([
       hl(1, 'a'),
       link(1, 'a', 'b', 'alliance', 'Pakt'),
+      event(1, 'caldiran-1514'),
       mark(1, 1, 1, 'Kent'),
       year(1, 1536),
     ]);
-    expect(describeDrawing(d, name)).toBe(
-      'vurgulanan: Alfa; Alfa – Beta: ittifak (Pakt); işaretli: Kent; sınır yılı 1536',
+    expect(describeDrawing(d, name, () => 'Çaldıran Muharebesi')).toBe(
+      'vurgulanan: Alfa; Alfa – Beta: ittifak (Pakt); olay: Çaldıran Muharebesi; işaretli: Kent; sınır yılı 1536',
     );
     expect(describeDrawing(emptyDrawing(), name)).toBe('');
     expect(isEmptyDrawing(emptyDrawing())).toBe(true);

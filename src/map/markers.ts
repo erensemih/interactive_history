@@ -1,5 +1,6 @@
 import type { Map as MLMap } from 'maplibre-gl';
 import { placeMarkers } from '../domain/placement';
+import type { Rect } from '../domain/reveal';
 import type { HistoricalEvent } from '../domain/types';
 import { dotMarkup } from '../ui/dot';
 
@@ -17,6 +18,8 @@ export interface MarkerStats {
   thinned: number;
   /** Outside the current viewport: panning reveals them. */
   offscreen: number;
+  /** The AI is the narrator: only the opened event and the ones it talks about are on the map (the rest stay on the timeline). */
+  narrator: boolean;
 }
 
 /** The pointer target of every marker (WCAG 2.5.8 asks for at least 24 × 24 px); the dot itself is smaller. */
@@ -26,6 +29,11 @@ const CALLOUT_EDGE = 8;
 /** The name tag: its widest size (CSS max-width) and the room its padding adds around the text. */
 const CALLOUT_MAX = 280;
 const CALLOUT_PAD = 20;
+const CALLOUT_H = 28;
+/** What a marker covers around its point: the dot with its ring and the year hanging at its right (its text box is 20 px high). */
+const DOT_REACH = 9;
+const HALF_HEIGHT = 11;
+const YEAR_REACH = 13 + 30;
 
 /**
  * Event markers on the map: one kind of dot, coloured by category, nothing else. Which events exist
@@ -34,6 +42,10 @@ const CALLOUT_PAD = 20;
  *
  * The one exception is the event the user has opened: it is always drawn, even when the zoom budget
  * or its importance would have hidden it, and it is unmistakable (halo, ripple, name beside it).
+ *
+ * While the AI narrates (the chat is open) it is the map's one narrator: every marker leaves the map, they
+ * all stay on the timeline, and only two kinds come back: the event the reader opened, and the events the
+ * AI talks about. Those are drawn like the opened one is, whatever the budget or the collisions say.
  *
  * Keyboard: the markers form one group with a single Tab stop; the arrow keys move between the visible
  * ones in reading order, so a screen full of markers does not turn into dozens of Tab stops.
@@ -45,6 +57,12 @@ export class EventMarkers {
   private events: HistoricalEvent[] = [];
   /** The opened event; may be one the range's set does not contain. */
   private selected: HistoricalEvent | null = null;
+  /** The chat is open: the AI narrates the map, and no marker is drawn that it or the reader has not brought. */
+  private narrator = false;
+  /** The events the AI talks about now; each has a marker of its own however the range's set looks. */
+  private told: HistoricalEvent[] = [];
+  /** Where each drawn marker (and its name tag) lies, in map pixels, from the last layout. */
+  private boxes: Rect[] = [];
   private focusYear = 0;
   private hoverId: string | null = null;
   private lastKey = '';
@@ -72,10 +90,24 @@ export class EventMarkers {
     container.appendChild(this.host);
   }
 
-  /** Everything that gets a marker element: the range's events plus the opened one. */
+  /** Everything that gets a marker element: the range's events plus the opened one and the ones the AI talks about. */
   private all(): HistoricalEvent[] {
-    const s = this.selected;
-    return s && !this.events.some((e) => e.id === s.id) ? [...this.events, s] : this.events;
+    const have = new Set(this.events.map((e) => e.id));
+    const extra: HistoricalEvent[] = [];
+    for (const ev of [this.selected, ...this.told]) {
+      if (ev && !have.has(ev.id)) {
+        have.add(ev.id);
+        extra.push(ev);
+      }
+    }
+    return extra.length ? [...this.events, ...extra] : this.events;
+  }
+
+  /** What may be drawn now: all of it, or while the AI narrates only the opened event and the ones it talks about. */
+  private drawable(): HistoricalEvent[] {
+    if (!this.narrator) return this.all();
+    const ids = new Set([...this.told.map((e) => e.id), ...(this.selected ? [this.selected.id] : [])]);
+    return this.all().filter((e) => ids.has(e.id));
   }
 
   private sync() {
@@ -109,6 +141,18 @@ export class EventMarkers {
     this.focusYear = year;
     this.lastKey = '';
     this.layout();
+  }
+
+  /**
+   * The chat is open or closed, and the events the AI talks about right now. With the chat open the map shows
+   * only those and the opened event; the range's other markers are gone until the chat closes.
+   */
+  setNarrator(on: boolean, told: readonly HistoricalEvent[]) {
+    const next = on ? told : [];
+    if (on === this.narrator && next.length === this.told.length && next.every((e, i) => e === this.told[i])) return;
+    this.narrator = on;
+    this.told = [...next];
+    this.sync();
   }
 
   setSelected(ev: HistoricalEvent | null) {
@@ -214,15 +258,17 @@ export class EventMarkers {
 
     const selectedId = this.selected?.id ?? null;
     const { placed, offscreen, thinned } = placeMarkers({
-      events: this.all(),
+      events: this.drawable(),
       zoom,
       focusYear: this.focusYear,
       selectedId,
+      keepIds: this.narrator ? new Set(this.told.map((e) => e.id)) : undefined,
       viewport: this.size,
       project: (ev) => map.project([ev.location.lon, ev.location.lat]),
     });
 
     const shown = new Set<string>();
+    const boxes: Rect[] = [];
     for (const { ev, x, y } of placed) {
       shown.add(ev.id);
       const el = this.elements.get(ev.id);
@@ -231,8 +277,12 @@ export class EventMarkers {
       const isSelected = ev.id === selectedId;
       el.style.zIndex = String(isSelected ? 30 : 10);
       el.classList.remove('is-hidden');
-      if (isSelected) this.placeCallout(el, x, y);
+      boxes.push({ left: x - DOT_REACH, top: y - HALF_HEIGHT, right: x + YEAR_REACH, bottom: y + HALF_HEIGHT });
+      if (isSelected) boxes.push(this.placeCallout(el, x, y));
     }
+    this.boxes = boxes;
+    // A narrator with nothing on the map has no group of markers to offer to a screen reader or the keyboard.
+    this.host.hidden = this.narrator && placed.length === 0;
 
     this.reading = placed
       .slice()
@@ -254,12 +304,13 @@ export class EventMarkers {
 
     const rangeIds = new Set(this.events.map((e) => e.id));
     const stats: MarkerStats = {
-      shown: placed.filter((p) => rangeIds.has(p.ev.id)).length,
+      shown: this.narrator ? placed.length : placed.filter((p) => rangeIds.has(p.ev.id)).length,
       total: this.events.length,
-      thinned,
-      offscreen,
+      thinned: this.narrator ? 0 : thinned,
+      offscreen: this.narrator ? 0 : offscreen,
+      narrator: this.narrator,
     };
-    const statsKey = `${stats.shown}/${stats.total}/${stats.thinned}/${stats.offscreen}`;
+    const statsKey = `${stats.shown}/${stats.total}/${stats.thinned}/${stats.offscreen}/${stats.narrator}`;
     if (statsKey !== this.lastStats) {
       this.lastStats = statsKey;
       this.cb.onStats?.(stats);
@@ -272,8 +323,16 @@ export class EventMarkers {
     return Math.min(CALLOUT_MAX, this.measure.measureText(title).width + CALLOUT_PAD);
   }
 
-  /** The opened event's name sits beside its dot: above it, or below near the top edge, and kept inside the map. */
-  private placeCallout(el: HTMLElement, x: number, y: number) {
+  /** The room the drawn markers (with the opened one's name tag) take, in map pixels: other labels keep clear of it. */
+  rects(): readonly Rect[] {
+    return this.boxes;
+  }
+
+  /**
+   * The opened event's name sits beside its dot: above it, or below near the top edge, and kept inside the map.
+   * Returns the room the tag takes.
+   */
+  private placeCallout(el: HTMLElement, x: number, y: number): Rect {
     const half = this.calloutWidth / 2;
     const shift =
       x - half < CALLOUT_EDGE
@@ -281,7 +340,10 @@ export class EventMarkers {
         : x + half > this.size.width - CALLOUT_EDGE
           ? this.size.width - CALLOUT_EDGE - (x + half)
           : 0;
-    el.dataset.callout = y < HIT + 40 ? 'below' : 'above';
+    const below = y < HIT + 40;
+    el.dataset.callout = below ? 'below' : 'above';
     el.style.setProperty('--shift', `${shift.toFixed(1)}px`);
+    const top = below ? y + HIT / 2 + 7 : y - HIT / 2 - 7 - CALLOUT_H;
+    return { left: x + shift - half, top, right: x + shift + half, bottom: top + CALLOUT_H };
   }
 }

@@ -713,3 +713,19 @@ button.chat-chip:not(:disabled):hover {
     scroll-margin-top: calc(var(--head-h) + max(36vh, 220px));
   }
 }
+
+/* "Harita takibi" marked for a moment, when the question over the map sends the reader to the setting */
+.chat-opt.is-pointed {
+  margin: -6px;
+  padding: 6px;
+  border-radius: 8px;
+  background: var(--paper-2);
+  box-shadow: 0 0 0 2px var(--ink);
+  animation: pointed 0.9s ease 2;
+}
+
+@keyframes pointed {
+  50% {
+    box-shadow: 0 0 0 5px rgb(31 27 22 / 0.18);
+  }
+}

@@ -323,9 +323,11 @@ export class AiSession {
       context,
       previous,
       catalog: tools.length ? this.resolver.catalog(context.range) : [],
+      events: tools.length ? this.resolver.eventCatalog(context.range) : [],
       sources,
       drawing: this.currentDrawing(),
       nameOf: (id) => this.resolver.nameOf(id),
+      eventTitleOf: (id) => this.resolver.eventById(id)?.title ?? id,
       history,
       tools: tools.length > 0,
     });

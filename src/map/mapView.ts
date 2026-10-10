@@ -1,7 +1,8 @@
 import maplibregl, { type ExpressionSpecification, type Map as MLMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { AppData } from '../data/load';
-import { EMPTY_RESOLVED, type ResolvedDrawing } from '../ai/types';
+import { EMPTY_RESOLVED, type FrameTarget, type ResolvedDrawing } from '../ai/types';
+import { frameBounds, framePadding, isFramed, projectWith } from '../domain/camera';
 import { isLand, primaryAt, rowsContaining } from '../domain/geo';
 import { unionBoundsAll, zoomOutToRevealAll, type Rect } from '../domain/reveal';
 import type { HistoricalEvent, PlacePoint } from '../domain/types';
@@ -29,6 +30,9 @@ export interface MapCallbacks {
 /** Room kept clear around a revealed event: its dot, the year on its right and its name above it. */
 const REVEAL_MARGIN = { top: 44, right: 60, bottom: 36, left: 36 };
 
+/** How close the camera goes to a step's drawing: a lone mark is shown with its surroundings, not at street level. */
+const FRAME_MAX_ZOOM = 5.2;
+
 const INITIAL_BOUNDS: [[number, number], [number, number]] = [
   [-108, -34],
   [146, 68],
@@ -54,11 +58,12 @@ const idsFilter = (year: number, ids: string[]): ExpressionSpecification => [
 /**
  * The MapLibre map. Its job is to draw the borders of one year and to report what the user clicks.
  * Clicking a place, a marker or a control never moves it: the view changes through the user's own
- * drag, wheel, pinch, keyboard or zoom buttons, and in exactly one other case, `revealEvent`, when
- * the user opens an event whose location is out of sight, and `focusOn`, when a step of the AI's
- * narration asks for some place to be in view (equally gentle: it zooms out just far enough, and only
- * the page decides whether to ask). Everything else the AI draws is an overlay or a layer and leaves the
- * camera alone. (Double-click zoom is disabled so a click can never be mistaken for a camera command.)
+ * drag, wheel, pinch, keyboard or zoom buttons, and in exactly two other cases: `revealEvent`, when
+ * the user opens an event whose location is out of sight, and `frameTarget`, when the reader has the AI's
+ * camera following ("Harita takibi") and a step of its narration becomes the active one (pan and zoom,
+ * smoothly, only as far as it takes, and only when the drawing is not already framed well). Everything else
+ * the AI draws is an overlay or a layer and leaves the camera alone. (Double-click zoom is disabled so a
+ * click can never be mistaken for a camera command.)
  */
 export class MapView {
   readonly map: MLMap;
@@ -74,6 +79,12 @@ export class MapView {
   /** Polities the AI has highlighted. */
   private aiIds: string[] = [];
   private hoverId: string | null = null;
+  /** The chat is open: the AI narrates, and the event markers other than the ones it or the reader brings are off the map. */
+  private narrator = false;
+  private toldIds: string[] = [];
+  private selectedEventId: string | null = null;
+  /** The controls lying over the map in map pixels; they only change when the map or the page is resized. */
+  private controls: Rect[] | null = null;
   private layoutFailed = false;
   private ready = false;
   private hoverQueued = false;
@@ -130,6 +141,7 @@ export class MapView {
       fadeDuration: 0,
     });
     new ResizeObserver(() => this.fitToContainer()).observe(container);
+    this.map.on('resize', () => (this.controls = null));
     this.map.touchZoomRotate.disableRotation();
     this.map.keyboard.disableRotation(); // north stays up: Shift+arrows would turn the map otherwise
     touch.addEventListener('change', (e) =>
@@ -377,15 +389,38 @@ export class MapView {
     const canvas = this.map.getCanvas();
     const size = { width: canvas.clientWidth, height: canvas.clientHeight };
     try {
-      this.labels.layout(force, size);
-      this.ai.layout();
-      this.pins.layout();
+      // Markers and the place dot first: they cannot move, so every label is laid out around them.
       this.markers.layout(force, size);
+      this.pins.layout();
+      this.labels.setAvoid(this.narratorRoom());
+      this.labels.layout(force, size);
+      const names = this.labels.boxes();
+      const yields = this.ai.layout({
+        hard: [
+          ...this.markers.rects(),
+          ...this.pins.rects(),
+          ...this.controlRects(),
+          ...names.filter((n) => n.forced).map((n) => n.rect),
+        ],
+        soft: names.filter((n) => !n.forced).map((n) => n.rect),
+      });
+      this.labels.yieldTo(yields);
     } catch (err) {
       // A bad record must not stop the map's frame loop (and with it the 'load' event).
       if (!this.layoutFailed) console.error('[harita] bindirme katmanları çizilemedi', err);
       this.layoutFailed = true;
     }
+  }
+
+  /** The controls over the map (zoom buttons, legend, the note), in map pixels; empty ones do not count. */
+  private controlRects(): Rect[] {
+    this.controls ??= this.cb.avoidRects().filter((r) => r.right - r.left > 0 && r.bottom - r.top > 0);
+    return this.controls;
+  }
+
+  /** The page changed what lies over the map (the note appeared, the legend went): measure the controls again. */
+  controlsChanged() {
+    this.controls = null;
   }
 
   /* --------------------------------------------------------- public API */
@@ -421,7 +456,36 @@ export class MapView {
 
   /** The opened event: always drawn (even if the range's set or the zoom budget would hide it) and highlighted. */
   setSelectedEvent(ev: HistoricalEvent | null) {
+    if (ev?.id === this.selectedEventId) return;
+    this.selectedEventId = ev?.id ?? null;
     this.markers.setSelected(ev);
+    this.ai.setSelectedEvent(this.selectedEventId);
+    this.layoutOverlays(); // names and labels keep clear of the marker that has just come or gone, with no map frame to wait for
+  }
+
+  /**
+   * The chat is open (the AI narrates) or closed. Open, the event markers leave the map: only the opened
+   * event and the ones the AI talks about stay or come. Closed, everything is as it always was.
+   */
+  setNarrator(on: boolean) {
+    if (on === this.narrator) return;
+    this.narrator = on;
+    this.syncNarrator();
+    this.layoutOverlays();
+  }
+
+  private syncNarrator() {
+    const told = this.toldIds.flatMap((id) => {
+      const ev = this.data.eventsById.get(id);
+      return ev ? [ev] : [];
+    });
+    this.markers.setNarrator(this.narrator, told);
+    this.labels.setAvoid(this.narratorRoom());
+  }
+
+  /** What the polity names keep clear of while the AI narrates: the few markers on the map and the place dot. */
+  private narratorRoom(): Rect[] {
+    return this.narrator ? [...this.markers.rects(), ...this.pins.rects()] : [];
   }
 
   /**
@@ -437,6 +501,12 @@ export class MapView {
       this.applyAi();
     }
     this.ai.setDrawing(d, description);
+    const told = d.events.map((e) => e.id);
+    if (told.length !== this.toldIds.length || told.some((id, i) => id !== this.toldIds[i])) {
+      this.toldIds = told;
+      this.syncNarrator();
+    }
+    this.layoutOverlays(); // the new labels are placed around what is on the map now, with no map frame to wait for
   }
 
   /**
@@ -450,9 +520,39 @@ export class MapView {
     this.bringIntoView([ev.location]);
   }
 
-  /** The same gentle move for a step of the AI's narration: every one of these places ends up in view. */
-  focusOn(points: PlacePoint[]) {
-    this.bringIntoView(points);
+  /**
+   * Brings what a step of the AI's narration put on the map into view: pan and zoom, as far as it takes and
+   * no further, eased so the reader can follow where it went. Does nothing (and says so) when the drawing is
+   * already framed well, so two steps in one region do not make the map breathe. Returns whether it moved.
+   */
+  frameTarget(target: FrameTarget): boolean {
+    if (!this.ready) return false;
+    const bounds = frameBounds(target.boxes, target.points);
+    if (!bounds) return false;
+    const map = this.map;
+    const canvas = map.getCanvas();
+    const size = { width: canvas.clientWidth, height: canvas.clientHeight };
+    if (size.width < 120 || size.height < 120) return false;
+    const padding = framePadding(this.controlRects(), size);
+    const fit = map.cameraForBounds(
+      [
+        [bounds[0], bounds[1]],
+        [bounds[2], bounds[3]],
+      ],
+      { padding, maxZoom: FRAME_MAX_ZOOM },
+    );
+    if (!fit?.center || fit.zoom === undefined || !Number.isFinite(fit.zoom)) return false;
+    const c = map.getCenter();
+    const now = { lng: c.lng, lat: c.lat, zoom: map.getZoom() };
+    if (isFramed(bounds, now, fit.zoom, size, padding)) return false;
+    const centre = maplibregl.LngLat.convert(fit.center);
+    const to = projectWith(now, size, centre.lng, centre.lat);
+    const travel = Math.hypot(to.x - size.width / 2, to.y - size.height / 2);
+    const duration = Math.round(
+      Math.min(2400, Math.max(800, 700 + 420 * Math.abs(fit.zoom - now.zoom) + 0.7 * travel)),
+    );
+    map.easeTo({ center: fit.center, zoom: fit.zoom, duration, easing: easeInOutSine });
+    return true;
   }
 
   private bringIntoView(points: PlacePoint[]) {

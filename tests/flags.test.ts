@@ -70,6 +70,60 @@ describe('placeFlags', () => {
     expect(p!.top).toBeGreaterThanOrEqual(4);
   });
 
+  it('hangs the label from a further point of its own when no side of the first is free', () => {
+    // every side of (300, 200) is taken; the same label may also hang from a point 200 px to the right
+    const walls = [{ left: 200, top: 120, right: 400, bottom: 280 }];
+    const [p] = placeFlags(
+      [flag('a', 300, 200, { alternates: [{ x: 500, y: 200, gap: 11, prefer: ['right'] }] })],
+      size,
+      walls,
+    );
+    expect(p!.clear).toBe(true);
+    expect(p!.left).toBeGreaterThanOrEqual(500);
+    expect(overlaps(rect(p!), walls[0]!)).toBe(false);
+  });
+
+  it('prefers a place clear of the soft obstacles, and sits on one only when nothing else is free', () => {
+    const name = { left: 305, top: 185, right: 400, bottom: 215 };
+    const [clear] = placeFlags([flag('a', 300, 200)], size, [], [name]);
+    expect(clear!.side).not.toBe('right'); // the right-hand side is taken by the name: another side is free
+    expect(clear!.clear).toBe(true);
+    expect(clear!.yields).toEqual([]);
+
+    // names all around: it takes the place that is free of everything but them, and says which names it sits on
+    const around = [
+      { left: 305, top: 185, right: 400, bottom: 215 },
+      { left: 200, top: 185, right: 295, bottom: 215 },
+      { left: 255, top: 130, right: 345, bottom: 188 },
+      { left: 255, top: 212, right: 345, bottom: 270 },
+    ];
+    const [forced] = placeFlags([flag('a', 300, 200)], size, [], around);
+    expect(forced!.clear).toBe(true); // nothing hard in the way
+    expect(forced!.yields.length).toBeGreaterThan(0);
+    expect(forced!.yields.every((y) => around.includes(y))).toBe(true);
+  });
+
+  it('never sits on a hard obstacle while any place is free of them, soft ones or not', () => {
+    const hard = [
+      { left: 311, top: 189, right: 401, bottom: 211 },
+      { left: 199, top: 189, right: 289, bottom: 211 },
+    ];
+    const soft = [
+      { left: 255, top: 130, right: 345, bottom: 188 },
+      { left: 255, top: 212, right: 345, bottom: 270 },
+    ];
+    const [p] = placeFlags([flag('a', 300, 200)], size, hard, soft);
+    for (const h of hard) expect(overlaps(rect(p!), h)).toBe(false);
+    expect(p!.yields.length).toBeGreaterThan(0);
+  });
+
+  it('when nothing at all is free it takes the place that covers the least', () => {
+    const wall = { left: 4, top: 4, right: 796, bottom: 496 };
+    const [p] = placeFlags([flag('a', 400, 250)], size, [wall]);
+    expect(p!.clear).toBe(false);
+    expect(p!.left).toBeGreaterThanOrEqual(4);
+  });
+
   it('is deterministic', () => {
     const reqs = [flag('a', 100, 100), flag('b', 110, 100), flag('c', 400, 300)];
     expect(placeFlags(reqs, size)).toEqual(placeFlags(reqs, size));

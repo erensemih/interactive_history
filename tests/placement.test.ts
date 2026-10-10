@@ -59,7 +59,11 @@ describe('placeMarkers', () => {
   });
 
   it('does not draw a selected event that is out of view', () => {
-    const { placed, offscreen } = placeMarkers({ ...base, selectedId: 'gone', events: [ev('gone', 150, 3), ev('a', 5, 3)] });
+    const { placed, offscreen } = placeMarkers({
+      ...base,
+      selectedId: 'gone',
+      events: [ev('gone', 150, 3), ev('a', 5, 3)],
+    });
     expect(placed.map((p) => p.ev.id)).toEqual(['a']);
     expect(offscreen).toBe(1);
   });
@@ -79,5 +83,27 @@ describe('placeMarkers', () => {
     const a = placeMarkers({ ...base, events });
     const b = placeMarkers({ ...base, events: [...events].reverse() });
     expect(b.placed.map((p) => p.ev.id)).toEqual(a.placed.map((p) => p.ev.id));
+  });
+});
+
+describe('placeMarkers: events that must be drawn', () => {
+  it('draws the kept events whatever the budget and the collisions say, and the ones that are not kept give way', () => {
+    // twenty events crowded on top of each other, three of them kept
+    const crowd = Array.from({ length: 20 }, (_, i) => ev(`e${i}`, 50 + (i % 4) * 0.2, 5));
+    const kept = new Set(['e17', 'e18', 'e19']);
+    const { placed } = placeMarkers({ ...base, zoom: 1, events: crowd, keepIds: kept });
+    const ids = placed.map((p) => p.ev.id);
+    for (const id of kept) expect(ids).toContain(id);
+    expect(ids.slice(0, 3).sort()).toEqual(['e17', 'e18', 'e19']); // first, so nothing else takes their place
+  });
+
+  it('counts a kept event that is out of view as out of view', () => {
+    const { placed, offscreen } = placeMarkers({
+      ...base,
+      events: [ev('gone', 150, 3), ev('here', 20, 3)],
+      keepIds: new Set(['gone']),
+    });
+    expect(placed.map((p) => p.ev.id)).toEqual(['here']);
+    expect(offscreen).toBe(1);
   });
 });

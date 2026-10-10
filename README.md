@@ -60,8 +60,8 @@ uygulamanın kendisi Python'a ihtiyaç duymaz, çünkü üretilen veri depoda du
 |---|---|
 | Zaman aralığını seçmek | Alttaki cetvelde aralık çubuğunu sürükleyin; kenarlarından sürükleyerek uzunluğunu ayarlayın; boş yere tıklarsanız aralık oraya taşınır. Başka denetim yoktur (yıl kutusu, hazır süre düğmesi yok). Klavyeyle: çubukta `←/→` 1 yıl, `Shift` ile 10 yıl, `Home/End` uçlara |
 | Haritada hangi yılın sınırlarının çizildiğini seçmek | Aralığın içindeki küçük işareti (çizgi + nokta) sürükleyin (varsayılan: aralığın ortası). Seçili yıl, haritanın üstündeki başlıkta "… yılının sınırları" notunda yazar |
-| Bir yeri seçmek | Haritada bir devletin üzerine tıklayın. **Harita yerinden oynamaz**: yalnızca sürükleme, tekerlek, çimdik ve `+/−` düğmeleri haritayı hareket ettirir (tek istisna aşağıda: görünüm dışındaki bir olayı açmak) |
-| Bir olayı okumak | Haritadaki işaretçiye, çizelgedeki noktaya ya da sağdaki listeye tıklayın. Çizelgede olay adları kalıcı yazılmaz: noktanın üstüne gelince (dokunmatikte dokununca) adı görünür; açık olayın adı noktasının yanında kalır. Klavyeyle: `Tab` ile işaretçi grubuna girin, ok tuşlarıyla işaretçiler arasında gezinin, `Enter` ile açın (odak olay kartına gider) |
+| Bir yeri seçmek | Haritada bir devletin üzerine tıklayın. **Harita yerinden oynamaz**: yalnızca sürükleme, tekerlek, çimdik ve `+/−` düğmeleri haritayı hareket ettirir (istisnalar aşağıda: görünüm dışındaki bir olayı açmak; sohbet açıkken, siz açık tutarsanız, *Harita takibi*) |
+| Bir olayı okumak | Haritadaki işaretçiye, çizelgedeki noktaya ya da sağdaki listeye tıklayın (sohbet açıkken olay işaretçileri haritadan çekilir: çizelgeden tıklayın, işaretçisi haritaya gelir). Çizelgede olay adları kalıcı yazılmaz: noktanın üstüne gelince (dokunmatikte dokununca) adı görünür; açık olayın adı noktasının yanında kalır. Klavyeyle: `Tab` ile işaretçi grubuna girin, ok tuşlarıyla işaretçiler arasında gezinin, `Enter` ile açın (odak olay kartına gider) |
 | Olaydan yer görünümüne dönmek | Panelin üstündeki tek satırlık yer başlığına tıklayın (ad + aralık), olay kartında ✕'e basın ya da `Esc` |
 | Seçimi kaldırmak | Panelde ✕ ya da `Esc` (önce açık olayı, ikincisi yeri kapatır) |
 
@@ -88,16 +88,26 @@ yine yalnızca seçili yere bağlıdır.
 |---|---|
 | ![](docs/verification/ai-1b-anlatim-adim2.png) | ![](docs/verification/ai-2-ittifak-sorusu.png) |
 
+| Her adım yalnızca kendi çizimini gösterir. 3. adım: Memlük; Ridaniye olayın kendi işareti, Mercidabık verinin bilmediği yer (serbest işaret) | 4. adım: Mohaç ve Viyana kendi işaretleriyle; kamera çizime kaydı; etiketler birbirini örtmüyor |
+|---|---|
+| ![](docs/verification/ai-1d-anlatim-adim3.png) | ![](docs/verification/ai-1e-anlatim-adim4.png) |
+
+| Harita takibi: büyük bir gezintiden sonra küçük soru | Soru ayarın yerini gösterir: *Ayarlar ⚙ → Harita takibi* |
+|---|---|
+| ![](docs/verification/ai-9-harita-takibi-sorusu.png) | ![](docs/verification/ai-9b-harita-takibi-ayari.png) |
+
 | Olay kartı sohbetin üstünde, *Bunu sohbette sor* | Yer değişince sohbet bunu söyler |
 |---|---|
 | ![](docs/verification/ai-3a-olay-sohbetin-ustunde.png) | ![](docs/verification/ai-4-baglam-degisti.png) |
 
 **Nasıl çalışır**
 
-- **Anlatım.** *Bu yerin tarihini anlat* yanıtı paragraf boyutunda numaralı adımlara böler (`## 1. Başlık`). Her adımın kendi harita
-  durumu vardır. Okurken, gözün altındaki adım (ekranın biraz üstündeki "okuma çizgisi") etkin olur ve harita onun durumuna geçer;
-  geri kaydırınca o adımın durumu aynen geri gelir. Fareyle gezmeyenler için her adımda *Haritada göster* düğmesi vardır. Bir adım
-  öncekinin çizimlerini devralır (modele `clear` var); adımın durumu bu yüzden her zaman "önceki adımlar + bu adım"dır.
+- **Anlatım.** *Bu yerin tarihini anlat* yanıtı paragraf boyutunda numaralı adımlara böler (`## 1. Başlık`). **Her adım haritanın
+  sahibidir:** etkin adım haritada yalnızca kendi çizimlerini gösterir (devlet vurguları, bağlantılar, olay işaretçileri, işaretler,
+  sınır yılı); bir önceki adımın çizimleri gider, geri dönülünce o adımın çizimi aynen gelir. Hiçbir adım ötekinden bir şey devralmaz
+  (yıl dahil: yıl istemeyen adımda yıl okurun kendi imlecidir); bu yüzden model her adımda gereken her şeyi kendisi bildirir ve
+  `clear` diye bir araç yoktur. Okurken, gözün altındaki adım (ekranın biraz üstündeki "okuma çizgisi") etkin olur ve harita onun
+  durumuna geçer. Fareyle gezmeyenler için her adımda *Haritada göster* düğmesi vardır.
 - **Soru.** Serbest soruların her yanıtı tek bir adım, yani tek bir harita durumudur.
 - **Panel.** Sohbet panelin yerini alır (yer kartının yanına değil). Yer, olay açıkken kullanılan aynı tek satırlık başlığa (ad + aralık)
   küçülür; başlık konuşmanın neyle ilgili olduğunu söyler, tıklanınca bir önceki görünüme (olay sayfası → sohbet → yer kartı) döner.
@@ -107,22 +117,45 @@ yine yalnızca seçili yere bağlıdır.
   yeniden boyutlanır.
 - **Bağlam.** Model her soruyla birlikte seçili yeri (o yıldaki devleti ve aralıktaki egemenlerini), aralığı, haritadaki yılı, açık
   olayı, aralıkta sınır verisinde bulunan devletlerin listesini (kimlik | ad) ve uygulamanın olay kayıtlarını alır. Bağlam bir **yer
-  listesidir** ve her yerin kendi aralığı vardır (bugün hepsi seçili aralık; ileride her iğnenin kendi aralığı için). Sohbet sürerken
+  listesidir** ve her yerin kendi aralığı vardır (bugün hepsi seçili aralık; birden çok yer ya da dönem haritaya bir şey
+  koymadan, sohbetin kendisinden gelecek: okur sorusunda başka bir yeri ya da dönemi anacak). Sohbet sürerken
   yer ya da aralık değişirse sohbette bir **"Bağlam değişti"** ayırıcısı (eski → yeni) çıkar; okur eski konuya dönerse kalkar; model de
   bir sonraki istekte bunu bir cümleyle öğrenir. Yıl imlecini oynatmak ya da bir olay açmak "yeni konu" sayılmaz.
-- **Haritaya çizim, yalnızca araç çağrılarıyla** (küçük bir küme): `highlight` (devlet vurgusu), `connect` (savaş / ittifak / ticaret /
-  antlaşma çizgisi, isteğe bağlı kısa etiket), `mark` (koordinat + kısa etiket), `set_year` (seçili aralığın içinde), `focus`, `clear`
-  ve adımları bildiren `step`. Çizimler **mürekkep ve kâğıt** dilindedir: veri katmanlarıyla aynı görsel dil ama onlardan ayrı (vurgu =
-  mürekkep kenar + ters yönde ince tarama; savaş = kalın çizgi ve ×, ittifak = çift çizgi, ticaret = kesikli ve çift oklu, antlaşma =
-  noktalı ve ◇; işaret = mürekkep eşkenar dörtgen ve etiket). Renk kullanılmaz: vermilyon yalnızca okurun seçimidir, olay noktaları
-  kendi renklerini korur. Modelin yazdığı her başvuru verideki bir şeye çözülmek zorundadır (devlet kimliği ya da adı, haritanın
-  içinde bir koordinat, aralığın içinde bir yıl); çözülmeyen çizim **sessizce atlanır** (yalnızca modele "atlandı" denir).
-- **Kamera.** `highlight`, `connect`, `mark` ve `set_year` haritayı hiç oynatmaz. Yalnızca `focus` oynatabilir, o da `revealEvent` ile
-  aynı yumuşak ve en küçük hareketle (yalnızca uzaklaşarak, gerekirse eski görünümü ve yerleri kapsayan en küçük görünüme). Okur
-  haritayı kendisi sürüklerse, yakınlaştırırsa ya da `+/−`'ya basarsa kamera adımı izlemeyi bırakır ("Harita serbest" çıkar; tek
-  tıkla geri açılır) ve yapay zekâ okurla savaşmaz. Çizimler yine adımı izler. Yapay zekânın istediği **yıl**, okurun kendi imlecinin
-  üstüne biner (imleç değişmez); okur imleci ya da aralığı oynatırsa bir sonraki adıma kadar kendi yılı geçerlidir. Sohbet kapanınca
+- **Haritaya çizim, yalnızca araç çağrılarıyla** (altı araç): `highlight` (devlet vurgusu), `connect` (savaş / ittifak / ticaret /
+  antlaşma çizgisi, isteğe bağlı kısa etiket), `show_event` (uygulamanın bir olayını **kendi işaretçisiyle** göstermek), `mark`
+  (koordinat + kısa etiket), `set_year` (seçili aralığın içinde) ve adımları bildiren `step`. Çizimler **mürekkep ve kâğıt**
+  dilindedir: veri katmanlarıyla aynı görsel dil ama onlardan ayrı (vurgu = mürekkep kenar + ters yönde ince tarama; savaş = kalın
+  çizgi ve ×, ittifak = çift çizgi, ticaret = kesikli ve çift oklu, antlaşma = noktalı ve ◇; serbest işaret = mürekkep eşkenar
+  dörtgen ve etiket). Renk kullanılmaz: vermilyon yalnızca okurun seçimidir, olay noktaları kendi renklerini korur. Modelin yazdığı
+  her başvuru verideki bir şeye çözülmek zorundadır (devlet kimliği ya da adı, olay kimliği ya da adı, haritanın içinde bir
+  koordinat, aralığın içinde bir yıl); çözülmeyen çizim **sessizce atlanır** (yalnızca modele "atlandı" denir).
+- **Haritada tek anlatıcı.** Sohbet açıkken haritayı yapay zekâ anlatır: **olay işaretçileri haritadan çekilir** (hepsi çizelgede
+  durur; sayaç "0 olay haritada · gerisi çizelgede" der). Bir olay haritaya iki yoldan gelir: okur çizelgeden tıklar (kartı açık
+  kaldığı sürece işaretçisi haritadadır) ya da etkin adım ondan söz eder. Anlatılan şey uygulamanın verisinde bir olaysa model işaret
+  çizmez, `show_event` der ve haritada **olayın kendi işaretçisi** (yıl yazılı, adı yanında; tıklanınca kartını açar) belirir. `mark`
+  yalnızca verinin bilmediği yerler içindir (bir kent, geçit, liman). Model yine de verideki bir olayı `mark` ile çizerse (aynı yer
+  adı ya da olay adı, olayın yerine ≤ 60 km, aralıkta tek eşleşme) sayfa onu olayın kendi işaretçisine çevirir ve modele bunu söyler:
+  haritada aynı şey için iki işaret olmaz. Modele olaylar kimlikleriyle (`OLAYLAR` listesi) verilir. Sohbet kapanınca haritanın
+  olayları eskisi gibi geri gelir; sohbet dışında hiçbir şey değişmedi.
+- **Kamera: Harita takibi.** Açıkken (varsayılan) her adım etkin olduğunda harita o adımın çizimlerini **görünür kılar**: vurgulanan
+  devletlerin ana parçaları, bağlantı uçları, işaretler ve olaylar birlikte, gerektiği kadar kayarak *ve* yakınlaşıp uzaklaşarak,
+  yumuşakça (0,8–2,4 sn), harita kontrollerinin altında kalmadan (`MapView.frameTarget`, `domain/camera.ts`). Çizim zaten iyi
+  çerçevedeyse (hepsi görünür, ortada, uygun ölçekte) harita oynamaz: aynı bölgedeki iki adım haritayı "nefes aldırmaz". Hiçbir
+  araç kamerayı oynatmaz; takip sayfanın işidir (modele `focus` yok). Okurun **küçük** hareketleri takibi kapatmaz: haritanın kısa
+  kenarının üçte birinden az kaydırma, bir kez `+`/`−`. **Önemli** bir harekette (üçte bir ya da daha çok kaydırma, ya da `+/−` ile
+  bir buçuk düzeyden çok; hareketler sayfanın bıraktığı kameradan itibaren toplanır) haritanın üstünde küçük bir soru çıkar:
+  *Haritayı kendiniz gezdiniz. Adımlar haritayı izlemeyi bıraksın mı?* (*Bıraksın* / *İzlemeye devam*), yanında ayarın yeri:
+  **Ayarlar ⚙ → Harita takibi** (tıklanınca ayarlar açılır ve satır işaretlenir). Soru iletişim kutusu değildir: odağı çalmaz,
+  haritanın %6'sından azını kaplar (dar bir telefon haritasında beşte birinden azını, yakınlaştırma düğmelerinin ve sayacın altında kalmadan), cevaplanmazsa kendiliğinden kalkar (hiçbir şeye karar vermeden) ve "İzlemeye devam" denirse o
+  sohbette bir daha sorulmaz. Takibi yalnızca okurun cevabı ya da ayar kapatır; kapalıyken adımlar çizimi değiştirir ama haritayı
+  oynatmaz ve sohbetin üstünde "Harita takibi kapalı · aç" çipi durur. Yapay zekânın istediği **yıl**, okurun kendi imlecinin üstüne
+  biner (imleç değişmez); okur imleci ya da aralığı oynatırsa bir sonraki adıma kadar kendi yılı geçerlidir. Sohbet kapanınca
   çizimler haritadan kalkar, geri açılınca etkin adımın durumu geri gelir.
+- **Etiketler birbirini örtmez.** Yapay zekâ etiketleri (bağlantı adı, serbest işaret adı, olay adı) işaretçileri, yer noktasını,
+  haritanın kontrollerini, kendi çizimlerinin simgelerini ve devlet adlarını engel sayarak yerleşir (`src/map/flags.ts`): önce
+  noktasının dört yanını, sonra daha uzak yerleri dener (bir bağlantının etiketi çizgisi boyunca kayar); hiçbir boş yer yoksa altındaki
+  devlet adı çekilir (vurgulananların adı çekilmez: onlar işaretçiden, olabildiğince az kayarak uzaklaşır). Bağlantı simgesi (×, ◇…)
+  de bir işaretçinin altında kalmaz, çizgisi boyunca kayar. `npm run e2e:ai` bunu sayfada ölçer (her adım, üç kamera, iki ekran boyu).
 
 **Model: `sample` yeteneği, anahtar yok.** Uygulama bir Claude artifact'ı olarak yayınlanır ve artifact çalışma zamanının `sample`
 yeteneğini (`const sample = await claude.use("sample")`) kullanır: çağrı **okurun kendi Claude hesabına** gider, ilk çağrıda okurdan
@@ -153,8 +186,8 @@ eklenir (modelin kartlarla çelişmemesi için). `src/ai/sources.ts` içindeki `
 gibi kaynakların takılacağı yerdir: `retrieve({ question, context })` metin parçaları döndürür, gerisi değişmez. Model de küçük bir
 arayüzün (`ModelProvider`) arkasındadır: gerçek `SampleProvider` ve komut dosyalı `MockProvider`.
 
-**Henüz yok:** yer iğneleri (sağ tıkla, iğne başına aralık) ve yüklenmiş belge kaynağı. Bağlamın şekli (yer listesi, yer başına aralık)
-ve `SourceProvider` bunlar için ayrılmıştır.
+**Henüz yok:** yüklenmiş belge kaynağı. Birden çok yerin bağlamı sohbetin kendisinden gelecek (okur başka bir yeri ya da dönemi
+anınca). Bağlamın şekli (yer listesi, yer başına aralık) ve `SourceProvider` bunlar için ayrılmıştır.
 
 ## Tasarım kararları ve gerekçeleri
 
@@ -276,19 +309,21 @@ kaynak yokluğu, Türkçe ad eksikliği…).
 
 ```
 src/
-  domain/   saf mantık (arayüzsüz, testli): time, geo, events, lanes, categories, placement, reveal
+  domain/   saf mantık (arayüzsüz, testli): time, geo, events, lanes, categories, placement, reveal, camera
   data/     veri yükleyici (`loadData`) ve saf birleştirme (`assembleData`)
   state/    store (durum + eylemler), derive (görünüm modeli), url (adres çubuğu), panelLayout
-  map/      MapLibre görünümü, DOM etiketleri, işaretçiler, yer iğnesi, yapay zekâ çizim katmanı (aiLayer, flags)
+  map/      MapLibre görünümü, DOM etiketleri, işaretçiler, yer noktası, yapay zekâ çizim katmanı (aiLayer, flags)
   ui/       cetvel, zaman çizelgesi, bilgi paneli, harita üstü öğeler, ipucu kutusu, panelWidth, chat/
   styles/   tasarım belirteçleri ve bileşen stilleri (chat.css, ai.css)
   ai/       okuma arkadaşı (arayüzsüz, testli): aşağıya bakın
 ```
 
-`src/ai/`: `resolve` (modelin yazdıklarını verideki şeylere çözer), `tools` (yedi sayfa işlevi), `drawing` (adım adım birikimli harita
-durumu: `TurnPlan`, `applyStep`), `steps` (metni adımlara ayırır), `activeStep` (okuma çizgisi), `context`, `prompt`, `sources`,
-`provider` (arayüz + hata kodları), `sampleProvider`, `mockProvider` + `mockScripts`, `session` (sohbet, geçmiş, durdurma, hata),
-`director` (etkin adım → çizim, yıl, kamera) ve `settings`.
+`src/ai/`: `resolve` (modelin yazdıklarını verideki devletlere, olaylara, noktalara çözer; devletlerin ana parçalarının kutusu),
+`tools` (altı sayfa işlevi), `drawing` (her adımın **kendi** çizimi: `TurnPlan`, `drawingOf`; kamera hedefi `frameTargetOf`), `steps`
+(metni adımlara ayırır), `activeStep` (okuma çizgisi), `context`, `prompt`, `sources`, `provider` (arayüz + hata kodları),
+`sampleProvider`, `mockProvider` + `mockScripts`, `session` (sohbet, geçmiş, durdurma, hata), `director` (etkin adım → çizim, yıl,
+kamera takibi ve "bıraksın mı" sorusu) ve `settings`. `src/domain/camera.ts`: kamerayı ölçen saf işlevler (sapma, önemli hareket,
+çerçeve, dolgu) ve `CameraWatch`.
 
 - Durumda **harita kamerası yoktur**; harita görünümünü yalnızca kullanıcının kendi eylemleri değiştirir: sürükleme,
   tekerlek, çimdik, `+/−` düğmeleri, klavye. **Tek istisna `MapView.revealEvent`'tir:** kullanıcı görünüm dışındaki bir
@@ -346,16 +381,31 @@ yakınlaştırdığı, telefon genişliğinde taşma olmadığı, dokunuşun ola
 Gerçek Chromium'da, komut dosyalı sağlayıcıyla (gerçek model yok; araç çağrıları ve akış gerçek bir yanıttaki gibi çalışır) şunları
 sınar ve `docs/verification/AI-RAPOR.md` ile `ai-*.png` yazar:
 
-1. Anadolu'da bir nokta, 1500–1550, sohbet açık, anlatım: adımlar belirir; okurken ve *Haritada göster*'e basınca harita etkin adımın
-   durumuna geçer (yıl, vurgu, bağlantı, işaret); geri dönülünce ilk adımın durumu aynen geri gelir; haritayı sürükleyince kamera
-   adımı izlemeyi bırakır; imleci oynatınca yapay zekâ yılı kenara çekilir.
-2. Osmanlı–Fransa ittifakı (1536) sorusu: iki devlet vurgulanır ve bağlanır, **harita hiç oynamaz**.
-3. Sohbet açıkken bir olaya tıklamak: kart sohbetin üstünde açılır, kapatınca (✕ ya da `Esc`) sohbet aynı yerde durur; *Bunu sohbette
-   sor* olayı konuşmaya gönderir.
-4. Sohbet sürerken yer ya da aralık değişir: "Bağlam değişti" ayırıcısı çıkar, güncellenir, geri dönülünce kalkar.
-5. Panel genişlemesi tek bir yumuşak hareket, haritanın içeriği hiçbir karede kaymaz (kare kare ölçülür), harita tek kez yeniden
+1. Anadolu'da bir nokta, 1500–1550, sohbet açık, anlatım: adımlar belirir. **Her adım yalnızca kendi çizimini gösterir** (6 adımın her
+   biri için tam küme: vurgulanan devletler, bağlantı, olay işaretçileri, serbest işaret, yıl; öteki adımların hiçbir izi yok); okurken
+   ve *Haritada göster*'e basınca harita etkin adımın durumuna geçer; önceki adımlara dönmek (4, 2, 6, 3, 5, 1) her seferinde yalnızca o
+   adımın çizimini aynen getirir. **Kamera adımı izler:** her adımda çizimin bütün noktaları görünür ve kontrollerin altında değil, harita
+   komşu adımlarda kayar/yakınlaşır/uzaklaşır; imleci oynatınca yapay zekâ yılı kenara çekilir.
+2. **Harita takibi.** Kısa sürükleme ve bir kez `+` takibi kapatmaz; iki düzey yakınlaşma ya da haritanın üçte biri kadar sürükleme
+   küçük bir soru getirir (haritanın %6'sından az, telefonda %22'sinden az, odağı çalmaz, iletişim kutusu değil; *Ayarlar ⚙ → Harita takibi* bağlantısı ayarı
+   açıp satırı işaretler). *Bıraksın*: takip kapanır, çip çıkar, adım değişince kamera oynamaz; çip ya da *Geri aç* yeniden açar ve etkin
+   adım hemen görünür kılınır. *İzlemeye devam*: o sohbette bir daha sorulmaz. Cevaplanmayan soru hiçbir şeye karar vermeden kalkar ve
+   yeni bir uzak hareketten sonra döner. Ayar anahtarı aynı şeyi yapar; yeni sohbet takibi yeniden açar.
+3. **Haritada tek anlatıcı.** Sohbet açılınca haritadaki bütün olay işaretçileri çekilir (çizelge aynen kalır, sayaç nedenini söyler);
+   hiçbir şey sorulmadan kapatınca harita birebir eski hâline döner. Çizelgeden tıklanan olay kartı açık kaldığı sürece haritadadır;
+   adım bir olaydan söz ederse haritada yalnızca o olayın kendi işaretçisi ve adı olur (serbest işaret çizilmez; yalnızca verinin
+   bilmediği yer, örneğin Mercidabık, serbest işaret olur). Model verideki bir olay için `mark` çağırırsa olayın kendi işaretçisine
+   çevrilir.
+4. **Etiketler örtüşmez:** 6 adım × 3 kamera (çerçeve, yakınlaştırılmış, uzaklaştırılmış) × 2 ekran boyunda yapay zekâ etiketleri ne bir
+   etiketi, ne bir işaretçiyi, ne yer noktasını, ne bir devlet adını, ne haritanın kontrollerini örter; hepsi harita içinde (sayfada
+   ölçülür).
+5. Osmanlı–Fransa ittifakı (1536) sorusu: iki devlet vurgulanır ve bağlanır, kamera ikisini de görünür kılar.
+6. Sohbet açıkken olaya tıklamak (çizelgeden): kart sohbetin üstünde açılır, işaretçisi haritaya gelir; kapatınca (✕ ya da `Esc`) sohbet
+   aynı yerde durur ve işaretçi çekilir; *Bunu sohbette sor* olayı konuşmaya gönderir ve yanıtta olay kendi işaretçisiyle görünür.
+7. Sohbet sürerken yer ya da aralık değişir: "Bağlam değişti" ayırıcısı çıkar, güncellenir, geri dönülünce kalkar.
+8. Panel genişlemesi tek bir yumuşak hareket, haritanın içeriği hiçbir karede kaymaz (kare kare ölçülür), harita tek kez yeniden
    boyutlanır; Durdur, hata ekranları, hız ayarı; telefon düzeni.
-6. **Gerçek `sample` bağdaştırıcısı**, tarayıcıda sahte bir artifact çalışma zamanıyla: araç şemaları, `cache` gönderilmemesi, geçmişin
+9. **Gerçek `sample` bağdaştırıcısı**, tarayıcıda sahte bir artifact çalışma zamanıyla: araç şemaları, `cache` gönderilmemesi, geçmişin
    her çağrıyla gitmesi, `modelTier`, `not_granted`/`rate_limited`/`tools_unavailable` ve `permissions.manage` düğmesi.
 
 **Neyi sınamıyor:** gerçek bir modelin istemi ne kadar iyi izlediğini. Gerçek `sample` bu ortamdan çağrılamaz; model çıktısı biçimine
@@ -365,8 +415,9 @@ karşı bağışlayıcı okunur (yukarıya bakın) ama ilk gerçek kullanımda g
 
 - Karşılaştırma modu henüz yok (veri yapıları ve panel yapısı hazır; yukarıya bakın).
 - Okuma arkadaşı: gerçek model çıktısı bu ortamda sınanamadı (yukarıya bakın). Bir bağlantının uç noktası devletin etiket noktasıdır
-  (çok parçalı devletlerde, karşı uca en yakın büyük parçanın ortası); küçük bir haritada etiketlerle üst üste binebilir. Yer iğneleri
-  ve yüklenmiş belge kaynağı henüz yok.
+  (çok parçalı devletlerde, karşı uca en yakın büyük parçanın ortası); tek parça ve çok büyük devletlerde (1517 sonrası Osmanlı) bu
+  nokta sınırdan uzakta olabilir ve çizginin ucundaki küçük daire devletin adının üstüne gelebilir (etiketlerin değil, yalnızca
+  çizgi ucunun örttüğü tek şey budur). Yüklenmiş belge kaynağı henüz yok.
 - Görünüm dışındaki bir olayı açınca harita yalnızca uzaklaşır; ancak dünyanın kenar sınırı (`maxBounds`) çok büyük uzaklaşmalarda
   merkezi de kaydırır (ör. Çin'den Macaristan'a: merkez 112°D'den 75°D'ya kayar). Bu hâlâ tek, sürekli ve yumuşak bir harekettir;
   önceki görünüm yeni görünümün içinde kalır.

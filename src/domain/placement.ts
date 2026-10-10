@@ -10,6 +10,8 @@ export interface PlacementInput {
   focusYear: number;
   /** An event that must be drawn whenever it is in view, budget and collisions aside. */
   selectedId: string | null;
+  /** More events of the same kind (the ones the AI is talking about): drawn whenever they are in view. */
+  keepIds?: ReadonlySet<string>;
   viewport: { width: number; height: number };
   /** Screen position (px, relative to the map) of an event's location. */
   project: (ev: HistoricalEvent) => { x: number; y: number };
@@ -44,10 +46,15 @@ const RING = 5;
  * Pure: the same events, camera and viewport always give the same markers.
  */
 export function placeMarkers(input: PlacementInput): PlacementResult {
-  const { zoom, focusYear, selectedId, viewport, project } = input;
-  const order = [...input.events].sort((a, b) => markerPriority(a, b, focusYear));
-  const selectedAt = selectedId ? order.findIndex((e) => e.id === selectedId) : -1;
-  if (selectedAt > 0) order.unshift(...order.splice(selectedAt, 1));
+  const { zoom, focusYear, selectedId, keepIds, viewport, project } = input;
+  const kept = (id: string) => id === selectedId || !!keepIds?.has(id);
+  // The events that must be drawn go first (the opened one before the rest), so nothing else takes their place.
+  const order = [...input.events].sort(
+    (a, b) =>
+      Number(b.id === selectedId) - Number(a.id === selectedId) ||
+      Number(kept(b.id)) - Number(kept(a.id)) ||
+      markerPriority(a, b, focusYear),
+  );
 
   const budget = markerBudget(zoom);
   const boxes: Array<{ x: number; y: number; w: number; h: number }> = [];
@@ -68,7 +75,7 @@ export function placeMarkers(input: PlacementInput): PlacementResult {
       offscreen++;
       continue;
     }
-    const isSelected = ev.id === selectedId;
+    const isSelected = kept(ev.id);
     if (!isSelected && placed.length >= budget) {
       thinned++;
       continue;

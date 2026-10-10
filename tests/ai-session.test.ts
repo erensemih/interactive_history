@@ -46,16 +46,27 @@ describe('a narration', () => {
     expect(answer.plan.numbers()).toEqual([1, 2, 3, 4, 5, 6]);
     for (const s of sections) expect(answer.plan.titleOf(s.n)).toBe(s.title);
 
-    // each step has its own map state; step 5 is the French alliance, step 3 forgot the Safavid war
+    // each step owns its map state: step 5 is the French alliance and shows nothing of the Hungarian war before it
     const five = answer.plan.drawingAt(5);
     expect(five.highlights).toEqual(['ottoman-empire', 'kingdom-of-france']);
     expect(five.links).toEqual([
       { from: 'ottoman-empire', to: 'kingdom-of-france', relation: 'alliance', label: 'İttifak, 1536' },
     ]);
+    expect(five.events).toEqual([]);
     expect(five.year).toBe(1536);
     const three = answer.plan.drawingAt(3);
     expect(three.links.map((l) => l.to)).toEqual(['mamluk-sultanate']);
-    expect(answer.plan.focusAt(2)).toEqual({ polities: ['ottoman-empire', 'safavid-dynasty'], points: [] });
+    expect(three.highlights).toEqual(['ottoman-empire', 'mamluk-sultanate']);
+    // events the app has records for are shown by their own markers; the one place it has none for is a mark
+    expect(three.events).toEqual(['ridaniye-1517']);
+    expect(three.marks.map((m) => m.label)).toEqual(['Mercidabık']);
+    expect(answer.plan.drawingAt(2).events).toEqual(['caldiran-1514']);
+    expect(answer.plan.drawingAt(1).events).toEqual(['safevi-1501']);
+    for (const n of answer.plan.numbers()) {
+      // every step says what it needs by itself: a polity, a year, and none of them is left to the step before
+      expect(answer.plan.drawingAt(n).highlights.length).toBeGreaterThan(0);
+      expect(answer.plan.drawingAt(n).year).toBeDefined();
+    }
   });
 
   it('reaches the model as tools plus turns made of the rules, the state and the request', async () => {
@@ -64,18 +75,11 @@ describe('a narration', () => {
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
     const req = provider.requests[0]!;
     expect(req.tier).toBe('quick');
-    expect(req.tools.map((t) => t.name)).toEqual([
-      'step',
-      'highlight',
-      'connect',
-      'mark',
-      'set_year',
-      'focus',
-      'clear',
-    ]);
+    expect(req.tools.map((t) => t.name)).toEqual(['step', 'highlight', 'connect', 'show_event', 'mark', 'set_year']);
     expect(req.turns.at(-1)!.content).toContain('İSTEK [ANLATIM]');
     expect(req.turns.at(-1)!.content).toContain('ottoman-empire | Osmanlı İmparatorluğu');
     expect(req.turns.at(-1)!.content).toContain('Çaldıran Muharebesi'); // the app's own record, as a source
+    expect(req.turns.at(-1)!.content).toContain('caldiran-1514 | '); // and with the id show_event takes
     expect(req.meta.mode).toBe('narration');
   });
 
@@ -114,7 +118,7 @@ describe('a narration', () => {
     await session.send({ text: 'Bu aralıkta dünyada olanları anlat.', mode: 'narration' }, contextAt(null));
     const answer = last(session);
     expect(parseAnswer(answer.text).sections.length).toBeGreaterThanOrEqual(3);
-    expect(answer.plan.drawingAt(2).marks.length).toBeGreaterThan(0);
+    expect(answer.plan.drawingAt(2).events.length).toBeGreaterThan(0);
   });
 });
 
@@ -212,7 +216,6 @@ describe('a question', () => {
     expect(d.highlights).toEqual(['ottoman-empire', 'kingdom-of-france']);
     expect(d.links[0]).toMatchObject({ relation: 'alliance' });
     expect(d.year).toBe(1536);
-    expect(answer.plan.focusAt(1)).toBeNull(); // the map is not asked to move
     expect(provider.requests[0]!.turns.at(-1)!.content).toContain('İSTEK [SORU]');
   });
 
@@ -226,7 +229,8 @@ describe('a question', () => {
     expect(provider.requests[0]!.turns.at(-1)!.content).toContain('Açık olay kartı: «Mohaç Muharebesi»');
     const answer = last(session);
     expect(answer.plan.drawingAt(1).highlights).toEqual(expect.arrayContaining(['ottoman-empire']));
-    expect(answer.plan.drawingAt(1).marks.map((m) => m.label)).toEqual(['Mohaç']);
+    expect(answer.plan.drawingAt(1).events).toEqual(['mohac-1526']); // its own marker, not a mark of the model's
+    expect(answer.plan.drawingAt(1).marks).toEqual([]);
     expect(answer.plan.drawingAt(1).year).toBe(1526);
   });
 
@@ -421,10 +425,10 @@ describe('tools that are not there', () => {
     };
     const session = makeSession(provider);
     await session.send({ text: 'Soru 1', mode: 'qa' }, anatolia());
-    expect(seen).toEqual([7, 0]);
+    expect(seen).toEqual([6, 0]);
     expect(last(session)).toMatchObject({ status: 'done', text: 'Yalnızca metin.', notes: [NO_TOOLS_NOTE] });
     await session.send({ text: 'Soru 2', mode: 'qa' }, anatolia());
-    expect(seen).toEqual([7, 0, 0]); // no second round trip for the same refusal
+    expect(seen).toEqual([6, 0, 0]); // no second round trip for the same refusal
   });
 
   it('a view that reports no tools gets plain text and a note, with no polity list in the prompt', async () => {

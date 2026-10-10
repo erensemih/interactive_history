@@ -145,3 +145,72 @@ describe('Resolver.catalog', () => {
     expect(resolver.catalog({ from: 1590, to: 1600 }).some((c) => c.id === 'mamluk-sultanate')).toBe(false);
   });
 });
+
+describe('Resolver.boundsAt', () => {
+  it('is the box around the main parts of a polity, not around an island or an exclave far away', () => {
+    const [w, s, e, n] = resolver.boundsAt('ottoman-empire', 1526)!;
+    expect(w).toBeLessThan(30); // the Balkans and Anatolia...
+    expect(e).toBeGreaterThan(40);
+    expect(s).toBeLessThan(33); // ...and Egypt
+    expect(n).toBeGreaterThan(40);
+    const box = resolver.boundsAt('kingdom-of-france', 1536)!;
+    expect(box[2] - box[0]).toBeLessThan(25); // France, not the world
+    expect(box[3] - box[1]).toBeLessThan(15);
+  });
+
+  it('is null for a polity without borders that year, and the same box on every call', () => {
+    expect(resolver.boundsAt('mamluk-sultanate', 1530)).toBeNull();
+    expect(resolver.boundsAt('yok', 1530)).toBeNull();
+    expect(resolver.boundsAt('ottoman-empire', 1526)).toBe(resolver.boundsAt('ottoman-empire', 1526));
+  });
+});
+
+describe('Resolver events', () => {
+  it('knows an event by its id, however it is spelled, or by a title that names exactly one', () => {
+    expect(resolver.event('caldiran-1514')?.id).toBe('caldiran-1514');
+    expect(resolver.event('Caldiran 1514')?.id).toBe('caldiran-1514');
+    expect(resolver.event('Çaldıran Muharebesi')?.id).toBe('caldiran-1514');
+    expect(resolver.event('çaldıran')?.id).toBe('caldiran-1514'); // a title that starts like it
+    expect(resolver.event("İstanbul'un Fethi")?.id).toBe('istanbul-fethi-1453');
+  });
+
+  it('does not guess: unknown, ambiguous or too short names are nothing', () => {
+    expect(resolver.event('atlantis')).toBeNull();
+    expect(resolver.event('')).toBeNull();
+    expect(resolver.event('Mu')).toBeNull();
+    expect(resolver.event(42)).toBeNull();
+    expect(resolver.event(null)).toBeNull();
+    expect(resolver.event('Muharebesi')).toBeNull(); // starts nothing
+  });
+
+  it('lists the events of the range with their ids, oldest first', () => {
+    const list = resolver.eventCatalog(range);
+    expect(list.map((e) => e.id)).toContain('caldiran-1514');
+    expect(list.map((e) => e.id)).not.toContain('istanbul-fethi-1453');
+    expect(list[0]).toMatchObject({ id: expect.any(String), title: expect.any(String), dateLabel: expect.any(String) });
+    const years = list.map((e) => resolver.eventById(e.id)!.start);
+    expect(years).toEqual([...years].sort((a, b) => a - b));
+  });
+});
+
+describe('Resolver.eventFor (a mark that is really an event)', () => {
+  const at = (id: string) => {
+    const ev = resolver.eventById(id)!;
+    return { lon: ev.location.lon, lat: ev.location.lat };
+  };
+
+  it('finds the event a label names, at its place', () => {
+    expect(resolver.eventFor('Çaldıran', at('caldiran-1514'), range)?.id).toBe('caldiran-1514');
+    expect(resolver.eventFor('Mohaç, 1526', at('mohac-1526'), range)?.id).toBe('mohac-1526');
+    expect(resolver.eventFor('Mohaç Muharebesi', at('mohac-1526'), range)?.id).toBe('mohac-1526');
+    expect(resolver.eventFor('Preveze', { lon: 20.7, lat: 38.95 }, range)?.id).toBe('preveze-1538'); // a few km off is fine
+  });
+
+  it('does not take a place for an event: the city of the same name, another year, another place, another range', () => {
+    expect(resolver.eventFor('Kahire', at('ridaniye-1517'), range)).toBeNull();
+    expect(resolver.eventFor('Mohaç, 1683', at('mohac-1526'), range)).toBeNull();
+    expect(resolver.eventFor('Mohaç', { lon: 2.35, lat: 48.85 }, range)).toBeNull();
+    expect(resolver.eventFor('Mohaç', at('mohac-1526'), { from: 1400, to: 1450 })).toBeNull();
+    expect(resolver.eventFor('', { lon: 0, lat: 0 }, range)).toBeNull();
+  });
+});

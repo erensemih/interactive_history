@@ -1,6 +1,7 @@
+import { isEmptyDrawing } from './drawing';
 import type { AssistantItem, AiSession } from './session';
 import { parseAnswer } from './steps';
-import type { Drawing, FocusTarget } from './types';
+import type { Drawing } from './types';
 
 export interface ActiveStep {
   itemId: string;
@@ -8,18 +9,22 @@ export interface ActiveStep {
 }
 
 export interface DirectorHooks {
-  /** The camera should bring these into view (smoothly, as little as it takes). Only called while following. */
-  focus(target: FocusTarget): void;
+  /**
+   * The step's drawing should be brought into view (smoothly, by whatever pan and zoom it takes). Called only
+   * while the camera follows; the page decides whether the drawing is already framed well enough.
+   */
+  frame(drawing: Drawing): void;
 }
 
 /**
- * Turns the conversation into what the map shows: the step the reader is on has a drawing, and moving
- * to another step (by reading on, by going back, by pointing at it) swaps the drawing for that step's.
+ * Turns the conversation into what the map shows: the step the reader is on owns the map, and moving to
+ * another step (by reading on, by going back, by pointing at it) swaps its drawing for that step's.
  *
  * The rules that keep the map the reader's own:
- *  - Drawings never move the camera. Only a step's `focus` may, and only while `following` is on; the
- *    first time the reader drags, zooms or pans the map themselves, it goes off and stays off until
- *    they switch it back on.
+ *  - Drawings never move the camera by themselves. While "Harita takibi" is on, the page brings each step's
+ *    drawing into view when the step becomes the active one. Small movements of the map by the reader do
+ *    not turn it off; after a substantial one (the page measures it) the reader is asked, once and
+ *    quietly, whether the camera should be released. Only their answer, or the setting, turns it off.
  *  - The year the AI asks for is an overlay on the reader's own cursor: if they move the cursor or the
  *    range themselves, the AI's year steps aside until the next step is activated.
  *  - An answer without any map action leaves the map as it is.
@@ -28,6 +33,12 @@ export class Director {
   private ref: ActiveStep | null = null;
   private current: Drawing | null = null;
   private follow = true;
+  /** The small question "release the camera?" is on screen. */
+  private asking = false;
+  /** The reader answered "keep following": the question is not asked again in this conversation. */
+  private keepAnswered = false;
+  /** The reader has moved the map since the active step was framed: a late drawing change must not take it back. */
+  private touched = false;
   private yearReleased = false;
   private seenVersion = -1;
   /** The answer whose first words have already moved the director to its first step. */
@@ -54,7 +65,7 @@ export class Director {
     return this.ref;
   }
 
-  /** What the AI has drawn on the map now (null: nothing, or nothing since the chat was cleared). */
+  /** What the AI shows on the map now (null: nothing, or nothing since the chat was cleared). */
   get drawing(): Drawing | null {
     return this.current;
   }
@@ -64,24 +75,49 @@ export class Director {
     return !this.yearReleased && this.current?.year !== undefined ? this.current.year : null;
   }
 
+  /** "Harita takibi": does the camera bring each step's drawing into view? */
   get following(): boolean {
     return this.follow;
   }
 
+  /** Is the question "release the camera?" waiting for an answer? */
+  get askingToRelease(): boolean {
+    return this.asking;
+  }
+
   setFollowing(on: boolean) {
-    if (on === this.follow) return;
+    if (on === this.follow && !this.asking) return;
     this.follow = on;
-    if (on) this.refocus();
+    this.asking = false;
+    if (on) this.frameActive();
     this.notify();
   }
 
   /**
-   * The reader dragged, zoomed or panned the map while a narration is on screen: from now on the AI keeps its
-   * hands off the camera. Moving the map before there is any step to follow is just using the map.
+   * The reader moved the map (a drag, the wheel, +/−, the keys) and it has come to rest. `far` says whether it
+   * was a substantial move; only then is the reader asked. Moving the map before there is any step to
+   * follow is just using the map.
    */
-  userMovedCamera() {
-    if (!this.follow || !this.ref) return;
-    this.follow = false;
+  userMovedCamera(far: boolean) {
+    if (!this.ref || !this.follow) return;
+    this.touched = true;
+    if (!far || this.keepAnswered || this.asking) return;
+    this.asking = true;
+    this.notify();
+  }
+
+  /** The reader answered the question with "keep following": no more questions in this conversation. */
+  keepFollowing() {
+    if (!this.asking && this.keepAnswered) return;
+    this.asking = false;
+    this.keepAnswered = true;
+    this.notify();
+  }
+
+  /** The question went unanswered for a while: it goes away without deciding anything. */
+  dismissQuestion() {
+    if (!this.asking) return;
+    this.asking = false;
     this.notify();
   }
 
@@ -99,10 +135,11 @@ export class Director {
     if (item?.kind !== 'assistant') return;
     this.ref = { itemId, n };
     this.yearReleased = false;
+    this.touched = false;
+    this.asking = false;
     this.seenVersion = item.plan.version;
     if (!item.plan.empty) this.current = item.plan.drawingAt(n);
-    const focus = item.plan.focusAt(n);
-    if (focus && this.follow) this.hooks.focus(focus);
+    this.frameActive();
     this.notify();
   }
 
@@ -111,17 +148,19 @@ export class Director {
     this.ref = null;
     this.current = null;
     this.follow = true; // a new conversation starts with the camera following again
+    this.asking = false;
+    this.keepAnswered = false;
+    this.touched = false;
     this.autoFor = null;
     this.yearReleased = false;
     this.seenVersion = -1;
     this.notify();
   }
 
-  private refocus() {
-    if (!this.ref) return;
-    const item = this.session.find(this.ref.itemId);
-    const focus = item?.kind === 'assistant' ? item.plan.focusAt(this.ref.n) : null;
-    if (focus) this.hooks.focus(focus);
+  /** Brings the active step's drawing into view, if the camera follows and the step drew anything. */
+  private frameActive() {
+    if (!this.follow || !this.ref || !this.current || isEmptyDrawing(this.current)) return;
+    this.hooks.frame(this.current);
   }
 
   private onSession() {
@@ -143,6 +182,7 @@ export class Director {
       if (item?.kind === 'assistant' && item.plan.version !== this.seenVersion) {
         this.seenVersion = item.plan.version;
         this.current = item.plan.drawingAt(this.ref.n);
+        if (!this.touched) this.frameActive();
         this.notify();
       }
     }

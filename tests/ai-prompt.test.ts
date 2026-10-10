@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { subjectKey, subjectLabel, type AiContext } from '../src/ai/context';
-import { applyStep, emptyDrawing } from '../src/ai/drawing';
+import { drawingOf, emptyDrawing } from '../src/ai/drawing';
 import {
   buildTurns,
   describeCatalog,
   describeContext,
+  describeEvents,
   instructions,
   NARRATION_REQUEST,
   utf8Bytes,
@@ -42,6 +43,7 @@ const base = (patch: Partial<PromptInput> = {}): PromptInput => ({
   context,
   previous: null,
   catalog: resolver.catalog(range),
+  events: resolver.eventCatalog(range),
   sources: [],
   drawing: null,
   nameOf: (id) => resolver.nameOf(id),
@@ -55,9 +57,21 @@ describe('instructions', () => {
     const text = instructions(true);
     expect(text).toContain('TEK turda');
     expect(text).toContain('## n. Kısa başlık');
-    for (const name of ['step', 'highlight', 'connect', 'mark', 'set_year', 'focus', 'clear'])
-      expect(text).toContain(name);
+    for (const name of ['step', 'highlight', 'connect', 'show_event', 'mark', 'set_year']) expect(text).toContain(name);
     expect(text).toContain('POLİTİLER');
+    expect(text).toContain('OLAYLAR');
+  });
+
+  it('say that every step owns the map, and that an event of the app is shown by its own marker', () => {
+    const text = instructions(true);
+    expect(text).toContain('HER ADIM HARİTANIN SAHİBİDİR');
+    expect(text).toContain('KENDİ başına');
+    expect(text).not.toContain('devral'); // nothing is inherited from the step before
+    expect(text).not.toContain('`clear`');
+    expect(text).not.toContain('`focus`'); // the camera is not the model's business
+    expect(text).toMatch(/OLAYLAR listesindeki bir olayı anlatıyorsan onu `show_event` ile göster/);
+    expect(text).toMatch(/`mark` yalnızca OLAYLAR'da bulunmayan yerler/);
+    expect(text).toContain('Harita takibi');
   });
 
   it('show the protocol on a worked example', () => {
@@ -99,7 +113,7 @@ describe('describeContext', () => {
     expect(text).toContain('Osmanlı İmparatorluğu (35.50°D, 38.90°K)');
     expect(text).toContain('Anadolu');
     expect(text).toContain('Bu noktanın egemenleri');
-    expect(text).toContain('«Mohaç Muharebesi», 29 Ağustos 1526');
+    expect(text).toContain('«Mohaç Muharebesi» (kimlik: mohac-1526), 29 Ağustos 1526');
     expect(text).toContain('Macaristan Krallığı');
   });
 
@@ -158,14 +172,30 @@ describe('buildTurns', () => {
     expect(last.endsWith(`İSTEK [ANLATIM]\n${NARRATION_REQUEST}`)).toBe(true);
   });
 
-  it('leaves the polity list out when there are no tools', () => {
-    const last = buildTurns(base({ tools: false })).at(-1)!.content;
+  it('leaves the polity and event lists out when there are no tools', () => {
+    const last = buildTurns(base({ tools: false, events: [] })).at(-1)!.content;
     expect(last).not.toContain('POLİTİLER');
+    expect(last).not.toContain('OLAYLAR');
+  });
+
+  it('lists the range events with the ids show_event takes', () => {
+    const last = buildTurns(base()).at(-1)!.content;
+    expect(last).toContain('OLAYLAR (');
+    expect(last).toMatch(/\ncaldiran-1514 \| [^|]+ \| Çaldıran Muharebesi \| Çaldıran\n/);
+    expect(last).not.toContain('istanbul-fethi-1453 |'); // outside the range
+    const lines = describeEvents(resolver.eventCatalog(range)).split('\n');
+    expect(lines.length).toBeGreaterThan(5);
+    expect(lines.every((l) => l.split(' | ').length === 4)).toBe(true);
   });
 
   it('tells the model what it has already drawn', () => {
-    const drawing = applyStep(emptyDrawing(), [{ kind: 'highlight', step: 1, polities: ['ottoman-empire'] }]);
-    expect(buildTurns(base({ drawing })).at(-1)!.content).toContain('vurgulanan: Osmanlı İmparatorluğu');
+    const drawing = drawingOf([
+      { kind: 'highlight', step: 1, polities: ['ottoman-empire'] },
+      { kind: 'event', step: 1, id: 'caldiran-1514' },
+    ]);
+    const turn = buildTurns(base({ drawing, eventTitleOf: (id) => resolver.eventById(id)?.title ?? id })).at(-1)!;
+    expect(turn.content).toContain('vurgulanan: Osmanlı İmparatorluğu');
+    expect(turn.content).toContain('olay: Çaldıran Muharebesi');
     expect(buildTurns(base({ drawing: emptyDrawing() })).at(-1)!.content).not.toContain('çizdiklerin');
   });
 

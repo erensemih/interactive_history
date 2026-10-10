@@ -198,3 +198,138 @@
     0 0 6px var(--halo),
     0 0 10px var(--halo);
 }
+
+/* an event the AI talks about: its marker is the app's own, only its name hangs here (ink on paper like the other flags) */
+.ai-flag.is-event {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.ai-flag[hidden] {
+  display: none;
+}
+
+/* a polity name an AI label sits on gives way for as long as the label is there */
+.plabel.is-yielded {
+  opacity: 0;
+}
+
+/* ------------------------------------------- "Harita takibi": the small question over the map */
+.follow-host {
+  position: absolute;
+  z-index: 4;
+  top: 12px;
+  left: 50%;
+  width: min(420px, calc(100% - 140px));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.follow-card {
+  pointer-events: auto;
+  padding: 8px 12px 9px;
+  background: rgb(245 240 228 / 0.97);
+  border: 1px solid var(--rule-strong);
+  border-radius: 10px;
+  box-shadow: var(--shadow-float);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink-2);
+  animation: card-in 0.2s ease;
+}
+
+.follow-card p {
+  margin: 0;
+}
+
+.follow-q b {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.follow-q .link {
+  margin-left: 4px;
+  font-size: 12.5px;
+}
+
+.follow-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-top: 7px;
+}
+
+.follow-btn {
+  padding: 3px 11px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--paper);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 99px;
+}
+
+.follow-btn.is-quiet {
+  color: var(--ink);
+  background: transparent;
+  border-color: var(--rule-strong);
+}
+
+.follow-btn:hover {
+  background: var(--ink-2);
+  color: var(--paper);
+}
+
+.follow-btn.is-quiet:hover {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+.follow-hint {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+.follow-hint.is-alone {
+  margin: 2px 0 0;
+}
+
+.follow-hint .link {
+  font-size: 11.5px;
+}
+
+@media (max-width: 560px) {
+  /* a narrow map: use the width between the corner and the zoom buttons, sit under the counter, and stay a few lines tall */
+  .follow-host {
+    top: 44px;
+    left: 6px;
+    right: 52px;
+    width: auto;
+    transform: none;
+  }
+
+  .follow-card {
+    padding: 5px 8px 6px;
+    font-size: 11.5px;
+    line-height: 1.3;
+  }
+
+  .follow-row {
+    margin-top: 4px;
+    gap: 3px 6px;
+  }
+
+  .follow-btn {
+    padding: 2px 9px;
+    font-size: 11.5px;
+  }
+
+  .follow-hint,
+  .follow-hint .link {
+    font-size: 10.5px;
+    white-space: nowrap;
+  }
+}

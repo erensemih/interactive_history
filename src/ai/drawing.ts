@@ -4,15 +4,16 @@ import {
   LIMITS,
   RELATION_WORD,
   type Drawing,
-  type FocusTarget,
+  type FrameTarget,
   type Link,
   type MapAction,
   type Mark,
   type ResolvedDrawing,
+  type ResolvedEvent,
   type ResolvedLink,
 } from './types';
 
-export const emptyDrawing = (): Drawing => ({ highlights: [], links: [], marks: [] });
+export const emptyDrawing = (): Drawing => ({ highlights: [], links: [], marks: [], events: [] });
 
 const linkKey = (l: Pick<Link, 'from' | 'to' | 'relation'>) => `${[l.from, l.to].sort().join('|')}|${l.relation}`;
 const markKey = (m: Mark) => `${m.point.lon.toFixed(1)},${m.point.lat.toFixed(1)}|${normalizeName(m.label)}`;
@@ -21,34 +22,33 @@ const markKey = (m: Mark) => `${m.point.lon.toFixed(1)},${m.point.lat.toFixed(1)
 const newest = <T>(list: T[], max: number): T[] => (list.length > max ? list.slice(list.length - max) : list);
 
 /**
- * What one step does to the drawing it inherits. Order inside a step never matters: a `clear` is applied
- * first (it empties the drawing and gives the year back to the reader), then the additions, then the
- * year. That makes the result independent of the order in which the page functions happened to run
- * (several tool calls of one round run at the same time).
+ * What one step shows on the map: its own actions and nothing else. The step before leaves nothing behind
+ * and the step after inherits nothing, so the map is always exactly what the step on screen asked for.
+ * The year is part of that: a step that sets none leaves the year to the reader.
  */
-export function applyStep(prev: Drawing, actions: readonly MapAction[]): Drawing {
-  const clears = actions.some((a) => a.kind === 'clear');
-  const next: Drawing = clears
-    ? { highlights: [], links: [], marks: [] }
-    : { highlights: [...prev.highlights], links: [...prev.links], marks: [...prev.marks], year: prev.year };
+export function drawingOf(actions: readonly MapAction[]): Drawing {
+  const d = emptyDrawing();
   for (const a of actions) {
     if (a.kind === 'highlight') {
-      for (const id of a.polities) if (!next.highlights.includes(id)) next.highlights.push(id);
+      for (const id of a.polities) if (!d.highlights.includes(id)) d.highlights.push(id);
     } else if (a.kind === 'connect') {
       const link: Link = { from: a.from, to: a.to, relation: a.relation, ...(a.label ? { label: a.label } : {}) };
-      const at = next.links.findIndex((l) => linkKey(l) === linkKey(link));
-      if (at >= 0) next.links[at] = link;
-      else next.links.push(link);
+      const at = d.links.findIndex((l) => linkKey(l) === linkKey(link));
+      if (at >= 0) d.links[at] = link;
+      else d.links.push(link);
     } else if (a.kind === 'mark') {
       const mark: Mark = { point: a.point, label: a.label };
-      if (!next.marks.some((m) => markKey(m) === markKey(mark))) next.marks.push(mark);
+      if (!d.marks.some((m) => markKey(m) === markKey(mark))) d.marks.push(mark);
+    } else if (a.kind === 'event') {
+      if (!d.events.includes(a.id)) d.events.push(a.id);
     }
   }
-  for (const a of actions) if (a.kind === 'set_year') next.year = a.year;
-  next.highlights = newest(next.highlights, LIMITS.highlights);
-  next.links = newest(next.links, LIMITS.links);
-  next.marks = newest(next.marks, LIMITS.marks);
-  return next;
+  for (const a of actions) if (a.kind === 'set_year') d.year = a.year;
+  d.highlights = newest(d.highlights, LIMITS.highlights);
+  d.links = newest(d.links, LIMITS.links);
+  d.marks = newest(d.marks, LIMITS.marks);
+  d.events = newest(d.events, LIMITS.events);
+  return d;
 }
 
 export interface PlannedStep {
@@ -109,36 +109,18 @@ export class TurnPlan {
   }
 
   /**
-   * The map as it stands at the end of step `n`: every step up to and including it, applied in order, so
-   * a later step builds on an earlier one unless it clears. Going back to step 2 gives exactly what step 2
-   * showed the first time.
+   * The map while step `n` is the one on screen: that step's own drawing, whichever step came before. Going
+   * back to step 2 gives exactly what step 2 showed the first time.
    */
   drawingAt(n: number): Drawing {
-    let drawing = emptyDrawing();
-    for (const k of this.numbers()) {
-      if (k > n) break;
-      drawing = applyStep(drawing, this.steps.get(k)!.actions);
-    }
-    return drawing;
-  }
-
-  /** What step `n` itself wants in view. The camera is not state: a step that asks for nothing leaves it alone. */
-  focusAt(n: number): FocusTarget | null {
-    const polities: string[] = [];
-    const points: PlacePoint[] = [];
-    for (const a of this.actionsOf(n)) {
-      if (a.kind !== 'focus') continue;
-      for (const id of a.polities) if (!polities.includes(id)) polities.push(id);
-      points.push(...a.points);
-    }
-    return polities.length || points.length ? { polities, points } : null;
+    return drawingOf(this.actionsOf(n));
   }
 }
 
 /**
- * The drawing for the year shown: polities become the places they are drawn at. A polity without
- * borders that year cannot be highlighted or connected, so it is left out (the drawing may well be right
- * in another year of the range).
+ * The drawing for the year shown: polities become the places they are drawn at, events the markers they
+ * have. A polity without borders that year cannot be highlighted or connected, so it is left out (the
+ * drawing may well be right in another year of the range); an event that is not in the data is dropped.
  */
 export function resolveDrawing(drawing: Drawing, resolver: Resolver, year: number): ResolvedDrawing {
   const highlightIds = drawing.highlights.filter((id) => resolver.rowAt(id, year));
@@ -152,20 +134,47 @@ export function resolveDrawing(drawing: Drawing, resolver: Resolver, year: numbe
     const b = resolver.anchorToward(link.to, year, mainA) ?? mainB;
     links.push({ ...link, a, b });
   }
-  return { highlightIds, links, marks: drawing.marks };
+  const events: ResolvedEvent[] = [];
+  for (const id of drawing.events) {
+    const ev = resolver.eventById(id);
+    if (ev) events.push({ id, title: ev.title, point: { lon: ev.location.lon, lat: ev.location.lat } });
+  }
+  return { highlightIds, links, marks: drawing.marks, events };
+}
+
+/**
+ * Everything the drawing puts on the map for `year`, as the camera needs it. Null when it puts nothing
+ * anywhere (a step with only a year, or an empty one): the camera then stays where it is.
+ */
+export function frameTargetOf(resolved: ResolvedDrawing, resolver: Resolver, year: number): FrameTarget | null {
+  const boxes = resolved.highlightIds.flatMap((id) => {
+    const box = resolver.boundsAt(id, year);
+    return box ? [box] : [];
+  });
+  const points: PlacePoint[] = [];
+  for (const l of resolved.links) points.push(l.a, l.b);
+  for (const m of resolved.marks) points.push(m.point);
+  for (const e of resolved.events) points.push(e.point);
+  return boxes.length || points.length ? { boxes, points } : null;
 }
 
 /** The drawing in words, for the model ("what is on the map now") and for screen readers. */
-export function describeDrawing(drawing: Drawing, nameOf: (id: string) => string): string {
+export function describeDrawing(
+  drawing: Drawing,
+  nameOf: (id: string) => string,
+  eventTitleOf: (id: string) => string = (id) => id,
+): string {
   const parts: string[] = [];
   if (drawing.highlights.length) parts.push(`vurgulanan: ${drawing.highlights.map(nameOf).join(', ')}`);
   for (const l of drawing.links) {
     const label = l.label ? ` (${l.label})` : '';
     parts.push(`${nameOf(l.from)} – ${nameOf(l.to)}: ${RELATION_WORD[l.relation]}${label}`);
   }
+  if (drawing.events.length) parts.push(`olay: ${drawing.events.map(eventTitleOf).join(', ')}`);
   if (drawing.marks.length) parts.push(`işaretli: ${drawing.marks.map((m) => m.label).join(', ')}`);
   if (drawing.year !== undefined) parts.push(`sınır yılı ${drawing.year}`);
   return parts.join('; ');
 }
 
-export const isEmptyDrawing = (d: Drawing): boolean => !d.highlights.length && !d.links.length && !d.marks.length;
+export const isEmptyDrawing = (d: Drawing): boolean =>
+  !d.highlights.length && !d.links.length && !d.marks.length && !d.events.length;

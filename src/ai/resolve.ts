@@ -1,11 +1,14 @@
 import { pointInPolygon } from '../domain/geo';
-import type { BorderRow, Entity, PlacePoint, PolygonCoords, YearRange } from '../domain/types';
+import { overlaps } from '../domain/time';
+import type { Bounds, BorderRow, Entity, HistoricalEvent, PlacePoint, PolygonCoords, YearRange } from '../domain/types';
 import { shortName } from '../ui/format';
 
 /** What the resolver needs of the app's data (`AppData` fits). */
 export interface ResolveData {
   entities: ReadonlyMap<string, Entity>;
   rows: readonly BorderRow[];
+  /** The app's own events: what the model may point at instead of drawing a mark of its own. */
+  events?: readonly HistoricalEvent[];
 }
 
 export interface CatalogEntry {
@@ -14,6 +17,14 @@ export interface CatalogEntry {
   /** The first and last year inside the asked range in which the polity has borders. */
   from: number;
   to: number;
+}
+
+/** One of the app's events, as the model is told about it. */
+export interface EventCatalogEntry {
+  id: string;
+  title: string;
+  dateLabel: string;
+  place: string;
 }
 
 /** The map's own bounds (see MapView): a point outside them cannot be drawn. */
@@ -45,6 +56,18 @@ export function cleanLabel(value: unknown, max: number): string | null {
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
 }
 
+/** Great-circle distance in kilometres. */
+export function distanceKm(a: PlacePoint, b: PlacePoint): number {
+  const rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad;
+  const dLon = (b.lon - a.lon) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLon / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/** How far from an event's own place a free mark may lie and still be taken for that event. */
+const SAME_PLACE_KM = 60;
+
 const toNumber = (value: unknown): number | null => {
   if (typeof value === 'number') return Number.isFinite(value) ? value : null;
   if (typeof value === 'string' && /^\s*-?\d+(?:[.,]\d+)?\s*$/.test(value)) return Number(value.replace(',', '.'));
@@ -59,8 +82,21 @@ const toNumber = (value: unknown): number | null => {
 export class Resolver {
   private readonly rowsById = new Map<string, BorderRow[]>();
   private readonly byName = new Map<string, Set<string>>();
+  private readonly events: readonly HistoricalEvent[];
+  private readonly eventsById = new Map<string, HistoricalEvent>();
+  private readonly eventsByKey = new Map<string, HistoricalEvent>();
+  private readonly eventsByTitle = new Map<string, HistoricalEvent[]>();
 
   constructor(private readonly data: ResolveData) {
+    this.events = data.events ?? [];
+    for (const ev of this.events) {
+      this.eventsById.set(ev.id, ev);
+      this.eventsByKey.set(normalizeName(ev.id), ev);
+      const title = normalizeName(ev.title);
+      const same = this.eventsByTitle.get(title);
+      if (same) same.push(ev);
+      else this.eventsByTitle.set(title, [ev]);
+    }
     for (const row of data.rows) {
       const list = this.rowsById.get(row.id);
       if (list) list.push(row);
@@ -147,7 +183,7 @@ export class Resolver {
       const biggest = parts[0]!.area;
       let nearest = Infinity;
       for (const part of parts) {
-        if (part.area < biggest * 0.2) break; // an exclave or an island is not where a polity is joined from
+        if (part.area < biggest * MAIN_PART) break; // an exclave or an island is not where a polity is joined from
         const at = partMiddle(part.poly) ?? main;
         const d = Math.hypot((at.lon - toward.lon) * Math.cos((toward.lat * Math.PI) / 180), at.lat - toward.lat);
         if (d < nearest) {
@@ -158,6 +194,96 @@ export class Resolver {
     }
     this.towardCache.set(key, best);
     return best;
+  }
+
+  /**
+   * The bounding box of a polity's main parts in `year`: the parts that are not much smaller than its biggest
+   * one, so an island or an exclave far away does not stretch the box over half the world. Null without borders.
+   */
+  boundsAt(id: string, year: number): Bounds | null {
+    const row = this.rowAt(id, year);
+    if (!row) return null;
+    const key = `${id}@${row.from}`;
+    const cached = this.boundsCache.get(key);
+    if (cached !== undefined) return cached;
+    let box: Bounds | null = null;
+    if (row.polys.length) {
+      const parts = row.polys.map((poly) => ({ poly, area: ringArea(poly[0]!) })).sort((a, b) => b.area - a.area);
+      const biggest = parts[0]!.area;
+      for (const part of parts) {
+        if (part.area < biggest * MAIN_PART) break;
+        const b = ringBounds(part.poly[0]!);
+        box = box
+          ? [Math.min(box[0], b[0]), Math.min(box[1], b[1]), Math.max(box[2], b[2]), Math.max(box[3], b[3])]
+          : b;
+      }
+    }
+    box ??= row.bbox ?? row.box;
+    this.boundsCache.set(key, box);
+    return box;
+  }
+
+  private readonly boundsCache = new Map<string, Bounds>();
+
+  /* --------------------------------------------------------------- events */
+
+  /** The app's event with this id, or null. */
+  eventById(id: string): HistoricalEvent | null {
+    return this.eventsById.get(id) ?? null;
+  }
+
+  /**
+   * The event a model reference means: its id (spelling and case do not matter), or its title when exactly one
+   * event has it, or a title that starts that way ("Çaldıran" for "Çaldıran Muharebesi"). Null otherwise.
+   */
+  event(ref: unknown): HistoricalEvent | null {
+    if (typeof ref !== 'string') return null;
+    const raw = ref.trim();
+    if (!raw) return null;
+    const byId = this.eventsById.get(raw);
+    if (byId) return byId;
+    const key = normalizeName(raw);
+    if (!key) return null;
+    const byKey = this.eventsByKey.get(key);
+    if (byKey) return byKey;
+    const exact = this.eventsByTitle.get(key) ?? [];
+    if (exact.length === 1) return exact[0]!;
+    if (exact.length > 1 || key.length < 4) return null;
+    const starts: HistoricalEvent[] = [];
+    for (const [title, list] of this.eventsByTitle) {
+      if (title.startsWith(`${key} `)) starts.push(...list);
+    }
+    return starts.length === 1 ? starts[0]! : null;
+  }
+
+  /**
+   * The event of the app's data a free mark is really about: one of the range's events whose place or name is
+   * what the label says (a year after it is fine: "Mohaç, 1526"), within a short distance of the marked point,
+   * and the only such event. A mark for something the data knows is shown as the data's own marker instead.
+   */
+  eventFor(label: string, point: PlacePoint, range: YearRange): HistoricalEvent | null {
+    const key = normalizeName(label);
+    const core = key.replace(/\s+\d{3,4}$/, '');
+    if (!core) return null;
+    const year = /\b(\d{3,4})\s*$/.exec(key)?.[1];
+    const hits = this.events.filter((ev) => {
+      if (!overlaps(ev.start, ev.end, range.from, range.to + 1)) return false;
+      if (distanceKm(point, ev.location) > SAME_PLACE_KM) return false;
+      if (year !== undefined && (Number(year) < Math.floor(ev.start) - 1 || Number(year) > Math.ceil(ev.end)))
+        return false;
+      const place = normalizeName(ev.location.name);
+      const title = normalizeName(ev.title);
+      return core === place || core === title || title.startsWith(`${core} `);
+    });
+    return hits.length === 1 ? hits[0]! : null;
+  }
+
+  /** The events that overlap the range, for the prompt: what the model may point at (oldest first). */
+  eventCatalog(range: YearRange): EventCatalogEntry[] {
+    return this.events
+      .filter((ev) => overlaps(ev.start, ev.end, range.from, range.to + 1))
+      .sort((a, b) => a.start - b.start || (a.id < b.id ? -1 : 1))
+      .map((ev) => ({ id: ev.id, title: ev.title, dateLabel: ev.dateLabel, place: ev.location.name }));
   }
 
   /** A point the map can show, rounded to about 100 m. */
@@ -192,6 +318,23 @@ export class Resolver {
     }
     return out.sort((a, b) => a.name.localeCompare(b.name, 'tr') || (a.id < b.id ? -1 : 1));
   }
+}
+
+/** A part smaller than this share of its polity's biggest part is an exclave, not where the polity is. */
+const MAIN_PART = 0.2;
+
+function ringBounds(ring: number[][]): Bounds {
+  let w = Infinity;
+  let s = Infinity;
+  let e = -Infinity;
+  let n = -Infinity;
+  for (const [x, y] of ring) {
+    if (x! < w) w = x!;
+    if (x! > e) e = x!;
+    if (y! < s) s = y!;
+    if (y! > n) n = y!;
+  }
+  return [w, s, e, n];
 }
 
 /** Shoelace area of a ring in square degrees (only compared between the parts of one polity). */
