@@ -36,7 +36,7 @@ export interface AppData {
   warnings: string[];
 }
 
-interface PolitiesIndex {
+export interface PolitiesIndex {
   meta: { range: [number, number]; tintCount: number; source: SourceInfo };
   entities: Record<
     string,
@@ -52,7 +52,7 @@ interface PolitiesIndex {
   >;
 }
 
-interface EntitiesDoc {
+export interface EntitiesDoc {
   entities: Record<
     string,
     {
@@ -88,20 +88,38 @@ function polysOf(geometry: Geometry): PolygonCoords[] {
   return [];
 }
 
+/** The data files, parsed. `assembleData` turns them into `AppData` (pure, so tests can run it in Node). */
+export interface RawFiles {
+  index: PolitiesIndex;
+  entitiesDoc: EntitiesDoc;
+  categoriesDoc: { categories: { id: string; label: { tr: string } }[] };
+  eventSets: { file: string; doc: { set?: string; events: RawEvent[] } }[];
+  land: FeatureCollection<Geometry> & { meta?: { source?: SourceInfo } };
+  bordersRaw: FeatureCollection<Geometry, BorderProps> & { meta?: { coast?: SourceInfo; source?: SourceInfo } };
+}
+
 export async function loadData(onProgress?: (label: string) => void): Promise<AppData> {
   onProgress?.('Veri dosyaları okunuyor…');
   const [index, entitiesDoc, categoriesDoc, eventsIndex, land] = await Promise.all([
     getJson<PolitiesIndex>('borders/polities.json'),
     getJson<EntitiesDoc>('entities.json'),
-    getJson<{ categories: { id: string; label: { tr: string } }[] }>('categories.json'),
+    getJson<RawFiles['categoriesDoc']>('categories.json'),
     getJson<{ files: string[] }>('events/index.json'),
-    getJson<FeatureCollection<Geometry> & { meta?: { source?: SourceInfo } }>('geo/land.json'),
+    getJson<RawFiles['land']>('geo/land.json'),
   ]);
   const [from, to] = index.meta.range;
   onProgress?.('Sınırlar yükleniyor…');
-  const bordersRaw = await getJson<
-    FeatureCollection<Geometry, BorderProps> & { meta?: { coast?: SourceInfo; source?: SourceInfo } }
-  >(`borders/cliopatria-${from}-${to}.json`);
+  const bordersRaw = await getJson<RawFiles['bordersRaw']>(`borders/cliopatria-${from}-${to}.json`);
+  onProgress?.('Olaylar yükleniyor…');
+  const eventSets: RawFiles['eventSets'] = [];
+  for (const file of eventsIndex.files) {
+    eventSets.push({ file, doc: await getJson<{ set?: string; events: RawEvent[] }>(`events/${file}`) });
+  }
+  return assembleData({ index, entitiesDoc, categoriesDoc, eventSets, land, bordersRaw });
+}
+
+export function assembleData({ index, entitiesDoc, categoriesDoc, eventSets, land, bordersRaw }: RawFiles): AppData {
+  const [from, to] = index.meta.range;
 
   /* entities: authored Turkish content + facts derived from the border dataset */
   const warnings: string[] = [];
@@ -155,11 +173,9 @@ export async function loadData(onProgress?: (label: string) => void): Promise<Ap
   }
 
   /* events: one bad record is skipped with a warning instead of taking the whole app down */
-  onProgress?.('Olaylar yükleniyor…');
   const events: HistoricalEvent[] = [];
   const seen = new Set<string>();
-  for (const file of eventsIndex.files) {
-    const doc = await getJson<{ set?: string; events: RawEvent[] }>(`events/${file}`);
+  for (const { file, doc } of eventSets) {
     for (const raw of doc.events) {
       try {
         const ev = normalizeEvent(raw, doc.set ?? file);

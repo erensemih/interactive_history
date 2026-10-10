@@ -7,6 +7,8 @@ import './styles/layout.css';
 import './styles/map.css';
 import './styles/panel.css';
 import './styles/dock.css';
+import './styles/chat.css';
+import './styles/ai.css';
 import { startApp } from './app';
 
 // Turkish casing (dotted İ, dotless ı) in CSS `text-transform` follows the document language, also when a

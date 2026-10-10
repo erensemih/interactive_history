@@ -1,14 +1,29 @@
 import { html, render } from 'lit-html';
+import { contextEvent, contextFromView, type AiContext } from './ai/context';
+import { Director } from './ai/director';
+import { describeDrawing, resolveDrawing } from './ai/drawing';
+import { errorCopy } from './ai/errorCopy';
+import { createMockProvider } from './ai/mockProvider';
+import { createMockScripts } from './ai/mockScripts';
+import { openPermissionsPanel } from './ai/permissions';
+import { eventRequest, NARRATION_REQUEST, WORLD_NARRATION_REQUEST } from './ai/prompt';
+import { createSampleProvider } from './ai/sampleProvider';
+import { AiSession, type AssistantItem } from './ai/session';
+import { readTier, writeTier } from './ai/settings';
+import { appEventsSource } from './ai/sources';
+import type { FocusTarget } from './ai/types';
 import { loadData, type AppData } from './data/load';
 import type { HistoricalEvent } from './domain/types';
 import { MapView } from './map/mapView';
 import { deriveView, type ViewModel } from './state/derive';
 import { DEFAULT_STATE, Store, type AppState } from './state/store';
 import { hashToPartialState, parseCamera, stateToHash } from './state/url';
+import { ChatView } from './ui/chat/chatView';
 import { InfoPanel } from './ui/infoPanel';
 import { MapChrome, MapHead } from './ui/mapChrome';
 import { formatRange } from './ui/format';
 import { scrollBehavior } from './ui/motion';
+import { PanelWidth } from './ui/panelWidth';
 import { Ruler } from './ui/ruler';
 import { Timeline, eventTip } from './ui/timeline';
 import { Tooltip } from './ui/tooltip';
@@ -22,6 +37,8 @@ declare global {
       data: AppData;
       view: () => ViewModel;
       visibleMarkerIds: () => string[];
+      /** The reading companion (tests read what it has drawn and said; nothing writes through this). */
+      ai: { session: AiSession; director: Director };
     };
   }
 }
@@ -119,14 +136,108 @@ export async function startApp(root: HTMLElement): Promise<void> {
   new MapChrome($('map-chrome'), data, {
     zoomIn: () => {
       cameraTouched = true;
+      if (store.state.chatOpen) director.userMovedCamera();
       mapView.map.zoomIn();
     },
     zoomOut: () => {
       cameraTouched = true;
+      if (store.state.chatOpen) director.userMovedCamera();
       mapView.map.zoomOut();
     },
   });
-  const panel = new InfoPanel($('panel'), store, data);
+
+  /* ------------------------------------------------ reading companion (AI) */
+  // The model is the reader's own Claude (the artifact runtime's `sample`); where there is none, a scripted
+  // stand-in answers and the chat says so. Nothing is asked of either until the first question.
+  const provider = createSampleProvider().then((p) => p ?? createMockProvider(createMockScripts(data)));
+  const session = new AiSession({
+    provider,
+    data,
+    sources: [appEventsSource(data)],
+    tier: readTier(),
+    drawing: () => director.drawing,
+  });
+  const director: Director = new Director(session, { focus: (target) => focusOn(target) });
+  /** What the reader is looking at, as the model will be told: set by every render. */
+  let liveContext: AiContext = { range: store.state.range, year: 0, places: [], event: null };
+
+  /** Brings the places a step asks for into view, at the year that step shows. */
+  function focusOn(target: FocusTarget) {
+    if (!mapView) return;
+    const year = director.year ?? vm.year;
+    const points = [...target.points];
+    for (const id of target.polities) {
+      const at = session.resolver.anchorAt(id, year);
+      if (at) points.push(at);
+    }
+    mapView.focusOn(points);
+  }
+
+  /** One question at a time, about whatever is open; an open event card is closed once it is in the conversation. */
+  function ask(text: string) {
+    const event = liveContext.event;
+    void session.send({ text, mode: 'qa', event }, liveContext);
+    if (event) store.selectEvent(null);
+  }
+  const chat = new ChatView({
+    session,
+    director,
+    data,
+    context: () => liveContext,
+    actions: {
+      send: ask,
+      narrate: () => narrate(),
+      stop: () => session.stop(),
+      retry: () => void session.retry(),
+      newChat: () => session.newChat(),
+      selectStep: (itemId, n) => {
+        director.activate(itemId, n);
+        announceStep(itemId, n);
+      },
+      readStep: (itemId, n) => director.activate(itemId, n),
+      setFollowing: (on) => director.setFollowing(on),
+      setTier: (tier) => {
+        session.setTier(tier);
+        writeTier(tier);
+      },
+      openPermissions: () => void openPermissionsPanel(),
+      dropEvent: () => store.selectEvent(null),
+    },
+  });
+  /** Pointing at a step is announced with what it puts on the map (reading on is not: that would be noise). */
+  function announceStep(itemId: string, n: number) {
+    const item = session.find(itemId);
+    if (item?.kind !== 'assistant') return;
+    const title = item.plan.titleOf(n);
+    const drawn = director.drawing ? describeDrawing(director.drawing, (id) => session.resolver.nameOf(id)) : '';
+    announce(`${title ? `Adım ${n}: ${title}. ` : `Adım ${n}. `}${drawn ? `Haritada: ${drawn}.` : ''}`);
+  }
+  function narrate() {
+    store.setChat(true);
+    const context = { ...liveContext, event: null };
+    const text = context.places.length ? NARRATION_REQUEST : WORLD_NARRATION_REQUEST;
+    void session.send({ text, mode: 'narration' }, context);
+  }
+  const panel = new InfoPanel($('panel'), store, data, {
+    chat,
+    narrate,
+    openChat: () => store.setChat(true),
+    askAboutEvent: (ev) => {
+      store.setChat(true);
+      store.selectEvent(null);
+      void session.send(
+        { text: eventRequest(ev), mode: 'qa', event: contextEvent(ev, data) },
+        { ...liveContext, event: null },
+      );
+    },
+    busy: () => session.busy,
+  });
+  const panelWidth = new PanelWidth(
+    root,
+    root.querySelector<HTMLElement>('aside.panel')!,
+    $('panel'),
+    () => mapView?.map,
+  );
   const ruler = new Ruler($('dock-ruler'), store, data);
   const timeline = new Timeline($('dock-timeline'), store, data, tip);
 
@@ -171,6 +282,10 @@ export async function startApp(root: HTMLElement): Promise<void> {
   /* ----------------------------------------------------- render loop */
   let vm = deriveView(store.state, data);
   let vmState = store.state;
+  /** The year the AI asked for when `vm` was derived. */
+  let vmAiYear: number | null = null;
+  let drawnDrawing: unknown = null;
+  let drawnYear = NaN;
   let queued = false;
   let hashTimer = 0;
   let lastHash = location.hash;
@@ -191,15 +306,21 @@ export async function startApp(root: HTMLElement): Promise<void> {
   function update() {
     queued = false;
     const state = store.state;
+    // The AI's year counts only while its chat is open; it overlays the reader's own cursor.
+    const aiYear = state.chatOpen ? director.year : null;
     // The view model depends on range, cursor, places and the open event only (not on hover).
     if (
       state.range !== vmState.range ||
       state.cursor !== vmState.cursor ||
       state.places !== vmState.places ||
-      state.selectedEventId !== vmState.selectedEventId
+      state.selectedEventId !== vmState.selectedEventId ||
+      aiYear !== vmAiYear
     ) {
-      vm = deriveView(state, data);
+      vm = deriveView(state, data, aiYear);
       vmState = state;
+      vmAiYear = aiYear;
+      liveContext = contextFromView(vm, data);
+      session.syncContext(liveContext);
     }
 
     if (!mapView) return;
@@ -213,9 +334,23 @@ export async function startApp(root: HTMLElement): Promise<void> {
     mapView.setHoverEvent(state.hoverEventId);
     revealIfNew(open);
 
+    // What the AI has drawn is shown while its chat is open, for the year shown, and never moves the map.
+    const drawing = state.chatOpen ? director.drawing : null;
+    if (drawing !== drawnDrawing || vm.year !== drawnYear) {
+      drawnDrawing = drawing;
+      drawnYear = vm.year;
+      mapView.setAiDrawing(
+        drawing ? resolveDrawing(drawing, session.resolver, vm.year) : null,
+        drawing ? describeDrawing(drawing, (id) => session.resolver.nameOf(id)) : '',
+      );
+    }
+
     head.render(vm);
+    // The panel's width changes first (once, smoothly), then its content is drawn for the new shape.
+    panelWidth.sync(state.chatOpen);
     panel.render(vm);
-    ruler.render();
+    if (state.chatOpen) chat.update();
+    ruler.render(vm.year);
     timeline.render(vm);
 
     announceChanges(vm);
@@ -304,12 +439,14 @@ export async function startApp(root: HTMLElement): Promise<void> {
   }
 
   store.subscribe((state: AppState, prev: AppState) => {
+    // Any change of range or cursor is the reader's own (the AI's year is an overlay, never written here).
+    if (state.range !== prev.range || state.cursor !== prev.cursor) director.userChangedTime();
     if (state.selectedEventId && state.selectedEventId !== prev.selectedEventId) {
       focusCardAfterUpdate = keyboardUser;
       if (window.matchMedia('(max-width: 900px)').matches) {
         // single-column layout: the reading panel is below the map, bring the card into view
         $('panel').scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
-      } else {
+      } else if (!state.chatOpen) {
         $('panel').scrollTo({ top: 0, behavior: scrollBehavior() });
       }
     }
@@ -324,6 +461,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     tip.hide(); // hover content can always be dismissed
     if (store.state.selectedEventId) store.selectEvent(null);
+    else if (store.state.chatOpen) store.setChat(false);
     else if (store.state.places.length) store.selectPlace(null);
   });
 
@@ -343,12 +481,34 @@ export async function startApp(root: HTMLElement): Promise<void> {
     });
   }
 
+  // The conversation and the director change what the map and the panel show.
+  let lastBusy = session.busy;
+  let lastStatus: string | null = null;
+  session.subscribe(() => {
+    chat.update();
+    if (session.busy !== lastBusy) {
+      lastBusy = session.busy;
+      store.refresh(); // the event card's "ask" button is off while an answer is being written
+    }
+    const last = [...session.items].reverse().find((i): i is AssistantItem => i.kind === 'assistant');
+    const status = last ? `${last.id}:${last.status}` : null;
+    if (status === lastStatus || !last) return;
+    lastStatus = status;
+    if (last.status === 'done') announce('Yanıt hazır.');
+    else if (last.status === 'failed' && last.error) announce(errorCopy(last.error.code).title);
+  });
+  director.subscribe(() => {
+    chat.update();
+    store.refresh(); // the drawing, the year and the camera follow the active step
+  });
+
   // First paint of everything except the map, then the map itself.
   vm = deriveView(store.state, data);
   vmState = store.state;
+  liveContext = contextFromView(vm, data);
   head.render(vm);
   panel.render(vm);
-  ruler.render();
+  ruler.render(vm.year);
   timeline.render(vm);
   announceChanges(vm);
   await new Promise((r) => requestAnimationFrame(() => r(null)));
@@ -421,7 +581,10 @@ export async function startApp(root: HTMLElement): Promise<void> {
   }
 
   mapView.map.on('movestart', (e) => {
-    if (e.originalEvent) cameraTouched = true; // the user's own drag, wheel, pinch or keys
+    if (e.originalEvent) {
+      cameraTouched = true; // the user's own drag, wheel, pinch or keys
+      if (store.state.chatOpen) director.userMovedCamera(); // and from now on the AI keeps its hands off the camera
+    }
   });
   mapView.map.on('moveend', scheduleHash);
   update();
@@ -438,5 +601,6 @@ export async function startApp(root: HTMLElement): Promise<void> {
     data,
     view: () => vm,
     visibleMarkerIds: () => mapView.visibleMarkerIds(),
+    ai: { session, director },
   };
 }

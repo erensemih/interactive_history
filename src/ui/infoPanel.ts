@@ -6,12 +6,30 @@ import type { Entity, HistoricalEvent, SourceRef } from '../domain/types';
 import { selectionsOf, type PlaceView, type SelectionRef, type ViewModel } from '../state/derive';
 import { panelLayout } from '../state/panelLayout';
 import type { Store } from '../state/store';
+import type { ChatView } from './chat/chatView';
 import { dot } from './dot';
 import { clsx, formatArea, formatRange } from './format';
 import { scrollBehavior } from './motion';
 
 /** A card is either read in full or folded into a one-line header. */
 type Variant = 'full' | 'compact';
+
+/** What the panel needs of the reading companion: its view, and the three things a card can start. */
+export interface PanelAi {
+  chat: ChatView;
+  /** "Bu yerin tarihini anlat": opens the chat and starts a narration. */
+  narrate(): void;
+  /** Opens the chat to ask something. */
+  openChat(): void;
+  /** "Bunu sohbette sor": sends the event into the conversation. */
+  askAboutEvent(ev: HistoricalEvent): void;
+  /** One question at a time: while an answer is being written, asking about an event waits. */
+  busy(): boolean;
+}
+
+const SPARK = html`<svg class="spark" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+  <path d="M8 1.5l1.5 4.2 4.2 1.5-4.2 1.5L8 12.9 6.5 8.7 2.3 7.2l4.2-1.5z" fill="currentColor" />
+</svg>`;
 
 /**
  * The right-hand info panel. What it shows is decided by `panelLayout` from a list of selection
@@ -22,20 +40,33 @@ type Variant = 'full' | 'compact';
  * references and lay the focus cards out in two columns.
  *
  * Below the cards sits the "elsewhere at the same time" list.
+ *
+ * With the chat open the panel is the conversation instead: the place (or "Dünya") is its one-line
+ * header, and an opened event is a sheet over it, so closing the event returns to the same chat.
  */
 export class InfoPanel {
   /** Entities whose long summary the reader has unfolded. */
   private readonly unfolded = new Set<string>();
 
+  /** Was the chat on screen at the last render? (It is put back, not rebuilt: see ChatView.attached.) */
+  private chatShown = false;
+
   constructor(
     private readonly host: HTMLElement,
     private readonly store: Store,
     private readonly data: AppData,
+    private readonly ai: PanelAi,
   ) {}
 
   render(vm: ViewModel) {
     const { places, event } = selectionsOf(vm);
-    const layout = panelLayout(places, event);
+    const layout = panelLayout(places, event, this.store.state.chatOpen);
+    this.host.classList.toggle('is-chat', layout.chat);
+    if (layout.chat) {
+      this.renderChat(vm, layout.sheet);
+      return;
+    }
+    this.chatShown = false;
     render(
       html`
         ${
@@ -60,6 +91,51 @@ export class InfoPanel {
       `,
       this.host,
     );
+  }
+
+  /* ----------------------------------------------------------------- chat */
+
+  private renderChat(vm: ViewModel, sheet: SelectionRef | null) {
+    const ev = sheet ? this.data.eventsById.get(sheet.id) : null;
+    this.ai.chat.setSheet(ev ? this.eventCard(ev, vm) : null);
+    const entering = !this.chatShown;
+    this.chatShown = true;
+    render(
+      html`<div class="panel-context panel-context-chat" data-testid="panel-context">${this.chatSubject(vm, !!ev)}</div>
+        ${this.ai.chat.element}`,
+      this.host,
+    );
+    if (entering) {
+      // On a touch screen focusing the question box would pop the keyboard up over the conversation.
+      this.ai.chat.attached(!window.matchMedia('(pointer: coarse)').matches);
+      // One column: bring the conversation up under the map, which stays in sight above it.
+      if (window.matchMedia('(max-width: 900px)').matches) {
+        requestAnimationFrame(() =>
+          this.host.closest('aside')?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' }),
+        );
+      }
+    }
+  }
+
+  /**
+   * What the conversation is about, in the one-line form the place takes whenever it is context: its name and
+   * the range. It is also the way back: out of the event sheet into the chat, out of the chat into the place card.
+   */
+  private chatSubject(vm: ViewModel, sheetOpen: boolean): TemplateResult {
+    const place = vm.places[0];
+    const label = place?.title ?? 'Dünya';
+    return html`<button
+      type="button"
+      class="line line-place"
+      data-testid="place-line"
+      title=${sheetOpen ? 'Sohbete dön' : 'Bilgi paneline dön'}
+      aria-label=${`${sheetOpen ? 'Sohbete dön' : 'Bilgi paneline dön'}: ${label}, ${formatRange(vm.range)}`}
+      @click=${() => (sheetOpen ? this.store.selectEvent(null) : this.store.setChat(false))}
+    >
+      <span class="line-back" aria-hidden="true">‹</span>
+      <span class="line-name">${label}</span>
+      <span class="line-range">${formatRange(vm.range)}</span>
+    </button>`;
   }
 
   /** One card for one selection reference. Unknown references (a place that was cleared meanwhile) draw nothing. */
@@ -95,7 +171,15 @@ export class InfoPanel {
         <li><span class="step">1</span> Cetvelde aralığı sürükleyin; kenarlarından uzunluğunu ayarlayın.</li>
         <li><span class="step">2</span> Haritada bir devletin üzerine tıklayın. Harita yerinden oynamaz.</li>
         <li><span class="step">3</span> İşaretçilere ve çizelgedeki noktalara tıklayıp ayrıntıyı buradan okuyun.</li>
+        <li>
+          <span class="step">4</span> Bir yer seçtikten sonra sohbette tarihini dinleyin; harita anlatılanı çizer.
+        </li>
       </ul>
+      <div class="card-actions">
+        <button type="button" class="btn" data-testid="intro-chat" @click=${() => this.ai.openChat()}>
+          ${SPARK} Sohbeti aç
+        </button>
+      </div>
     </section>`;
   }
 
@@ -162,6 +246,12 @@ export class InfoPanel {
                 kümesinin kapsamı dışındadır.
               </p>`
       }
+      <div class="card-actions chat-cta">
+        <button type="button" class="btn btn-solid" data-testid="place-narrate" @click=${() => this.ai.narrate()}>
+          ${SPARK} Bu yerin tarihini anlat
+        </button>
+        <button type="button" class="link" data-testid="place-ask" @click=${() => this.ai.openChat()}>Soru sor</button>
+      </div>
       ${
         inWindowSeq.length > 1
           ? html`<div class="facts">
@@ -294,6 +384,16 @@ export class InfoPanel {
         ${ev.sources.map((s) => this.sourceLink(s))}
       </p>
       <div class="card-actions">
+        <button
+          type="button"
+          class="btn btn-solid"
+          data-testid="event-ask"
+          ?disabled=${this.ai.busy()}
+          title=${this.ai.busy() ? 'Bir yanıt yazılırken yeni soru sorulamaz' : 'Bu olayı sohbete gönder'}
+          @click=${() => this.ai.askAboutEvent(ev)}
+        >
+          ${SPARK} Bunu sohbette sor
+        </button>
         <button type="button" class="btn" @click=${() => this.store.focusYear(ev.year, span)}>
           Haritayı ${ev.year} yılına getir
         </button>

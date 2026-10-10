@@ -44,8 +44,13 @@ export interface ViewModel {
   selectedEvent: HistoricalEvent | null;
 }
 
-export function deriveView(state: AppState, data: AppData): ViewModel {
-  const year = displayYear(state.range, state.cursor);
+/**
+ * `yearOverride` is the year the AI's current step asks for; it only counts inside the selected range.
+ * The reader's own cursor stays in the state, untouched, and comes back when the override goes away.
+ */
+export function deriveView(state: AppState, data: AppData, yearOverride: number | null = null): ViewModel {
+  const asked = yearOverride !== null && yearOverride >= state.range.from && yearOverride <= state.range.to;
+  const year = asked ? yearOverride : displayYear(state.range, state.cursor);
   const domain = detailDomain(state.range, data.extent);
   const mapEvents = mapEventsInRange(data.events, state.range);
 

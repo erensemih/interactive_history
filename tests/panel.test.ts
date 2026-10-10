@@ -7,19 +7,24 @@ const event = (id: string): SelectionRef => ({ type: 'event', id });
 
 describe('panelLayout', () => {
   it('with nothing selected there is nothing to read: the panel shows its introduction', () => {
-    expect(panelLayout([], null)).toEqual({ context: [], focus: [] });
+    expect(panelLayout([], null)).toEqual({ context: [], focus: [], chat: false, sheet: null });
   });
 
   it('with only a place selected, the place is what the panel describes', () => {
-    expect(panelLayout([place('a')], null)).toEqual({ context: [], focus: [place('a')] });
+    expect(panelLayout([place('a')], null)).toEqual({ context: [], focus: [place('a')], chat: false, sheet: null });
   });
 
   it('with an event open, the event is the focus and the place folds into the context', () => {
-    expect(panelLayout([place('a')], event('e'))).toEqual({ context: [place('a')], focus: [event('e')] });
+    expect(panelLayout([place('a')], event('e'))).toEqual({
+      context: [place('a')],
+      focus: [event('e')],
+      chat: false,
+      sheet: null,
+    });
   });
 
   it('an event without a place stands alone', () => {
-    expect(panelLayout([], event('e'))).toEqual({ context: [], focus: [event('e')] });
+    expect(panelLayout([], event('e'))).toEqual({ context: [], focus: [event('e')], chat: false, sheet: null });
   });
 
   it('is a list, not a place-plus-event pair: two places become two focus cards', () => {
@@ -33,6 +38,43 @@ describe('panelLayout', () => {
     const closed = panelLayout([place('a')], null);
     expect(open.context).toEqual(closed.focus);
     expect(closed.context).toEqual([]);
+  });
+});
+
+describe('panelLayout with the chat open', () => {
+  it('the place becomes the header of the conversation, and there are no cards', () => {
+    expect(panelLayout([place('a')], null, true)).toEqual({
+      context: [place('a')],
+      focus: [],
+      chat: true,
+      sheet: null,
+    });
+  });
+
+  it('an opened event is a sheet over the chat, not instead of it', () => {
+    expect(panelLayout([place('a')], event('e'), true)).toEqual({
+      context: [place('a')],
+      focus: [],
+      chat: true,
+      sheet: event('e'),
+    });
+  });
+
+  it('closing the sheet returns to the same chat', () => {
+    const open = panelLayout([place('a')], event('e'), true);
+    const closed = panelLayout([place('a')], null, true);
+    expect(closed.chat).toBe(true);
+    expect(open.context).toEqual(closed.context);
+    expect(closed.sheet).toBeNull();
+  });
+
+  it('without a place the chat is about the world: no header references', () => {
+    expect(panelLayout([], null, true)).toEqual({ context: [], focus: [], chat: true, sheet: null });
+  });
+
+  it('leaving the chat restores the cards exactly', () => {
+    expect(panelLayout([place('a')], event('e'), false).focus).toEqual([event('e')]);
+    expect(panelLayout([place('a')], null, false).focus).toEqual([place('a')]);
   });
 });
 

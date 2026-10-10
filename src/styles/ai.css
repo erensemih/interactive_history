@@ -1,0 +1,200 @@
+/* ---------------------------------------------------- what the AI draws on the map */
+/* Pen and ink on paper: the same visual language as the data layers, told apart from them by pattern
+   (solid, double, dashed, dotted) and never by hue. Vermilion stays the reader's own colour. */
+.ai-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ai-layer[hidden] {
+  display: none;
+}
+
+.ai-links {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+}
+
+.ai-flags {
+  position: absolute;
+  inset: 0;
+}
+
+/* relation lines */
+.ai-link {
+  animation: ai-in 0.5s ease both;
+}
+
+.ai-link .casing,
+.ai-link .line,
+.ai-link .inner {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ai-link .casing {
+  stroke: var(--paper);
+  stroke-opacity: 0.88;
+}
+
+.ai-link .line {
+  stroke: var(--ink);
+}
+
+.ai-link .end {
+  fill: var(--ink);
+  stroke: var(--paper);
+  stroke-width: 1.6;
+}
+
+.ai-link .head {
+  fill: var(--ink);
+  stroke: var(--paper);
+  stroke-width: 1.3;
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
+
+.ai-link[data-relation='war'] .casing {
+  stroke-width: 5.6;
+}
+.ai-link[data-relation='war'] .line {
+  stroke-width: 2.4;
+}
+
+/* alliance: a double line (an ink band with a paper core) */
+.ai-link[data-relation='alliance'] .casing {
+  stroke-width: 8.6;
+}
+.ai-link[data-relation='alliance'] .line {
+  stroke-width: 5.4;
+}
+.ai-link[data-relation='alliance'] .inner {
+  stroke: var(--paper);
+  stroke-width: 1.9;
+}
+
+/* trade: dashed, with an arrowhead at both ends */
+.ai-link[data-relation='trade'] .casing {
+  stroke-width: 5;
+}
+.ai-link[data-relation='trade'] .line {
+  stroke-width: 2;
+  stroke-dasharray: 7 5;
+  stroke-linecap: butt;
+}
+
+/* treaty: dotted */
+.ai-link[data-relation='treaty'] .casing {
+  stroke-width: 6.4;
+}
+.ai-link[data-relation='treaty'] .line {
+  stroke-width: 3.4;
+  stroke-dasharray: 0.1 6.4;
+}
+
+.ai-link .glyph .disc {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.ai-link .glyph .core {
+  fill: var(--ink);
+}
+.ai-link .glyph .cross {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.3;
+  stroke-linecap: round;
+}
+.ai-link .glyph .diamond {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.7;
+  stroke-linejoin: round;
+}
+
+/* marks: an ink diamond on a paper ring, with a small label beside it */
+.ai-pt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  will-change: transform;
+}
+
+.ai-pt::before {
+  content: '';
+  position: absolute;
+  left: -5.5px;
+  top: -5.5px;
+  width: 11px;
+  height: 11px;
+  border-radius: 1.5px;
+  background: var(--ink);
+  box-shadow: 0 0 0 2px var(--paper);
+  transform: rotate(45deg);
+  animation: ai-pop 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.ai-flag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 22px;
+  padding: 0 7px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  color: var(--ink);
+  background: rgb(245 240 228 / 0.95);
+  border: 1px solid rgb(31 27 22 / 0.72);
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgb(31 27 22 / 0.14);
+  will-change: transform;
+  animation: ai-in 0.4s ease both;
+}
+
+.ai-flag.is-mark {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.ai-flag.is-link {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+@keyframes ai-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes ai-pop {
+  from {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.3);
+  }
+}
+
+/* a polity the AI points at: its name in ink, heavier */
+.plabel.is-ai:not(.is-selected) {
+  color: var(--ink);
+  font-weight: 650;
+  text-shadow:
+    0 0 3px var(--halo),
+    0 0 6px var(--halo),
+    0 0 10px var(--halo);
+}

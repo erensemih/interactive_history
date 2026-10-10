@@ -29,6 +29,8 @@ export class PolityLabels {
   private readonly elements = new Map<string, HTMLElement>();
   private candidates: Candidate[] = [];
   private selected = new Set<string>();
+  /** Polities the AI points at: labelled like the selected ones, in ink. */
+  private emphasis = new Set<string>();
   private readonly measureCtx: CanvasRenderingContext2D;
   private readonly widthCache = new Map<string, number>();
   private lastKey = '';
@@ -79,6 +81,13 @@ export class PolityLabels {
     this.layout();
   }
 
+  setEmphasis(ids: string[]) {
+    if (ids.length === this.emphasis.size && ids.every((id) => this.emphasis.has(id))) return;
+    this.emphasis = new Set(ids);
+    this.lastKey = '';
+    this.layout();
+  }
+
   private textWidth(text: string, weight: number, italic: boolean, caps: boolean, spacingEm: number): number {
     const key = `${text}|${weight}|${italic}|${caps}|${spacingEm}`;
     let w = this.widthCache.get(key);
@@ -112,7 +121,8 @@ export class PolityLabels {
       const cosLat = Math.cos((lat * Math.PI) / 180);
       const kmPerPx = (40075.017 * Math.max(cosLat, 0.05)) / world;
       const side = Math.sqrt(row.area) / kmPerPx;
-      const selected = this.selected.has(row.id);
+      const emphasised = this.emphasis.has(row.id);
+      const selected = this.selected.has(row.id) || emphasised;
       if (side < MIN_SIDE_PX && !selected) continue;
 
       const p = map.project([lon, lat]);
@@ -174,7 +184,8 @@ export class PolityLabels {
       el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) translate(-50%, -50%)`;
       el.classList.toggle('is-caps', caps);
       el.classList.toggle('is-italic', italic);
-      el.classList.toggle('is-selected', selected);
+      el.classList.toggle('is-selected', this.selected.has(row.id));
+      el.classList.toggle('is-ai', emphasised);
       el.classList.remove('is-hidden');
     }
     for (const [k, el] of this.elements) if (!visible.has(k)) el.classList.add('is-hidden');

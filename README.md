@@ -47,6 +47,7 @@ npm run dev          # http://127.0.0.1:5173
 npm run build && npm run preview
 npm test             # birim testleri + veri doğrulaması
 npm run e2e          # gerçek tarayıcıda kabul senaryosu (aşağıya bakın)
+npm run e2e:ai       # okuma arkadaşı (sohbet) için aynısı, komut dosyalı modelle
 npm run data:validate
 ```
 
@@ -75,6 +76,85 @@ Harita kamerası (`v=yakınlaştırma/enlem/boylam`) adrese yalnızca siz harita
 otomatik çerçeve herkes için aynıdır ve bağlantıya girmez. Bozuk ya da yarım bir bağlantı (ör. `p=32.85,`) yok sayılır;
 uygulamayı çökertmez. Fare olan cihazlarda tekerlek haritayı yakınlaştırır (dar pencerede de); dokunmatik ekranlarda sayfa
 kaydırması ile harita hareketi karışmasın diye harita iki parmakla gezilir.
+
+## Okuma arkadaşı: haritayla birlikte okuyan sohbet
+
+Panelin yerini bir **sohbet** alabilir (yer kartındaki *Bu yerin tarihini anlat* / *Soru sor*, açılış kartındaki *Sohbeti aç*).
+Şimdiye kadarki uygulama sohbetin **bağlam seçicisidir**: seçili yer, zaman aralığı ve açık olay modele kendiliğinden gider; harita
+ise model anlatırken üzerine çizdiği şeydir. Şu an çalışanların hiçbiri değişmedi: harita yine yalnızca zamana, zaman çizelgesi
+yine yalnızca seçili yere bağlıdır.
+
+| Anlatım: adımlar, her adımın kendi harita durumu | Soru: tek yanıt, tek harita durumu |
+|---|---|
+| ![](docs/verification/ai-1b-anlatim-adim2.png) | ![](docs/verification/ai-2-ittifak-sorusu.png) |
+
+| Olay kartı sohbetin üstünde, *Bunu sohbette sor* | Yer değişince sohbet bunu söyler |
+|---|---|
+| ![](docs/verification/ai-3a-olay-sohbetin-ustunde.png) | ![](docs/verification/ai-4-baglam-degisti.png) |
+
+**Nasıl çalışır**
+
+- **Anlatım.** *Bu yerin tarihini anlat* yanıtı paragraf boyutunda numaralı adımlara böler (`## 1. Başlık`). Her adımın kendi harita
+  durumu vardır. Okurken, gözün altındaki adım (ekranın biraz üstündeki "okuma çizgisi") etkin olur ve harita onun durumuna geçer;
+  geri kaydırınca o adımın durumu aynen geri gelir. Fareyle gezmeyenler için her adımda *Haritada göster* düğmesi vardır. Bir adım
+  öncekinin çizimlerini devralır (modele `clear` var); adımın durumu bu yüzden her zaman "önceki adımlar + bu adım"dır.
+- **Soru.** Serbest soruların her yanıtı tek bir adım, yani tek bir harita durumudur.
+- **Panel.** Sohbet panelin yerini alır (yer kartının yanına değil). Yer, olay açıkken kullanılan aynı tek satırlık başlığa (ad + aralık)
+  küçülür; başlık konuşmanın neyle ilgili olduğunu söyler, tıklanınca bir önceki görünüme (olay sayfası → sohbet → yer kartı) döner.
+  Sohbet sırasında bir olaya (harita ya da çizelge) tıklanırsa olay kartı **sohbetin üstünde** açılır; kapatınca aynı sohbete,
+  aynı okuma konumuna dönülür. Karttaki *Bunu sohbette sor* olayı konuşmaya gönderir. Sohbet açılırken panel tek ve yumuşak bir
+  hareketle genişler (410 → 540 px); harita **kıpırdamaz**: yalnızca sağdan örtülür, sonda bir kez, sol kenarı sabit tutularak
+  yeniden boyutlanır.
+- **Bağlam.** Model her soruyla birlikte seçili yeri (o yıldaki devleti ve aralıktaki egemenlerini), aralığı, haritadaki yılı, açık
+  olayı, aralıkta sınır verisinde bulunan devletlerin listesini (kimlik | ad) ve uygulamanın olay kayıtlarını alır. Bağlam bir **yer
+  listesidir** ve her yerin kendi aralığı vardır (bugün hepsi seçili aralık; ileride her iğnenin kendi aralığı için). Sohbet sürerken
+  yer ya da aralık değişirse sohbette bir **"Bağlam değişti"** ayırıcısı (eski → yeni) çıkar; okur eski konuya dönerse kalkar; model de
+  bir sonraki istekte bunu bir cümleyle öğrenir. Yıl imlecini oynatmak ya da bir olay açmak "yeni konu" sayılmaz.
+- **Haritaya çizim, yalnızca araç çağrılarıyla** (küçük bir küme): `highlight` (devlet vurgusu), `connect` (savaş / ittifak / ticaret /
+  antlaşma çizgisi, isteğe bağlı kısa etiket), `mark` (koordinat + kısa etiket), `set_year` (seçili aralığın içinde), `focus`, `clear`
+  ve adımları bildiren `step`. Çizimler **mürekkep ve kâğıt** dilindedir: veri katmanlarıyla aynı görsel dil ama onlardan ayrı (vurgu =
+  mürekkep kenar + ters yönde ince tarama; savaş = kalın çizgi ve ×, ittifak = çift çizgi, ticaret = kesikli ve çift oklu, antlaşma =
+  noktalı ve ◇; işaret = mürekkep eşkenar dörtgen ve etiket). Renk kullanılmaz: vermilyon yalnızca okurun seçimidir, olay noktaları
+  kendi renklerini korur. Modelin yazdığı her başvuru verideki bir şeye çözülmek zorundadır (devlet kimliği ya da adı, haritanın
+  içinde bir koordinat, aralığın içinde bir yıl); çözülmeyen çizim **sessizce atlanır** (yalnızca modele "atlandı" denir).
+- **Kamera.** `highlight`, `connect`, `mark` ve `set_year` haritayı hiç oynatmaz. Yalnızca `focus` oynatabilir, o da `revealEvent` ile
+  aynı yumuşak ve en küçük hareketle (yalnızca uzaklaşarak, gerekirse eski görünümü ve yerleri kapsayan en küçük görünüme). Okur
+  haritayı kendisi sürüklerse, yakınlaştırırsa ya da `+/−`'ya basarsa kamera adımı izlemeyi bırakır ("Harita serbest" çıkar; tek
+  tıkla geri açılır) ve yapay zekâ okurla savaşmaz. Çizimler yine adımı izler. Yapay zekânın istediği **yıl**, okurun kendi imlecinin
+  üstüne biner (imleç değişmez); okur imleci ya da aralığı oynatırsa bir sonraki adıma kadar kendi yılı geçerlidir. Sohbet kapanınca
+  çizimler haritadan kalkar, geri açılınca etkin adımın durumu geri gelir.
+
+**Model: `sample` yeteneği, anahtar yok.** Uygulama bir Claude artifact'ı olarak yayınlanır ve artifact çalışma zamanının `sample`
+yeteneğini (`const sample = await claude.use("sample")`) kullanır: çağrı **okurun kendi Claude hesabına** gider, ilk çağrıda okurdan
+izin istenir, yanıt `onText` ile akar, harita eylemleri sayfa işlevleri (`tools`) olarak verilir. Bu yüzden sistem istemi yoktur
+(yönergeler ve bağlam baştaki bir kullanıcı turundadır), çağrılar belleksizdir (sayfa sohbet geçmişini kendisi tutar ve her çağrıyla
+yollar; 256 KiB sınırı için en eski karşılıklar atılır), sayfanın ağı yoktur (modelin kendi bilgisi + uygulamanın olay kayıtları;
+canlı Vikipedi yok). Hız: **Hızlı / Dengeli / Derin** (`modelTier`: quick / default / complex; model adı hiçbir yerde yok; seçim
+tarayıcıda saklanır). `not_granted`, `rate_limited`, `tools_unavailable`, `cancelled` ve diğer kodlar sohbette, yazıldıkları yerde
+Türkçe olarak gösterilir; **hiçbir hata kendiliğinden yeniden denenmez** (yalnızca okur *Yeniden dene*'ye basarsa). Yanıt sürerken
+**Durdur** vardır; metin ilk kez gelene kadar "Düşünüyor…" yazar.
+
+**Tur sayısı az olsun diye iki turlu bir protokol.** Her araç turu ayrı bir (ücretli) istektir ve araç girdileri akmaz. Bu yüzden
+model **birinci turda, metin yazmadan, tek seferde** adımları (`step{n, title}`) ve her adımın çizimlerini (`step` numarasıyla) bildirir;
+**ikinci turda** yalnızca metni yazar (`## n. Başlık` + paragraf), metin akarken okur okumaya başlar ve ilk adımın haritası hazırdır.
+Sayfa metni adımlara ayırır (başlık işaretini, numarayı ve boşluğu bağışlayıcı biçimde okur; başlıksız ama paragraf sayısı adım
+sayısına eşit metni de adımlara dağıtır). Araç yoksa (`limits()` raporlamazsa ya da `tools_unavailable` gelirse) aynı soru yalnızca
+metin olarak sorulur ve sohbet bunu söyler.
+
+**Claude olmayan yerde: deneme kipi.** `claude.use("sample")` boş dönerse (yerel geliştirme, kaydedilmiş dosya, başka bir ev sahibi)
+sohbet **komut dosyalı bir sağlayıcıya** düşer ve bunu açıkça yazar ("Deneme kipi"). Komut dosyalı sağlayıcı gerçek bir çağrının
+yaptığını yapar: düşünür, birinci turdaki araç çağrılarını gerçekten çalıştırır, metni parça parça akıtır. Osmanlı anlatımı, Fransa
+ittifakı sorusu ve açık olay sorusu için hazır yanıtları vardır; geri kalan her yer ve aralık için yanıtı uygulamanın kendi verisinden
+(yerin egemenleri, olay kayıtları) üretir. Soru metnine `[hata:rate_limited]` gibi bir işaret eklemek hata ekranlarını görmek için
+o hatayı üretir.
+
+**Kaynaklar.** Varsayılan kaynak modelin kendi bilgisidir; uygulamanın doğrulanmış olay kayıtları ilgili dönem ve yer için isteme
+eklenir (modelin kartlarla çelişmemesi için). `src/ai/sources.ts` içindeki `SourceProvider` arayüzü ileride okurun yüklediği bir kitap
+gibi kaynakların takılacağı yerdir: `retrieve({ question, context })` metin parçaları döndürür, gerisi değişmez. Model de küçük bir
+arayüzün (`ModelProvider`) arkasındadır: gerçek `SampleProvider` ve komut dosyalı `MockProvider`.
+
+**Henüz yok:** yer iğneleri (sağ tıkla, iğne başına aralık) ve yüklenmiş belge kaynağı. Bağlamın şekli (yer listesi, yer başına aralık)
+ve `SourceProvider` bunlar için ayrılmıştır.
 
 ## Tasarım kararları ve gerekçeleri
 
@@ -197,12 +277,18 @@ kaynak yokluğu, Türkçe ad eksikliği…).
 ```
 src/
   domain/   saf mantık (arayüzsüz, testli): time, geo, events, lanes, categories, placement, reveal
-  data/     veri yükleyici ve birleştirme
-  state/    store (durum + eylemler), derive (görünüm modeli), url (adres çubuğu)
-  map/      MapLibre görünümü, DOM etiketleri, işaretçiler, yer iğnesi
-  ui/       cetvel, zaman çizelgesi, bilgi paneli, harita üstü öğeler, ipucu kutusu
-  styles/   tasarım belirteçleri ve bileşen stilleri
+  data/     veri yükleyici (`loadData`) ve saf birleştirme (`assembleData`)
+  state/    store (durum + eylemler), derive (görünüm modeli), url (adres çubuğu), panelLayout
+  map/      MapLibre görünümü, DOM etiketleri, işaretçiler, yer iğnesi, yapay zekâ çizim katmanı (aiLayer, flags)
+  ui/       cetvel, zaman çizelgesi, bilgi paneli, harita üstü öğeler, ipucu kutusu, panelWidth, chat/
+  styles/   tasarım belirteçleri ve bileşen stilleri (chat.css, ai.css)
+  ai/       okuma arkadaşı (arayüzsüz, testli): aşağıya bakın
 ```
+
+`src/ai/`: `resolve` (modelin yazdıklarını verideki şeylere çözer), `tools` (yedi sayfa işlevi), `drawing` (adım adım birikimli harita
+durumu: `TurnPlan`, `applyStep`), `steps` (metni adımlara ayırır), `activeStep` (okuma çizgisi), `context`, `prompt`, `sources`,
+`provider` (arayüz + hata kodları), `sampleProvider`, `mockProvider` + `mockScripts`, `session` (sohbet, geçmiş, durdurma, hata),
+`director` (etkin adım → çizim, yıl, kamera) ve `settings`.
 
 - Durumda **harita kamerası yoktur**; harita görünümünü yalnızca kullanıcının kendi eylemleri değiştirir: sürükleme,
   tekerlek, çimdik, `+/−` düğmeleri, klavye. **Tek istisna `MapView.revealEvent`'tir:** kullanıcı görünüm dışındaki bir
@@ -227,6 +313,8 @@ src/
   (`from/to`) aynı biçimde uygulanır.
 
 ## Doğrulama
+
+`npm test` (birim testleri) ve `npm run e2e:ai` (okuma arkadaşı, aşağıda) bu bölümdeki kabul senaryosuna ek olarak çalışır.
 
 `npm run e2e`, üretim derlemesini gerçek (başsız) Chromium'da şu senaryoyla sınar ve `docs/verification/` altına
 ekran görüntüleri ve `RAPOR.md` yazar:
@@ -253,9 +341,32 @@ kaybolmadığı, cetvelde uca tıklamanın pencereyi küçültmediği, ekran oku
 yakınlaştırdığı, telefon genişliğinde taşma olmadığı, dokunuşun olayı açıp adını gösterdiği (ve ekranda ipucu bırakmadığı) ve
 "hareketi azalt" tercihinde görünümün animasyonsuz değiştiği denetlenir.
 
+### Okuma arkadaşı: `npm run e2e:ai`
+
+Gerçek Chromium'da, komut dosyalı sağlayıcıyla (gerçek model yok; araç çağrıları ve akış gerçek bir yanıttaki gibi çalışır) şunları
+sınar ve `docs/verification/AI-RAPOR.md` ile `ai-*.png` yazar:
+
+1. Anadolu'da bir nokta, 1500–1550, sohbet açık, anlatım: adımlar belirir; okurken ve *Haritada göster*'e basınca harita etkin adımın
+   durumuna geçer (yıl, vurgu, bağlantı, işaret); geri dönülünce ilk adımın durumu aynen geri gelir; haritayı sürükleyince kamera
+   adımı izlemeyi bırakır; imleci oynatınca yapay zekâ yılı kenara çekilir.
+2. Osmanlı–Fransa ittifakı (1536) sorusu: iki devlet vurgulanır ve bağlanır, **harita hiç oynamaz**.
+3. Sohbet açıkken bir olaya tıklamak: kart sohbetin üstünde açılır, kapatınca (✕ ya da `Esc`) sohbet aynı yerde durur; *Bunu sohbette
+   sor* olayı konuşmaya gönderir.
+4. Sohbet sürerken yer ya da aralık değişir: "Bağlam değişti" ayırıcısı çıkar, güncellenir, geri dönülünce kalkar.
+5. Panel genişlemesi tek bir yumuşak hareket, haritanın içeriği hiçbir karede kaymaz (kare kare ölçülür), harita tek kez yeniden
+   boyutlanır; Durdur, hata ekranları, hız ayarı; telefon düzeni.
+6. **Gerçek `sample` bağdaştırıcısı**, tarayıcıda sahte bir artifact çalışma zamanıyla: araç şemaları, `cache` gönderilmemesi, geçmişin
+   her çağrıyla gitmesi, `modelTier`, `not_granted`/`rate_limited`/`tools_unavailable` ve `permissions.manage` düğmesi.
+
+**Neyi sınamıyor:** gerçek bir modelin istemi ne kadar iyi izlediğini. Gerçek `sample` bu ortamdan çağrılamaz; model çıktısı biçimine
+karşı bağışlayıcı okunur (yukarıya bakın) ama ilk gerçek kullanımda gözle bakılmalıdır.
+
 ## Bilinen sınırlar ve sonraki adımlar
 
 - Karşılaştırma modu henüz yok (veri yapıları ve panel yapısı hazır; yukarıya bakın).
+- Okuma arkadaşı: gerçek model çıktısı bu ortamda sınanamadı (yukarıya bakın). Bir bağlantının uç noktası devletin etiket noktasıdır
+  (çok parçalı devletlerde, karşı uca en yakın büyük parçanın ortası); küçük bir haritada etiketlerle üst üste binebilir. Yer iğneleri
+  ve yüklenmiş belge kaynağı henüz yok.
 - Görünüm dışındaki bir olayı açınca harita yalnızca uzaklaşır; ancak dünyanın kenar sınırı (`maxBounds`) çok büyük uzaklaşmalarda
   merkezi de kaydırır (ör. Çin'den Macaristan'a: merkez 112°D'den 75°D'ya kayar). Bu hâlâ tek, sürekli ve yumuşak bir harekettir;
   önceki görünüm yeni görünümün içinde kalır.

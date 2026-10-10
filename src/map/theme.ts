@@ -6,7 +6,9 @@ export interface MapTheme {
   coast: string;
   borderInk: string;
   accent: string;
+  ink: string;
   ink3: string;
+  paper: string;
   tints: string[];
 }
 
@@ -26,7 +28,9 @@ export function readTheme(count: number): MapTheme {
     coast: token(s, '--coast', '#3a3128'),
     borderInk: token(s, '--border-ink', '#5d4d3b'),
     accent: token(s, '--accent', '#cf3f27'),
+    ink: token(s, '--ink', '#1f1b16'),
     ink3: token(s, '--ink-3', '#6d6455'),
+    paper: token(s, '--paper', '#f5f0e4'),
     tints,
   };
 }
@@ -46,6 +50,28 @@ export function hatchImage(color: string): ImageData {
     ctx.beginPath();
     ctx.moveTo(off, size);
     ctx.lineTo(off + size, 0);
+    ctx.stroke();
+  }
+  return ctx.getImageData(0, 0, size, size);
+}
+
+/**
+ * The AI's highlight: fine ink hatching running the other way (top-left to bottom-right) from the
+ * selection's vermilion one, so the two read as different hands even where they meet on one polity.
+ */
+export function inkHatchImage(color: string): ImageData {
+  const size = 16;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.1;
+  ctx.globalAlpha = 0.42;
+  ctx.lineCap = 'butt';
+  for (const off of [-size, 0, size]) {
+    ctx.beginPath();
+    ctx.moveTo(off, 0);
+    ctx.lineTo(off + size, size);
     ctx.stroke();
   }
   return ctx.getImageData(0, 0, size, size);

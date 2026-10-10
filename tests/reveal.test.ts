@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { unionBounds, zoomOutToReveal } from '../src/domain/reveal';
+import { unionBounds, unionBoundsAll, zoomOutToReveal, zoomOutToRevealAll } from '../src/domain/reveal';
 
 const view = { width: 1000, height: 600, margin: { top: 40, right: 60, bottom: 30, left: 30 }, avoid: [] };
 
@@ -53,5 +53,56 @@ describe('unionBounds', () => {
     expect(unionBounds([10, 20, 30, 40], { lon: 50, lat: 45 })).toEqual([10, 20, 50, 45]);
     expect(unionBounds([10, 20, 30, 40], { lon: -5, lat: 0 })).toEqual([-5, 0, 30, 40]);
     expect(unionBounds([10, 20, 30, 40], { lon: 20, lat: 30 })).toEqual([10, 20, 30, 40]);
+  });
+});
+
+describe('zoomOutToRevealAll', () => {
+  it('is the farthest of the points: all of them must end up in view', () => {
+    const near = { dx: 120, dy: -80 };
+    const far = { dx: 1500, dy: 0 };
+    const farOnly = zoomOutToReveal({ ...view, ...far });
+    expect(zoomOutToRevealAll({ ...view, offsets: [near] })).toBe(0);
+    expect(zoomOutToRevealAll({ ...view, offsets: [near, far] })).toBeCloseTo(farOnly, 5);
+    expect(zoomOutToRevealAll({ ...view, offsets: [far, near] })).toBeCloseTo(farOnly, 5);
+  });
+
+  it('points on opposite sides need no more than the farther one', () => {
+    const levels = zoomOutToRevealAll({
+      ...view,
+      offsets: [
+        { dx: 1500, dy: 0 },
+        { dx: -1500, dy: 0 },
+      ],
+    });
+    expect(levels).toBeGreaterThan(Math.log2(1500 / 440) - 0.02);
+    expect(levels).toBeLessThan(Math.log2(1500 / 440) + 0.1);
+  });
+
+  it('gives up when any one point cannot be brought in, and with nothing to show asks for nothing', () => {
+    expect(
+      zoomOutToRevealAll({
+        ...view,
+        offsets: [
+          { dx: 10, dy: 10 },
+          { dx: Number.NaN, dy: 0 },
+        ],
+      }),
+    ).toBe(Infinity);
+    expect(zoomOutToRevealAll({ ...view, offsets: [] })).toBe(0);
+  });
+});
+
+describe('unionBoundsAll', () => {
+  it('grows a view to hold every point', () => {
+    expect(
+      unionBoundsAll(
+        [10, 20, 30, 40],
+        [
+          { lon: 50, lat: 45 },
+          { lon: -5, lat: 0 },
+        ],
+      ),
+    ).toEqual([-5, 0, 50, 45]);
+    expect(unionBoundsAll([10, 20, 30, 40], [])).toEqual([10, 20, 30, 40]);
   });
 });

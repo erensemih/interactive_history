@@ -1,0 +1,715 @@
+/* ------------------------------------------------------------- the chat panel */
+/* With the chat open the panel is a conversation: the place (or "Dünya") is its one-line header, the
+   answers scroll in the middle, and the question box stays at the bottom. */
+.panel-scroll.is-chat {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-context-chat {
+  position: static;
+  flex: none;
+  margin: 0;
+}
+
+.chat {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-bar {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px var(--gutter) 4px;
+}
+
+.chat-bar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.chat-gear {
+  margin-left: auto;
+}
+
+.chat-free {
+  margin-left: auto;
+  padding: 3px 10px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 99px;
+  background: var(--paper-2);
+  font-size: 11.5px;
+  color: var(--ink-2);
+}
+
+.chat-free span {
+  font-weight: 650;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.chat-free + .chat-gear {
+  margin-left: 0;
+}
+
+.chat-menu {
+  position: absolute;
+  z-index: 6;
+  right: var(--gutter);
+  top: calc(100% - 2px);
+  width: min(310px, calc(100% - 2 * var(--gutter)));
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  border-radius: 10px;
+  box-shadow: var(--shadow-float);
+  animation: card-in 0.16s ease;
+}
+
+.chat-menu fieldset {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.chat-menu legend {
+  margin-bottom: 4px;
+  padding: 0;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.chat-opt {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 9px;
+  align-items: start;
+  cursor: pointer;
+}
+
+.chat-opt input {
+  margin: 2px 0 0;
+  accent-color: var(--ink);
+}
+
+.chat-opt b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.chat-opt small {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.chat-menu-clear {
+  justify-self: start;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------------------------------------------------------- the reading area */
+.chat-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-scroll {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px var(--gutter) 32px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--paper-4) transparent;
+  outline: none;
+}
+
+/* The event card, over the conversation (which waits underneath, exactly where it was). */
+.chat-sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  overflow-y: auto;
+  padding: 16px var(--gutter) 28px;
+  background: var(--paper);
+  animation: sheet-in 0.22s ease;
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.chat-notice {
+  margin-bottom: 14px;
+  padding: 9px 12px;
+  border: 1px dashed var(--rule-strong);
+  border-radius: 8px;
+  background: var(--paper-2);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.chat-notice b {
+  color: var(--ink);
+}
+
+.chat-notice .btn {
+  margin-top: 8px;
+}
+
+/* empty state */
+.chat-empty {
+  padding: 10px 0 8px;
+}
+
+.chat-empty-title {
+  margin: 8px 0 12px;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-size: 25px;
+  line-height: 1.12;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+
+.chat-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.chat-suggest .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* messages */
+.msg {
+  margin: 0 0 18px;
+}
+
+.msg-user {
+  max-width: 90%;
+  margin-left: auto;
+  padding: 9px 13px;
+  border-radius: 13px 13px 3px 13px;
+  background: var(--paper-3);
+  font-family: var(--font-serif);
+  font-size: 15.5px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.msg-user .chat-chip {
+  margin-top: 7px;
+}
+
+.msg-ai {
+  margin-bottom: 26px;
+}
+
+.msg-tag,
+.msg-note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.msg-tag .link {
+  font-size: 12px;
+}
+
+.chat-preamble {
+  margin-bottom: 14px;
+  color: var(--ink-2);
+}
+
+/* the steps of a narration (.cs = one step of an answer): numbered, on a thread, the one the map shows is inked in */
+.cs {
+  position: relative;
+  padding: 0 0 22px;
+}
+
+.cs.is-numbered {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 0 12px;
+}
+
+.cs.is-numbered::before {
+  content: '';
+  position: absolute;
+  left: 13.5px;
+  top: 30px;
+  bottom: 2px;
+  width: 1px;
+  background: var(--rule-strong);
+}
+
+.cs.is-numbered:last-child::before {
+  display: none;
+}
+
+.cs.has-map {
+  cursor: pointer;
+}
+
+.cs-n {
+  position: relative;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--ink-3);
+  border-radius: 50%;
+  background: var(--paper);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+
+.cs.is-active .cs-n {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.cs-title {
+  margin: 2px 0 7px;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-weight: 560;
+  font-size: 19.5px;
+  line-height: 1.2;
+  letter-spacing: -0.006em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.cs-body .prose + .prose {
+  margin-top: 9px;
+}
+
+.cs-map {
+  margin-top: 8px;
+  min-height: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cs-show {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}
+
+.cs-show:hover {
+  color: var(--ink);
+  text-decoration-style: solid;
+}
+
+.cs-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+}
+
+/* the same ink diamond the map uses for a mark */
+.cs-live i {
+  width: 7px;
+  height: 7px;
+  background: var(--ink);
+  transform: rotate(45deg);
+}
+
+/* thinking, and a text that is still being written */
+.chat-thinking {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 8px;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--ink-3);
+}
+
+.chat-thinking .link {
+  margin-left: 12px;
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.dots {
+  display: inline-flex;
+  gap: 3px;
+  transform: translateY(1px);
+}
+
+.dots b {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: dot-pulse 1.2s ease-in-out infinite;
+}
+
+.dots b:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.dots b:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes dot-pulse {
+  0%,
+  70%,
+  100% {
+    opacity: 0.25;
+  }
+  35% {
+    opacity: 1;
+  }
+}
+
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -2px;
+  background: var(--ink);
+  animation: caret-blink 1s steps(2, jump-none) infinite;
+}
+
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* the subject of the conversation changed */
+.chat-context {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  margin: 4px 0 24px;
+  text-align: center;
+}
+
+.chat-context::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 8px;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+.chat-context-tag {
+  position: relative;
+  padding: 0 10px;
+  background: var(--paper);
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.chat-context-line {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 8px;
+  align-items: baseline;
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+
+.chat-context-line s {
+  text-decoration: none;
+  color: var(--ink-3);
+}
+
+.chat-context-line b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* failure, shown where it happened */
+.chat-error {
+  margin-top: 10px;
+  padding: 11px 13px 12px;
+  border: 1px solid var(--rule-strong);
+  border-left: 3px solid var(--ink);
+  border-radius: 8px;
+  background: var(--paper-2);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.chat-error strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+
+.chat-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+/* chips: an event, a suggestion */
+.chat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 4px 11px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 99px;
+  background: var(--paper);
+  font-size: 12.5px;
+  line-height: 1.3;
+  text-align: left;
+  color: var(--ink-2);
+}
+
+button.chat-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.chat-chip:not(:disabled):hover {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+.chat-chip.is-static {
+  cursor: default;
+}
+
+.chat-chip small {
+  color: var(--ink-3);
+  font-size: 11.5px;
+}
+
+.chat-chip span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------------- composer */
+.composer {
+  flex: none;
+  display: grid;
+  gap: 8px;
+  padding: 10px var(--gutter) 14px;
+  border-top: 1px solid var(--rule-strong);
+  background: var(--paper);
+}
+
+.composer-event {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.composer-event-hint {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.composer-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 6px 6px 6px 13px;
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.composer-row:focus-within {
+  box-shadow: 0 0 0 3px rgb(31 27 22 / 0.13);
+}
+
+.composer textarea {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-height: 132px;
+  padding: 6px 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font-family: var(--font-serif);
+  font-size: 15.5px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.composer textarea::placeholder {
+  color: var(--ink-3);
+}
+
+.composer textarea:disabled {
+  cursor: not-allowed;
+}
+
+.send {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--ink);
+  color: var(--paper);
+  transition: opacity 0.15s;
+}
+
+.send.is-idle,
+.send:disabled {
+  opacity: 0.35;
+}
+
+.send.is-stop {
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------- buttons */
+.btn-solid {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.btn-solid:hover {
+  background: var(--ink-2);
+  border-color: var(--ink-2);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn .spark {
+  flex: none;
+}
+
+.chat-cta {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+/* ----------------------------------------------------- wider panel, phones */
+.app.is-chat {
+  --panel-w: var(--panel-w-chat);
+}
+
+@media (max-width: 900px) {
+  /* One column: the map stays in sight above the conversation (stuck to the top while the page scrolls),
+     and the conversation fills what is left of the screen, scrolling inside itself like on a wide screen. */
+  .panel-scroll.is-chat {
+    overflow: visible;
+  }
+  .chat {
+    /* what is left under the strip and the map, less the one-line header of the panel */
+    height: calc(100dvh - var(--head-h) - max(36vh, 220px) - 45px);
+    min-height: 300px;
+  }
+  .app.is-chat .map-col {
+    position: sticky;
+    top: 0;
+    z-index: 8;
+  }
+  .app.is-chat .map-wrap {
+    height: 36vh;
+    min-height: 220px;
+  }
+  /* the legend would cover half of so small a map */
+  .app.is-chat .legend {
+    display: none;
+  }
+  .app.is-chat .panel {
+    scroll-margin-top: calc(var(--head-h) + max(36vh, 220px));
+  }
+}

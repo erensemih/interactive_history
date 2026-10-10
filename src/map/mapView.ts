@@ -1,13 +1,15 @@
 import maplibregl, { type ExpressionSpecification, type Map as MLMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { AppData } from '../data/load';
+import { EMPTY_RESOLVED, type ResolvedDrawing } from '../ai/types';
 import { isLand, primaryAt, rowsContaining } from '../domain/geo';
-import { unionBounds, zoomOutToReveal, type Rect } from '../domain/reveal';
+import { unionBoundsAll, zoomOutToRevealAll, type Rect } from '../domain/reveal';
 import type { HistoricalEvent, PlacePoint } from '../domain/types';
+import { AiDrawingLayer } from './aiLayer';
 import { PolityLabels } from './labels';
 import { EventMarkers, type MarkerStats } from './markers';
 import { PlacePins } from './pin';
-import { hatchImage, readTheme, stippleImage, type MapTheme } from './theme';
+import { hatchImage, inkHatchImage, readTheme, stippleImage, type MapTheme } from './theme';
 
 export interface MapCallbacks {
   /** Markers drawn vs. map events in the range, and why the rest are not drawn. */
@@ -53,19 +55,24 @@ const idsFilter = (year: number, ids: string[]): ExpressionSpecification => [
  * The MapLibre map. Its job is to draw the borders of one year and to report what the user clicks.
  * Clicking a place, a marker or a control never moves it: the view changes through the user's own
  * drag, wheel, pinch, keyboard or zoom buttons, and in exactly one other case, `revealEvent`, when
- * the user opens an event whose location is out of sight. (Double-click zoom is disabled so a click
- * can never be mistaken for a camera command.)
+ * the user opens an event whose location is out of sight, and `focusOn`, when a step of the AI's
+ * narration asks for some place to be in view (equally gentle: it zooms out just far enough, and only
+ * the page decides whether to ask). Everything else the AI draws is an overlay or a layer and leaves the
+ * camera alone. (Double-click zoom is disabled so a click can never be mistaken for a camera command.)
  */
 export class MapView {
   readonly map: MLMap;
   private readonly theme: MapTheme;
   private readonly labels: PolityLabels;
   private readonly markers: EventMarkers;
+  private readonly ai: AiDrawingLayer;
   private readonly pins: PlacePins;
   private year = 0;
   /** Border rows valid in the shown year: hit-testing a pointer position only looks at these. */
   private rowsNow: AppData['rows'] = [];
   private selectedIds: string[] = [];
+  /** Polities the AI has highlighted. */
+  private aiIds: string[] = [];
   private hoverId: string | null = null;
   private layoutFailed = false;
   private ready = false;
@@ -112,6 +119,9 @@ export class MapView {
       ],
       renderWorldCopies: false,
       attributionControl: false,
+      // The panel changes the map's size by itself (PanelWidth resizes the map once, its left edge held in
+      // place); MapLibre's own tracking would then resize it a second time. We watch the container instead.
+      trackResize: false,
       dragRotate: false,
       pitchWithRotate: false,
       doubleClickZoom: false,
@@ -119,6 +129,7 @@ export class MapView {
       maxPitch: 0,
       fadeDuration: 0,
     });
+    new ResizeObserver(() => this.fitToContainer()).observe(container);
     this.map.touchZoomRotate.disableRotation();
     this.map.keyboard.disableRotation(); // north stays up: Shift+arrows would turn the map otherwise
     touch.addEventListener('change', (e) =>
@@ -127,6 +138,8 @@ export class MapView {
 
     const canvasContainer = this.map.getCanvasContainer();
     this.labels = new PolityLabels(this.map, canvasContainer, data);
+    // Above the polity labels, below the pin and the event markers (the DOM order decides at equal z-index).
+    this.ai = new AiDrawingLayer(this.map, canvasContainer);
     this.pins = new PlacePins(this.map, canvasContainer);
     this.markers = new EventMarkers(this.map, canvasContainer, {
       onClick: (id) => cb.onEventClick(id),
@@ -161,6 +174,14 @@ export class MapView {
     });
   }
 
+  /** The container changed size by some other means (a window resize, a rotated phone): resize about the centre, as usual. */
+  private fitToContainer() {
+    const box = this.map.getContainer();
+    const canvas = this.map.getCanvas();
+    if (box.clientWidth === canvas.clientWidth && box.clientHeight === canvas.clientHeight) return;
+    this.map.resize();
+  }
+
   /* ------------------------------------------------------------ layers */
 
   private onLoad() {
@@ -168,6 +189,7 @@ export class MapView {
     const map = this.map;
     map.addImage('hatch', hatchImage(t.accent), { pixelRatio: 2 });
     map.addImage('stipple', stippleImage(t.ink3), { pixelRatio: 2 });
+    map.addImage('ink-hatch', inkHatchImage(t.ink), { pixelRatio: 2 });
 
     map.addSource('land', { type: 'geojson', data: this.data.land, tolerance: 0.2, buffer: 16, maxzoom: 9 });
     map.addSource('borders', {
@@ -267,6 +289,37 @@ export class MapView {
       layout: { 'line-join': 'round' },
       paint: { 'line-color': t.accent, 'line-width': zoomWidth(1.4, 2.4, 3), 'line-opacity': 0.95 },
     });
+    // The AI's highlight: a light ink wash, fine ink hatching and a pen outline on a paper rim.
+    map.addLayer({
+      id: 'ai-fill',
+      type: 'fill',
+      source: 'borders',
+      filter: idsFilter(this.year, this.aiIds),
+      paint: { 'fill-color': t.ink, 'fill-opacity': 0.07 },
+    });
+    map.addLayer({
+      id: 'ai-hatch',
+      type: 'fill',
+      source: 'borders',
+      filter: idsFilter(this.year, this.aiIds),
+      paint: { 'fill-pattern': 'ink-hatch' },
+    });
+    map.addLayer({
+      id: 'ai-casing',
+      type: 'line',
+      source: 'borders',
+      filter: idsFilter(this.year, this.aiIds),
+      layout: { 'line-join': 'round' },
+      paint: { 'line-color': t.paper, 'line-width': zoomWidth(3.8, 5.6, 7.6), 'line-opacity': 0.92 },
+    });
+    map.addLayer({
+      id: 'ai-line',
+      type: 'line',
+      source: 'borders',
+      filter: idsFilter(this.year, this.aiIds),
+      layout: { 'line-join': 'round' },
+      paint: { 'line-color': t.ink, 'line-width': zoomWidth(1.3, 2, 2.8), 'line-opacity': 0.95 },
+    });
     map.addLayer({
       id: 'coast',
       type: 'line',
@@ -287,6 +340,14 @@ export class MapView {
     m.setFilter('polity-line', yearFilter(this.year));
     this.applySelection();
     this.applyHover();
+    this.applyAi();
+  }
+
+  private applyAi() {
+    if (!this.ready) return;
+    for (const id of ['ai-fill', 'ai-hatch', 'ai-casing', 'ai-line']) {
+      this.map.setFilter(id, idsFilter(this.year, this.aiIds));
+    }
   }
 
   private applySelection() {
@@ -317,6 +378,7 @@ export class MapView {
     const size = { width: canvas.clientWidth, height: canvas.clientHeight };
     try {
       this.labels.layout(force, size);
+      this.ai.layout();
       this.pins.layout();
       this.markers.layout(force, size);
     } catch (err) {
@@ -363,6 +425,21 @@ export class MapView {
   }
 
   /**
+   * The AI's drawing for the year shown (the polygons are map layers, lines and marks are an overlay).
+   * Replacing it never touches the camera.
+   */
+  setAiDrawing(drawing: ResolvedDrawing | null, description = '') {
+    const d = drawing ?? EMPTY_RESOLVED;
+    const same = d.highlightIds.length === this.aiIds.length && d.highlightIds.every((id, i) => id === this.aiIds[i]);
+    if (!same) {
+      this.aiIds = d.highlightIds;
+      this.labels.setEmphasis(this.aiIds);
+      this.applyAi();
+    }
+    this.ai.setDrawing(d, description);
+  }
+
+  /**
    * Brings an event into view if it is out of sight, changing the camera as little as possible: the map
    * zooms out about its current centre just far enough (nothing pans, and the view the user was in stays
    * inside the new one), eased so the user can follow where it went. If even the widest view cannot show
@@ -370,15 +447,26 @@ export class MapView {
    * the event is already visible, so clicking a marker never moves the map.
    */
   revealEvent(ev: HistoricalEvent) {
-    if (!this.ready) return;
+    this.bringIntoView([ev.location]);
+  }
+
+  /** The same gentle move for a step of the AI's narration: every one of these places ends up in view. */
+  focusOn(points: PlacePoint[]) {
+    this.bringIntoView(points);
+  }
+
+  private bringIntoView(points: PlacePoint[]) {
+    if (!this.ready || !points.length) return;
     const map = this.map;
     const canvas = map.getCanvas();
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
-    const p = map.project([ev.location.lon, ev.location.lat]);
-    const levels = zoomOutToReveal({
-      dx: p.x - width / 2,
-      dy: p.y - height / 2,
+    const offsets = points.map((pt) => {
+      const p = map.project([pt.lon, pt.lat]);
+      return { dx: p.x - width / 2, dy: p.y - height / 2 };
+    });
+    const levels = zoomOutToRevealAll({
+      offsets,
       width,
       height,
       margin: REVEAL_MARGIN,
@@ -391,7 +479,7 @@ export class MapView {
       return;
     }
     const b = map.getBounds();
-    const [w, s, e, n] = unionBounds([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], ev.location);
+    const [w, s, e, n] = unionBoundsAll([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], points);
     map.fitBounds(
       [
         [w, s],

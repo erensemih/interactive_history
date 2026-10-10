@@ -212,6 +212,7 @@ body {
 @media (max-width: 1180px) {
   :root {
     --panel-w: 360px;
+    --panel-w-chat: 460px;
     --dock-label-w: 136px;
   }
   .tagline {

@@ -16,6 +16,8 @@ type Drag = { mode: 'start' | 'end' | 'move' | 'cursor'; grab: number; pointerId
 export class Ruler {
   private drag: Drag = null;
   private track: HTMLElement | null = null;
+  /** The year whose borders are drawn: the reader's cursor, or the one the AI's current step asks for. */
+  private shown: number | null = null;
 
   constructor(
     private readonly host: HTMLElement,
@@ -122,16 +124,17 @@ export class Ruler {
     else if (target === 'end') this.store.setRange({ from: r.from, to: clamp(r.to + delta, r.from, ext.to) });
     else if (target === 'move') this.store.shiftBy(delta);
     else {
-      const y = this.store.shownYear + delta;
+      const y = (this.shown ?? this.store.shownYear) + delta;
       this.store.setDisplayYear(clamp(y, r.from, r.to));
     }
   };
 
   /* ------------------------------------------------------------ render */
 
-  render() {
+  render(shownYear?: number) {
     const { range } = this.store.state;
-    const year = this.store.shownYear;
+    const year = shownYear ?? this.store.shownYear;
+    this.shown = year;
     const ext = this.data.extent;
     const left = this.pct(range.from);
     const width = this.pct(range.to + 1) - left;

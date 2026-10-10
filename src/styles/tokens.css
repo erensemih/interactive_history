@@ -55,6 +55,8 @@
   --shadow-float: 0 1px 0 rgb(60 45 20 / 0.06), 0 8px 22px -10px rgb(60 45 20 / 0.35);
 
   --panel-w: 410px;
+  /* wider while the chat is open: a long narration reads better on a longer line */
+  --panel-w-chat: 540px;
   --topbar-h: 46px;
   /* the strip above the map (place name + border year) and the time dock below it: both fixed, so
      selecting a place can never resize the map and make it look as if it had moved */
