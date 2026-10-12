@@ -43,8 +43,7 @@ interface Item {
 /**
  * The place timeline. It shows what happened *to the selected place*: events whose parties include
  * the polity (or its parents, or the region) that held that place. Distance is irrelevant. The
- * horizontal axis is the selected range plus context on both sides; events outside the range are
- * drawn faded so a one-year range still has neighbours to read.
+ * horizontal axis is the selected range and nothing more: no year before it or after it, no event outside it.
  *
  * Event names are not written on the timeline: hovering (or focusing) a dot names it, and so does a
  * tap, which also opens it. Only the opened event keeps a name tag next to its dot.
@@ -130,10 +129,8 @@ export class Timeline {
   }
 
   private plot(vm: ViewModel, place: PlaceView | null): TemplateResult {
-    const { domain, range } = vm;
+    const { domain } = vm;
     const w = this.width;
-    const bandL = this.xOf(range.from, domain);
-    const bandW = this.xOf(range.to + 1, domain) - bandL;
     const cursorX = this.xOf(vm.year + 0.5, domain);
     const ticks = axisTicks(domain.from, domain.to, w, 64);
 
@@ -147,11 +144,6 @@ export class Timeline {
         role="group"
         aria-label=${place ? `Zaman çizelgesi: ${place.title}` : 'Zaman çizelgesi: yer seçilmedi'}
       >
-        <div
-          class="tl-range"
-          style=${styleMap({ left: `${bandL}px`, width: `${Math.max(2, bandW)}px` })}
-          aria-hidden="true"
-        ></div>
         <div class="tl-cursor" style=${styleMap({ left: `${cursorX}px` })} aria-hidden="true"></div>
 
         <div class="tl-ground" style=${styleMap({ top: `${BAND_TOP}px`, height: `${BAND_H}px` })}>
@@ -233,8 +225,10 @@ export class Timeline {
 
   private layoutEvents(events: HistoricalEvent[], domain: YearRange): Item[] {
     const w = this.width;
-    // An event that began before the window is pinned to its left edge instead of being drawn off-plot.
-    const xs = events.map((ev) => ({ ev, x: Math.min(w, Math.max(0, this.xOf(ev.start, domain))) }));
+    // An event that began before the window is pinned to its left edge instead of being drawn off-plot (a dot is kept
+    // whole: its centre never nearer the edge than its radius).
+    const r = MARKER_DIAMETER / 2 + 1;
+    const xs = events.map((ev) => ({ ev, x: Math.min(w - r, Math.max(r, this.xOf(ev.start, domain))) }));
     const rows = stackDots(
       xs.map(({ ev, x }) => ({ id: ev.id, x })),
       ROWS,
@@ -245,7 +239,6 @@ export class Timeline {
 
   private eventItem(it: Item, vm: ViewModel): TemplateResult {
     const { ev, x, row } = it;
-    const inRange = ev.end > vm.range.from && ev.start < vm.range.to + 1;
     const selected = this.store.state.selectedEventId === ev.id;
     const hovered = this.store.state.hoverEventId === ev.id;
     const cy = rowCentre(row);
@@ -254,7 +247,7 @@ export class Timeline {
       ${
         ev.range && spanPx > 10
           ? html`<div
-              class=${clsx('tl-span', !inRange && 'is-context')}
+              class="tl-span"
               style=${styleMap({ left: `${x}px`, top: `${cy}px`, width: `${spanPx}px`, '--c': styleFor(ev.category).color })}
               aria-hidden="true"
             ></div>`
@@ -262,7 +255,7 @@ export class Timeline {
       }
       <button
         type="button"
-        class=${clsx('tl-ev', !inRange && 'is-context', selected && 'is-selected', hovered && 'is-hover')}
+        class=${clsx('tl-ev', selected && 'is-selected', hovered && 'is-hover')}
         data-id=${ev.id}
         style=${styleMap({ left: `${x}px`, top: `${cy}px` })}
         aria-label=${`${ev.title}, ${ev.dateLabel}`}

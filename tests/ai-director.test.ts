@@ -42,7 +42,8 @@ describe('the director', () => {
     director.subscribe(() => seenActive.push(director.active?.n));
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
     expect(director.active).toEqual({ itemId: answer(session).id, n: 1 });
-    expect(director.drawing?.highlights).toEqual(['ottoman-empire', 'safavid-dynasty']);
+    expect(director.drawing?.highlights).toEqual(['ottoman-empire']);
+    expect(director.drawing?.events).toEqual(['safevi-1501']);
     expect(director.year).toBe(1505);
     expect(seenActive.length).toBeGreaterThan(0);
   });
@@ -56,8 +57,8 @@ describe('the director', () => {
     expect(director.drawing?.events).toEqual([]);
     expect(director.year).toBe(1536);
     director.activate(id, 2);
-    // only step 2's own: the war and the battle of Çaldıran; nothing of the alliance on the way back
-    expect(director.drawing?.links.map((l) => [l.relation, l.to])).toEqual([['war', 'safavid-dynasty']]);
+    // only step 2's own: the battle of Çaldıran (the app draws its war line); nothing of the alliance on the way back
+    expect(director.drawing?.links).toEqual([]);
     expect(director.drawing?.events).toEqual(['caldiran-1514']);
     expect(director.year).toBe(1514);
     director.activate(id, 1);
@@ -88,7 +89,8 @@ describe('the director', () => {
     const id = answer(session).id;
     await settle();
     expect(framed).toHaveLength(1); // the first step, once the plan was in: one frame, not one per tool call
-    expect(framed[0]!.highlights).toEqual(['ottoman-empire', 'safavid-dynasty']);
+    expect(framed[0]!.highlights).toEqual(['ottoman-empire']);
+    expect(framed[0]!.events).toEqual(['safevi-1501']);
     director.activate(id, 3);
     director.activate(id, 4);
     director.activate(id, 4); // the same step again changes nothing
@@ -99,7 +101,7 @@ describe('the director', () => {
   it('a step that draws nothing leaves the camera alone', async () => {
     const quiet: MockScript = (req) =>
       req.meta.question === 'sessiz'
-        ? { calls: [{ name: 'set_year', input: { year: 1520 } }], text: 'Sadece bir yıl.' }
+        ? { calls: [{ name: 'step', input: { n: 1, title: 'Yıl', caption: 'Sadece bir yıl.', year: 1520 } }], text: 'Sadece bir yıl.' }
         : null;
     const { session, framed } = setup([quiet, ...createMockScripts(data)]);
     await session.send({ text: 'sessiz', mode: 'qa' }, anatolia());
@@ -258,7 +260,8 @@ describe('the director', () => {
     expect(director.active).toEqual({ itemId: second, n: 1 });
     expect(director.drawing?.links.map((l) => l.relation)).toEqual(['alliance']);
     director.activate(first, 1);
-    expect(director.drawing?.highlights).toEqual(['ottoman-empire', 'safavid-dynasty']);
+    expect(director.drawing?.highlights).toEqual(['ottoman-empire']);
+    expect(director.drawing?.events).toEqual(['safevi-1501']);
   });
 
   it('a cleared chat clears the map', async () => {
@@ -282,7 +285,7 @@ describe('the director', () => {
     await session.send({ text: 'Fransa ile ittifak neydi?', mode: 'qa' }, anatolia());
     await session.send({ text: 'Peki Venedik?', mode: 'qa' }, anatolia());
     expect(provider.requests[1]!.turns.at(-1)!.content).toContain(
-      'Haritada şu an senin çizdiklerin var (vurgulanan: Osmanlı İmparatorluğu, Fransa Krallığı',
+      'Haritada şu an senin çizdiklerin var (öne çıkan: Osmanlı İmparatorluğu, Fransa Krallığı',
     );
     expect(provider.requests[0]!.turns.at(-1)!.content).not.toContain('çizdiklerin');
   });

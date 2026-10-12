@@ -1,6 +1,9 @@
 import type { AppData } from '../data/load';
+import type { HistoricalEvent } from '../domain/types';
 import { subjectKey, subjectLabel, type AiContext, type ContextEvent, type Mode } from './context';
-import { TurnPlan } from './drawing';
+import { describeDrawing, TurnPlan } from './drawing';
+import { isStepped, shortOf, stepsOf, captionFromText } from './narration';
+import { narrationOutline } from './outline';
 import { buildTurns, type HistoryTurn } from './prompt';
 import {
   toModelError,
@@ -95,6 +98,7 @@ export class AiSession {
   private readonly ready: Promise<ModelProvider>;
   private readonly sources: SourceProvider[];
   private readonly currentDrawing: () => Drawing | null;
+  private readonly events: readonly HistoricalEvent[];
   private abort: AbortController | null = null;
   private seq = 0;
   private lastSubject: { key: string; label: string; ctx: AiContext } | null = null;
@@ -104,6 +108,7 @@ export class AiSession {
   constructor(options: SessionOptions) {
     this.currentDrawing = options.drawing ?? (() => null);
     this.sources = options.sources;
+    this.events = options.data.events;
     this.tier = options.tier ?? 'default';
     this.resolver = new Resolver(options.data);
     this.ready = options.provider;
@@ -190,7 +195,10 @@ export class AiSession {
       mode: request.mode,
       status: 'waiting',
       text: '',
-      plan: new TurnPlan(),
+      plan: new TurnPlan((id) => {
+        const ev = this.resolver.eventById(id);
+        return ev ? this.resolver.showYearOf(ev) : null;
+      }),
       error: null,
       truncated: false,
       notes: [],
@@ -225,7 +233,7 @@ export class AiSession {
     this.abort?.abort();
   }
 
-  /** Forgets the conversation (the model never kept it anyway). */
+  /** "Sohbeti temizle": forgets the whole conversation (what the model is sent on the next question starts from nothing). */
   newChat() {
     this.abort?.abort();
     this.items = [];
@@ -233,19 +241,53 @@ export class AiSession {
     this.notify();
   }
 
+  /**
+   * The whole conversation so far, as the model needs it: every question the reader asked and every answer it gave
+   * (what it wrote, and in words what it put on the map), in order. Answers that failed or are empty are not part of
+   * it. Long chats are condensed when the turns are built (see `condense` in prompt.ts), never here: the page keeps all of it.
+   */
   private historyTurns(): HistoryTurn[] {
+    const nameOf = (id: string) => this.resolver.nameOf(id);
+    const titleOf = (id: string) => this.resolver.eventById(id)?.title ?? id;
     const out: HistoryTurn[] = [];
     for (let i = 0; i < this.items.length - 1; i++) {
       const ask = this.items[i];
       const answer = this.items[i + 1];
       if (ask?.kind !== 'user' || answer?.kind !== 'assistant') continue;
       if ((answer.status !== 'done' && answer.status !== 'stopped') || !answer.text.trim()) continue;
+      const stepped = isStepped(answer);
+      const steps = stepped ? stepsOf(answer) : [];
+      const scenes = (stepped ? steps.map((s) => s.n) : [1])
+        .map((n) => {
+          const said = describeDrawing(answer.plan.drawingAt(n), nameOf, titleOf);
+          return said ? (stepped ? `${n}. adım: ${said}` : said) : '';
+        })
+        .filter(Boolean)
+        .join(' · ');
+      const digest = stepped
+        ? steps.map((s) => `${s.n}. ${s.title}${s.caption ? ` — ${s.caption}` : ''}`).join('\n')
+        : captionFromText(shortOf(answer).body, 420);
       out.push(
         { role: 'user', text: ask.text, subject: ask.subject, event: ask.event?.title },
-        { role: 'assistant', text: answer.text },
+        { role: 'assistant', text: answer.text, ...(scenes ? { scenes } : {}), ...(digest ? { digest } : {}) },
       );
     }
     return out;
+  }
+
+  /** How many times this very ask (the same words about the same subject) was made, and answered, before the one being answered now. */
+  private repeatsOf(request: AskRequest, context: AiContext): number {
+    const subject = subjectLabel(context);
+    const words = request.text.trim().toLocaleLowerCase('tr');
+    let n = 0;
+    for (let i = 0; i < this.items.length - 2; i++) {
+      const ask = this.items[i];
+      const answer = this.items[i + 1];
+      if (ask?.kind !== 'user' || answer?.kind !== 'assistant') continue;
+      if (answer.status !== 'done' && answer.status !== 'stopped') continue;
+      if (ask.subject === subject && ask.text.trim().toLocaleLowerCase('tr') === words) n++;
+    }
+    return n;
   }
 
   private async run(
@@ -324,6 +366,8 @@ export class AiSession {
       catalog: tools.length ? this.resolver.catalog(context.range) : [],
       events: tools.length ? this.resolver.eventCatalog(context.range) : [],
       sources,
+      outline: tools.length && request.mode === 'narration' ? narrationOutline(context, this.events) : [],
+      repeats: this.repeatsOf(request, context),
       drawing: this.currentDrawing(),
       nameOf: (id) => this.resolver.nameOf(id),
       eventTitleOf: (id) => this.resolver.eventById(id)?.title ?? id,

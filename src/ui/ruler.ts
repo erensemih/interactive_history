@@ -1,6 +1,7 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { styleMap } from 'lit-html/directives/style-map.js';
 import type { AppData } from '../data/load';
+import { spreadPoints } from '../domain/spread';
 import { clamp, presetRange } from '../domain/time';
 import type { Store } from '../state/store';
 import { clsx, formatRange } from './format';
@@ -20,10 +21,13 @@ export interface RulerActions {
   goStep(n: number): void;
 }
 
-/** Closest two step points may sit (px, centre to centre); a point that would touch the one before it is moved along. */
-const STEP_PITCH = 16;
-/** How far a point may be moved from its year: any further and it would say the wrong date. */
-const STEP_DRIFT = 26;
+/**
+ * Closest two step points may sit (px, centre to centre): a point is 15 px across and the one on screen is drawn 1.3 times
+ * as big, so no two ever touch. Points that crowd one another are spread about where their years put them.
+ */
+const STEP_PITCH = 22;
+/** A point's radius: it keeps this far from the ends of the track. */
+const STEP_RADIUS = 10;
 
 /**
  * The time control: one slim ruler over the whole dataset (1400–1600) with a brush for the selected
@@ -161,15 +165,15 @@ export class Ruler {
   private progress(steps: readonly StepMark[]): TemplateResult | typeof nothing {
     if (steps.length < 2 || !this.track) return nothing;
     const width = this.track.clientWidth || 1;
-    // left to right by year (and by number within a year); a point that would touch the one before is moved on
+    // left to right by year (and by number within a year); points that crowd each other are spread about their years
     const ordered = [...steps].sort((a, b) => a.year - b.year || a.n - b.n);
-    let prev = -Infinity;
-    const placed = ordered.map((m) => {
-      const own = (this.pct(m.year + 0.5) / 100) * width;
-      const x = Math.min(own + STEP_DRIFT, Math.max(own, prev + STEP_PITCH));
-      prev = x;
-      return { ...m, x };
-    });
+    const xs = spreadPoints(
+      ordered.map((m) => (this.pct(m.year + 0.5) / 100) * width),
+      STEP_PITCH,
+      STEP_RADIUS,
+      width - STEP_RADIUS,
+    );
+    const placed = ordered.map((m, i) => ({ ...m, x: xs[i]! }));
     const first = placed[0]!;
     const active = placed.find((m) => m.active);
     const rank = active ? placed.indexOf(active) : -1;
@@ -231,7 +235,11 @@ export class Ruler {
           <strong class="range-readout" data-testid="range-readout">${formatRange(range)}</strong>
         </div>
 
-        <div class="ruler" role="group" aria-label="Zaman cetveli, ${ext.from}–${ext.to}">
+        <div
+          class=${clsx('ruler', steps.length >= 2 && 'has-steps')}
+          role="group"
+          aria-label="Zaman cetveli, ${ext.from}–${ext.to}"
+        >
           <div
             class="ruler-track"
             @pointerdown=${this.onTrackDown}

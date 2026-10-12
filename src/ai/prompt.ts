@@ -3,6 +3,7 @@ import { formatRange } from '../ui/format';
 import { subjectLabel, type AiContext } from './context';
 import { describeDrawing } from './drawing';
 import { INSTRUCTIONS_FILE } from './instructions';
+import type { OutlineStep } from './outline';
 import type { CatalogEntry, EventCatalogEntry } from './resolve';
 import type { SourceGroup } from './sources';
 import type { Drawing } from './types';
@@ -20,10 +21,24 @@ export interface HistoryTurn {
   subject?: string;
   /** The event the question was about, if it was asked about one. */
   event?: string;
+  /** For the model's turns: what it put on the map, in words (it only wrote the text; the page drew the rest). */
+  scenes?: string;
+  /**
+   * For the model's turns: the answer in short (the titles and captions of its steps, or its first sentences). The
+   * whole conversation goes to the model every time; once it grows long the oldest answers go as this instead.
+   */
+  digest?: string;
 }
 
 /** The input is limited to 256 KiB; this leaves room for the rules and for the answer's own overhead. */
 export const MAX_PROMPT_BYTES = 200_000;
+/**
+ * How much of the chat goes in full. The whole conversation is sent on every call, so the model knows what it has
+ * already said; past this size the oldest answers are sent in short (see `condense`), the newest stay whole.
+ */
+export const FULL_HISTORY_BYTES = 60_000;
+/** An answer reduced to a line, when even the digests of a very long chat do not fit. */
+const BRIEF_CHARS = 200;
 
 export const utf8Bytes = (text: string): number => new TextEncoder().encode(text).length;
 
@@ -56,30 +71,32 @@ ${TEXT_RULES}`;
   return `UYGULAMA NOTLARI
 Bu bölüm uygulamanın teknik ayrıntılarıdır; yukarıdakilerle birlikte uygula.
 
-Araçlar. Haritaya yalnızca araçlarla çizersin. Yukarıda adı geçen eylemlerin karşılığı:
- • devletleri vurgulamak → \`highlight\`
- • iki yeri (devleti) aralarındaki ilişkiye göre bağlamak → \`connect\` (war, alliance, trade, treaty)
- • bir noktayı kısa bir etiketle işaretlemek → \`mark\`
- • sınır yılını değiştirmek → \`set_year\` (seçili aralığın içinden bir yıl; ayarlamazsan okurun kendi yılı görünür)
- • bir bölgeyi göstermek → \`focus\`
- • veri setindeki bir olayı göstermek → \`show_event\` (OLAYLAR listesindeki kimlikle; kendi işaretini çizme, aynı şey için \`mark\` da çağırma)
- • adımları bildirmek → \`step\`
-Devlet kimliği gereken her yerde YALNIZCA POLİTİLER listesindeki kimlikleri kullan; listede olmayanı çizme. \`mark\` yalnızca OLAYLAR'da bulunmayan yerler (kent, geçit, liman) içindir; etiket en çok 24 karakter. Bir araç "atlandı" derse önemli değil; metinde anma.
-Kamerayı sen yönetmezsin: okur "Harita takibi"ni açık tuttukça harita, sahnenin gösterimini (ve \`focus\` ile istediğin bölgeyi) görünür kılacak biçimde kendiliğinden kayar ve yakınlaşır. Bu yüzden bir sahnede birbirinden çok uzak yerleri gereksiz yere çizme.
+Araçlar. Haritada NEYİN görüneceğini araçlarla söylersin; NASIL görüneceğini (renk, vurgu, çizgi, kamera) uygulama belirler, her seferinde aynı biçimde. Yukarıda adı geçen eylemlerin karşılığı:
+ • veri setindeki bir olayı göstermek → \`show_event\` (OLAYLAR listesindeki kimlikle). Yalnızca hangi olay olduğunu söylersin: uygulama olayın taraflarını öne çıkarır, olayın kendi işaretini koyar ve savaşlarda iki taraf arasındaki çizgiyi o işaretin üzerinden geçirir. Aynı olay için ayrıca \`connect\` ya da \`mark\` çağırma.
+ • hangi devletlerin öne çıkacağını söylemek → \`highlight\` (POLİTİLER listesindeki kimliklerle). Olayın tarafları zaten öne çıkar; bunu yalnızca onlardan başka devletler için ya da olay göstermeyen bir adımda kullan.
+ • veride olmayan bir ilişkiyi çizmek → \`connect\` (war, alliance, trade, treaty); yalnızca OLAYLAR'da karşılığı olmayan ilişkiler için (örneğin bir ittifak ya da bir ticaret yolu).
+ • veride olmayan bir yeri işaretlemek → \`mark\` (kent, geçit, liman; etiket en çok 24 karakter).
+ • adımları bildirmek → \`step\` (numara, başlık, altyazı; ve gerekiyorsa \`year\`).
+Kamera diye bir aracın yok: uygulama her adımın gösterdiği her şeyi (öne çıkan devletlerin tamamını, olayları, çizgileri, işaretleri) görünür alana sığdırır. Bu yüzden bir adımda birbirinden çok uzak şeyleri gereksiz yere gösterme. Haritada görünen sınırların yılı, adım olay gösteriyorsa o olayların en erkeninin yılıdır; olay göstermeyen bir adımda ya da başka bir yıl istiyorsan \`step\` aracına \`year\` ver (seçili aralığın içinden), vermezsen okurun kendi yılı görünür.
+Devlet kimliği gereken her yerde YALNIZCA POLİTİLER listesindeki kimlikleri kullan. Bir araç "atlandı" derse önemli değil; metinde anma.
+
+Olayı metinde işaretle. Veri setindeki bir olaydan söz ettiğinde, altyazıda ve metinde, adını \`[olay adı](olay:KİMLİK)\` biçiminde yaz; KİMLİK OLAYLAR listesindeki kimliktir. Okur ona tıklayınca olay açılır ve harita onu gösterir. Cümleye uydur: \`[Çaldıran Muharebesi](olay:caldiran-1514)'nde\`. Listede olmayan bir olay için bu biçimi kullanma; başlıklarda da kullanma.
 
 Tek parça cevap: \`step\` çağırma. Gösterim gerekiyorsa araçları step numarası vermeden çağır (tek sahne), sonra kısa metni yaz.
 
 Adımlı cevap iki aşamada verilir:
  1) Önce HİÇ METİN YAZMADAN, ihtiyacın olan bütün araç çağrılarını TEK turda, birlikte (paralel) yap. Her adım için \`step\`{n, title, caption} (n 1'den başlar; title en çok 6 sözcük; caption altyazıdır) ve o adımın sahnesi için gereken araçlar, hepsi aynı step numarasıyla.
  2) Sonuçlar gelince başka araç çağırmadan her adımın tam metnini yaz: "## n. Başlık" satırı (n ve başlık \`step\` çağrısındakiyle aynı), altında o adımın metni. Altyazı bu metnin özeti olmalı.
-Her adım haritanın sahibidir: o adım etkin olunca harita yalnızca o adımın gösterimini gösterir; öncekinin çizimleri kalkar, okur geri dönünce o adımınki aynen gelir. Bu yüzden her adım gereken her şeyi (vurgu, bağlantı, olay, işaret, yıl) kendi başına bildirmeli; bir önceki adımın haritada kalacağını varsayma.
+Her adım haritanın sahibidir: o adım etkin olunca harita yalnızca o adımın gösterimini gösterir; öncekinin çizimleri kalkar, okur geri dönünce o adımınki aynen gelir. Bu yüzden her adım gereken her şeyi (olay, öne çıkan devlet, ilişki, işaret) kendi başına bildirmeli; bir önceki adımın haritada kalacağını varsayma.
+
+Anlatım iskeleti. Bir yerin ya da dünyanın tarihini anlatman istendiğinde isteğin yanında bir ANLATIM İSKELETİ gelir: uygulamanın o konu için veriden çıkardığı ana dönüm noktaları, tarih sırasıyla. Aynı konuda hep aynı iskelet gelir; anlatımın yapısı da hep aynı olsun diye adımları ona göre kur: her satır bir adım, her adım o satırın olayını \`show_event\` ile gösterir, sıra ve adım sayısı iskeletindir. Yalnızca iki satır aynı sahneyi paylaşıyorsa (aynı taraflar, aynı yıl) onları tek adımda birleştirebilirsin. İskeletin dışına çıkıp adım ekleme; başlıkları, altyazıları ve metinleri kendi sözlerinle yaz. Kullanıcı başka bir biçim isterse (daha kısa, daha ayrıntılı, başka bir odak) onun isteği geçerlidir.
 ${TEXT_RULES}
 
 ÖRNEK (iki adımlı)
- 1. tur, yalnızca araç çağrıları, hepsi birlikte: step{n:1,title:"Doğuda yeni bir komşu",caption:"1501'de Şah İsmail Safevî Devleti'ni kurdu; Osmanlı'nın doğusunda yeni bir güç doğdu."} · highlight{step:1,polities:["ottoman-empire","safavid-dynasty"]} · show_event{step:1,event:"safevi-1501"} · set_year{step:1,year:1505} · step{n:2,title:"Çaldıran",caption:"1514'te Çaldıran'da Osmanlı ordusu Safevîleri yendi; doğu sınırı bu savaşla çizildi."} · highlight{step:2,polities:["ottoman-empire","safavid-dynasty"]} · connect{step:2,from:"ottoman-empire",to:"safavid-dynasty",relation:"war"} · show_event{step:2,event:"caldiran-1514"} · set_year{step:2,year:1514}
+ 1. tur, yalnızca araç çağrıları, hepsi birlikte: step{n:1,title:"Doğuda yeni bir komşu",caption:"1501'de [Safevî Devleti kuruldu](olay:safevi-1501); Osmanlı'nın doğusunda yeni bir güç doğdu.",year:1505} · show_event{step:1,event:"safevi-1501"} · highlight{step:1,polities:["ottoman-empire"]} · step{n:2,title:"Çaldıran",caption:"1514'te [Çaldıran Muharebesi](olay:caldiran-1514)'nde Osmanlı ordusu Safevîleri yendi; doğu sınırı bu savaşla çizildi."} · show_event{step:2,event:"caldiran-1514"}
  2. tur, yalnızca metin:
  ## 1. Doğuda yeni bir komşu
- (metin)
+ (metin; veri setindeki olaylar [ad](olay:kimlik) biçiminde)
 
  ## 2. Çaldıran
  (metin)`;
@@ -125,6 +142,10 @@ export function describeEvents(events: readonly EventCatalogEntry[]): string {
     .join('\n');
 }
 
+export function describeOutline(outline: readonly OutlineStep[]): string {
+  return outline.map((s, i) => `${i + 1}. ${s.id} | ${s.dateLabel} | ${s.title} | ${s.place}`).join('\n');
+}
+
 export function describeCatalog(catalog: readonly CatalogEntry[], range: { from: number; to: number }): string {
   return catalog
     .map((c) => {
@@ -143,6 +164,10 @@ export interface PromptInput {
   /** The app's events in the range, with the ids `show_event` takes (empty without tools). */
   events: readonly EventCatalogEntry[];
   sources: readonly SourceGroup[];
+  /** The app's outline for a narration (empty for anything else): the turning points of the subject, in date order. */
+  outline?: readonly OutlineStep[];
+  /** How many times this very ask (the same words about the same subject) was already made in this chat. */
+  repeats?: number;
   /** What the AI has already drawn on the map (null: nothing). */
   drawing: Drawing | null;
   nameOf: (id: string) => string;
@@ -168,42 +193,134 @@ function currentTurn(input: PromptInput, sources: readonly SourceGroup[]): strin
     );
     if (input.events.length) {
       parts.push(
-        `OLAYLAR (uygulamanın seçili aralıktaki olayları; show_event bu kimlikleri alır. kimlik | tarih | ad | yer)\n${describeEvents(input.events)}`,
+        `OLAYLAR (uygulamanın seçili aralıktaki olayları; show_event ve metindeki [ad](olay:kimlik) işaretleri bu kimlikleri alır. kimlik | tarih | ad | yer)\n${describeEvents(input.events)}`,
       );
     }
   }
+  if (input.tools && input.outline?.length) {
+    parts.push(
+      `ANLATIM İSKELETİ (uygulamanın bu konu için veriden çıkardığı ana dönüm noktaları, tarih sırasıyla; anlatımı bu sıra ve sayıda adımlara böl. adım | kimlik | tarih | ad | yer)\n${describeOutline(input.outline)}`,
+    );
+  }
   const found = sourcesText(sources);
   if (found) parts.push(`KAYITLAR\n${found}`);
+  if (input.repeats) {
+    parts.push(
+      `TEKRAR\nBu istek (aynı sözlerle, aynı konuda) bu sohbette daha önce ${input.repeats} kez yapıldı; cevabı yukarıdaki konuşmada. Aynısını baştan yazma: önceki anlatıma atıf yap ve bu sefer neyi farklı yapacağını bir cümleyle söyle, ya da kullanıcıya neyi merak ettiğini sor.`,
+    );
+  }
   parts.push(`İSTEK\n${input.question}`);
   return parts.join('\n\n');
 }
 
-function historyTurn(h: HistoryTurn): PromptTurn {
-  if (h.role === 'assistant') return { role: 'assistant', content: h.text };
+/** The reader's turn as the model sees it: what the chat was about, then what was asked. */
+function askTurn(h: HistoryTurn): PromptTurn {
   const event = h.event ? `olay: «${h.event}»` : '';
   const tag = [h.subject, event].filter(Boolean).join(' · ');
   return { role: 'user', content: tag ? `[${tag}] ${h.text}` : h.text };
 }
 
+/** The model's own answer, whole: what it showed on the map (the page drew it), then what it wrote. */
+function answerTurn(h: HistoryTurn): PromptTurn {
+  return { role: 'assistant', content: h.scenes ? `[Haritada gösterdiklerim: ${h.scenes}]\n${h.text}` : h.text };
+}
+
+/** The same answer in short: what it said in a few lines, with what it showed. */
+function digestTurn(h: HistoryTurn): PromptTurn {
+  const short = h.digest || h.text.slice(0, 400);
+  return {
+    role: 'assistant',
+    content: `[Önceki cevabımın özeti; sohbet uzadığı için kısaltıldı]${h.scenes ? ` [Haritada gösterdiklerim: ${h.scenes}]` : ''}\n${short}`,
+  };
+}
+
+interface Exchange {
+  ask: HistoryTurn;
+  answer: HistoryTurn | null;
+}
+
+/** The chat as exchanges: a reader's turn and the answer to it (a turn of the reader's without one is kept on its own). */
+function exchangesOf(history: readonly HistoryTurn[]): Exchange[] {
+  const out: Exchange[] = [];
+  for (const h of history) {
+    if (!h.text.trim()) continue;
+    if (h.role === 'user') out.push({ ask: h, answer: null });
+    else if (out.length && !out[out.length - 1]!.answer) out[out.length - 1]!.answer = h;
+  }
+  return out;
+}
+
+type Fidelity = 'full' | 'digest' | 'brief';
+
 /**
- * The turns of one call: the rules, then the chat so far, then the new request with the current state.
- * Two reader turns in a row are read as one, which is what the rules turn and the first request are.
- * When the whole thing would not fit, the oldest exchanges go first, then the passages; the rules and
- * the new request never do.
+ * The conversation as turns, the whole of it, however long: the newest exchanges in full and the older ones as shorter
+ * and shorter versions of themselves, so the model always knows what it said and what was asked, and the reader never
+ * notices anything. Nothing is dropped. In order, as the size demands it, oldest first:
+ *   1. an answer goes in short (its steps' titles and captions) once the chat is longer than `fullBytes`;
+ *   2. when even that does not fit `maxBytes`, an exchange goes in a line of its own;
+ *   3. the lines of the oldest exchanges are folded into one short summary turn.
+ */
+export function condense(
+  history: readonly HistoryTurn[],
+  { fullBytes = FULL_HISTORY_BYTES, maxBytes = MAX_PROMPT_BYTES }: { fullBytes?: number; maxBytes?: number } = {},
+): PromptTurn[] {
+  const exchanges = exchangesOf(history);
+  const level: Fidelity[] = exchanges.map(() => 'full');
+  const brief = (x: Exchange) => {
+    const said = x.answer ? (x.answer.digest || x.answer.text).replace(/\s+/g, ' ').slice(0, BRIEF_CHARS) : '';
+    return `• ${askTurn(x.ask).content.replace(/\s+/g, ' ').slice(0, 160)}${said ? ` → ${said}…` : ''}`;
+  };
+  const turnsOf = (i: number): PromptTurn[] => {
+    const x = exchanges[i]!;
+    const ask = askTurn(x.ask);
+    if (!x.answer) return [ask];
+    return [ask, level[i] === 'full' ? answerTurn(x.answer) : digestTurn(x.answer)];
+  };
+  const assemble = (): PromptTurn[] => {
+    const briefs = exchanges.flatMap((x, i) => (level[i] === 'brief' ? [brief(x)] : []));
+    const lead: PromptTurn[] = briefs.length
+      ? [
+          {
+            role: 'user',
+            content: `[Sohbetin başı, kısaca (sohbet çok uzadığı için yalnızca özeti): önce sorulanlar ve verdiğim cevapların özeti]\n${briefs.join('\n')}`,
+          },
+        ]
+      : [];
+    return [...lead, ...exchanges.flatMap((_, i) => (level[i] === 'brief' ? [] : turnsOf(i)))];
+  };
+  const size = (turns: readonly PromptTurn[]) => turns.reduce((n, t) => n + utf8Bytes(t.content), 0);
+  // 1. the oldest answers in short while the chat in full is too long
+  let turns = assemble();
+  for (let i = 0; i < exchanges.length && size(turns) > fullBytes; i++) {
+    if (!exchanges[i]!.answer) continue;
+    level[i] = 'digest';
+    turns = assemble();
+  }
+  // 2. and, still too long for one call, the oldest exchanges as a line each
+  for (let i = 0; i < exchanges.length && size(turns) > maxBytes; i++) {
+    level[i] = 'brief';
+    turns = assemble();
+  }
+  return turns;
+}
+
+/**
+ * The turns of one call: the rules, then the whole chat so far (condensed where it is long, see `condense`), then the
+ * new request with the current state. Two reader turns in a row are read as one, which is what the rules turn and
+ * the first request are. When the whole thing would still not fit, the passages are thinned; the rules and the new
+ * request never are.
  */
 export function buildTurns(input: PromptInput, maxBytes = MAX_PROMPT_BYTES): PromptTurn[] {
   const rules: PromptTurn = { role: 'user', content: instructions(input.tools) };
-  const past = input.history.filter((h) => h.text.trim()).map(historyTurn);
   let sources = input.sources;
-  const assemble = (): PromptTurn[] => [rules, ...past, { role: 'user', content: currentTurn(input, sources) }];
   const size = (turns: PromptTurn[]) => turns.reduce((n, t) => n + utf8Bytes(t.content), 0);
-
+  const fixed = () => utf8Bytes(rules.content) + utf8Bytes(currentTurn(input, sources));
+  const assemble = (): PromptTurn[] => [
+    rules,
+    ...condense(input.history, { maxBytes: Math.max(0, maxBytes - fixed()) }),
+    { role: 'user', content: currentTurn(input, sources) },
+  ];
   let turns = assemble();
-  // Oldest pair first (a reader turn and the answer to it).
-  while (size(turns) > maxBytes && past.length) {
-    past.splice(0, past[0]!.role === 'user' && past[1]?.role === 'assistant' ? 2 : 1);
-    turns = assemble();
-  }
   while (size(turns) > maxBytes && sources.length) {
     sources = sources
       .map((g) => ({ ...g, passages: g.passages.slice(0, Math.floor(g.passages.length / 2)) }))

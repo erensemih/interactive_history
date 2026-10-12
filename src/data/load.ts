@@ -182,6 +182,7 @@ export function assembleData({ index, entitiesDoc, categoriesDoc, eventSets, lan
         if (seen.has(ev.id)) throw new Error(`${ev.id}: kimlik yinelenmiş`);
         seen.add(ev.id);
         ev.parties = [...new Set(ev.parties.map(canonical))];
+        if (ev.versus) ev.versus = [...new Set(ev.versus.map(canonical))].filter((id) => ev.parties.includes(id));
         for (const party of ev.parties) if (!entities.has(party)) warn(`${ev.id}: bilinmeyen taraf "${party}"`);
         events.push(ev);
       } catch (err) {

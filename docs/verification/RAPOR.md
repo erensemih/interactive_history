@@ -1,51 +1,54 @@
 # Doğrulama raporu
 
-Çalıştırma: 2026-10-12T10:40:45.281Z · Chromium (başsız) · 1440×900
+Çalıştırma: 2026-10-12T16:46:55.979Z · Chromium (başsız) · 1440×900
 
-**139/139 denetim geçti.**
+**142/142 denetim geçti.**
 
 | Durum | Denetim | Ayrıntı |
 |---|---|---|
 | ✓ | Başlık "Dünya" ve seçili yer yok |  |
 | ✓ | Çizelge "yer seçilmedi" durumunda |  |
 | ✓ | Tanıtım kartı ✕ ile kapanır (sağ taraf boşalır) |  |
-| ✓ | Aralık 1500–1500 |  |
+| ✓ | Aralık 1480–1520 |  |
 | ✓ | Haritadaki sınır yılı 1500 |  |
 | ✓ | Başlık: Osmanlı İmparatorluğu | Osmanlı İmparatorluğu |
 | ✓ | Bilgi panelinde yer kartı Osmanlı |  |
 | ✓ | Osmanlı poligonu vurgu katmanında çiziliyor | 1 parça |
 | ✓ | Zaman çizelgesi başlığı Osmanlı |  |
-| ✓ | Çizelgede Osmanlı olayları var | 3 olay: sefarad-gocu-1492, venedik-savasi-1499, caldiran-1514 |
-| ✓ | Yakın tarihli Osmanlı olayı (Sefarad göçü 1492) çizelgede |  |
+| ✓ | Çizelgede Osmanlı olayları var | 4 olay: sefarad-gocu-1492, venedik-savasi-1499, caldiran-1514, ridaniye-1517 |
+| ✓ | Aralıktaki Osmanlı olayı (Sefarad göçü 1492) çizelgede |  |
+| ✓ | Çizelgedeki her olay seçili aralıkla (1480–1520) kesişiyor: aralığın dışından olay yok |  |
 | ✓ | Küresel (Osmanlı dışı) olay çizelgede yok |  |
 | ✓ | Harita HAREKET ETMEDİ (merkez, yakınlaştırma, açı) | {"lng":19,"lat":27.68325323460695,"zoom":1.9707739596405063,"bearing":0,"pitch":0} |
-| ✓ | Harita içeriği yere bağlı değil: işaretçiler aynı |  |
-| ✓ | Harita olay kümesi aynı |  |
+| ✓ | Yer seçilince dünya olayları haritadan çekilir (anlatıcı seçili yer; hiçbir şey seçili değilken işaretçiler vardı) | 11 → 0 işaretçi |
+| ✓ | Haritanın olay kümesi (veri) yerden bağımsız aynı; yalnızca çizilip çizilmemesi anlatıcıya bağlı |  |
 | ✓ | Düzen kaymadı (üst çubuk, harita, soru kutusu ve alt bölüm aynı boyutta; kart haritanın üstünde bir katman) |  |
 | ✓ | Seçilen noktada yer iğnesi var |  |
 | ✓ | Karttaki ✕ kartı kapatır ve yer seçimini kaldırır; harita yerinde |  |
+| ✓ | Seçim kalkınca dünya olayları haritaya aynı kümeyle döner |  |
 | ✓ | Başlık: Ming Hanedanı | Ming Hanedanı |
 | ✓ | Ming poligonu vurgulandı |  |
-| ✓ | Çizelgede yalnızca Ming olayları var | hongzhi-1487, zhengde-1505 |
+| ✓ | Çizelgede yalnızca Ming olayları var | hongzhi-1487, zhengde-1505, portekiz-guangzhou-1517, ning-isyani-1519 |
 | ✓ | Harita HAREKET ETMEDİ (Çin tıklaması) |  |
 | ✓ | Düzen kaymadı |  |
-| ✓ | İşaretçiler hâlâ aynı |  |
+| ✓ | Çin’de de dünya olayları haritada yok (anlatıcı seçili yer) |  |
 | ✓ | Aralık 1450–1500 |  |
 | ✓ | Sınır yılı aralığın ortası (1475) |  |
 | ✓ | Haritanın olay kümesi, aralığa göre hesaplanan kümeyle birebir aynı | 12 olay |
 | ✓ | İstanbul'un Fethi (1453) ve Kolomb (1492) kümede |  |
 | ✓ | Aralık dışı olaylar (Luther 1517, Armada 1588) yok |  |
-| ✓ | Görünen her işaretçi aralığın içinde | 11 görünür |
+| ✓ | Yer seçiliyken aralık değişince de haritada dünya olayı işaretçisi yok |  |
 | ✓ | Paneldeki "başka yerlerde" listesi aynı küme | 12 satır |
 | ✓ | Seçili yer (Ming) korundu |  |
 | ✓ | Harita HAREKET ETMEDİ (aralık değişimi) |  |
+| ✓ | Yer bırakılınca görünen her işaretçi aralığın içinde ve dünya olayları geri geldi | 11 görünür |
 | ✓ | İstanbul işaretçisi haritada görünür |  |
 | ✓ | İşaretçi tıklaması olayı bilgi panelinde açar |  |
 | ✓ | Olay kartı tarihi Türkçe |  |
 | ✓ | İşaretçi tıklaması da haritayı oynatmadı |  |
-| ✓ | İşaretçi tıklaması yeri sıfırlamadı |  |
+| ✓ | İşaretçi tıklaması yer seçmedi (başlık “Dünya” kaldı) |  |
 | ✓ | Aralık 1450–1500 iken Anadolu → Osmanlı |  |
-| ✓ | Çizelge noktası tıklaması olayı açar | varna-1444 |
+| ✓ | Çizelge noktası tıklaması olayı açar | istanbul-fethi-1453 |
 | ✓ | Zaten görünen bir olayı çizelgeden açmak haritayı oynatmaz |  |
 | ✓ | Osmanlı çizelgesinde yerel (önem < 3) bir olay var |  |
 | ✓ | Haritanın kendi kümesinde olmayan yerel olay, çizelgeden açılınca işaretçiyle çizilir ve seçili görünür | bedesten-1461 |
@@ -97,15 +100,15 @@
 | ✓ | "SEÇİLİ YER" etiketi yok | Osmanlı İmparatorluğu 1505 yılının sınırları |
 | ✓ | Başlığın yazı tipi aynı kaldı (Newsreader, serif) | "Newsreader Variable", "Iowan Old Style", "Palatino Linotype", Georgia, serif |
 | ✓ | "1505 yılının sınırları" notu başlığın yanında | Osmanlı İmparatorluğu 1505 yılının sınırları |
-| ✓ | Dokuz devlet tonunun hiçbiri mavi, turkuaz ya da mor değil | #e2d9c6 #b9dca8 #f1b8c2 #f7eeb0 #f6bd8a #d9c3a5 #c6cb98 #e6b3a6 #b6b5a7 |
+| ✓ | Dokuz devlet tonunun hiçbiri mavi, turkuaz ya da mor değil | #b1e8a1 #feb5e1 #88c383 #eb9b77 #e9d07a #ea96b9 #c9b15d #ffba9c #b7ce77 |
 | ✓ | Haritanın devlet dolgusunda kullanılan renklerin hiçbiri mavi değil | 10 renk |
-| ✓ | Haritada çizilen devlet piksellerinin hiçbiri mavi değil | #f5f0e4 #b9dca8 #e2d9c6 #e2d9c6 #f6bd8a #59544c #b7daa6 #997972 #e2d7a0 #dac1a6 |
+| ✓ | Haritada çizilen devlet piksellerinin hiçbiri mavi değil | #f5f0e4 #feb5e1 #b1e8a1 #b1e8a1 #e9d07a #555649 #fcb3df #6f7c58 #d7906f #d5c99f |
 | ✓ | Deniz hâlâ mavi (mavi yalnızca deniz ve göllere ayrılmış) | #bdd0d5 |
 | ✓ | Alt bölüm (cetvel + çizelge) ince: en çok 84 px (ilk sürümün 286 px’inin dörtte biri kadar), ekranın %10’undan az | 80 px = %28 |
-| ✓ | Çizelgede hiçbir olay adı kalıcı yazılı değil (yalnızca üzerine gelince) | 10 olay |
+| ✓ | Çizelgede hiçbir olay adı kalıcı yazılı değil (yalnızca üzerine gelince) | 4 olay |
 | ✓ | Seçili yer: dolu kırmızı nokta, halka yok | {"bg":"rgb(207, 58, 33)","border":"0px","rings":0} |
 | ✓ | Noktanın çevresinde yarıçapsal sönen yumuşak kırmızı ışıma var (nokta ana öğe, ışıma geniş ve silik) | 12px nokta, 64px ışıma |
-| ✓ | Tüm olay noktaları (harita, çizelge, lejant, panel) aynı şekil ve boyutta | 13x13 · harita 11, çizelge 10, lejant 6, panel 9 |
+| ✓ | Tüm olay noktaları (harita, çizelge, lejant, panel) aynı şekil ve boyutta | 13x13 · harita 11, çizelge 4, lejant 6, panel 12 |
 | ✓ | İşaretçi boyutu önemle değişmez (haritada birden çok önem düzeyi var, boyut tek) | önem düzeyleri: 3,5,4 |
 | ✓ | Türler yalnızca renkle ayrışır: 6 ayrı renk, haritadaki her işaretçi lejanttaki türünün rengini taşır | rgb(138, 58, 19) rgb(170, 78, 162) rgb(0, 134, 34) rgb(163, 148, 15) rgb(254, 102, 168) rgb(242, 155, 94) |
 | ✓ | Arayüzde önem göstergesi kalmadı (nokta boyutu, kart bloğu, cetvel histogramı) |  |
@@ -118,15 +121,15 @@
 | ✓ | Çin'e yakınlaşılmış; Mohaç şu an görünümün dışında ve haritada çizili değil | yakınlaştırma 4.60 |
 | ✓ | Mohaç, Osmanlı çizelgesinde bir nokta olarak duruyor |  |
 | ✓ | Harita uzaklaştı (en az bir yakınlaştırma düzeyi) | 2.29 düzey |
-| ✓ | Hareket yumuşak: atlama yok, ara kareler var (tek karede en çok %45 yol) | 6 ara kare, en büyük adım 0.56 / 2.29 |
-| ✓ | Hareket takip edilebilecek kadar uzun sürer (≥ 0,8 sn) | 1534 ms |
+| ✓ | Hareket yumuşak: atlama yok, ara kareler var (tek karede en çok %45 yol) | 8 ara kare, en büyük adım 0.48 / 2.29 |
+| ✓ | Hareket takip edilebilecek kadar uzun sürer (≥ 0,8 sn) | 1643 ms |
 | ✓ | Yalnızca uzaklaşır: hareket sırasında geri yakınlaşma yok |  |
 | ✓ | Mohaç artık görünümde: kenarlardan uzakta, kontrollerin arkasında değil, işaretçisi çizili | 303,269 / 1440×776 |
 | ✓ | Önceki görünüm yeni görünümün içinde kalır (Çin hâlâ ekranda) | [91,23,133,42] ⊂ [-24,-20,180,67] |
 | ✓ | Harita yalnızca gerektiği kadar uzaklaştı (en az gereken düzey + küçük pay) | kullanılan 2.29 düzey, gereken 2.24 |
 | ✓ | Mohaç işaretçisi belirgin biçimde vurgulu: ≥ 3 px vurgu halkası, ışıma, adı yanında | {"ring":3,"colour":"rgb(207, 58, 33)","callout":"Mohaç Muharebesi"} |
-| ✓ | Vurgu yalnızca seçili olayda: diğer işaretçilerde halka yok | 0 |
-| ✓ | Vurgu gözle de seçilir: işaretçinin çevresinde yüzlerce vurgu rengi pikseli | 517 piksel |
+| ✓ | Vurgu yalnızca seçili olayda: haritada başka işaretçi yok (yer seçili, anlatıcı o) ya da varsa halkası yok | null |
+| ✓ | Vurgu gözle de seçilir: işaretçinin çevresinde yüzlerce vurgu rengi pikseli | 516 piksel |
 | ✓ | Çizelgede seçili nokta vurgulu ve adı yanında kalır (seçili olayın etiketi görünür kalabilir) | 1526Mohaç Muharebesi |
 | ✓ | Ad etiketi başka bir noktayı örtmez | 0 |
 | ✓ | Panel: olay odakta (tam kart); yer tek satırlık başlığa küçüldü (ad + aralık), yer kartı gizli | ‹ Osmanlı İmparatorluğu 1515–1535 (38 px) |
@@ -135,7 +138,7 @@
 | ✓ | Olay kartının kapatma düğmesi de yer görünümüne döndürür |  |
 | ✓ | Esc de olayı kapatır; yer seçili kalır ve panel yer görünümüne döner |  |
 | ✓ | Bu senaryoda konsol hatası yok (9) |  |
-| ✓ | Geniş aralıkta, yakınlaştırma bütçesi yüzünden haritada çizilmeyen olaylar var | 12 olay |
+| ✓ | Geniş aralıkta, yakınlaştırma bütçesi yüzünden haritada çizilmeyen olaylar var | 14 olay |
 | ✓ | Seçilince çizilir (bütçe ve önem süzgeci aşılır): ankara-muharebesi-1402 |  |
 | ✓ | Seçilince çizilir (bütçe ve önem süzgeci aşılır): varna-1444 |  |
 | ✓ | Telefon: yatay taşma yok, başlık haritanın üstünde, alt bölüm ince (≈ 80 px) | 80 px |

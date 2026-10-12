@@ -5,11 +5,13 @@
  *   npm run e2e            # builds if needed, serves the build, runs the scenario
  *
  * Scenario (the acceptance test of the brief):
- *   1. Range = 1500. Click a point in Anatolia   -> the Ottoman Empire is highlighted, the timeline lists Ottoman events.
+ *   1. Range = 1480–1520 (year 1500). Click a point in Anatolia -> the Ottoman Empire is highlighted, the timeline lists
+ *      the Ottoman events of that range and nothing beyond it.
  *   2. Click a point in China                    -> Ming is highlighted. The map must not have moved.
  *   3. Range = 1450–1500                         -> the map's events update to exactly that range.
- * Plus: clicks (land, sea, marker) never move the camera, the map's content never depends on the selected
- * place, the layout never shifts, and the ruler works by pointer and keyboard.
+ * Plus: clicks (land, sea, marker) never move the camera, the set of events the map holds never depends on the
+ * selected place (what is drawn does: while a place is selected it is the narrator and the world's events leave the
+ * map), the layout never shifts, and the ruler works by pointer and keyboard.
  * And the second round of feedback: place title above (not on) the map, no blue polities, a bottom area of about a
  * third of its former height with hover-only timeline labels, one dot shape/size told apart by colour, a colour-only
  * legend, a selected event that is always visible (the map eases out just far enough), and an info panel driven by
@@ -224,11 +226,12 @@ try {
   );
 
   /* ---- 1. 1500 + Anatolia */
-  console.log("\n1. 1500 yılı, Anadolu'da bir nokta");
-  await setRange(1500, 1500);
+  console.log("\n1. 1480–1520 aralığı (sınır yılı 1500), Anadolu'da bir nokta");
+  // (the place timeline shows the selected range and nothing beyond it, so the range is wide enough for a handful of events)
+  await setRange(1480, 1520);
   check(
-    'Aralık 1500–1500',
-    JSON.stringify(await page.evaluate(() => window.__ayni.store.state.range)) === '{"from":1500,"to":1500}',
+    'Aralık 1480–1520',
+    JSON.stringify(await page.evaluate(() => window.__ayni.store.state.range)) === '{"from":1480,"to":1520}',
   );
   check('Haritadaki sınır yılı 1500', (await text('[data-testid=title-year]')) === '1500');
 
@@ -280,16 +283,24 @@ try {
     tl1.length >= 3 && tl1.every((id) => ottomanIds.includes(id)),
     `${tl1.length} olay: ${tl1.join(', ')}`,
   );
-  check('Yakın tarihli Osmanlı olayı (Sefarad göçü 1492) çizelgede', tl1.includes('sefarad-gocu-1492'));
+  check('Aralıktaki Osmanlı olayı (Sefarad göçü 1492) çizelgede', tl1.includes('sefarad-gocu-1492'));
+  check(
+    'Çizelgedeki her olay seçili aralıkla (1480–1520) kesişiyor: aralığın dışından olay yok',
+    tl1.every((id) => {
+      const e = allEvents.find((x) => x.id === id);
+      return yearOf(e.date) <= 1520 && endYearOf(e.date) >= 1480;
+    }),
+  );
   check('Küresel (Osmanlı dışı) olay çizelgede yok', !tl1.includes('kolomb-1492'));
   const cam1 = await camera();
   check('Harita HAREKET ETMEDİ (merkez, yakınlaştırma, açı)', sameCamera(baseCam, cam1), JSON.stringify(cam1));
   check(
-    'Harita içeriği yere bağlı değil: işaretçiler aynı',
-    JSON.stringify(await markerIds()) === JSON.stringify(markersBefore),
+    'Yer seçilince dünya olayları haritadan çekilir (anlatıcı seçili yer; hiçbir şey seçili değilken işaretçiler vardı)',
+    markersBefore.length >= 5 && (await markerIds()).length === 0,
+    `${markersBefore.length} → ${(await markerIds()).length} işaretçi`,
   );
   check(
-    'Harita olay kümesi aynı',
+    'Haritanın olay kümesi (veri) yerden bağımsız aynı; yalnızca çizilip çizilmemesi anlatıcıya bağlı',
     JSON.stringify(
       await page.evaluate(() =>
         window.__ayni
@@ -319,6 +330,10 @@ try {
     'Karttaki ✕ kartı kapatır ve yer seçimini kaldırır; harita yerinde',
     (await text('[data-testid=title-main]')) === 'Dünya' && sameCamera(baseCam, await camera()),
   );
+  check(
+    'Seçim kalkınca dünya olayları haritaya aynı kümeyle döner',
+    JSON.stringify(await markerIds()) === JSON.stringify(markersBefore),
+  );
   const china = await pixelOf(112.0, 33.0);
   await page.mouse.click(china.x, china.y);
   await page.waitForFunction(
@@ -341,7 +356,7 @@ try {
   const cam2 = await camera();
   check('Harita HAREKET ETMEDİ (Çin tıklaması)', sameCamera(baseCam, cam2));
   check('Düzen kaymadı', JSON.stringify(await geometry()) === JSON.stringify(baseGeo));
-  check('İşaretçiler hâlâ aynı', JSON.stringify(await markerIds()) === JSON.stringify(markersBefore));
+  check('Çin’de de dünya olayları haritada yok (anlatıcı seçili yer)', (await markerIds()).length === 0);
   await page.screenshot({ path: join(OUT, '03-cin-1500.png') });
 
   /* ---- 3. range 1450–1500 */
@@ -370,12 +385,7 @@ try {
     'Aralık dışı olaylar (Luther 1517, Armada 1588) yok',
     !actual.includes('luther-95-tez-1517') && !actual.includes('armada-1588'),
   );
-  const visible = await markerIds();
-  check(
-    'Görünen her işaretçi aralığın içinde',
-    visible.every((id) => expected.includes(id)),
-    `${visible.length} görünür`,
-  );
+  check('Yer seçiliyken aralık değişince de haritada dünya olayı işaretçisi yok', (await markerIds()).length === 0);
   const listIds = await page.$$eval('.evlist .row', (els) => els.map((e) => e.dataset.id).sort());
   check(
     'Paneldeki "başka yerlerde" listesi aynı küme',
@@ -389,6 +399,15 @@ try {
 
   /* ---- 4. markers and timeline nodes */
   console.log('\n4. İşaretçi ve çizelge tıklamaları');
+  // the world's events are on the map when no place is selected: the place is let go of first
+  await page.click('[data-testid=place-close]');
+  await settle(500);
+  const visible = await markerIds();
+  check(
+    'Yer bırakılınca görünen her işaretçi aralığın içinde ve dünya olayları geri geldi',
+    visible.length >= 5 && visible.every((id) => expected.includes(id)),
+    `${visible.length} görünür`,
+  );
   const marker = page.locator('.evt[data-id="istanbul-fethi-1453"]');
   check(
     'İstanbul işaretçisi haritada görünür',
@@ -402,7 +421,10 @@ try {
   );
   check('Olay kartı tarihi Türkçe', (await text('[data-testid=event-date]')).includes('6 Nisan – 29 Mayıs 1453'));
   check('İşaretçi tıklaması da haritayı oynatmadı', sameCamera(baseCam, await camera()));
-  check('İşaretçi tıklaması yeri sıfırlamadı', (await text('[data-testid=title-main]')).trim() === 'Ming Hanedanı');
+  check(
+    'İşaretçi tıklaması yer seçmedi (başlık “Dünya” kaldı)',
+    (await text('[data-testid=title-main]')).trim() === 'Dünya',
+  );
   await page.screenshot({ path: join(OUT, '05-olay-detayi.png') });
 
   // Select Anatolia again, then a timeline dot
@@ -414,7 +436,10 @@ try {
     (await text('[data-testid=title-main]')).trim() === 'Osmanlı İmparatorluğu',
   );
 
-  // A dot on the timeline opens its event. When the event is already in sight the map stays exactly where it is.
+  // A dot on the timeline opens its event (a dot of the event that is open already would close it: nothing is open now).
+  // When the event is already in sight the map stays exactly where it is.
+  await page.evaluate(() => window.__ayni.store.selectEvent(null));
+  await settle(300);
   const sighted = await page.evaluate(() => {
     const vm = window.__ayni.view();
     const m = window.__ayni.map;
@@ -1008,6 +1033,16 @@ try {
     );
 
     // -- every event dot is the same shape and size, told apart by colour alone
+    // (the place's timeline has dots only while a place is selected, and the world's events are on the map only while none
+    // is: the timeline's dots are measured first, then the place is let go of for the map's)
+    const timelineDots = await p.evaluate(() =>
+      [...document.querySelectorAll('.tl-ev .dot')]
+        .map((el) => el.getBoundingClientRect())
+        .filter((r) => r.width > 0)
+        .map((r) => `${Math.round(r.width)}x${Math.round(r.height)}`),
+    );
+    await p.click('[data-testid=place-close]');
+    await p.waitForTimeout(700);
     const dots = await p.evaluate(() => {
       const info = (sel) =>
         [...document.querySelectorAll(sel)]
@@ -1040,17 +1075,17 @@ try {
         importanceUi: document.querySelectorAll('[data-importance], .importance, .ruler-bins, .bin').length,
       };
     });
-    const sizes = new Set([...dots.map, ...dots.timeline, ...dots.legend, ...dots.panel]);
+    const sizes = new Set([...dots.map, ...timelineDots, ...dots.legend, ...dots.panel]);
     check(
       'Tüm olay noktaları (harita, çizelge, lejant, panel) aynı şekil ve boyutta',
       sizes.size === 1 &&
         dots.map.length >= 5 &&
-        dots.timeline.length >= 3 &&
+        timelineDots.length >= 3 &&
         dots.legend.length === 6 &&
         dots.radius.length === 1 &&
         dots.radius[0].includes('50%') &&
         dots.shapes === 0,
-      `${[...sizes].join(',')} · harita ${dots.map.length}, çizelge ${dots.timeline.length}, lejant ${dots.legend.length}, panel ${dots.panel.length}`,
+      `${[...sizes].join(',')} · harita ${dots.map.length}, çizelge ${timelineDots.length}, lejant ${dots.legend.length}, panel ${dots.panel.length}`,
     );
     check(
       'İşaretçi boyutu önemle değişmez (haritada birden çok önem düzeyi var, boyut tek)',
@@ -1093,7 +1128,10 @@ try {
       legend.items.join(' · '),
     );
 
-    // -- hover texts that replaced the permanent ones
+    // -- hover texts that replaced the permanent ones (the place is chosen again: its timeline carries one of them)
+    const again = await toPx(35.5, 38.9);
+    await p.mouse.click(again[0], again[1]);
+    await p.waitForTimeout(700);
     const noData = await toPx(-100, 45);
     await p.mouse.move(noData[0], noData[1]);
     await p.waitForTimeout(500);
@@ -1288,8 +1326,8 @@ try {
       JSON.stringify({ ring: mk.ringW, colour: mk.ringColour, callout: mk.callout }),
     );
     check(
-      'Vurgu yalnızca seçili olayda: diğer işaretçilerde halka yok',
-      mk.otherOpacity === 0,
+      'Vurgu yalnızca seçili olayda: haritada başka işaretçi yok (yer seçili, anlatıcı o) ya da varsa halkası yok',
+      mk.otherOpacity === 0 || mk.otherOpacity === null,
       String(mk.otherOpacity),
     );
     const reds = await colourCount(

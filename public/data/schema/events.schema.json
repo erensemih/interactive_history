@@ -71,6 +71,12 @@
           "items": { "type": "string" },
           "description": "entities.json içindeki devlet/bölge kimlikleri. Olay, bu tarafların zaman çizelgesinde mesafeden bağımsız görünür."
         },
+        "versus": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "İsteğe bağlı; yalnızca savaş (military) olaylarında. Karşı safın kimlikleri (parties içinden). Verilmezse karşı taraf parties[1] sayılır; parties[0] ile parties[1] aynı safta ise (Grunwald: Polonya ve Litvanya Töton Şövalyeleri'ne karşı) karşı saf burada söylenir. Uygulama savaş çizgisini parties[0] ile bu saf arasında çizer."
+        },
         "sources": {
           "type": "array",
           "minItems": 1,

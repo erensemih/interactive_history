@@ -5,7 +5,8 @@ import { CATEGORY_STYLES, FALLBACK_STYLE, MARKER_DIAMETER, styleFor } from '../s
 
 /**
  * Guards the colour rules of the map, in numbers:
- *  - blue belongs to the sea and the lakes alone, so no polity tint may be blue-ish;
+ *  - blue belongs to the sea and the lakes alone, so no polity tint may be blue-ish; nor grey, which reads as the
+ *    dotted "no data" ground; and the nine tints stay far enough apart that two neighbours never blur;
  *  - event markers differ by colour alone, so every pair must stay apart, also for colour-blind readers,
  *    and none may look like the vermilion that means "your selection".
  * The maths (OKLab ΔE ×100, Machado et al. 2009 colour-vision simulation at severity 1.0) is the same
@@ -75,6 +76,8 @@ const isBlueish = (hex: string) => {
 
 describe('polity tints', () => {
   const tints = Array.from({ length: 9 }, (_, i) => ({ name: `tint-${i}`, hex: token(`tint-${i}`) }));
+  const inUse = tints.slice(0, 8); // the data uses indices 0-7; the ninth is a spare
+  const chromaOf = (hex: string) => hueChroma(hex).chroma;
 
   it('are never blue, teal or violet (blue is for the sea)', () => {
     for (const t of tints) expect(isBlueish(t.hex), `${t.name} ${t.hex}`).toBe(false);
@@ -85,8 +88,64 @@ describe('polity tints', () => {
     expect(isBlueish(token('sea-deep'))).toBe(true);
   });
 
-  it('stay apart from the sea (the closest, sand, is 6.2; the coastline and the shallow-water glow do the rest)', () => {
-    for (const t of tints) expect(deltaE(t.hex, token('sea')), `${t.name} against the sea`).toBeGreaterThan(5);
+  it('are never grey or sand-like: each is clearly coloured (a grey polity reads as "no data")', () => {
+    for (const t of tints) expect(chromaOf(t.hex), `${t.name} ${t.hex}`).toBeGreaterThanOrEqual(0.075);
+  });
+
+  it('stay well away from the dotted no-data ground, the paper and the sea', () => {
+    for (const t of tints) {
+      expect(deltaE(t.hex, token('land-nodata')), `${t.name} against the no-data ground`).toBeGreaterThanOrEqual(11);
+      expect(deltaE(t.hex, token('paper')), `${t.name} against the paper`).toBeGreaterThanOrEqual(9);
+      expect(deltaE(t.hex, token('sea')), `${t.name} against the sea`).toBeGreaterThanOrEqual(11);
+      expect(deltaE(t.hex, token('sea-deep')), `${t.name} against the deep sea`).toBeGreaterThanOrEqual(11);
+    }
+  });
+
+  it('are clearly different from each other, so two neighbours never blur into one (every pair of the eight in use ΔE ≥ 8.5)', () => {
+    for (const [i, a] of inUse.entries())
+      for (const b of inUse.slice(i + 1)) expect(deltaE(a.hex, b.hex), `${a.name} / ${b.name}`).toBeGreaterThanOrEqual(8.5);
+    for (const t of inUse) expect(deltaE(t.hex, tints[8]!.hex), `${t.name} / the spare`).toBeGreaterThanOrEqual(6.5);
+  });
+
+  it('keep clear of the vermilion that means "your selection"', () => {
+    for (const t of tints) expect(deltaE(t.hex, token('accent')), t.name).toBeGreaterThanOrEqual(15);
+  });
+});
+
+describe('spotlight colours (the vivid twin of each tint)', () => {
+  const vivid = Array.from({ length: 9 }, (_, i) => ({ name: `vivid-${i}`, hex: token(`vivid-${i}`), tint: token(`tint-${i}`) }));
+
+  it('are never blue, teal or violet', () => {
+    for (const v of vivid) expect(isBlueish(v.hex), `${v.name} ${v.hex}`).toBe(false);
+  });
+
+  it('are vivid: saturated and a shade darker than the wash they stand out from', () => {
+    for (const v of vivid) {
+      const { chroma } = hueChroma(v.hex);
+      expect(chroma, `${v.name} chroma`).toBeGreaterThanOrEqual(0.12);
+      expect(oklabOf(toLinear(v.hex))[0], `${v.name} is darker than its tint`).toBeLessThan(oklabOf(toLinear(v.tint))[0]);
+      expect(deltaE(v.hex, v.tint), `${v.name} against its own tint`).toBeGreaterThanOrEqual(12);
+    }
+  });
+
+  it('keep their own hue (a polity stays recognisable when it is lit)', () => {
+    for (const v of vivid) {
+      let d = Math.abs(hueChroma(v.hex).hue - hueChroma(v.tint).hue);
+      if (d > 180) d = 360 - d;
+      expect(d, `${v.name} hue drift`).toBeLessThanOrEqual(24);
+    }
+  });
+
+  it('stay off the vermilion and off the sea', () => {
+    for (const v of vivid) {
+      expect(deltaE(v.hex, token('accent')), `${v.name} against the accent`).toBeGreaterThanOrEqual(11);
+      expect(deltaE(v.hex, token('sea')), `${v.name} against the sea`).toBeGreaterThanOrEqual(15);
+    }
+  });
+
+  it('are told apart from each other (ΔE ≥ 6; two lit neighbours also have the link and their names)', () => {
+    for (const [i, a] of vivid.entries())
+      for (const b of vivid.slice(i + 1)) expect(deltaE(a.hex, b.hex), `${a.name} / ${b.name}`).toBeGreaterThanOrEqual(6);
   });
 });
 

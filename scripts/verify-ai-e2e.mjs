@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * End-to-end verification of the reading companion (the AI) and of the map-first layout, in a real (headless) Chromium.
+ * End-to-end verification of the reading companion (the AI), of the map-first layout and of the cleaner map, in a real
+ * (headless) Chromium.
  *
  *   npm run e2e:ai            # builds if needed, serves the build, runs the scenarios
  *
@@ -8,9 +9,21 @@
  * tool calls and streams the very same kind of text as a real answer, only with fixed content. The page
  * decides to use it by itself, because `window.claude` does not exist in this browser, and says so over the map.
  * One group (G) injects a fake artifact runtime instead, to drive the real `sample` adapter in the browser
- * (the instruction file as the first turn, the seven tools, the plan before the long texts).
+ * (the instruction file as the first turn, the five tools, the plan before the long texts, the whole conversation).
  *
- * The brief of the map-first round:
+ * The round about a cleaner map ("the model decides WHAT to show, the app decides HOW it looks"):
+ *   P. Colours: the colours the map really shows (read from screenshots) are never grey or blue and neighbours differ; in a
+ *      narration the lit polities are solid and vivid and the rest is faded.
+ *   A, J. A place selected (or the AI narrating) takes the world's events off the map; one narrator at a time. In a step
+ *      only what it names is drawn: the event by its kind (a war is one unit: marker and line), no name boxes beside
+ *      markers, the camera fits all of it above the caption and the question box.
+ *   R. The names of events in captions and texts are links that do what a click on the event in the timeline does.
+ *   T. The place timeline shows the selected range and nothing beyond it; the ruler's step points do not overlap
+ *      each other or the range's writing.
+ *   F. The end of a text is not under the question box (full screen, beside the map, small windows, phones).
+ *   G, E. The whole conversation reaches the model (and "Sohbeti temizle" always works).
+ *
+ * The map-first round before it:
  *   L. Layout: the map is almost the whole screen, a thin timeline at the bottom, the question box just above it,
  *      a small info card on the right that closes easily and steps aside by itself when something is asked.
  *   A, V. Watch: a multi-step narration moves step by step with its short caption in one fixed place, stepped by
@@ -21,12 +34,13 @@
  *   B. A short answer has no steps: a short text with at most one map scene.
  *
  * And what already worked (kept): each step owns the map (A), "Harita takibi" (A2–A4), events (C, C2), the subject
- * changing mid-conversation (D), one narrator (J), no label covering another (K), stopping, failing and settings
- * (E), the real `sample` adapter (G) and the phone (H).
+ * changing mid-conversation (D), no label covering another (K), stopping, failing and settings (E), the real `sample`
+ * adapter (G) and the phone (H).
  *
  * Writes screenshots (ai-*.png) and a Turkish report (AI-RAPOR.md) to docs/verification/.
  *   E2E_ONLY=A3,K  runs only those groups (the code before the first "." of a heading) while working on them;
- *   E2E_URL      reuses a server that is already running.
+ *   E2E_VERBOSE=1  prints the whole error of a scenario that stopped;
+ *   E2E_URL        reuses a server that is already running.
  */
 import { spawn, execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -63,6 +77,7 @@ async function guard(run) {
   try {
     await run();
   } catch (err) {
+    if (process.env.E2E_VERBOSE) console.log(err.stack ?? err.message);
     check(
       `${currentSection.split(':')[0]}: senaryo beklenmedik biçimde durdu`,
       false,
@@ -179,10 +194,32 @@ const active = (page) => page.evaluate(() => window.__ayni.ai.director.active);
 const aiDom = (page) =>
   page.evaluate(() => ({
     links: [...document.querySelectorAll('.ai-layer .ai-link')].map((e) => e.dataset.relation),
+    wars: document.querySelectorAll('.ai-layer .ai-war').length,
     flags: [...document.querySelectorAll('.ai-layer .ai-flag')].filter((e) => !e.hidden).map((e) => e.textContent),
     marks: document.querySelectorAll('.ai-layer .ai-pt').length,
     hidden: document.querySelector('.ai-layer')?.hidden ?? true,
   }));
+/** The spotlight: the veil over the rest of the map, the polities lit, the names faded and lit. */
+const spotlight = (page) =>
+  page.evaluate(() => {
+    const m = window.__ayni.map;
+    let ids = [];
+    try {
+      ids = m.getFilter('ai-fill')[3][2][1].filter((x) => x !== '\u0000none');
+    } catch {
+      /* no layer yet */
+    }
+    const names = [...document.querySelectorAll('.plabel:not(.is-hidden)')];
+    return {
+      veil: Number(m.getPaintProperty('ai-veil', 'background-opacity')),
+      solid: m.getPaintProperty('ai-fill', 'fill-opacity'),
+      ids,
+      faded: names.filter((e) => e.classList.contains('is-faded')).length,
+      lit: names.filter((e) => e.classList.contains('is-ai')).length,
+      unfaded: names.filter((e) => !e.classList.contains('is-faded') && !e.classList.contains('is-ai')).length,
+      hatch: !!m.getLayer('ai-hatch'),
+    };
+  });
 const headYear = (page) => text(page, '[data-testid=title-year]');
 const lastRequest = (page) =>
   page.evaluate(() => {
@@ -257,9 +294,9 @@ async function cameraRests(page, timeout = 8000) {
   await page.waitForTimeout(150);
 }
 
-/** Goes to a step through its point in Watch's controls, and waits until the camera has come to rest. */
+/** Goes to a step through its point on the ruler (the narration's progress bar), and waits until the camera has come to rest. */
 async function showStep(page, n) {
-  await page.click(`[data-testid=watch-pip][data-n="${n}"]`);
+  await page.click(`[data-testid=ruler-step][data-n="${n}"]`);
   await cameraRests(page);
 }
 
@@ -356,12 +393,20 @@ const MAP_STATE = () => {
   const year = ai.director.year ?? window.__ayni.view().year;
   const r = ai.session.resolver;
   const box = document.querySelector('#map').getBoundingClientRect();
+  let ids = [];
+  try {
+    ids = map.getFilter('ai-line')[3][2][1].filter((x) => x !== '\u0000none');
+  } catch {
+    /* no layer yet */
+  }
+  // everything the step shows: the whole box of every polity in the spotlight (its four corners), the events, the marks,
+  // the model's own lines' ends, and both ends of every war line
   const pts = [];
+  for (const id of ids) {
+    const b = r.boundsAt(id, year);
+    if (b) pts.push([b[0], b[1]], [b[2], b[3]], [b[0], b[3]], [b[2], b[1]]);
+  }
   if (d) {
-    for (const id of d.highlights) {
-      const b = r.boundsAt(id, year);
-      if (b) pts.push([b[0], b[1]], [b[2], b[3]], [b[0], b[3]], [b[2], b[1]]);
-    }
     for (const m of d.marks) pts.push([m.point.lon, m.point.lat]);
     for (const id of d.events) {
       const e = data.eventsById.get(id);
@@ -378,6 +423,13 @@ const MAP_STATE = () => {
     const p = map.project([lon, lat]);
     return !(p.x >= 0 && p.y >= 0 && p.x <= box.width && p.y <= box.height);
   }).length;
+  // the foot of the screen (the caption, or the short answer, and the question box): the step is shown above it
+  const foot = document.querySelector('#bottom').getBoundingClientRect();
+  const belowFoot = pts.filter(([lon, lat]) => box.top + map.project([lon, lat]).y > foot.top).length;
+  const warEnds = [...document.querySelectorAll('.ai-layer .ai-war .end')].map((e) => e.getBoundingClientRect());
+  const warOutside = warEnds.filter(
+    (e) => e.left < box.left || e.right > box.right || e.top < box.top || e.bottom > foot.top,
+  ).length;
   // what the step puts on the map must not end up under the cards, the caption, the question box or the reader
   const overs = [
     ...document.querySelectorAll(
@@ -393,15 +445,10 @@ const MAP_STATE = () => {
     return overs.some((r) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom);
   }).length;
   const c = map.getCenter();
-  let ids = [];
-  try {
-    ids = map.getFilter('ai-line')[3][2][1].filter((x) => x !== '\u0000none');
-  } catch {
-    /* no layer yet */
-  }
   return {
     ids,
     links: [...document.querySelectorAll('.ai-layer .ai-link')].map((e) => e.dataset.relation),
+    wars: document.querySelectorAll('.ai-layer .ai-war').length,
     flags: [...document.querySelectorAll('.ai-layer .ai-flag')].filter((e) => !e.hidden).map((e) => e.textContent),
     eventFlags: [...document.querySelectorAll('.ai-layer .ai-flag.is-event')]
       .filter((e) => !e.hidden)
@@ -412,6 +459,8 @@ const MAP_STATE = () => {
     camera: { lng: c.lng, lat: c.lat, zoom: map.getZoom() },
     targets: pts.length,
     outside,
+    belowFoot,
+    warOutside,
     covered,
   };
 };
@@ -431,29 +480,61 @@ async function dragMap(page, dx, dy) {
   await page.waitForTimeout(900);
 }
 
-/** The Ottoman narration of the mock, step by step: what each step asks for (and so what it alone shows). */
+/**
+ * The Ottoman narration of the mock, step by step: what each step asks for (and so what it alone shows). The model only names
+ * the events and the polities that stand out; the app lights the events' parties (so `ids` is the spotlight: the model's
+ * highlights, then the parties of its events) and draws every war as one line through its marker (`wars`).
+ */
 const OTTOMAN = [
-  { n: 1, ids: 'ottoman-empire,safavid-dynasty', links: '', events: ['safevi-1501'], marks: 0, year: '1505' },
-  { n: 2, ids: 'ottoman-empire,safavid-dynasty', links: 'war', events: ['caldiran-1514'], marks: 0, year: '1514' },
-  { n: 3, ids: 'ottoman-empire,mamluk-sultanate', links: 'war', events: ['ridaniye-1517'], marks: 1, year: '1517' },
+  {
+    n: 1,
+    ids: 'ottoman-empire,safavid-dynasty,aq-qoyunlu',
+    links: '',
+    wars: 0,
+    events: ['safevi-1501'],
+    marks: 0,
+    year: '1505',
+  },
+  {
+    n: 2,
+    ids: 'ottoman-empire,safavid-dynasty',
+    links: '',
+    wars: 1,
+    events: ['caldiran-1514'],
+    marks: 0,
+    year: '1514',
+  },
+  {
+    n: 3,
+    ids: 'ottoman-empire,mamluk-sultanate',
+    links: '',
+    wars: 1,
+    events: ['ridaniye-1517'],
+    marks: 1,
+    year: '1517',
+  },
   {
     n: 4,
     ids: 'ottoman-empire,kingdom-of-hungary,habsburg-monarchy',
-    links: 'war',
+    links: '',
+    wars: 2,
     events: ['mohac-1526', 'viyana-1529'],
     marks: 0,
     year: '1526',
   },
-  { n: 5, ids: 'ottoman-empire,kingdom-of-france', links: 'alliance', events: [], marks: 0, year: '1536' },
+  { n: 5, ids: 'ottoman-empire,kingdom-of-france', links: 'alliance', wars: 0, events: [], marks: 0, year: '1536' },
   {
     n: 6,
-    ids: 'ottoman-empire,republic-of-venice,papal-states',
-    links: 'war',
+    ids: 'ottoman-empire,republic-of-venice,papal-states,spanish-empire',
+    links: '',
+    wars: 1,
     events: ['preveze-1538'],
     marks: 0,
     year: '1538',
   },
 ];
+/** A caption as the reader sees it: the names of events are links, but the words are the same. */
+const plainCaption = (text) => text.replace(/\[([^\]]+)\]\(olay:[A-Za-z0-9_-]+\)/g, '$1');
 const sameSet = (a, b) => a.length === b.length && [...a].sort().join() === [...b].sort().join();
 const camCompare = (a, b) => ({
   moved: Math.abs(a.zoom - b.zoom) > 0.02 || Math.hypot(a.lng - b.lng, a.lat - b.lat) > 0.05,
@@ -616,6 +697,8 @@ section('A. İzle: çok adımlı anlatım adım adım ilerler; her adım yalnız
 await guard(async () => {
   const page = await open('#t=1500-1550');
   const anatolia = await pixelOf(page, 35.5, 38.9);
+  await page.click('[data-testid=intro-close]').catch(() => undefined);
+  const markersWorld = await markerIds(page);
   await page.mouse.click(anatolia.x, anatolia.y);
   await settle(page, 500);
   check(
@@ -626,6 +709,17 @@ await guard(async () => {
   );
   await shot(page, 'ai-0-yer-karti.png');
   const markersBefore = await markerIds(page);
+  const placeNote = (await text(page, '.map-stats').catch(() => '')).replace(/\s+/g, ' ').trim();
+  const dockDots = await count(page, '.dock [data-id]');
+  check(
+    'Yer seçilince dünya olayları haritadan çekilir (hiçbiri çizilmez); hiçbir şey seçili değilken ' +
+      `${markersWorld.length} olay işaretçisi vardı; not: “Yer seçili · dünya olayları haritadan çekildi”`,
+    markersWorld.length >= 5 &&
+      markersBefore.length === 0 &&
+      /Yer seçili.*haritadan çekildi/.test(placeNote) &&
+      dockDots >= 10,
+    `${markersWorld.length} → ${markersBefore.length} · not: “${placeNote}” · çizelgede ${dockDots} olay`,
+  );
   const camBefore = await camera(page);
 
   await page.click('[data-testid=place-narrate]');
@@ -661,7 +755,8 @@ await guard(async () => {
   check(
     'Metin bitince “Metin yazılıyor…” kalkar; adım sayısı 6; altyazılar ve başlıklar dolu',
     !(await visible(page, '[data-testid=watch-writing]')) &&
-      (await count(page, '[data-testid=watch-pip]')) === 6 &&
+      (await count(page, '[data-testid=ruler-step]')) === 6 &&
+      (await text(page, '[data-testid=watch-count]')).replace(/\s+/g, ' ').trim() === '1 / 6' &&
       (await text(page, '[data-testid=watch-title]')).length > 3 &&
       (await text(page, '[data-testid=watch-caption]')).length > 40,
   );
@@ -672,7 +767,7 @@ await guard(async () => {
   });
   check(
     'Altyazı modelin step çağrısındaki altyazıdır, bir iki cümle (en çok ~200 karakter) ve metinden kısa',
-    cap1 === plan[0].caption && cap1.length <= 220 && cap1.length > 40,
+    cap1 === plainCaption(plan[0].caption) && cap1.length <= 220 && cap1.length > 40,
     `${cap1.length} karakter`,
   );
   const st0 = await page.evaluate(() => window.__ayni.store.state);
@@ -683,9 +778,9 @@ await guard(async () => {
   );
   const markersChat = await markerIds(page);
   check(
-    'Anlatım sürerken olay işaretçileri haritadan çekildi (çizelgede duruyorlar); yalnızca anlatılan olay haritada',
-    markersBefore.length >= 5 && markersChat.join() === 'safevi-1501' && (await count(page, '.dock [data-id]')) >= 10,
-    `${markersBefore.length} → ${markersChat.length} işaretçi`,
+    'Anlatım sürerken dünya olayları haritada yok (çizelgede duruyorlar); yalnızca anlatılan olay haritada',
+    markersWorld.length >= 5 && markersChat.join() === 'safevi-1501' && (await count(page, '.dock [data-id]')) >= 10,
+    `${markersWorld.length} → ${markersBefore.length} → ${markersChat.length} işaretçi`,
   );
   check(
     'Sohbet, Claude olmadığını açıkça söylüyor (deneme kipi)',
@@ -706,25 +801,90 @@ await guard(async () => {
     boxes.push(await rectOf(page, '[data-testid=watch]'));
     const expected = exp.events;
     check(
-      `${exp.n}. adım yalnızca kendi çizimini gösteriyor: ${exp.ids.split(',').length} devlet, ${exp.links || 'bağlantı yok'}, ${expected.length} olay işareti, ${exp.marks} serbest işaret, ${exp.year}`,
+      `${exp.n}. adım yalnızca kendi çizimini gösteriyor: ${exp.ids.split(',').length} devlet öne çıkar, ${exp.wars} savaş çizgisi, ${exp.links || 'kendi çizgisi yok'}, ${expected.length} olay işareti, ${exp.marks} serbest işaret, ${exp.year}`,
       state.ids.join() === exp.ids &&
         state.links.join() === exp.links &&
+        state.wars === exp.wars &&
         sameSet(state.markers, expected) &&
-        sameSet(state.eventFlags, expected) &&
+        state.eventFlags.length === 0 &&
         state.diamonds === exp.marks &&
         state.year === exp.year,
       `${state.ids.length} devlet · işaretçiler: ${state.markers.join(', ') || '—'} · ${state.flags.join(' | ')}`,
     );
+    const spot = await spotlight(page);
+    check(
+      `${exp.n}. adım spot ışığı: öne çıkan ${spot.ids.length} devlet dolgun ve canlı, haritanın geri kalanı soluk (örtü ${spot.veil}), öne çıkmayan adlar soluk, tarama yok`,
+      spot.ids.join() === exp.ids &&
+        spot.veil > 0.5 &&
+        spot.solid === 1 &&
+        spot.faded > 3 &&
+        spot.lit >= 1 &&
+        spot.unfaded === 0 &&
+        !spot.hatch,
+      `soluk ad ${spot.faded} · öne çıkan ad ${spot.lit} · soluk olmayan ${spot.unfaded}`,
+    );
+    const names = await page.evaluate(() => ({
+      boxes: document.querySelectorAll('.ai-layer .ai-flag.is-event, .evt-label, .evt-name').length,
+      callouts: [...document.querySelectorAll('.evt')].filter((e) => getComputedStyle(e, '::after').display !== 'none')
+        .length,
+    }));
+    check(
+      `${exp.n}. adım: olay işaretlerinin yanında ad kutusu yok (ad üstüne gelince görünür)`,
+      names.boxes === 0 && names.callouts === 0,
+      `${names.boxes} kutu · ${names.callouts} açık olay adı`,
+    );
+    if (exp.wars > 0) {
+      const unit = await page.evaluate(() => {
+        const out = [];
+        for (const g of document.querySelectorAll('.ai-layer .ai-war')) {
+          const path = g.querySelector('path.line');
+          const ring = g.querySelector('circle.ring').getBoundingClientRect();
+          const ringC = { x: ring.left + ring.width / 2, y: ring.top + ring.height / 2 };
+          const svg = path.ownerSVGElement.getBoundingClientRect();
+          // the marker whose centre is nearest the ring
+          let best = null;
+          for (const e of document.querySelectorAll('.evt:not(.is-hidden) .evt-mark')) {
+            const r = e.getBoundingClientRect();
+            const c = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+            const d = Math.hypot(c.x - ringC.x, c.y - ringC.y);
+            if (!best || d < best.d) best = { d, c };
+          }
+          // how far the marker's centre is from the line itself
+          let off = Infinity;
+          const len = path.getTotalLength();
+          for (let i = 0; i <= 200; i++) {
+            const pt = path.getPointAtLength((len * i) / 200);
+            off = Math.min(off, Math.hypot(svg.left + pt.x - best.c.x, svg.top + pt.y - best.c.y));
+          }
+          out.push({
+            markerToRing: best.d,
+            markerToLine: off,
+            ringR: ring.width / 2,
+            width: parseFloat(getComputedStyle(path).strokeWidth),
+          });
+        }
+        return out;
+      });
+      check(
+        `${exp.n}. adım: savaş çizgisi ile olay işareti tek birim: işaret çizginin üzerinde (≤ 2 px) ve halkanın ortasında (≤ 1 px)`,
+        unit.length === exp.wars && unit.every((u) => u.markerToLine <= 2 && u.markerToRing <= 1 && u.ringR >= 10),
+        unit.map((u) => `çizgi ${u.markerToLine.toFixed(1)} · halka ${u.markerToRing.toFixed(1)}`).join(' | '),
+      );
+    }
     const cap = await text(page, '[data-testid=watch-caption]');
     check(
       `${exp.n}. adım: altyazı ve sayaç bu adımın (“${exp.n} / 6”, “${plan[exp.n - 1].title}”)`,
-      cap === plan[exp.n - 1].caption &&
+      cap === plainCaption(plan[exp.n - 1].caption) &&
         (await text(page, '[data-testid=watch-count]')).replace(/\s+/g, ' ').trim() === `${exp.n} / 6` &&
         (await text(page, '[data-testid=watch-title]')) === plan[exp.n - 1].title,
     );
     check(
-      `${exp.n}. adım: kamera çizimi görünür kıldı (${state.targets} nokta, görünüm dışında ${state.outside}) ve hiçbiri kartın, altyazının ya da soru kutusunun altında kalmadı (${state.covered})`,
-      state.targets > 0 && state.outside === 0 && state.covered === 0,
+      `${exp.n}. adım: kamera adımın gösterdiği her şeyi (${state.targets} nokta: öne çıkan devletlerin kutuları, olaylar, çizgi uçları) altyazı ve soru kutusunun ÜSTÜNDEKİ görünür alana sığdırdı: görünüm dışında ${state.outside}, ekranın dibindeki sütunun altında ${state.belowFoot}, savaş çizgisi uçları dışarıda ${state.warOutside}, örtülen ${state.covered}`,
+      state.targets > 0 &&
+        state.outside === 0 &&
+        state.belowFoot === 0 &&
+        state.warOutside === 0 &&
+        state.covered === 0,
       `merkez ${state.camera.lng.toFixed(1)}, ${state.camera.lat.toFixed(1)} · yakınlaştırma ${state.camera.zoom.toFixed(2)}`,
     );
     const lap = await overlapReport(page);
@@ -774,6 +934,7 @@ await guard(async () => {
       JSON.stringify(await drawing(page)) === JSON.stringify(drawings[n]) &&
       again.ids.join() === before.ids.join() &&
       again.links.join() === before.links.join() &&
+      again.wars === before.wars &&
       sameSet(again.markers, before.markers) &&
       sameSet(again.flags, before.flags) &&
       again.diamonds === before.diamonds &&
@@ -806,13 +967,14 @@ await guard(async () => {
   await settle(page, 700);
   const markersClosed = await markerIds(page);
   check(
-    'Anlatımı kapatmak (✕) yapay zekâ çizimini haritadan kaldırır; olay işaretçileri geri gelir; kart geri gelir',
+    'Anlatımı kapatmak (✕) yapay zekâ çizimini ve spot ışığını kaldırır; yer hâlâ seçili olduğundan dünya olayları dönmez; kart geri gelir',
     (await aiDom(page)).hidden &&
       (await aiIds(page)).length === 0 &&
-      markersClosed.length >= 4 &&
+      (await spotlight(page)).veil === 0 &&
+      markersClosed.length === 0 &&
       (await visible(page, '[data-testid=place-card]')) &&
       !(await visible(page, '[data-testid=watch]')),
-    `${markersBefore.length} → ${markersChat.length} → ${markersClosed.length}`,
+    `${markersWorld.length} → ${markersChat.length} → ${markersClosed.length}`,
   );
   check(
     'Kapanışta başlıktaki yıl kullanıcının imlecine döner (yapay zekâ yılı yok)',
@@ -976,6 +1138,8 @@ await guard(async () => {
         on: e.classList.contains('is-on'),
         past: e.classList.contains('is-past'),
         cx: (r.left + r.right) / 2,
+        left: r.left,
+        right: r.right,
         top: r.top,
         bottom: r.bottom,
         want: track.left + ((years[n - 1] + 0.5 - ext.from) / span) * track.width,
@@ -984,7 +1148,15 @@ await guard(async () => {
     });
     const run = document.querySelector('.ruler-run')?.getBoundingClientRect();
     const dock = document.querySelector('.dock').getBoundingClientRect();
-    return { pts, run: run ? { left: run.left, right: run.right } : null, dock: dock.toJSON(), track: track.toJSON() };
+    const label = document.querySelector('.brush-label');
+    return {
+      pts,
+      run: run ? { left: run.left, right: run.right } : null,
+      dock: dock.toJSON(),
+      track: track.toJSON(),
+      label: label ? getComputedStyle(label).display : 'yok',
+      labelRect: label ? label.getBoundingClientRect().toJSON() : null,
+    };
   });
   const gaps = bar.pts.slice(1).map((p, i) => p.cx - bar.pts[i].cx);
   check(
@@ -994,10 +1166,22 @@ await guard(async () => {
       gaps.every((g) => g > 0),
     bar.pts.map((p) => `${p.n}:${p.year}`).join(' '),
   );
+  const touching = [];
+  for (let i = 0; i < bar.pts.length; i++)
+    for (let j = i + 1; j < bar.pts.length; j++) {
+      const a = bar.pts[i];
+      const b = bar.pts[j];
+      if (a.left < b.right && b.left < a.right) touching.push(`${a.n}×${b.n}`);
+    }
   check(
-    'Her nokta kendi yılının hizasında (yan yana düşenler en çok 26 px kaydırılmış) ve birbirine değmiyor (en az 14 px)',
-    bar.pts.every((p) => p.cx - p.want > -2 && p.cx - p.want < 28) && gaps.every((g) => g >= 14),
-    `en dar aralık ${Math.min(...gaps).toFixed(0)} px · kayma ${bar.pts.map((p) => (p.cx - p.want).toFixed(0)).join(', ')}`,
+    'Adım noktaları birbirine değmiyor (etkin olanın büyütülmüş hâli de: merkezler en az 22 px arayla) ve yıllarının çevresinde duruyor',
+    touching.length === 0 && gaps.every((g) => g >= 21.5) && bar.pts.every((p) => Math.abs(p.cx - p.want) < 40),
+    `en dar aralık ${Math.min(...gaps).toFixed(0)} px · kayma ${bar.pts.map((p) => (p.cx - p.want).toFixed(0)).join(', ')}${touching.length ? ` · değenler ${touching.join()}` : ''}`,
+  );
+  check(
+    'Noktalar aralık yazısının üstüne binmiyor: fırçanın kendi yazısı noktalar varken gizli (aralık, cetvelin yanındaki büyük yazıda duruyor)',
+    bar.label === 'none' && /\d{4}/.test(await text(page, '[data-testid=range-readout]')),
+    `fırça yazısı: ${bar.label}`,
   );
   check(
     'Noktalar zaman çizelgesi bandının içinde ve band ince kalıyor (en çok 84 px)',
@@ -1362,13 +1546,14 @@ await guard(async () => {
   );
   const lapMini = await overlapReport(page);
   check(
-    'Küçük haritada çizimin ad etiketleri yok (pencereyi kalabalıklaştırmaz; metin yanında), çizim ve işaretçiler yerinde',
+    'Küçük haritada çizimin ad etiketleri yok (pencereyi kalabalıklaştırmaz; metin yanında); savaş tek parça (işaret + çizgi) ve serbest işaret yerinde',
     lapMini.flags === 0 &&
       lapMini.clash.length === 0 &&
       mini.diamonds === 1 &&
-      mini.links.join() === 'war' &&
+      mini.wars === 1 &&
+      mini.links.length === 0 &&
       mini.markers.join() === 'ridaniye-1517',
-    `${lapMini.flags} etiket · ${mini.links.join()} · ${mini.markers.join()}`,
+    `${lapMini.flags} etiket · ${mini.wars} savaş · ${mini.markers.join()}`,
   );
   await shot(page, 'ai-w3-oku-tam-ekran.png');
 
@@ -1436,8 +1621,10 @@ await guard(async () => {
       bigMap.outside === 0 &&
       bigMap.covered === 0 &&
       lapBig.clash.length === 0 &&
-      tagsBack.flags >= 1,
-    `${expandState.step}. adım · ${tagsBack.flags} ad etiketi geri geldi`,
+      tagsBack.flags === 0 &&
+      bigMap.wars === OTTOMAN[escStep - 1].wars &&
+      bigMap.markers.join() === OTTOMAN[escStep - 1].events.join(),
+    `${expandState.step}. adım · ${bigMap.wars} savaş · işaretçi ${bigMap.markers.join() || '—'} · ${tagsBack.flags} ad kutusu`,
   );
 
   // --- a question asked while reading updates the map in the background
@@ -1478,10 +1665,10 @@ await guard(async () => {
     `${lastAnswer.n} yanıt`,
   );
   check(
-    'Arkadaki harita yeni soruya geçti (Osmanlı + Fransa, ittifak çizgisi, 1536) ve çizim paneli ile soru kutusunun dışında',
+    'Arkadaki harita yeni soruya geçti (Osmanlı + Fransa, ittifak çizgisi; yanıt olay da yıl da vermediği için okurun kendi yılı, 1525) ve çizim paneli ile soru kutusunun dışında',
     qMap.ids.join() === 'ottoman-empire,kingdom-of-france' &&
       qMap.links.join() === 'alliance' &&
-      qMap.year === '1536' &&
+      qMap.year === '1525' &&
       qMap.outside === 0 &&
       qMap.covered === 0 &&
       qMap.markers.length === 0,
@@ -1675,7 +1862,7 @@ await guard(async () => {
       /Ayarlar ⚙ → Harita takibi/.test(await text(page, '[data-testid=follow-released]')),
   );
   const camFree = await camera(page);
-  await page.click('[data-testid=watch-pip][data-n="4"]');
+  await page.click('[data-testid=ruler-step][data-n="4"]');
   await settle(page, 2500);
   const afterFree = await mapState(page);
   check(
@@ -1727,7 +1914,6 @@ await guard(async () => {
   await page.keyboard.press('Escape');
 
   // a new conversation starts following again, and may ask again
-  await page.click('[data-testid=chat-settings]');
   await page.click('[data-testid=chat-new]');
   await settle(page, 400);
   check('Yeni sohbet takibi yeniden açar', await following(page));
@@ -1806,7 +1992,7 @@ await guard(async () => {
       text: t.innerText,
       bottom: box.bottom,
       askTop: ask.top,
-      steps: q('[data-testid=watch-count]') || q('[data-testid=watch-pip]') || q('[data-testid=watch-prev]'),
+      steps: q('[data-testid=watch-count]') || q('[data-testid=watch-prev]'),
       auto: q('[data-testid=watch-play]') || q('[data-testid=watch-speed]'),
       ruler: document.querySelectorAll('[data-testid=ruler-step]').length,
       headings: /^#|^\d+\.\s/m.test(t.innerText),
@@ -1848,7 +2034,11 @@ await guard(async () => {
       .map((e) => e.textContent.replace(/\s+/g, ' ')),
   );
   check('İki devletin adı da haritada mürekkep renginde, kalın', labels.length >= 2, labels.join(' | '));
-  check('Harita sınırları 1536’ya getirildi', state.year === '1536');
+  check(
+    'Tek parçalı yanıt, olay göstermiyorsa yıl seçmez: harita okurun kendi yılında (1525) kalır',
+    state.year === '1525',
+    `başlıkta ${state.year}`,
+  );
   check(
     'Kamera ittifakın iki ucunu da görünür kıldı (Fransa’dan Osmanlı’ya), metnin ve soru kutusunun altında kalan bir şey yok; haritada olay işaretçisi yok',
     state.outside === 0 && state.covered === 0 && camCompare(camBefore, camAfter).moved && state.markers.length === 0,
@@ -1984,11 +2174,13 @@ await guard(async () => {
   );
   const state = await mapState(page);
   check(
-    'Yanıtın haritası: olay kendi işaretiyle (adı yanında), taraflar vurgulu, olayın yılı; serbest işaret yok',
+    'Yanıtın haritası: yalnızca olay söylendi; uygulama onu kendi işaretiyle (ad kutusu yok), tarafları öne çıkarılmış ve savaş çizgisiyle çizdi; olayın yılı; serbest işaret yok',
     state.markers.join() === id &&
-      state.eventFlags.join() === id &&
+      state.eventFlags.length === 0 &&
+      state.wars === 1 &&
+      state.links.length === 0 &&
       state.diamonds === 0 &&
-      state.ids.includes('ottoman-empire') &&
+      state.ids.join() === 'ottoman-empire,kingdom-of-hungary,habsburg-monarchy' &&
       state.year === '1526' &&
       state.outside === 0 &&
       state.covered === 0,
@@ -2009,7 +2201,8 @@ await guard(async () => {
 section('C2. Olay: yanıt yokken kart sağda açılır; “Bunu sohbette sor”; çizelgeden; Esc sırası');
 await guard(async () => {
   const page = await open('#t=1500-1550&p=35.500,38.900');
-  await page.locator('.marker-layer [data-id="mohac-1526"]').click({ timeout: 5000 });
+  // (a place is selected, so the world's events are not on the map: the event is opened from the place's timeline)
+  await page.locator('.dock [data-id="mohac-1526"]').first().click({ timeout: 5000 });
   await settle(page, 600);
   check(
     'Yanıt yokken olay kartı sağdaki kartta açılır (altyazı, metin ya da sekme yok)',
@@ -2089,7 +2282,8 @@ await guard(async () => {
   check('Üst çubuk yeni yeri gösteriyor', /Fransa Krallığı/.test(await text(page, '[data-testid=title-main]')));
   check(
     'Soru kutusu yeni yeri söylüyor',
-    /Fransa Krallığı hakkında/.test(await page.getAttribute('[data-testid=chat-input]', 'placeholder')),
+    /Fransa Krallığı/.test(await page.getAttribute('[data-testid=chat-input]', 'placeholder')),
+    `“${await page.getAttribute('[data-testid=chat-input]', 'placeholder')}” · kutu ${await page.evaluate(() => document.querySelector('[data-testid=chat-input]').clientWidth)} px`,
   );
   check(
     'Yeni yerin kartı sağda geri geldi (seçim kartı sekmeden çıktı)',
@@ -2134,80 +2328,99 @@ await guard(async () => {
 });
 /* ====================================================== J. one narrator */
 section(
-  'J. Tek anlatıcı: yanıt ekrandayken olay işaretçileri haritadan çekilir; anılan ve tıklanan olay işaretçisini getirir',
+  'J. Tek anlatıcı: yer seçiliyken ya da yanıt ekrandayken dünya olayları haritadan çekilir; anılan ve tıklanan olay işaretçisini getirir',
 );
+// J1: nothing selected, the AI narrates
 await guard(async () => {
-  const page = await open('#t=1500-1550&p=35.500,38.900');
+  const page = await open('#t=1500-1550');
+  await page.click('[data-testid=intro-close]').catch(() => undefined);
   const before = await markerIds(page);
-  const dockBefore = await count(page, '.dock [data-id]');
   const note0 = await text(page, '.map-stats');
   check(
-    'Yanıt yokken hiçbir şey değişmedi: haritada olay işaretçileri ve “n / m olay haritada” notu var',
-    before.length >= 5 && /\/\s*\d+ olay haritada/.test(note0) && !/gerisi çizelgede/.test(note0),
+    'Hiçbir şey seçili değilken dünya olayları haritada: işaretçiler ve “n / m olay haritada” notu',
+    before.length >= 5 && /\/\s*\d+ olay haritada/.test(note0) && !/gerisi/.test(note0),
     `${before.length} işaretçi · ${note0.replace(/\s+/g, ' ')}`,
-  );
-  await page.click('[data-testid=place-ask]');
-  await settle(page, 700);
-  check(
-    'Soru kutusuna geçmek haritaya dokunmaz: işaretçiler yerinde (anlatıcı, ekrana bir yanıt gelince başlar)',
-    sameSet(await markerIds(page), before),
   );
   await ask(page, 'Osmanlı ile Fransa arasındaki 1536 ittifakı neydi?');
   await cameraRests(page, 12000);
   await settle(page, 600);
   const note1 = await text(page, '.map-stats');
   check(
-    'Yanıt ekrana gelince tüm olay işaretçileri haritadan çekilir, çizelgede aynen kalır',
-    (await markerIds(page)).length === 0 &&
-      (await count(page, '.marker-layer .evt:not(.is-hidden)')) === 0 &&
-      (await count(page, '.dock [data-id]')) === dockBefore,
-    `harita ${before.length} → 0 · çizelge ${dockBefore} → ${await count(page, '.dock [data-id]')}`,
+    'Yanıt ekrana gelince (anlatıcı yapay zekâ) dünya olayları haritadan çekilir; not nedenini söyler',
+    (await markerIds(page)).length === 0 && /0\s*olay haritada/.test(note1) && /gerisi/.test(note1),
+    `${before.length} → 0 · ${note1.replace(/\s+/g, ' ')}`,
   );
-  check(
-    'Not nedenini söylüyor: “0 olay haritada · gerisi çizelgede”',
-    /0\s*olay haritada/.test(note1) && /gerisi çizelgede/.test(note1),
-    note1.replace(/\s+/g, ' '),
-  );
-
-  // an event the reader clicks comes to the map for as long as its card is open
-  await page.locator('.dock [data-id="caldiran-1514"]').first().click({ timeout: 5000 });
-  await settle(page, 900);
-  check(
-    'Çizelgeden tıklanan olay haritada belirir (yalnızca o) ve kartı açıktır',
-    (await markerIds(page)).join() === 'caldiran-1514' && (await visible(page, '[data-testid=event-card]')),
-  );
-  await page.evaluate(() => document.activeElement?.blur?.());
-  await page.keyboard.press('Escape');
-  await settle(page, 500);
-  check('Kart kapanınca olayın işaretçisi yeniden haritadan çekilir', (await markerIds(page)).length === 0);
-
-  // closing the answer gives the map back exactly as it was
   await page.click('[data-testid=watch-close]');
   await settle(page, 900);
   const note2 = await text(page, '.map-stats');
+  const after = await markerIds(page);
   check(
-    'Yanıtı kapatmak (✕) olay işaretçilerini haritaya geri getirir, yapay zekâ çizimi gider, eski not döner (kamera yerinde kalır)',
-    (await markerIds(page)).length >= 5 &&
-      (await aiDom(page)).hidden &&
-      /\/\s*\d+ olay haritada/.test(note2) &&
-      !/gerisi çizelgede/.test(note2),
-    `${(await markerIds(page)).length} işaretçi · ${note2.replace(/\s+/g, ' ')}`,
+    'Yanıtı kapatmak (✕) dünya olaylarını haritaya geri getirir (kamera yanıtın çerçevesinde kaldığı için küme o görünüme göre), yapay zekâ çizimi gider, eski not döner',
+    after.length >= 5 && (await aiDom(page)).hidden && /\/\s*\d+ olay haritada/.test(note2) && !/gerisi/.test(note2),
+    `${after.length} işaretçi · ${note2.replace(/\s+/g, ' ')}`,
   );
   await page.context().close();
 });
+
+// J2: a place is selected: it is the narrator, the world's events leave the map
+await guard(async () => {
+  const page = await open('#t=1500-1550');
+  await page.click('[data-testid=intro-close]').catch(() => undefined);
+  const world = await markerIds(page);
+  const anatolia = await pixelOf(page, 35.5, 38.9);
+  await page.mouse.click(anatolia.x, anatolia.y);
+  await settle(page, 700);
+  const note = await text(page, '.map-stats');
+  const dock = await count(page, '.dock [data-id]');
+  check(
+    'Bir yer seçilince dünya olaylarının hiçbiri haritada kalmaz (anlatıcı yer); çizelge o yerin olaylarıyla dolu; not: “Yer seçili”',
+    world.length >= 5 &&
+      (await markerIds(page)).length === 0 &&
+      (await count(page, '.marker-layer .evt:not(.is-hidden)')) === 0 &&
+      dock >= 8 &&
+      /Yer seçili/.test(note),
+    `${world.length} → 0 işaretçi · çizelgede ${dock} olay · ${note.replace(/\s+/g, ' ')}`,
+  );
+  await shot(page, 'ai-j2-yer-secili-olaylar-cekildi.png');
+  // an event the reader opens (from the place's timeline, or the card's "elsewhere" list) is drawn: only that one
+  await page.click('[data-testid=elsewhere] summary');
+  await settle(page, 300);
+  const row = page.locator('[data-testid=elsewhere] .row').first();
+  const rowId = await row.evaluate((e) => e.dataset.id ?? e.closest('[data-id]')?.dataset.id ?? '');
+  await row.click({ timeout: 5000 });
+  await settle(page, 900);
+  const opened = await markerIds(page);
+  check(
+    'Kartın “başka yerlerde” listesinden ya da çizelgeden açılan olay haritaya gelir (yalnızca o), kartı açıktır',
+    opened.length === 1 && (await visible(page, '[data-testid=event-card]')) && (!rowId || opened[0] === rowId),
+    `${opened.join()} (${rowId})`,
+  );
+  await page.click('[data-testid=event-close]');
+  await settle(page, 500);
+  check('Olay kartı kapanınca işaretçisi haritadan yine çekilir', (await markerIds(page)).length === 0);
+  await page.click('[data-testid=place-close]').catch(() => undefined);
+  await page.keyboard.press('Escape');
+  await settle(page, 800);
+  check(
+    'Seçim kalkınca dünya olayları haritaya döner (aynı küme) ve not eski hâline gelir',
+    sameSet(await markerIds(page), world) && /\/\s*\d+ olay haritada/.test(await text(page, '.map-stats')),
+    `${(await markerIds(page)).length} işaretçi`,
+  );
+  await page.context().close();
+});
+
+// J3: a place is selected and the AI narrates it: only what the step talks about is on the map
 await guard(async () => {
   const page = await open('#t=1500-1550&p=35.500,38.900');
-  const before = await markerIds(page);
   await page.click('[data-testid=place-narrate]');
   await finalStatus(page);
   await cameraRests(page, 12000);
   await showStep(page, 2);
   const s2 = await mapState(page);
-  const named = await page.evaluate(() => document.querySelector('.ai-flag.is-event')?.textContent);
   check(
-    '2. adım Çaldıran’dan söz ediyor: haritada Çaldıran’ın kendi işaretçisi ve adı var, başka olay yok',
-    s2.markers.join() === 'caldiran-1514' && named === 'Çaldıran Muharebesi' && s2.diamonds === 0,
-    `${s2.markers.join()} · ${named}`,
+    '2. adım Çaldıran’dan söz ediyor: haritada Çaldıran’ın kendi işaretçisi var (yanında ad kutusu yok), başka olay yok',
+    s2.markers.join() === 'caldiran-1514' && s2.eventFlags.length === 0 && s2.diamonds === 0,
+    `${s2.markers.join()}`,
   );
   const dotLook = await page.evaluate(() => {
     const el = document.querySelector('.evt[data-id="caldiran-1514"]');
@@ -2221,6 +2434,14 @@ await guard(async () => {
     'Anılan olayın işaretçisi sıradan olay işaretçisiyle aynı (yıl yazılı, düğme, vurgulu değil)',
     dotLook.year === '1514' && !dotLook.selected && dotLook.button === 'BUTTON',
   );
+  // the name is on hover, like every marker's
+  await page.hover('.evt[data-id="caldiran-1514"] .evt-mark');
+  await settle(page, 300);
+  check(
+    'Olay işaretinin adı üstüne gelince görünür (ipucu)',
+    /Çaldıran Muharebesi/.test(await text(page, '.tip').catch(() => '')),
+  );
+  await page.mouse.move(5, 5);
   // clicking that marker opens its card like any other
   await page.locator('.marker-layer [data-id="caldiran-1514"]').click({ timeout: 5000 });
   await settle(page, 700);
@@ -2232,16 +2453,16 @@ await guard(async () => {
   );
   const lapSel = await overlapReport(page);
   check(
-    'Hem anılan hem açık olduğunda adı bir kez yazılı (açık olayın etiketi), çakışma yok',
-    (await count(page, '.ai-flag.is-event:not([hidden])')) === 0 && lapSel.clash.length === 0,
+    'Hem anılan hem açık olduğunda yapay zekâ tarafında ad kutusu yok (açık olayın kendi adı kartta ve işaretinde), çakışma yok',
+    (await count(page, '.ai-flag.is-event')) === 0 && lapSel.clash.length === 0,
     lapSel.clash.join(' | '),
   );
   await page.evaluate(() => document.activeElement?.blur?.());
   await page.keyboard.press('Escape');
   await settle(page, 500);
   check(
-    'Kart kapanınca olay yine anlatılan olay olarak haritada kalır',
-    (await markerIds(page)).join() === 'caldiran-1514' && (await count(page, '.ai-flag.is-event:not([hidden])')) === 1,
+    'Kart kapanınca olay yine anlatılan olay olarak haritada kalır (ad kutusu yok)',
+    (await markerIds(page)).join() === 'caldiran-1514' && (await count(page, '.ai-flag.is-event')) === 0,
   );
 
   // a mark for something the data has an event for is shown as that event; a place the data does not know stays a mark
@@ -2262,8 +2483,9 @@ await guard(async () => {
     /^tamam/.test(calls[0]) &&
       /olay kaydı/.test(calls[0]) &&
       s4.markers.includes('belgrad-1521') &&
-      s4.eventFlags.includes('belgrad-1521'),
-    `${calls[0]}`,
+      s4.eventFlags.length === 0 &&
+      s4.wars >= 3,
+    `${calls[0]} · ${s4.wars} savaş çizgisi`,
   );
   check(
     'Verinin bilmediği bir yer (Konya) serbest işaret olarak kalır: mürekkep eşkenar dörtgen ve etiketi',
@@ -2282,10 +2504,8 @@ await guard(async () => {
   await page.click('[data-testid=watch-close]');
   await settle(page, 900);
   check(
-    'Anlatım kapanınca anlatıcının işaretçileri ve çizimi gider, haritanın olayları geri gelir',
-    (await aiDom(page)).hidden &&
-      (await markerIds(page)).length >= before.length - 2 &&
-      !(await markerIds(page)).includes('belgrad-1521'),
+    'Anlatım kapanınca anlatıcının işaretçileri ve çizimi gider; yer hâlâ seçili olduğundan dünya olayları dönmez',
+    (await aiDom(page)).hidden && (await markerIds(page)).length === 0,
     (await markerIds(page)).join(', '),
   );
   await page.context().close();
@@ -2334,6 +2554,715 @@ for (const vp of [
     );
     await page.context().close();
   });
+
+/* =================================================== P. the colours the map really shows */
+/**
+ * What the map really shows, read from a screenshot and not from the style: everything above the map's canvas is hidden,
+ * the screenshot is sampled on a grid, and under each sample lies the one polity found there (a sample on a border, or
+ * where two polities overlap, is left out). With `lit` (the polities of a narration step) the colours are judged against
+ * the spotlight instead: the lit ones solid and vivid, all the rest veiled with paper.
+ */
+const SAMPLE = async ({ b64, lit }) => {
+  const m = window.__ayni.map;
+  const box = document.querySelector('#map').getBoundingClientRect();
+  const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const bmp = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+  const cv = new OffscreenCanvas(bmp.width, bmp.height);
+  const cx = cv.getContext('2d', { willReadFrequently: true });
+  cx.drawImage(bmp, 0, 0);
+  const px = cx.getImageData(0, 0, bmp.width, bmp.height).data;
+  const sc = bmp.width / innerWidth;
+  const rgbAt = (x, y) => {
+    const i = (Math.round((box.top + y) * sc) * bmp.width + Math.round((box.left + x) * sc)) * 4;
+    return [px[i], px[i + 1], px[i + 2]];
+  };
+  const css = getComputedStyle(document.documentElement);
+  const hex = (name) => {
+    const v = css.getPropertyValue(name).trim();
+    return [1, 3, 5].map((k) => parseInt(v.slice(k, k + 2), 16));
+  };
+  const tints = [...Array(9).keys()].map((i) => hex(`--tint-${i}`));
+  const vivid = [...Array(9).keys()].map((i) => hex(`--vivid-${i}`));
+  const paper = hex('--paper');
+  const veil = lit ? Number(m.getPaintProperty('ai-veil', 'background-opacity')) : 0;
+  const lin = (c) => {
+    const v = c / 255;
+    return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  const lab = (c) => {
+    const [r, g, b] = c.map(lin);
+    const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+    const mm = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+    const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+    return [
+      0.2104542553 * l + 0.793617785 * mm - 0.0040720468 * s,
+      1.9779984951 * l - 2.428592205 * mm + 0.4505937099 * s,
+      0.0259040371 * l + 0.7827717662 * mm - 0.808675766 * s,
+    ];
+  };
+  const dE = (a, b) => {
+    const x = lab(a);
+    const y = lab(b);
+    return 100 * Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]);
+  };
+  const chroma = (c) => Math.hypot(lab(c)[1], lab(c)[2]);
+  const hue = (c) => ((Math.atan2(lab(c)[2], lab(c)[1]) * 180) / Math.PI + 360) % 360;
+  const blend = (a, b, t) => a.map((v, i) => v * (1 - t) + b[i] * t);
+
+  const STEP = 12;
+  const cols = Math.floor(box.width / STEP);
+  const rows = Math.floor(box.height / STEP);
+  const grid = new Map();
+  for (let j = 1; j < rows; j++)
+    for (let i = 1; i < cols; i++) {
+      const fs = m.queryRenderedFeatures([i * STEP, j * STEP], { layers: ['polity-fill'] });
+      if (!fs.length || new Set(fs.map((f) => f.properties.id)).size !== 1) continue;
+      const f = fs[0].properties;
+      // well inside its polity: the borders and their casing (a few pixels wide) are not what the colour statistics judge
+      const inside = [
+        [-5, -5],
+        [5, -5],
+        [-5, 5],
+        [5, 5],
+      ].every(([dx, dy]) => {
+        const near = m.queryRenderedFeatures([i * STEP + dx, j * STEP + dy], { layers: ['polity-fill'] });
+        return near.length > 0 && near.every((g) => g.properties.id === f.id);
+      });
+      grid.set(`${i},${j}`, {
+        i,
+        j,
+        id: f.id,
+        tint: f.tint,
+        inside,
+        rgb: rgbAt(i * STEP, j * STEP),
+        lit: !!lit && lit.includes(f.id),
+      });
+    }
+  const everything = [...grid.values()];
+  const want = (s) => (s.lit ? vivid[s.tint] : blend(tints[s.tint], paper, veil));
+  for (const s of everything) s.dev = dE(s.rgb, want(s));
+  const samples = everything.filter((s) => s.inside);
+  const good = samples.filter((s) => s.dev <= 3);
+
+  const byPolity = new Map();
+  for (const s of good) if (!byPolity.has(s.id)) byPolity.set(s.id, s.rgb);
+  const greys = [];
+  const blues = [];
+  let minChroma = Infinity;
+  for (const [id, c] of byPolity) {
+    const ch = chroma(c);
+    minChroma = Math.min(minChroma, ch);
+    if (ch < 0.07) greys.push(id);
+    if (ch >= 0.02 && hue(c) >= 180 && hue(c) <= 310) blues.push(id);
+  }
+  // neighbours: two samples one step apart (right, below) in different polities with nothing but those two between them
+  // (a thin third polity, a bay or a strait in between would make them strangers)
+  const idsAt = (x, y) =>
+    new Set(m.queryRenderedFeatures([x, y], { layers: ['polity-fill'] }).map((f) => f.properties.id));
+  const touching = (s, o) => {
+    for (let k = 1; k < 6; k++) {
+      const ids = idsAt(s.i * STEP + ((o.i - s.i) * STEP * k) / 6, s.j * STEP + ((o.j - s.j) * STEP * k) / 6);
+      if (ids.size === 0 || [...ids].some((id) => id !== s.id && id !== o.id)) return false;
+    }
+    return true;
+  };
+  const pairs = new Map();
+  for (const s of everything.filter((e) => e.dev <= 3))
+    for (const [di, dj] of [
+      [1, 0],
+      [0, 1],
+    ]) {
+      const o = grid.get(`${s.i + di},${s.j + dj}`);
+      if (!o || o.dev > 3 || o.id === s.id || !touching(s, o)) continue;
+      const key = [s.id, o.id].sort().join(' | ');
+      if (!pairs.has(key)) pairs.set(key, dE(s.rgb, o.rgb));
+    }
+  const close = [...pairs].filter(([, d]) => d < 8).map(([k, d]) => `${k} ${d.toFixed(1)}`);
+  const mean = (a, f) => a.reduce((t, s) => t + f(s.rgb), 0) / (a.length || 1);
+  const litS = good.filter((s) => s.lit);
+  const restS = good.filter((s) => !s.lit);
+  return {
+    n: samples.length,
+    good: good.length,
+    polities: byPolity.size,
+    greys,
+    blues,
+    minChroma,
+    pairs: pairs.size,
+    minDE: pairs.size ? Math.min(...pairs.values()) : null,
+    close,
+    nLit: samples.filter((s) => s.lit).length,
+    nRest: samples.filter((s) => !s.lit).length,
+    litOff: samples.filter((s) => s.lit && s.dev > 3).length,
+    restOff: samples.filter((s) => !s.lit && s.dev > 3).length,
+    chromaLit: mean(litS, chroma),
+    chromaRest: mean(restS, chroma),
+    lightLit: mean(litS, (c) => lab(c)[0]),
+    lightRest: mean(restS, (c) => lab(c)[0]),
+  };
+};
+async function sampleMap(page, lit = null) {
+  await page.addStyleTag({
+    content:
+      '.sample-hide .maplibregl-marker, .sample-hide .plabel, .sample-hide .evt, .sample-hide .pin, .sample-hide .ai-layer, ' +
+      '.sample-hide .map-chrome, .sample-hide .map-zoom, .sample-hide [data-avoid], .sample-hide .maplibregl-ctrl ' +
+      '{ visibility: hidden !important; }',
+  });
+  await page.evaluate(() => document.documentElement.classList.add('sample-hide'));
+  await page.waitForTimeout(250);
+  const png = await page.screenshot();
+  await page.evaluate(() => document.documentElement.classList.remove('sample-hide'));
+  return page.evaluate(SAMPLE, { b64: png.toString('base64'), lit });
+}
+
+section(
+  'P. Devlet renkleri: ekranda görünen renkler gri/grimsi ya da mavi değil, komşular birbirinden ayrışıyor; spot ışığında öne çıkanlar canlı, gerisi soluk',
+);
+await guard(async () => {
+  const views = [
+    { name: 'dünya, 1500–1550', hash: '#t=1500-1550', cam: null, shot: 'ai-p1-renkler-dunya.png' },
+    {
+      name: 'Avrupa, 1400–1450',
+      hash: '#t=1400-1450',
+      cam: { center: [14, 48], zoom: 3.7 },
+      shot: 'ai-p2-renkler-avrupa.png',
+    },
+    { name: 'Doğu Asya, 1550–1600', hash: '#t=1550-1600', cam: { center: [105, 36], zoom: 3.2 } },
+    { name: 'Hindistan ve İran, 1450–1500', hash: '#t=1450-1500', cam: { center: [72, 28], zoom: 3.6 } },
+  ];
+  const got = [];
+  for (const v of views) {
+    const page = await open(v.hash);
+    await page.click('[data-testid=intro-close]').catch(() => undefined);
+    if (v.cam) {
+      await page.evaluate((cam) => window.__ayni.map.jumpTo(cam), v.cam);
+      await settle(page, 1800);
+    }
+    if (v.shot) await shot(page, v.shot);
+    got.push({ ...v, ...(await sampleMap(page)) });
+    await page.context().close();
+  }
+  const total = (k) => got.reduce((t, g) => t + g[k], 0);
+  const all = (f) => got.every(f);
+  const fmt = (g) => `${g.name}: ${g.polities} devlet, ${g.good}/${g.n} örnek`;
+  check(
+    `Ekran görüntüsünden okunan renkler (${got.length} görünüm, ${total('polities')} devlet): her görünümde en az 10 devlet, iç örneklerin %97’sinden fazlası stilin istediği renkte`,
+    all((g) => g.polities >= 10 && g.good / g.n > 0.97),
+    got.map(fmt).join(' · '),
+  );
+  const minChroma = Math.min(...got.map((g) => g.minChroma));
+  check(
+    `Hiçbir devlet gri ya da grimsi değil: en soluk devletin doygunluğu (OKLCH C) ${minChroma.toFixed(3)} (en az 0,07; kum rengi “veri yok” zemini gibi görünen yok)`,
+    all((g) => g.greys.length === 0) && minChroma >= 0.07,
+    got.flatMap((g) => g.greys).join(', '),
+  );
+  check(
+    'Hiçbir devlet mavi, turkuaz ya da mor değil (ton 180°–310° dışında; mavi yalnızca deniz ve göllerin)',
+    all((g) => g.blues.length === 0),
+    got.flatMap((g) => g.blues).join(', '),
+  );
+  const minDE = Math.min(...got.map((g) => g.minDE ?? 99));
+  check(
+    `Komşu devletler belirgin ayrışıyor: ${total('pairs')} komşu çiftte en küçük renk farkı ΔE ${minDE.toFixed(1)} (en az 8)`,
+    all((g) => g.pairs >= 8) && minDE >= 8,
+    got
+      .flatMap((g) => g.close)
+      .slice(0, 6)
+      .join(' · '),
+  );
+});
+
+await guard(async () => {
+  // the spotlight, from the pixels: the polities a step lights are solid in their vivid colour, everything else is faded
+  const page = await open('#t=1500-1550&p=35.500,38.900');
+  await page.click('[data-testid=place-narrate]');
+  await finalStatus(page);
+  await cameraRests(page, 12000);
+  const rows = [];
+  for (const exp of OTTOMAN) {
+    if (exp.n !== 1) await showStep(page, exp.n);
+    await settle(page, 800); // the veil fades in over a third of a second
+    const spot = await spotlight(page);
+    rows.push({ ...(await sampleMap(page, spot.ids)), step: exp.n, lit: spot.ids });
+  }
+  const fmt = (r) =>
+    `${r.step}. adım: ${r.nLit} öne çıkan örnek (renk sapması ${r.litOff}), ${r.nRest} soluk örnek (sapma ${r.restOff}), doygunluk ${r.chromaLit.toFixed(2)} → ${r.chromaRest.toFixed(2)}`;
+  check(
+    'Spot ışığı, ekran görüntüsünden: her adımda öne çıkan devletlerin pikselleri kendi canlı renginde (tam dolgun, saydam değil), haritanın geri kalanı kâğıt örtüyle solmuş renkte',
+    rows.every((r) => r.nLit >= 15 && r.nRest >= 100 && r.litOff / r.nLit < 0.05 && r.restOff / r.nRest < 0.05),
+    rows.map(fmt).join(' · '),
+  );
+  check(
+    'Öne çıkanlar belirgin ayrışıyor: canlı devletlerin doygunluğu soluk devletlerinkinin en az iki katı, soluk olanlar daha açık',
+    rows.every((r) => r.chromaLit >= 2 * r.chromaRest && r.lightRest > r.lightLit + 0.04),
+    rows
+      .map(
+        (r) =>
+          `${r.step}: ${(r.chromaLit / r.chromaRest).toFixed(1)}× · açıklık ${r.lightLit.toFixed(2)} / ${r.lightRest.toFixed(2)}`,
+      )
+      .join(' · '),
+  );
+  const vividGrey = rows.filter((r) => r.chromaLit < 0.1).map((r) => r.step);
+  check(
+    'Canlı renkler de gri ya da mavi değil: öne çıkan devletlerin ortalama doygunluğu en az 0,10',
+    vividGrey.length === 0,
+    rows.map((r) => `${r.step}: ${r.chromaLit.toFixed(2)}`).join(' · '),
+  );
+  await page.context().close();
+});
+
+/* ================================================== R. the names of events in captions and texts */
+section('R. Olay adları: altyazıda ve metinde tıklanabilir bağlantı; çizelgedeki bir olaya tıklamakla aynı şeyi yapar');
+/** Everything a click on an event changes, read in one go (to compare one way of opening an event with another). */
+const eventState = (page) =>
+  page.evaluate(() => {
+    const q = (sel) => document.querySelector(sel);
+    const shown = (sel) => {
+      const e = q(sel);
+      if (!e) return false;
+      const r = e.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden';
+    };
+    const rect = (sel) => {
+      const e = q(sel);
+      if (!e) return null;
+      const r = e.getBoundingClientRect();
+      return {
+        left: Math.round(r.left),
+        top: Math.round(r.top),
+        right: Math.round(r.right),
+        bottom: Math.round(r.bottom),
+      };
+    };
+    return {
+      event: window.__ayni.store.state.selectedEventId,
+      card: shown('[data-testid=event-card]'),
+      cardRect: rect('[data-testid=event-card]'),
+      title: q('[data-testid=event-title]')?.textContent.trim() ?? null,
+      selectedMarker: [...document.querySelectorAll('.marker-layer .evt.is-selected')].map((e) => e.dataset.id),
+      markers: window.__ayni.visibleMarkerIds().sort(),
+      chip: q('[data-testid=chat-event-chip]')?.textContent.replace(/\s+/g, ' ').trim() ?? null,
+      step: window.__ayni.ai.director.active?.n ?? null,
+      view: window.__ayni.ai.presentation.view,
+      read: window.__ayni.ai.presentation.readMode,
+    };
+  });
+await guard(async () => {
+  const page = await open('#t=1500-1550&p=35.500,38.900');
+  await page.click('[data-testid=place-narrate]');
+  await finalStatus(page);
+  await cameraRests(page, 12000);
+  await showStep(page, 4);
+
+  // --- in the caption of the step on screen
+  const refs = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-testid=watch-caption] button.evt-ref')].map((b) => {
+      const cs = getComputedStyle(b);
+      return { id: b.dataset.event, text: b.textContent.trim(), cursor: cs.cursor, line: cs.textDecorationLine };
+    }),
+  );
+  check(
+    '4. adımın altyazısında Mohaç ve Viyana birer bağlantı (olay kimlikleriyle): altı çizili, işaretçi imleçli; cümlenin içinde düz yazı gibi duruyor',
+    refs.map((r) => r.id).join() === 'mohac-1526,viyana-1529' &&
+      refs.every((r) => r.cursor === 'pointer' && r.line.includes('underline')),
+    refs.map((r) => `“${r.text}”`).join(' '),
+  );
+  const captionText = await text(page, '[data-testid=watch-caption]');
+  check(
+    'Altyazının görünen yazısında bağlantı işaretleri yok (köşeli ayraç, “olay:” görünmüyor)',
+    !/[[\]]|olay:/.test(captionText),
+    captionText.slice(0, 80),
+  );
+
+  // the name of an event on the map shows on hover (there is no name box beside the marker)
+  await page.hover('.evt[data-id="mohac-1526"] .evt-mark');
+  await settle(page, 500);
+  const hoverTip = await page.evaluate(() => {
+    const t = document.querySelector('.tip');
+    return { shown: !!t && !t.hidden, text: t?.textContent.replace(/\s+/g, ' ').trim() ?? '' };
+  });
+  check(
+    'Haritadaki olay işaretçisinin adı üzerine gelince görünür (yanında kalıcı bir ad kutusu yok): “Mohaç Muharebesi”',
+    hoverTip.shown && /Mohaç Muharebesi/.test(hoverTip.text),
+    hoverTip.text.slice(0, 70),
+  );
+  await page.mouse.move(700, 300);
+  await settle(page, 300);
+
+  // what a click on the event in the timeline does: the baseline
+  await page.locator('.dock [data-id="mohac-1526"]').first().click();
+  await settle(page, 700);
+  const viaTimeline = await eventState(page);
+  await page.click('[data-testid=event-close]');
+  await settle(page, 500);
+  await page.mouse.move(700, 300); // the pointer leaves the timeline dot
+  await page.click('[data-testid=watch-caption] button.evt-ref[data-event="mohac-1526"]');
+  await settle(page, 700);
+  const viaCaption = await eventState(page);
+  check(
+    'Altyazıdaki “Mohaç”, çizelgedeki Mohaç noktasına tıklamakla aynı şeyi yapar: aynı olay açık, aynı kart (aynı yerde, aynı başlık), aynı işaretçiler, soru kutusunda aynı çip; adım ve görünüm yerinde',
+    JSON.stringify(viaCaption) === JSON.stringify(viaTimeline) &&
+      viaCaption.event === 'mohac-1526' &&
+      viaCaption.card &&
+      /Mohaç/.test(viaCaption.title) &&
+      viaCaption.selectedMarker.join() === 'mohac-1526' &&
+      /Mohaç/.test(viaCaption.chip ?? '') &&
+      viaCaption.step === 4 &&
+      viaCaption.view === 'watch',
+    JSON.stringify(viaCaption),
+  );
+  await shot(page, 'ai-r1-altyazida-olay-adi.png');
+
+  // the other name in the same caption: the card moves to it; the same name again closes it (as the timeline's dot does)
+  await page.click('[data-testid=watch-caption] button.evt-ref[data-event="viyana-1529"]');
+  await settle(page, 600);
+  const second = await eventState(page);
+  check(
+    'Aynı altyazıdaki “Viyana” kartı o olaya çevirir (tek kart, açık olay Viyana, işaretçisi vurgulu); altyazı ve 4. adım yerinde',
+    second.event === 'viyana-1529' &&
+      second.card &&
+      /Viyana/.test(second.title) &&
+      second.selectedMarker.join() === 'viyana-1529' &&
+      second.step === 4 &&
+      (await visible(page, '[data-testid=watch]')) &&
+      (await count(page, '[data-testid=event-card]')) === 1,
+    `${second.title}`,
+  );
+  await page.click('[data-testid=watch-caption] button.evt-ref[data-event="viyana-1529"]');
+  await settle(page, 500);
+  const toggled = await eventState(page);
+  check(
+    'Aynı bağlantıya bir daha tıklamak olayı kapatır (çizelgedeki nokta gibi); yer kartı sekmeye döner, adım yerinde',
+    toggled.event === null && !toggled.card && (await visible(page, '[data-testid=card-tab]')) && toggled.step === 4,
+  );
+
+  // --- in the text beside the map
+  await page.click('[data-testid=watch-read]');
+  await settle(page, 900);
+  const readRefs = await page.evaluate(() => ({
+    four: [...document.querySelectorAll('[data-testid=chat-step][data-n="4"] button.evt-ref')].map(
+      (b) => b.dataset.event,
+    ),
+    all: document.querySelectorAll('[data-testid=chat-scroll] button.evt-ref').length,
+    raw: /olay:|\]\(/.test(document.querySelector('[data-testid=chat-scroll]').innerText),
+  }));
+  check(
+    'Okuyucudaki metinde de olay adları bağlantı: 4. adımda Mohaç ve Viyana, tüm metinde 6 (Safevî, Çaldıran, Ridaniye, Mohaç, Viyana, Preveze); işaret sözdizimi görünmüyor',
+    readRefs.four.join() === 'mohac-1526,viyana-1529' && readRefs.all === 6 && !readRefs.raw,
+    `${readRefs.all} bağlantı`,
+  );
+  await page.locator('.dock [data-id="mohac-1526"]').first().click();
+  await settle(page, 700);
+  const readTimeline = await eventState(page);
+  await page.click('[data-testid=event-close]');
+  await settle(page, 400);
+  await page.mouse.move(300, 300);
+  await page.click('[data-testid=chat-step][data-n="4"] button.evt-ref[data-event="mohac-1526"]');
+  await settle(page, 800);
+  const readSide = await eventState(page);
+  const reader = await rectOf(page, '#read');
+  check(
+    'Okuyucuda (yan panel) metindeki “Mohaç” da çizelgedeki noktayla aynı şeyi yapar: aynı olay, aynı kart; kart okuyucunun soluna sığıyor (üstüne binmiyor); okuyucu açık, adım 4 yerinde',
+    JSON.stringify(readSide) === JSON.stringify(readTimeline) &&
+      readSide.event === 'mohac-1526' &&
+      readSide.card &&
+      readSide.cardRect.right <= reader.left + 1 &&
+      readSide.view === 'read' &&
+      readSide.read === 'side' &&
+      readSide.step === 4,
+    JSON.stringify(readSide.cardRect),
+  );
+  await shot(page, 'ai-r2-metinde-olay-adi.png');
+  // (found while writing these: a key pressed in the text, then a change of size, moved the step; Esc closes the card)
+  await page.keyboard.press('Escape');
+  await settle(page, 500);
+  const afterEsc = await eventState(page);
+  check(
+    'Esc önce olay kartını kapatır; okuyucu ve adım yerinde',
+    afterEsc.event === null && !afterEsc.card && afterEsc.view === 'read' && afterEsc.step === 4,
+  );
+  await page.click('[data-testid=read-size]');
+  await settle(page, 1300);
+  const full = await pres(page);
+  check(
+    'Bir bağlantıya tıklayıp Esc’e bastıktan hemen sonra tam ekrana geçmek okunan adımı oynatmaz (4. adım kalır; eskiden metin sonuna kayıp 6. adıma geçiyordu)',
+    full.read === 'full' && full.step === 4,
+    `${full.step}. adım`,
+  );
+
+  // --- in the text, full screen: the card has no room beside the small map, so the event shows as in a timeline click there
+  await page.locator('.dock [data-id="viyana-1529"]').first().click();
+  await settle(page, 700);
+  const fullTimeline = await eventState(page);
+  await page.keyboard.press('Escape');
+  await settle(page, 500);
+  const fullAfter = await eventState(page);
+  await page.mouse.move(300, 300);
+  await page.click('[data-testid=chat-step][data-n="4"] button.evt-ref[data-event="viyana-1529"]');
+  await settle(page, 800);
+  const fullRef = await eventState(page);
+  check(
+    'Tam ekranda da metindeki bağlantı çizelgedeki noktayla aynı şeyi yapar: olay açık, işaretçisi küçük haritada vurgulu, soru kutusunda olay çipi; okuyucu ve adım yerinde',
+    JSON.stringify(fullRef) === JSON.stringify(fullTimeline) &&
+      fullRef.event === 'viyana-1529' &&
+      fullRef.selectedMarker.join() === 'viyana-1529' &&
+      /Viyana/.test(fullRef.chip ?? '') &&
+      fullRef.view === 'read' &&
+      fullRef.read === 'full' &&
+      fullRef.step === 4,
+    `${fullRef.chip}`,
+  );
+  check(
+    'Tam ekranda Esc açık olayı kaldırır (okuyucu tam ekran kalır)',
+    fullAfter.event === null && fullAfter.view === 'read' && fullAfter.read === 'full' && fullAfter.step === 4,
+  );
+  await shot(page, 'ai-r3-tam-ekranda-olay-adi.png');
+  await page.context().close();
+});
+
+/* ============================================== T. the place timeline shows the range and nothing beyond it */
+section(
+  'T. Çizelge: yalnızca seçili aralık (ondan önce ve sonra hiçbir şey yok); adım noktaları aralık yazısına ve birbirine binmiyor',
+);
+/** The place timeline as drawn: its axis (years and where they sit), the dots, the sovereignty strip, the cursor. */
+const timelineState = (page) =>
+  page.evaluate(() => {
+    const plot = document.querySelector('.tl-plot').getBoundingClientRect();
+    const evs = window.__ayni.data.eventsById;
+    const cur = document.querySelector('.tl-cursor').getBoundingClientRect();
+    return {
+      width: plot.width,
+      range: { ...window.__ayni.store.state.range },
+      year: window.__ayni.view().year,
+      sub: document.querySelector('.tl-sub')?.textContent.replace(/\s+/g, ' ').trim() ?? '',
+      ticks: [...document.querySelectorAll('.tl-tick')].map((e) => ({
+        year: Number(e.textContent.trim()) || null,
+        x: e.getBoundingClientRect().left - plot.left,
+      })),
+      dots: [...document.querySelectorAll('.tl-ev')].map((e) => {
+        const r = e.getBoundingClientRect();
+        const ev = evs.get(e.dataset.id);
+        return { id: e.dataset.id, cx: (r.left + r.right) / 2 - plot.left, start: ev.start, end: ev.end };
+      }),
+      segs: [...document.querySelectorAll('.tl-seg')].map((e) => {
+        const r = e.getBoundingClientRect();
+        return { l: r.left - plot.left, r: r.right - plot.left };
+      }),
+      cursor: cur.left - plot.left,
+      extra: document.querySelectorAll('.tl-range, .tl-ground .is-context, [data-testid=timeline-context]').length,
+    };
+  });
+const timelineChecks = (name, t, from, to) => {
+  const span = to - from + 1;
+  const labelled = t.ticks.filter((k) => k.year !== null);
+  const xOf = (y) => ((y - from) / span) * t.width;
+  check(
+    `${name}: eksen yalnızca ${from}–${to}: yıl etiketlerinin hepsi bu aralıkta, ${labelled.length} etiket, yerleri aralığa göre (yıl başına ${(t.width / span).toFixed(1)} px); ilk ve son yıl çizelgenin kenarlarına yakın`,
+    labelled.length >= 3 &&
+      labelled.every((k) => k.year >= from && k.year <= to && Math.abs(k.x - xOf(k.year)) < 1.5) &&
+      Math.abs(labelled[0].x - xOf(labelled[0].year)) < 1.5 &&
+      xOf(labelled[0].year) < (Math.min(40, span) / span) * t.width + 1 &&
+      t.sub.includes(`${from}–${to}`),
+    `${labelled.map((k) => k.year).join(' ')} · “${t.sub}”`,
+  );
+  const outside = t.dots.filter((d) => d.start > to || d.end < from).map((d) => d.id);
+  const off = t.dots.filter((d) => d.cx < 0 || d.cx > t.width).map((d) => d.id);
+  check(
+    `${name}: çizelgedeki ${t.dots.length} olay noktasının hepsi bu aralıkla kesişiyor (dışarıdan olay yok) ve çizelgenin içinde; sınırda başlayan olay kenara yapışık duruyor`,
+    t.dots.length >= 1 && outside.length === 0 && off.length === 0,
+    `${outside.concat(off).join(', ') || 'dışarıda olan yok'}`,
+  );
+  check(
+    `${name}: yer egemenlik şeridi de aralığın dışına taşmıyor; imleç (${t.year}) yerinde; “bağlam” bandı ya da aralık dışı etiketi yok`,
+    t.segs.every((s) => s.l >= -0.5 && s.r <= t.width + 0.5) &&
+      Math.abs(t.cursor - ((t.year + 0.5 - from) / span) * t.width) < 2 &&
+      t.extra === 0,
+    `imleç ${t.cursor.toFixed(0)} px · ${t.segs.length} parça`,
+  );
+};
+await guard(async () => {
+  for (const [from, to, shotName] of [
+    [1500, 1550, 'ai-t1-cizelge-aralik.png'],
+    [1514, 1520, 'ai-t2-cizelge-dar-aralik.png'],
+  ]) {
+    const page = await open(`#t=${from}-${to}&p=35.500,38.900`);
+    await page.click('[data-testid=intro-close]').catch(() => undefined);
+    await settle(page, 800);
+    const t = await timelineState(page);
+    timelineChecks(`${from}–${to}`, t, from, to);
+    await shot(page, shotName);
+    await page.context().close();
+  }
+});
+await guard(async () => {
+  // the ruler's step points while a narration is on: not on each other, not on the range's writing, not on the year labels.
+  // The six steps of the Ottoman narration lie some years apart; the world narration of a short range crowds three of its
+  // five steps into 1517 (Ridaniye, Luther's theses, the Portuguese at Guangzhou), which the points have to spread.
+  for (const [range, how] of [
+    ['1500-1550', 'place'],
+    ['1514-1520', 'world'],
+  ]) {
+    const page = await open(`#t=${range}${how === 'place' ? '&p=35.500,38.900' : ''}`);
+    await page.click('[data-testid=intro-close]').catch(() => undefined);
+    if (how === 'place') await page.click('[data-testid=place-narrate]');
+    else {
+      await page.click('[data-testid=chat-input]');
+      await page.click('[data-testid=chat-narrate]');
+    }
+    await page.waitForSelector('[data-testid=watch-caption]', { timeout: 20000 });
+    await finalStatus(page);
+    await cameraRests(page, 12000);
+    const years = await page.evaluate(() =>
+      [...document.querySelectorAll('[data-testid=ruler-step]')].map((e) => /· (\d{4})$/.exec(e.title)?.[1]),
+    );
+    const m = await page.evaluate(() => {
+      const R = (e) => {
+        const r = e.getBoundingClientRect();
+        return { l: r.left, r: r.right, t: r.top, b: r.bottom };
+      };
+      const hit = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+      const seen = (e) => {
+        const cs = getComputedStyle(e);
+        const r = e.getBoundingClientRect();
+        return cs.display !== 'none' && cs.visibility !== 'hidden' && r.width > 0 && r.height > 0;
+      };
+      const pts = [...document.querySelectorAll('[data-testid=ruler-step]')].map((e) => ({ n: e.dataset.n, ...R(e) }));
+      const writing = [...document.querySelectorAll('.range-readout, .brush-label, .ruler-tick b')]
+        .filter(seen)
+        .map((e) => ({ name: e.className || e.tagName, text: e.textContent.trim(), ...R(e) }));
+      const pairs = [];
+      for (let i = 0; i < pts.length; i++)
+        for (let j = i + 1; j < pts.length; j++) if (hit(pts[i], pts[j])) pairs.push(`${pts[i].n}×${pts[j].n}`);
+      const onWriting = [];
+      for (const p of pts) for (const w of writing) if (hit(p, w)) onWriting.push(`${p.n}×${w.text}`);
+      const track = document.querySelector('.ruler-track').getBoundingClientRect();
+      return {
+        n: pts.length,
+        pairs,
+        onWriting,
+        label: [...document.querySelectorAll('.brush-label')].some(seen),
+        inside: pts.every((p) => p.l >= track.left - 1 && p.r <= track.right + 1),
+        gaps: pts.slice(1).map((p, i) => ((p.l + p.r) / 2 - (pts[i].l + pts[i].r) / 2).toFixed(0)),
+      };
+    });
+    const same = Math.max(...Object.values(years.reduce((c, y) => ({ ...c, [y]: (c[y] ?? 0) + 1 }), {})));
+    check(
+      `Aralık ${range.replace('-', '–')}: ${m.n} adım noktası (yılları ${years.join(' ')}; en kalabalık yılda ${same}) birbirine ve aralık yazısına (büyük yazı, fırçanın etiketi, cetvel yılları) binmiyor; fırçanın kendi etiketi gizli; hepsi cetvelin içinde`,
+      m.n >= 5 &&
+        m.pairs.length === 0 &&
+        m.onWriting.length === 0 &&
+        !m.label &&
+        m.inside &&
+        (how === 'place' || same >= 3),
+      `merkezler arası ${m.gaps.join(' ')} px${m.pairs.length ? ` · değenler ${m.pairs.join()}` : ''}${m.onWriting.length ? ` · yazıya binenler ${m.onWriting.join()}` : ''}`,
+    );
+    if (how === 'world') await shot(page, 'ai-t3-adim-noktalari-kalabalik.png');
+    await page.context().close();
+  }
+});
+
+/* ====================================== F. the end of the text is not under the question box */
+section(
+  'F. Oku: metnin son satırı soru kutusunun (ve üstündeki notun, çipin) altında kalmıyor; tam ekranda, yan panelde, dar pencerede ve telefonda',
+);
+await guard(async () => {
+  const cases = [
+    { name: 'masaüstü 1440×900', viewport: { width: 1440, height: 900 }, mobile: false, modes: ['full', 'side'] },
+    { name: 'dar pencere 1024×700', viewport: { width: 1024, height: 700 }, mobile: false, modes: ['full', 'side'] },
+    { name: 'telefon 390×844', viewport: { width: 390, height: 844 }, mobile: true, modes: ['full'] },
+  ];
+  const rows = [];
+  for (const c of cases) {
+    const page = await open('#t=1500-1550&p=35.500,38.900', { viewport: c.viewport, mobile: c.mobile });
+    await page.click('[data-testid=place-narrate]');
+    await finalStatus(page);
+    await cameraRests(page, 12000);
+    await page.click('[data-testid=watch-read]');
+    await settle(page, 900);
+    for (const mode of c.modes) {
+      if (!c.mobile && (await pres(page)).read !== mode) {
+        await page.click('[data-testid=read-size]');
+        await settle(page, 1000);
+      }
+      // with an event open (its chip stands over the box as well), and without
+      for (const withEvent of [false, true]) {
+        if (withEvent) {
+          await page.locator('.dock [data-id="mohac-1526"]').first().click();
+          await settle(page, 700);
+        }
+        // to the very end (the text may still be settling on its step after the change of size: try until it stays there)
+        for (let k = 0; k < 6; k++) {
+          await page.evaluate(() => {
+            const s = document.querySelector('[data-testid=chat-scroll]');
+            s.scrollTo({ top: s.scrollHeight, behavior: 'instant' });
+          });
+          await settle(page, 350);
+          if (
+            await page.evaluate(() => {
+              const s = document.querySelector('[data-testid=chat-scroll]');
+              return s.scrollTop + s.clientHeight >= s.scrollHeight - 2;
+            })
+          )
+            break;
+        }
+        const g = await page.evaluate(() => {
+          const scroll = document.querySelector('[data-testid=chat-scroll]');
+          const seen = (e) => {
+            const r = e.getBoundingClientRect();
+            return r.width > 0 && r.height > 0;
+          };
+          // the text's last line: the lowest paragraph or link in the scroll area
+          const lines = [...scroll.querySelectorAll('p, button, h3')].filter(seen);
+          const bottom = Math.max(...lines.map((e) => e.getBoundingClientRect().bottom));
+          const foot = document.querySelector('#bottom').getBoundingClientRect();
+          const box = document.querySelector('[data-testid=ask]').getBoundingClientRect();
+          // what lies over the middle of that last line (and over its two ends): the text itself, or something else?
+          const last = lines.reduce((a, b) =>
+            b.getBoundingClientRect().bottom > a.getBoundingClientRect().bottom ? b : a,
+          );
+          const lr = last.getBoundingClientRect();
+          const probes = [lr.left + 4, (lr.left + lr.right) / 2, lr.right - 4].map((x) =>
+            document.elementFromPoint(
+              Math.min(innerWidth - 1, Math.max(0, x)),
+              Math.min(innerHeight - 1, lr.top + lr.height / 2),
+            ),
+          );
+          const covered = probes.filter((e) => !e || !scroll.contains(e)).length;
+          // the stack beside the reader (map side) does not lie over the text: only a stack that overlaps it sideways counts
+          const reader = document.querySelector('#read').getBoundingClientRect();
+          const overlapsSideways = foot.left < reader.right && foot.right > reader.left;
+          return {
+            bottom,
+            footTop: foot.top,
+            askTop: box.top,
+            overlapsSideways,
+            covered,
+            inView: bottom <= innerHeight,
+            atEnd: scroll.scrollTop + scroll.clientHeight >= scroll.scrollHeight - 2,
+            last: lines.at(-1).textContent.trim().slice(0, 40),
+          };
+        });
+        rows.push({ ...c, mode, withEvent, ...g });
+        if (c.name.startsWith('masaüstü') && mode === 'full' && !withEvent)
+          await shot(page, 'ai-f1-metnin-sonu-tam-ekran.png');
+        if (withEvent) {
+          await page.keyboard.press('Escape'); // the event goes (the reader stays)
+          await settle(page, 400);
+        }
+      }
+    }
+    await page.context().close();
+  }
+  for (const r of rows)
+    check(
+      `${r.name} · ${r.mode === 'full' ? 'tam ekran' : 'yan panel'}${r.withEvent ? ' · olay açıkken (çip de var)' : ''}: metnin sonuna kaydırınca son satır (“${r.last}…”) soru kutusu yığınının (not, çip, kutu) üstünde kalıyor`,
+      r.atEnd &&
+        r.inView &&
+        r.covered === 0 &&
+        (!r.overlapsSideways || (r.bottom <= r.footTop - 4 && r.bottom <= r.askTop - 4)),
+      `son satırın altı ${Math.round(r.bottom)} px, yığının üstü ${Math.round(r.footTop)} px${r.overlapsSideways ? ' (yığın metnin altında)' : ' (yığın haritanın yanında)'} · örtülen uç ${r.covered}/3`,
+    );
+});
 
 /* ============================================ E. stopping and failing, settings */
 section('E. Durdurma, hatalar, ayarlar');
@@ -2451,12 +3380,23 @@ await guard(async () => {
     'Yanıt var: haritada çizim, soru kutusunda metin düğmesi',
     !(await aiDom(page)).hidden && (await visible(page, '[data-testid=read-toggle]')),
   );
-  await page.click('[data-testid=chat-settings]');
+  const clearBtn = await page.evaluate(() => {
+    const b = document.querySelector('[data-testid=chat-new]');
+    const r = b?.getBoundingClientRect();
+    return b && r ? { visible: r.width > 20 && r.height > 20, label: b.innerText.trim(), disabled: b.disabled } : null;
+  });
+  check(
+    '“Sohbeti temizle” her zaman görünür (ayar menüsü kapalıyken de, soru kutusunun üstünde), yazışma varken etkin',
+    !!clearBtn && clearBtn.visible && /Sohbeti temizle/.test(clearBtn.label) && !clearBtn.disabled,
+    JSON.stringify(clearBtn),
+  );
   await page.click('[data-testid=chat-new]');
   await settle(page, 400);
   check(
-    '“Sohbeti temizle” yazışmayı, ekrandaki yanıtı ve haritadaki çizimi siler; metin düğmesi kalkar',
+    '“Sohbeti temizle” yazışmayı, ekrandaki yanıtı ve haritadaki çizimi siler; metin düğmesi kalkar; düğme görünür kalır ama boştayken kapalı',
     (await page.evaluate(() => window.__ayni.ai.session.items.length)) === 0 &&
+      (await visible(page, '[data-testid=chat-new]')) &&
+      (await page.locator('[data-testid=chat-new]').isDisabled()) &&
       (await aiDom(page)).hidden &&
       !(await page.evaluate(() => window.__ayni.ai.presentation.shown)) &&
       !(await visible(page, '[data-testid=watch-short]')) &&
@@ -2486,6 +3426,7 @@ const FAKE_RUNTIME = (opts = {}) => {
       signal: !!options.signal,
       first: input[0].content,
       last: input[input.length - 1].content,
+      turns: input.map((t) => t.content),
     });
     if (window.__rejectWith) throw window.__rejectWith;
     const ctx = { signal: options.signal };
@@ -2498,6 +3439,7 @@ const FAKE_RUNTIME = (opts = {}) => {
             n: 1,
             title: 'İttifak',
             caption: 'Osmanlı ile Fransa, Habsburg çemberine karşı 1536 dolayında yakınlaştı.',
+            year: 1536,
           },
           ctx,
         ),
@@ -2506,21 +3448,23 @@ const FAKE_RUNTIME = (opts = {}) => {
           { step: 1, from: 'ottoman-empire', to: 'kingdom-of-france', relation: 'alliance', label: 'Gerçek yol' },
           ctx,
         ),
-        by.set_year.execute({ step: 1, year: 1536 }, ctx),
         by.step.execute(
-          { n: 2, title: 'Akdeniz', caption: "1538'de Preveze'de Osmanlı donanması üstünlüğü aldı." },
+          {
+            n: 2,
+            title: 'Akdeniz',
+            caption: "1538'de [Preveze](olay:preveze-1538)'de Osmanlı donanması üstünlüğü aldı.",
+          },
           ctx,
         ),
         by.highlight.execute({ step: 2, polities: ['ottoman-empire', 'republic-of-venice'] }, ctx),
         by.show_event.execute({ step: 2, event: 'preveze-1538' }, ctx),
-        by.set_year.execute({ step: 2, year: 1538 }, ctx),
       ]);
     }
     // the long texts are written after the plan; a held call lets the page be looked at in between
     if (window.__hold) await new Promise((r) => (window.__release = r));
     await new Promise((r) => setTimeout(r, 80));
     const first = '## 1. İttifak\nBu yanıt sahte çalışma zamanından geldi';
-    const full = `${first}, araçlarla birlikte.\n\n## 2. Akdeniz\nPreveze önünde donanmalar karşılaştı.`;
+    const full = `${first}, araçlarla birlikte.\n\n## 2. Akdeniz\n[Preveze](olay:preveze-1538) önünde donanmalar karşılaştı.`;
     options.onText?.({ text: first, delta: first });
     await new Promise((r) => setTimeout(r, 80));
     options.onText?.({ text: full, delta: full.slice(first.length) });
@@ -2581,16 +3525,31 @@ await guard(async () => {
       mid.outside === 0,
     mid.ids.join('+'),
   );
-  await page.click('[data-testid=watch-pip][data-n="2"]');
-  await cameraRests(page);
+  await showStep(page, 2);
   const mid2 = await mapState(page);
   check(
-    'Metin yazılmadan 2. adıma da geçilebiliyor: Osmanlı + Venedik, Preveze işareti, 1538',
+    'Metin yazılmadan 2. adıma da geçilebiliyor: model yalnızca Osmanlı + Venedik ve Preveze’yi söyledi; uygulama olayın taraflarını da öne çıkardı, savaş çizgisini çizdi, yılı olayınkinden aldı (1538)',
     (await stepNow(page)) === 2 &&
-      mid2.ids.join() === 'ottoman-empire,republic-of-venice' &&
+      mid2.ids.join() === 'ottoman-empire,republic-of-venice,papal-states,spanish-empire' &&
       mid2.markers.join() === 'preveze-1538' &&
+      mid2.wars === 1 &&
       mid2.year === '1538',
-    `${mid2.ids.join('+')} · ${mid2.markers.join()}`,
+    `${mid2.ids.join('+')} · ${mid2.markers.join()} · savaş ${mid2.wars}`,
+  );
+  // the name of the event in the caption is a link: it does what a click on the event in the timeline does
+  const refs = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-testid=watch-caption] button.evt-ref')].map((b) => [
+      b.textContent,
+      b.dataset.event,
+    ]),
+  );
+  check(
+    'Altyazıdaki olay adı bağlantı: “Preveze” → preveze-1538 (gösterilen metin, [ad](olay:kimlik) işareti değil)',
+    refs.length === 1 &&
+      refs[0][0] === 'Preveze' &&
+      refs[0][1] === 'preveze-1538' &&
+      !/olay:/.test(await text(page, '[data-testid=watch-caption]')),
+    JSON.stringify(refs),
   );
   await page.click('[data-testid=watch-read]');
   await settle(page, 500);
@@ -2620,15 +3579,16 @@ await guard(async () => {
   );
   check('Araçlarla çağrıda cache hiç gönderilmiyor (çalışma zamanı reddederdi)', call.hasCache === false);
   check(
-    'Yedi araç, bu sırayla: step, highlight, connect, show_event, mark, set_year, focus',
-    call.tools.join() === 'step,highlight,connect,show_event,mark,set_year,focus',
+    'Beş araç, bu sırayla: step, show_event, highlight, connect, mark (kamera ya da görünüş aracı yok)',
+    call.tools.join() === 'step,show_event,highlight,connect,mark',
     call.tools.join(),
   );
   check(
-    'Adım aracı iki metin ister: numara, başlık ve altyazı (caption)',
+    'Adım aracı iki metin ister: numara, başlık ve altyazı (caption); yıl isteğe bağlı',
     call.stepSchema &&
-      ['n', 'title', 'caption'].every((k) => k in call.stepSchema.properties) &&
-      ['n', 'title', 'caption'].every((k) => call.stepSchema.required.includes(k)),
+      ['n', 'title', 'caption', 'year'].every((k) => k in call.stepSchema.properties) &&
+      ['n', 'title', 'caption'].every((k) => call.stepSchema.required.includes(k)) &&
+      !call.stepSchema.required.includes('year'),
   );
   const results = await page.evaluate(() => window.__toolResults);
   check(
@@ -2662,8 +3622,26 @@ await guard(async () => {
     second.roles.join(),
   );
   check(
+    'Konuşmanın tamamı modele gidiyor: önceki sorunun kendisi, önceki yanıtın tam metni (iki adım) ve o yanıtın haritada ne gösterdiği',
+    /Fransa ile ittifak neydi\?/.test(second.turns[1]) &&
+      /\[Preveze\]\(olay:preveze-1538\) önünde donanmalar karşılaştı/.test(second.turns[2]) &&
+      /\[Haritada gösterdiklerim: 1\. adım: öne çıkan: Osmanlı İmparatorluğu, Fransa Krallığı/.test(second.turns[2]) &&
+      /2\. adım: öne çıkan: Osmanlı İmparatorluğu, Venedik Cumhuriyeti; olay: Preveze/.test(second.turns[2]),
+    second.turns[2]?.slice(second.turns[2].indexOf('[Haritada'), second.turns[2].indexOf('[Haritada') + 220),
+  );
+  check(
     'Yeni çağrının bağlamında önceki çizimler söyleniyor',
     /Haritada şu an senin çizdiklerin var/.test(second.last),
+  );
+  // the third question after "Sohbeti temizle" starts from nothing: no history reaches the model
+  await page.click('[data-testid=chat-new]');
+  await settle(page, 300);
+  await ask(page, 'Peki Venedik?');
+  const third = await page.evaluate(() => window.__sampleCalls[2]);
+  check(
+    '“Sohbeti temizle”den sonra sorulan soruda önceki konuşma modele gitmez (yalnızca yönergeler ve yeni istek)',
+    third.roles.join() === 'user,user' && !/önünde donanmalar karşılaştı/.test(third.turns.join('\n')),
+    third.roles.join(),
   );
   await shot(page, 'ai-8-gercek-sample.png');
   await page.context().close();
@@ -2775,7 +3753,10 @@ await guard(async () => {
       return e ? e.getBoundingClientRect().toJSON() : null;
     };
     const watch = document.querySelector('[data-testid=watch]');
-    const controls = [...watch.querySelectorAll('button, select')].map((e) => e.getBoundingClientRect());
+    // the controls (an event's name in the caption is a link in a sentence, not a control: it is as high as the line)
+    const controls = [...watch.querySelectorAll('.watch-btn, .watch-speed select')]
+      .map((e) => e.getBoundingClientRect())
+      .filter((r) => r.width > 0);
     const w = watch.getBoundingClientRect();
     return {
       vw: innerWidth,
@@ -2791,7 +3772,7 @@ await guard(async () => {
         const e = document.querySelector('.legend');
         return !!e && getComputedStyle(e).display !== 'none';
       })(),
-      tiny: [...watch.querySelectorAll('button')].filter((b) => b.getBoundingClientRect().height < 30).length,
+      tiny: [...watch.querySelectorAll('.watch-btn')].filter((b) => b.getBoundingClientRect().height < 30).length,
     };
   });
   check(
@@ -2910,7 +3891,7 @@ server.stop();
 /* ------------------------------------------------------------------ report */
 const passed = results.filter((r) => r.ok).length;
 const lines = [
-  '# Okuma arkadaşı ve harita öncelikli düzen: doğrulama raporu',
+  '# Okuma arkadaşı, sade harita ve tutarlı sohbet: doğrulama raporu',
   '',
   `${passed}/${results.length} denetim geçti (\`npm run e2e:ai\`). Model olarak komut dosyalı deneme kipi kullanıldı; G grubu gerçek \`sample\` bağdaştırıcısını sahte bir çalışma zamanıyla sınar.`,
   '',
@@ -2924,11 +3905,16 @@ for (const [i, s] of sections.entries()) {
 lines.push(
   '## Ekran görüntüleri',
   '',
+  '- `ai-p1-renkler-dunya.png`, `ai-p2-renkler-avrupa.png`: devlet renkleri (gri ve mavi yok, komşular ayrışıyor)',
   '- `ai-0-yeni-duzen.png`: harita neredeyse tam ekran; üstte ince çubuk, altta ince zaman çizelgesi, hemen üstünde soru kutusu, sağda küçük bilgi kartı',
   '- `ai-0-yer-karti.png`: bir yer seçilince küçük kart',
   '- `ai-1a-anlatim-adim1.png`, `ai-1b-anlatim-adim2.png`, `ai-1d-anlatim-adim3.png`, `ai-1e-anlatim-adim4.png`, `ai-1c-anlatim-adim6.png`: İzle; her adım yalnızca kendi çizimini gösterir, altyazı sabit yerde, kamera adımı izler',
   '- `ai-1f-tek-anlatici.png`: yanıt ekrandayken haritada yalnızca anılan ve tıklanan olayların işaretçileri',
+  '- `ai-j2-yer-secili-olaylar-cekildi.png`: bir yer seçilince dünya olayları haritadan çekilir (not nedenini söyler, çizelge o yerin olaylarıyla dolu)',
   '- `ai-v1-ilerleme-cubugu.png`: zaman cetveli ilerleme çubuğu (adımlar tarihlerinde, görülenler dolu)',
+  '- `ai-t1-cizelge-aralik.png`, `ai-t2-cizelge-dar-aralik.png`: yer çizelgesi yalnızca seçili aralığı gösterir; `ai-t3-adim-noktalari-kalabalik.png`: aynı yıla düşen üç adımın noktaları birbirine binmeden açılır',
+  '- `ai-r1-altyazida-olay-adi.png`, `ai-r2-metinde-olay-adi.png`, `ai-r3-tam-ekranda-olay-adi.png`: altyazıdaki ve metindeki olay adları tıklanabilir; çizelgedeki tıklamayla aynı sonuç',
+  '- `ai-f1-metnin-sonu-tam-ekran.png`: tam ekran okumada metnin son satırı soru kutusunun üstünde',
   '- `ai-w1-izle-adim3.png`, `ai-w2-oku-yan-panel.png`, `ai-w3-oku-tam-ekran.png`: aynı adım (3) üç görünümde: İzle, Oku yan panel, Oku tam ekran (köşede küçük harita)',
   '- `ai-w4-oku-sirasinda-soru.png`: okurken sorulan soru, arkadaki haritayı günceller',
   '- `ai-2-kisa-yanit.png`: kısa yanıt (adımsız, tek sahne; Osmanlı–Fransa ittifakı)',

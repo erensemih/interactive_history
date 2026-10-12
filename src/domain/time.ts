@@ -150,28 +150,6 @@ export function presetRange(r: YearRange, span: number, extent: YearRange): Year
   return { from, to: from + length - 1 };
 }
 
-/**
- * The window the place timeline displays: the selected range plus context on both sides,
- * so a one-year selection still shows what happened around it. Always inside `extent`.
- */
-export function detailDomain(r: YearRange, extent: YearRange, minSpan = 30): YearRange {
-  const span = r.to - r.from + 1;
-  const pad = Math.max(Math.ceil(span * 0.5), Math.ceil((minSpan - span) / 2), 8);
-  let lo = r.from - pad;
-  let hi = r.to + pad;
-  const total = extent.to - extent.from + 1;
-  if (hi - lo + 1 >= total) return { ...extent };
-  if (lo < extent.from) {
-    hi += extent.from - lo;
-    lo = extent.from;
-  }
-  if (hi > extent.to) {
-    lo -= hi - extent.to;
-    hi = extent.to;
-  }
-  return { from: Math.max(lo, extent.from), to: Math.min(hi, extent.to) };
-}
-
 /** Round tick positions (years) for an axis that spans [lo, hi + 1) over `width` px. */
 export function axisTicks(lo: number, hi: number, width: number, minGap = 64): { year: number; major: boolean }[] {
   const span = hi - lo + 1;

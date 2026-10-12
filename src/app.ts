@@ -16,6 +16,7 @@ import type { Drawing } from './ai/types';
 import { loadData, type AppData } from './data/load';
 import { CameraWatch, type Camera } from './domain/camera';
 import type { HistoricalEvent } from './domain/types';
+import type { Narrator } from './map/markers';
 import { MapView } from './map/mapView';
 import { deriveView, type ViewModel } from './state/derive';
 import { DEFAULT_STATE, Store, type AppState } from './state/store';
@@ -268,6 +269,14 @@ export async function startApp(root: HTMLElement): Promise<void> {
         presentation.shown && presentation.view === 'read' ? presentation.closeRead() : presentation.openRead(),
     },
   });
+  /**
+   * The name of an event in a caption or a text was clicked: the same as clicking that event on the timeline (it opens
+   * its card and, if it lies out of sight, the map makes room for it; a second click closes it again).
+   */
+  function openEvent(id: string) {
+    if (!data.eventsById.has(id)) return;
+    store.selectEvent(store.state.selectedEventId === id ? null : id);
+  }
   const watchView = new WatchView({
     session,
     presentation,
@@ -277,6 +286,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
       openPermissions: () => void openPermissionsPanel(),
       read: () => presentation.openRead(),
       close: () => presentation.hide(),
+      openEvent,
     },
   });
   const readView = new ReadView({
@@ -298,6 +308,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
       watch: () => presentation.closeRead(),
       close: () => presentation.closeRead(),
       toggleSize: () => presentation.setReadMode(presentation.readMode === 'full' ? 'side' : 'full'),
+      openEvent,
     },
   });
   $('bottom').append(watchView.element, askBox.element);
@@ -371,6 +382,8 @@ export async function startApp(root: HTMLElement): Promise<void> {
   let vmAiYear: number | null = null;
   let drawnDrawing: unknown = null;
   let wasNarrating = false;
+  /** Who narrates the map now: the AI, else the selected place, else nobody. */
+  let narratorNow: Narrator | null = null;
   /** The map is a small window in a corner (the full-screen reader): where the camera was, if it must come back to it. */
   let wasMini = false;
   let miniSaved: Camera | null = null;
@@ -509,9 +522,11 @@ export async function startApp(root: HTMLElement): Promise<void> {
     mapView.setHoverEvent(state.hoverEventId);
     revealIfNew(open);
 
-    // While an answer is on screen the AI is the map's narrator: the event markers leave the map (they stay on the
-    // timeline) and only the opened event and the ones the AI talks about are drawn.
-    mapView.setNarrator(narrating);
+    // The map has one narrator at a time: the AI while its answer is on screen, else the selected place. With one
+    // the globally important events leave the map (they stay on the timeline) and only the opened event and the ones
+    // the AI talks about are drawn; with nobody selected and nothing asked, they are all there.
+    narratorNow = narrating ? 'ai' : vm.places.length > 0 ? 'place' : null;
+    mapView.setNarrator(narratorNow);
     // The answer comes back (the reader opened it again): its step's drawing returns to the map, and the camera
     // follows it.
     if (narrating && !wasNarrating && director.following && director.drawing) {
@@ -569,7 +584,14 @@ export async function startApp(root: HTMLElement): Promise<void> {
     if (rangeKey !== announced.range) {
       const first = announced.range === '';
       announced.range = rangeKey;
-      if (!first) announce(`Zaman aralığı ${rangeKey}. Haritada ${v.mapEvents.length} olay.`, 500);
+      // (with somebody narrating the world's events are off the map, so there is nothing to count there)
+      if (!first)
+        announce(
+          narratorNow
+            ? `Zaman aralığı ${rangeKey}.`
+            : `Zaman aralığı ${rangeKey}. Haritada ${v.mapEvents.length} olay.`,
+          500,
+        );
     }
   }
 
@@ -762,9 +784,17 @@ export async function startApp(root: HTMLElement): Promise<void> {
         onMarkerStats: ({ shown, total, thinned, offscreen, narrator }) => {
           const el = $('map-stats');
           el.hidden = total === 0;
-          if (narrator) {
-            // The AI narrates: the others are on the timeline, and the note says where they went.
-            render(html`<b>${shown}</b> olay haritada <span> · gerisi çizelgede</span>`, el);
+          if (narrator === 'place' && shown === 0) {
+            // A place is selected: the world's events have left the map. They are in the card's "elsewhere" list, and the
+            // note says so and how they come back.
+            render(
+              html`<b>Yer seçili</b> <span> · dünya olayları haritadan çekildi, seçimi kaldırınca döner</span>`,
+              el,
+            );
+          } else if (narrator) {
+            // Somebody narrates: the others are off the map until it ends (or on the place's timeline), and the note says so.
+            const rest = store.state.places.length ? 'gerisi çizelgede' : 'gerisi yanıt kapanınca döner';
+            render(html`<b>${shown}</b> olay haritada <span> · ${rest}</span>`, el);
           } else {
             // Say honestly why some events are not drawn: zoom/collision thinning, or simply out of view.
             const hint =

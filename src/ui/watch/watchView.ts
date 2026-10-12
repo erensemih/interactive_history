@@ -5,7 +5,8 @@ import { SPEED_IDS, SPEEDS, type Presentation, type SpeedId } from '../../ai/pre
 import type { AiSession, AssistantItem } from '../../ai/session';
 import { paragraphsOf } from '../../ai/steps';
 import { clsx } from '../format';
-import { inline } from '../read/richText';
+import { eventRefOf, inline } from '../read/richText';
+import { plainText, withoutOpenReference } from '../read/segments';
 
 export interface WatchActions {
   stop(): void;
@@ -15,6 +16,8 @@ export interface WatchActions {
   read(): void;
   /** The cross: the answer goes away and the map is the reader's again. */
   close(): void;
+  /** An event named in a caption or a text was clicked: the same as a click on that event in the timeline. */
+  openEvent(id: string): void;
 }
 
 export interface WatchDeps {
@@ -73,8 +76,18 @@ export class WatchView {
     this.element = document.createElement('div');
     this.element.className = 'watch-host';
     this.element.dataset.testid = 'watch-host';
+    // one listener over everything drawn here: the names of events in a caption or a short text are links
+    this.element.addEventListener('click', (e) => {
+      const id = eventRefOf(e.target);
+      if (!id) return;
+      e.preventDefault();
+      deps.actions.openEvent(id);
+    });
     this.draw();
   }
+
+  /** Is this the id of an event of the app's data? (A reference to anything else stays plain text.) */
+  private known = (id: string) => !!this.deps.session.resolver.eventById(id);
 
   update() {
     if (this.queued) return;
@@ -214,103 +227,97 @@ export class WatchView {
       data-step=${step.n}
       role="region"
       aria-roledescription="anlatım"
-      aria-label="Anlatım: ${step.title || `adım ${i + 1}`}"
+      aria-label="Anlatım: ${plainText(step.title) || `adım ${i + 1}`}"
       data-avoid
     >
       <div class="watch-head">
-        <span class="watch-count" data-testid="watch-count" aria-label=${`${i + 1}. adım, toplam ${steps.length}`}>
-          ${i + 1} / ${steps.length}
-        </span>
+        <div class="watch-nav">
+          <button
+            type="button"
+            class="watch-btn watch-nav-btn"
+            data-testid="watch-prev"
+            aria-label="Önceki adım"
+            aria-keyshortcuts="ArrowLeft"
+            title="Önceki adım (←)"
+            ?disabled=${!p.hasPrev}
+            @click=${() => p.prev()}
+          >
+            ${ICON.prev}
+          </button>
+          <span class="watch-count" data-testid="watch-count" aria-label=${`${i + 1}. adım, toplam ${steps.length}`}>
+            ${i + 1} / ${steps.length}
+          </span>
+          <button
+            type="button"
+            class="watch-btn watch-nav-btn"
+            data-testid="watch-next"
+            aria-label="Sonraki adım"
+            aria-keyshortcuts="ArrowRight"
+            title="Sonraki adım (→)"
+            ?disabled=${!p.hasNext}
+            @click=${() => p.next()}
+          >
+            ${ICON.next}
+          </button>
+        </div>
         <h2 class="watch-title" data-testid="watch-title">${step.title}</h2>
         ${
           writing
             ? html`<span class="watch-wip" data-testid="watch-writing"
-                >Metin yazılıyor<i class="dots" aria-hidden="true"><b></b><b></b><b></b></i
+                ><span class="watch-wip-text">Metin yazılıyor</span
+                ><i class="dots" aria-hidden="true"><b></b><b></b><b></b></i
               ></span>`
             : nothing
         }
-      </div>
-      <p class="watch-caption" data-testid="watch-caption" aria-live="polite" aria-atomic="true">${step.caption}</p>
-      ${this.notesOf(item)}${err ?? nothing}${this.stoppedLine(item)}
-      <div class="watch-controls">
-        <button
-          type="button"
-          class="watch-btn"
-          data-testid="watch-prev"
-          aria-label="Önceki adım"
-          aria-keyshortcuts="ArrowLeft"
-          title="Önceki adım (←)"
-          ?disabled=${!p.hasPrev}
-          @click=${() => p.prev()}
-        >
-          ${ICON.prev}
-        </button>
-        <button
-          type="button"
-          class="watch-btn"
-          data-testid="watch-next"
-          aria-label="Sonraki adım"
-          aria-keyshortcuts="ArrowRight"
-          title="Sonraki adım (→)"
-          ?disabled=${!p.hasNext}
-          @click=${() => p.next()}
-        >
-          ${ICON.next}
-        </button>
-        <ol class="watch-pips" aria-label="Adımlar">
-          ${steps.map(
-            (s, k) =>
-              html`<li>
-                <button
-                  type="button"
-                  class=${clsx('watch-pip', k === i && 'is-on', k < i && 'is-past')}
-                  data-testid="watch-pip"
-                  data-n=${s.n}
-                  aria-label=${`${k + 1}. adım${s.title ? `: ${s.title}` : ''}`}
-                  aria-current=${k === i ? 'step' : 'false'}
-                  title=${s.title}
-                  @click=${() => p.go(s.n)}
-                ></button>
-              </li>`,
-          )}
-        </ol>
-        <button
-          type="button"
-          class=${clsx('watch-btn', 'watch-play', p.playing && 'is-on')}
-          data-testid="watch-play"
-          aria-pressed=${p.playing}
-          aria-label=${p.playing ? 'Otomatik oynatmayı duraklat' : 'Otomatik oynat'}
-          title=${p.playing ? 'Duraklat' : 'Kendiliğinden ilerlesin'}
-          @click=${() => p.toggle()}
-        >
-          ${p.playing ? ICON.pause : ICON.play}<span>${p.playing ? 'Duraklat' : 'Oynat'}</span>
-        </button>
-        <label class="watch-speed">
-          <span class="sr-only">Oynatma hızı</span>
-          <select
-            data-testid="watch-speed"
-            aria-label="Oynatma hızı"
-            title="Oynatma hızı"
-            @change=${(e: Event) => p.setSpeed((e.target as HTMLSelectElement).value as SpeedId)}
+        <div class="watch-tools">
+          <button
+            type="button"
+            class=${clsx('watch-btn', 'watch-play', p.playing && 'is-on')}
+            data-testid="watch-play"
+            aria-pressed=${p.playing}
+            aria-label=${p.playing ? 'Otomatik oynatmayı duraklat' : 'Otomatik oynat'}
+            title=${p.playing ? 'Duraklat' : 'Kendiliğinden ilerlesin'}
+            @click=${() => p.toggle()}
           >
-            ${SPEED_IDS.map((id) => html`<option value=${id} ?selected=${p.speed === id}>${SPEEDS[id].label}</option>`)}
-          </select>
-        </label>
-        <span class="watch-spacer"></span>
-        <button type="button" class="watch-btn watch-read" data-testid="watch-read" @click=${() => actions.read()}>
-          ${ICON.lines}<span>Metni oku</span>
-        </button>
-        <button
-          type="button"
-          class="watch-btn"
-          data-testid="watch-close"
-          aria-label="Anlatımı kapat"
-          title="Kapat: harita yeniden sizin"
-          @click=${() => actions.close()}
-        >
-          ${ICON.close}
-        </button>
+            ${p.playing ? ICON.pause : ICON.play}<span>${p.playing ? 'Duraklat' : 'Oynat'}</span>
+          </button>
+          <label class="watch-speed">
+            <span class="sr-only">Oynatma hızı</span>
+            <select
+              data-testid="watch-speed"
+              aria-label="Oynatma hızı"
+              title="Oynatma hızı"
+              @change=${(e: Event) => p.setSpeed((e.target as HTMLSelectElement).value as SpeedId)}
+            >
+              ${SPEED_IDS.map((id) => html`<option value=${id} ?selected=${p.speed === id}>${SPEEDS[id].label}</option>`)}
+            </select>
+          </label>
+          <button
+            type="button"
+            class="watch-btn watch-read"
+            data-testid="watch-read"
+            aria-label="Metni oku"
+            title="Metni oku"
+            @click=${() => actions.read()}
+          >
+            ${ICON.lines}<span>Metni oku</span>
+          </button>
+          <button
+            type="button"
+            class="watch-btn"
+            data-testid="watch-close"
+            aria-label="Anlatımı kapat"
+            title="Kapat: harita yeniden sizin"
+            @click=${() => actions.close()}
+          >
+            ${ICON.close}
+          </button>
+        </div>
       </div>
+      <p class="watch-caption" data-testid="watch-caption" aria-live="polite" aria-atomic="true">
+        ${inline(withoutOpenReference(step.caption), this.known)}
+      </p>
+      ${this.notesOf(item)}${err ?? nothing}${this.stoppedLine(item)}
     </section>`;
   }
 
@@ -336,7 +343,7 @@ export class WatchView {
             ? paragraphs.map(
                 (p, i) =>
                   html`<p>
-                    ${inline(p)}${writing && i === paragraphs.length - 1 ? html`<i class="caret" aria-hidden="true"></i>` : nothing}
+                    ${inline(writing ? withoutOpenReference(p) : p, this.known)}${writing && i === paragraphs.length - 1 ? html`<i class="caret" aria-hidden="true"></i>` : nothing}
                   </p>`,
               )
             : html`<p><i class="caret" aria-hidden="true"></i></p>`
@@ -345,7 +352,14 @@ export class WatchView {
       ${this.notesOf(item)}${err ?? nothing}${this.stoppedLine(item)}
       <div class="watch-controls">
         <span class="watch-spacer"></span>
-        <button type="button" class="watch-btn watch-read" data-testid="watch-read" @click=${() => actions.read()}>
+        <button
+          type="button"
+          class="watch-btn watch-read"
+          data-testid="watch-read"
+          aria-label="Metni oku"
+          title="Metni oku"
+          @click=${() => actions.read()}
+        >
           ${ICON.lines}<span>Metni oku</span>
         </button>
         <button

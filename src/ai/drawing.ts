@@ -1,4 +1,5 @@
-import type { PlacePoint } from '../domain/types';
+import type { HistoricalEvent, PlacePoint } from '../domain/types';
+import { eventKindOf, warSides } from './eventKinds';
 import { normalizeName, type Resolver } from './resolve';
 import {
   LIMITS,
@@ -11,6 +12,7 @@ import {
   type ResolvedDrawing,
   type ResolvedEvent,
   type ResolvedLink,
+  type ResolvedWar,
 } from './types';
 
 export const emptyDrawing = (): Drawing => ({
@@ -18,12 +20,13 @@ export const emptyDrawing = (): Drawing => ({
   links: [],
   marks: [],
   events: [],
-  focus: { polities: [], points: [] },
 });
+
+/** The year of an event of the data (null for an id the data does not know). */
+export type EventYear = (id: string) => number | null;
 
 const linkKey = (l: Pick<Link, 'from' | 'to' | 'relation'>) => `${[l.from, l.to].sort().join('|')}|${l.relation}`;
 const markKey = (m: Mark) => `${m.point.lon.toFixed(1)},${m.point.lat.toFixed(1)}|${normalizeName(m.label)}`;
-const pointKey = (p: PlacePoint) => `${p.lon.toFixed(1)},${p.lat.toFixed(1)}`;
 
 /** The newest `max` entries: when a step asks for too much, the earlier requests give way. */
 const newest = <T>(list: T[], max: number): T[] => (list.length > max ? list.slice(list.length - max) : list);
@@ -31,9 +34,10 @@ const newest = <T>(list: T[], max: number): T[] => (list.length > max ? list.sli
 /**
  * What one step shows on the map: its own actions and nothing else. The step before leaves nothing behind
  * and the step after inherits nothing, so the map is always exactly what the step on screen asked for.
- * The year is part of that: a step that sets none leaves the year to the reader.
+ * The year is part of that: the one the step names, else the year of the earliest event it shows (a step about
+ * Mohács shows the borders of 1526 without being told), else the reader's own.
  */
-export function drawingOf(actions: readonly MapAction[]): Drawing {
+export function drawingOf(actions: readonly MapAction[], eventYearOf?: EventYear): Drawing {
   const d = emptyDrawing();
   for (const a of actions) {
     if (a.kind === 'highlight') {
@@ -48,9 +52,6 @@ export function drawingOf(actions: readonly MapAction[]): Drawing {
       if (!d.marks.some((m) => markKey(m) === markKey(mark))) d.marks.push(mark);
     } else if (a.kind === 'event') {
       if (!d.events.includes(a.id)) d.events.push(a.id);
-    } else if (a.kind === 'focus') {
-      for (const id of a.polities) if (!d.focus.polities.includes(id)) d.focus.polities.push(id);
-      for (const p of a.points) if (!d.focus.points.some((q) => pointKey(q) === pointKey(p))) d.focus.points.push(p);
     }
   }
   for (const a of actions) if (a.kind === 'set_year') d.year = a.year;
@@ -58,8 +59,10 @@ export function drawingOf(actions: readonly MapAction[]): Drawing {
   d.links = newest(d.links, LIMITS.links);
   d.marks = newest(d.marks, LIMITS.marks);
   d.events = newest(d.events, LIMITS.events);
-  d.focus.polities = newest(d.focus.polities, LIMITS.focus);
-  d.focus.points = newest(d.focus.points, LIMITS.focus);
+  if (d.year === undefined && eventYearOf) {
+    const years = d.events.map(eventYearOf).filter((y): y is number => y !== null);
+    if (years.length) d.year = Math.min(...years);
+  }
   return d;
 }
 
@@ -80,6 +83,9 @@ export class TurnPlan {
   private readonly steps = new Map<number, PlannedStep>();
   /** Grows with every change, so a view can tell cheaply whether it has to look again. */
   version = 0;
+
+  /** `eventYearOf` lets a step that shows an event of the data and names no year show that event's year. */
+  constructor(private readonly eventYearOf?: EventYear) {}
 
   private ensure(n: number): PlannedStep {
     let step = this.steps.get(n);
@@ -133,19 +139,53 @@ export class TurnPlan {
    * back to step 2 gives exactly what step 2 showed the first time.
    */
   drawingAt(n: number): Drawing {
-    return drawingOf(this.actionsOf(n));
+    return drawingOf(this.actionsOf(n), this.eventYearOf);
   }
 }
 
+/* ------------------------------------------------------------- how the app draws an event */
+
+/** The war line of an event for the year shown: the first side and the opposing one that have borders then, joined near the event. */
+function warOf(ev: HistoricalEvent, resolver: Resolver, year: number, point: PlacePoint): ResolvedWar | undefined {
+  const sides = warSides(ev);
+  if (!sides) return undefined;
+  const aId = sides.first.find((p) => resolver.rowAt(p, year));
+  const bId = sides.second.find((p) => p !== aId && resolver.rowAt(p, year));
+  if (!aId || !bId) return undefined;
+  // each end leaves from the part of its polity that is nearest the event, so the line does not start across the sea
+  const a = resolver.anchorToward(aId, year, point) ?? resolver.anchorAt(aId, year);
+  const b = resolver.anchorToward(bId, year, point) ?? resolver.anchorAt(bId, year);
+  return a && b ? { aId, bId, a, b } : undefined;
+}
+
+const pairKey = (a: string, b: string) => [a, b].sort().join('|');
+
 /**
- * The drawing for the year shown: polities become the places they are drawn at, events the markers they
- * have. A polity without borders that year cannot be highlighted or connected, so it is left out (the
+ * The drawing for the year shown: polities become the places they are drawn at, events the markers (and, for a war,
+ * the line) they have. A polity without borders that year cannot be lit or connected, so it is left out (the
  * drawing may well be right in another year of the range); an event that is not in the data is dropped.
  */
 export function resolveDrawing(drawing: Drawing, resolver: Resolver, year: number): ResolvedDrawing {
-  const highlightIds = drawing.highlights.filter((id) => resolver.rowAt(id, year));
+  const events: ResolvedEvent[] = [];
+  for (const id of drawing.events) {
+    const ev = resolver.eventById(id);
+    if (!ev) continue;
+    const point = { lon: ev.location.lon, lat: ev.location.lat };
+    const war = eventKindOf(ev.category) === 'war' ? warOf(ev, resolver, year, point) : undefined;
+    events.push({
+      id,
+      title: ev.title,
+      category: ev.category,
+      point,
+      parties: ev.parties.filter((p) => resolver.rowAt(p, year)),
+      ...(war ? { war } : {}),
+    });
+  }
+  // the app already draws a war event's line: the model's own line between the same two is the same thing twice
+  const drawnWars = new Set(events.flatMap((e) => (e.war ? [pairKey(e.war.aId, e.war.bId)] : [])));
   const links: ResolvedLink[] = [];
   for (const link of drawing.links) {
+    if (link.relation === 'war' && drawnWars.has(pairKey(link.from, link.to))) continue;
     const mainA = resolver.anchorAt(link.from, year);
     const mainB = resolver.anchorAt(link.to, year);
     if (!mainA || !mainB) continue;
@@ -154,13 +194,15 @@ export function resolveDrawing(drawing: Drawing, resolver: Resolver, year: numbe
     const b = resolver.anchorToward(link.to, year, mainA) ?? mainB;
     links.push({ ...link, a, b });
   }
-  const events: ResolvedEvent[] = [];
-  for (const id of drawing.events) {
-    const ev = resolver.eventById(id);
-    if (ev) events.push({ id, title: ev.title, point: { lon: ev.location.lon, lat: ev.location.lat } });
-  }
-  const focusIds = drawing.focus.polities.filter((id) => resolver.rowAt(id, year));
-  return { highlightIds, links, marks: drawing.marks, events, focusIds, focusPoints: drawing.focus.points };
+  // in the spotlight: what the model named, the parties of its events, the ends of its own lines
+  const spot: string[] = [];
+  const light = (id: string) => {
+    if (!spot.includes(id) && resolver.rowAt(id, year)) spot.push(id);
+  };
+  drawing.highlights.forEach(light);
+  for (const e of events) e.parties.forEach(light);
+  for (const l of links) [l.from, l.to].forEach(light);
+  return { spotIds: spot, links, marks: drawing.marks, events };
 }
 
 /**
@@ -168,19 +210,17 @@ export function resolveDrawing(drawing: Drawing, resolver: Resolver, year: numbe
  * anywhere (a step with only a year, or an empty one): the camera then stays where it is.
  */
 export function frameTargetOf(resolved: ResolvedDrawing, resolver: Resolver, year: number): FrameTarget | null {
-  const boxes = resolved.highlightIds.flatMap((id) => {
+  const boxes = resolved.spotIds.flatMap((id) => {
     const box = resolver.boundsAt(id, year);
     return box ? [box] : [];
   });
-  for (const id of resolved.focusIds) {
-    const box = resolver.boundsAt(id, year);
-    if (box) boxes.push(box);
-  }
   const points: PlacePoint[] = [];
   for (const l of resolved.links) points.push(l.a, l.b);
   for (const m of resolved.marks) points.push(m.point);
-  for (const e of resolved.events) points.push(e.point);
-  points.push(...resolved.focusPoints);
+  for (const e of resolved.events) {
+    points.push(e.point);
+    if (e.war) points.push(e.war.a, e.war.b);
+  }
   return boxes.length || points.length ? { boxes, points } : null;
 }
 
@@ -191,24 +231,17 @@ export function describeDrawing(
   eventTitleOf: (id: string) => string = (id) => id,
 ): string {
   const parts: string[] = [];
-  if (drawing.highlights.length) parts.push(`vurgulanan: ${drawing.highlights.map(nameOf).join(', ')}`);
+  if (drawing.highlights.length) parts.push(`öne çıkan: ${drawing.highlights.map(nameOf).join(', ')}`);
   for (const l of drawing.links) {
     const label = l.label ? ` (${l.label})` : '';
     parts.push(`${nameOf(l.from)} – ${nameOf(l.to)}: ${RELATION_WORD[l.relation]}${label}`);
   }
   if (drawing.events.length) parts.push(`olay: ${drawing.events.map(eventTitleOf).join(', ')}`);
   if (drawing.marks.length) parts.push(`işaretli: ${drawing.marks.map((m) => m.label).join(', ')}`);
-  const region = [...drawing.focus.polities.map(nameOf), ...drawing.focus.points.map(() => 'bir nokta')];
-  if (region.length) parts.push(`gösterilen bölge: ${region.join(', ')}`);
   if (drawing.year !== undefined) parts.push(`sınır yılı ${drawing.year}`);
   return parts.join('; ');
 }
 
-/** Does the step put nothing on the map and ask for no region? (A step with only a year has nothing to show or frame.) */
+/** Does the step put nothing on the map? (A step with only a year has nothing to show or frame.) */
 export const isEmptyDrawing = (d: Drawing): boolean =>
-  !d.highlights.length &&
-  !d.links.length &&
-  !d.marks.length &&
-  !d.events.length &&
-  !d.focus.polities.length &&
-  !d.focus.points.length;
+  !d.highlights.length && !d.links.length && !d.marks.length && !d.events.length;

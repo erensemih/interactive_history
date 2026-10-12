@@ -120,6 +120,43 @@
   stroke-linejoin: round;
 }
 
+/* A war event, drawn by the app the same way every time: one ink line from the first side's polity through the event's own
+   marker to the second side's, the marker sitting on a paper ring where the line passes. No glyph, no name box: the marker
+   is the glyph, and the name shows on hover like every marker's. */
+.ai-war {
+  animation: ai-in 0.5s ease both;
+}
+
+.ai-war .casing,
+.ai-war .line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ai-war .casing {
+  stroke: var(--paper);
+  stroke-opacity: 0.9;
+  stroke-width: 6;
+}
+
+.ai-war .line {
+  stroke: var(--ink);
+  stroke-width: 2.6;
+}
+
+.ai-war .end {
+  fill: var(--ink);
+  stroke: var(--paper);
+  stroke-width: 1.6;
+}
+
+.ai-war .ring {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 2.2;
+}
+
 /* marks: an ink diamond on a paper ring, with a small label beside it */
 .ai-pt {
   position: absolute;
@@ -189,7 +226,11 @@
   }
 }
 
-/* a polity the AI points at: its name in ink, heavier */
+/* a polity in the spotlight: its name in ink, heavier; every other name fades with the map under the veil */
+.plabel.is-faded:not(.is-hidden):not(.is-yielded) {
+  opacity: 0.34;
+}
+
 .plabel.is-ai:not(.is-selected) {
   color: var(--ink);
   font-weight: 650;
@@ -197,13 +238,6 @@
     0 0 3px var(--halo),
     0 0 6px var(--halo),
     0 0 10px var(--halo);
-}
-
-/* an event the AI talks about: its marker is the app's own, only its name hangs here (ink on paper like the other flags) */
-.ai-flag.is-event {
-  font-family: var(--font-serif);
-  font-weight: 600;
-  font-size: 13px;
 }
 
 .ai-flag[hidden] {

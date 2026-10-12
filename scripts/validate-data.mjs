@@ -180,6 +180,15 @@ export function validateAll(root = DEFAULT_ROOT) {
         }
         if (new Set(ev.parties).size !== ev.parties.length) err('parties içinde yinelenen kimlik');
       }
+      // versus (war events only): the other side, taken from the parties
+      if (ev.versus !== undefined) {
+        if (ev.category !== 'military') err('versus yalnızca military olaylarında anlamlı');
+        if (!Array.isArray(ev.versus) || ev.versus.length === 0) err('versus boş olamaz');
+        else {
+          for (const p of ev.versus) if (!ev.parties?.includes(p)) err(`versus "${p}" parties içinde değil`);
+          if (ev.versus.includes(ev.parties?.[0])) err('versus ilk tarafı içeremez (ilk taraf karşı safta olmaz)');
+        }
+      }
 
       // sources
       if (!Array.isArray(ev.sources) || ev.sources.length === 0)

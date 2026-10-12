@@ -1,32 +1,48 @@
 /* --------------------------------------------------------------------------- Watch */
-/* What the answer says, over the map, in one fixed place like a subtitle: the caption of the step on screen,
-   with the controls to step through it. */
+/* What the answer says, over the map, in one fixed place like a subtitle: the caption of the step on screen. It is
+   kept light: one row of controls (the steps, the autoplay, the text, the cross) and two lines of caption, on a thin
+   translucent sheet, so the map shows through and the foot of the screen stays calm. */
 .watch {
   position: relative;
-  padding: 10px 14px 9px;
-  background: rgb(250 246 236 / 0.97);
-  border: 1px solid var(--rule-strong);
+  padding: 7px 12px 9px;
+  background: rgb(250 246 236 / 0.9);
+  border: 1px solid rgb(31 27 22 / 0.14);
   border-radius: 14px;
-  box-shadow: var(--shadow-float);
+  box-shadow: 0 6px 18px -12px rgb(60 45 20 / 0.4);
   animation: card-in 0.2s ease;
 }
 
 .watch-head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 22px;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.watch-nav {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.watch-tools {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
 }
 
 .watch-count {
   flex: none;
-  padding: 1px 9px;
-  border-radius: 99px;
-  background: var(--ink);
-  font-size: 11.5px;
+  min-width: 44px;
+  padding: 1px 7px;
+  text-align: center;
+  font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--paper);
+  color: var(--ink);
 }
 
 .watch-title {
@@ -37,7 +53,7 @@
   white-space: nowrap;
   font-family: var(--font-serif);
   font-optical-sizing: auto;
-  font-size: 16.5px;
+  font-size: 15.5px;
   font-weight: 560;
   letter-spacing: -0.006em;
   color: var(--ink);
@@ -52,14 +68,14 @@
   color: var(--ink-3);
 }
 
-/* two lines are always set aside, so the controls under the caption stay where they are from step to step */
+/* two lines are always set aside, so the box keeps its height from step to step */
 .watch-caption {
-  margin: 5px 0 9px;
-  min-height: calc(2 * 1.4em);
+  margin: 2px 0 0;
+  min-height: calc(2 * 1.38em);
   font-family: var(--font-serif);
   font-optical-sizing: auto;
-  font-size: 18px;
-  line-height: 1.4;
+  font-size: 16.5px;
+  line-height: 1.38;
   color: var(--ink);
   text-wrap: pretty;
 }
@@ -71,20 +87,25 @@
   gap: 6px;
 }
 
+/* the controls are quiet: no frame until the pointer is on them (the text button keeps a thin one: it is the way to a whole other view) */
 .watch-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-width: 32px;
-  height: 32px;
-  padding: 0 9px;
-  border: 1px solid var(--rule-strong);
-  border-radius: 9px;
-  background: var(--paper);
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
   font-size: 12.5px;
   font-weight: 600;
   color: var(--ink);
+}
+
+.watch-read {
+  border-color: var(--rule-strong);
 }
 
 .watch-btn:hover:not(:disabled) {
@@ -111,54 +132,16 @@
 }
 
 .watch-speed select {
-  height: 32px;
-  padding: 0 24px 0 9px;
-  border: 1px solid var(--rule-strong);
-  border-radius: 9px;
-  background: var(--paper);
+  height: 30px;
+  padding: 0 22px 0 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background-color: transparent;
   font: inherit;
   font-size: 12.5px;
   font-weight: 600;
   color: var(--ink);
   cursor: pointer;
-}
-
-/* the steps as small points: where you are, and a way to any other */
-.watch-pips {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin: 0 4px;
-}
-
-.watch-pip {
-  position: relative;
-  width: 18px;
-  height: 18px;
-  display: grid;
-  place-items: center;
-}
-
-.watch-pip::before {
-  content: '';
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  border: 1.6px solid var(--ink-3);
-  background: transparent;
-  transition:
-    transform 0.15s,
-    background 0.15s;
-}
-
-.watch-pip.is-past::before {
-  background: var(--ink-3);
-}
-
-.watch-pip.is-on::before {
-  background: var(--accent);
-  border-color: var(--accent);
-  transform: scale(1.3);
 }
 
 /* thinking, stopped: a quiet line */
@@ -260,17 +243,16 @@
 }
 
 .watch-short .watch-controls {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 @media (max-width: 900px) {
   .watch {
-    padding: 8px 10px 8px;
+    padding: 6px 10px 8px;
     border-radius: 12px;
   }
   .watch-caption {
-    font-size: 16px;
-    margin: 4px 0 7px;
+    font-size: 15.5px;
   }
   .watch-title {
     font-size: 15px;
@@ -281,22 +263,47 @@
   .watch-btn.watch-read span {
     display: inline;
   }
-  /* a finger: the buttons and the step points are bigger than a pointer needs */
+  /* a finger: the buttons are bigger than a pointer needs */
   .watch-btn,
   .watch-speed select {
     height: 36px;
     min-width: 36px;
   }
-  .watch-pip {
-    width: 28px;
-    height: 36px;
-  }
-  .watch-pips {
-    gap: 0;
-    margin: 0;
-  }
   .watch-text {
     max-height: 30vh;
     font-size: 15.5px;
+  }
+}
+
+/* a narrow screen has no room for the step's title beside the controls: the count and the caption say enough. The row
+   must stay one row (the box keeps its height from state to state): the speed only matters while it plays, so it
+   shows then and the text button gives up its words to make room; "writing" is its dots. */
+@media (max-width: 560px) {
+  .watch-steps .watch-title {
+    display: none;
+  }
+  .watch-steps .watch-head {
+    justify-content: space-between;
+  }
+  .watch-play:not(.is-on) + .watch-speed {
+    display: none;
+  }
+  .watch-play.is-on ~ .watch-read span {
+    display: none;
+  }
+  .watch-wip-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* the smallest phones: the text button is its icon (it keeps its name for a screen reader) */
+@media (max-width: 380px) {
+  .watch-btn.watch-read span {
+    display: none;
   }
 }

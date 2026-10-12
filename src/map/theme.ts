@@ -10,6 +10,8 @@ export interface MapTheme {
   ink3: string;
   paper: string;
   tints: string[];
+  /** The spotlight's twin of each tint: the same hue, darker and saturated. */
+  vivid: string[];
 }
 
 function token(style: CSSStyleDeclaration, name: string, fallback: string): string {
@@ -20,7 +22,12 @@ function token(style: CSSStyleDeclaration, name: string, fallback: string): stri
 export function readTheme(count: number): MapTheme {
   const s = getComputedStyle(document.documentElement);
   const tints: string[] = [];
-  for (let i = 0; i < count; i++) tints.push(token(s, `--tint-${i}`, '#e7dbc4'));
+  const vivid: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const tint = token(s, `--tint-${i}`, '#e7dbc4');
+    tints.push(tint);
+    vivid.push(token(s, `--vivid-${i}`, tint));
+  }
   return {
     sea: token(s, '--sea', '#bdd0d5'),
     seaDeep: token(s, '--sea-deep', '#acc2c8'),
@@ -32,6 +39,7 @@ export function readTheme(count: number): MapTheme {
     ink3: token(s, '--ink-3', '#6d6455'),
     paper: token(s, '--paper', '#f5f0e4'),
     tints,
+    vivid,
   };
 }
 
@@ -50,28 +58,6 @@ export function hatchImage(color: string): ImageData {
     ctx.beginPath();
     ctx.moveTo(off, size);
     ctx.lineTo(off + size, 0);
-    ctx.stroke();
-  }
-  return ctx.getImageData(0, 0, size, size);
-}
-
-/**
- * The AI's highlight: fine ink hatching running the other way (top-left to bottom-right) from the
- * selection's vermilion one, so the two read as different hands even where they meet on one polity.
- */
-export function inkHatchImage(color: string): ImageData {
-  const size = 16;
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = size;
-  const ctx = canvas.getContext('2d')!;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.1;
-  ctx.globalAlpha = 0.42;
-  ctx.lineCap = 'butt';
-  for (const off of [-size, 0, size]) {
-    ctx.beginPath();
-    ctx.moveTo(off, 0);
-    ctx.lineTo(off + size, size);
     ctx.stroke();
   }
   return ctx.getImageData(0, 0, size, size);

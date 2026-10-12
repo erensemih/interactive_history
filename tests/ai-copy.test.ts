@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ERROR_COPY, errorCopy } from '../src/ai/errorCopy';
 import { openPermissionsPanel } from '../src/ai/permissions';
 import type { ModelErrorCode } from '../src/ai/provider';
-import { segmentsOf } from '../src/ui/read/segments';
+import { plainText, segmentsOf, withoutOpenReference } from '../src/ui/read/segments';
 
 describe('error copy', () => {
   const codes: ModelErrorCode[] = [
@@ -90,5 +90,46 @@ describe('segmentsOf', () => {
         .map((s) => s.text)
         .join(''),
     ).toBe('2  3 = 6');
+  });
+});
+
+describe('references to events in a text', () => {
+  it('reads [text](olay:id) as the words and the event they stand for, next to bold and italic', () => {
+    expect(segmentsOf("1526'da [Mohaç Muharebesi](olay:mohac-1526)'nde **Macarlar** yenildi")).toEqual([
+      { text: "1526'da ", bold: false, italic: false },
+      { text: 'Mohaç Muharebesi', bold: false, italic: false, event: 'mohac-1526' },
+      { text: "'nde ", bold: false, italic: false },
+      { text: 'Macarlar', bold: true, italic: false },
+      { text: ' yenildi', bold: false, italic: false },
+    ]);
+  });
+
+  it('keeps two references in one sentence apart', () => {
+    const events = segmentsOf('[Mohaç](olay:mohac-1526) ve [Viyana kuşatıldı](olay:viyana-1529).')
+      .filter((s) => s.event)
+      .map((s) => `${s.text}=${s.event}`);
+    expect(events).toEqual(['Mohaç=mohac-1526', 'Viyana kuşatıldı=viyana-1529']);
+  });
+
+  it('leaves a bracket that is not a reference as plain words', () => {
+    const parts = segmentsOf('Metin [köşeli] ve [başka](https://example.org) bağlantı');
+    expect(parts.some((s) => s.event)).toBe(false);
+    expect(parts.map((s) => s.text).join('')).toBe('Metin [köşeli] ve [başka](https://example.org) bağlantı');
+  });
+
+  it('turns references into their words where only text is wanted (a subtitle, a screen reader label)', () => {
+    expect(plainText("[Çaldıran Muharebesi](olay:caldiran-1514)'nde Safevîler yenildi")).toBe(
+      "Çaldıran Muharebesi'nde Safevîler yenildi",
+    );
+  });
+
+  it('cuts a reference that is still being typed, at every point of it, so the syntax is never seen', () => {
+    const full = "[Mohaç](olay:mohac-1526)'ta yenildiler";
+    for (let n = 1; n <= full.indexOf(')'); n++) {
+      const shown = withoutOpenReference(full.slice(0, n));
+      expect(shown, full.slice(0, n)).not.toMatch(/\[|\]|\(olay|olay:/);
+    }
+    // a finished one stays whole
+    expect(withoutOpenReference(full.slice(0, full.indexOf(')') + 1))).toBe('[Mohaç](olay:mohac-1526)');
   });
 });

@@ -27,6 +27,7 @@
       "importance": 4,
       "category": "military",
       "parties": ["kingdom-of-poland", "grand-duchy-of-lithuania", "teutonic-order"],
+      "versus": ["teutonic-order"],
       "sources": [{ "wikipedia": "Battle of Grunwald" }]
     },
     {
@@ -157,6 +158,7 @@
       "importance": 4,
       "category": "military",
       "parties": ["crown-of-castile", "crown-of-aragon", "emirate-of-granada"],
+      "versus": ["emirate-of-granada"],
       "sources": [{ "wikipedia": "Granada War" }]
     },
     {

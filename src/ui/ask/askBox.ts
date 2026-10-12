@@ -33,6 +33,9 @@ export interface AskDeps {
   context(): AiContext;
 }
 
+/** Narrower than this (px) the box shows the bin of "Sohbeti temizle" without its words. */
+const TIGHT = 560;
+
 const TIER_HINT: Record<ModelTier, string> = {
   quick: 'En çabuk; kısa ve sade',
   default: 'Günlük kullanım için',
@@ -67,6 +70,17 @@ const ICON = {
   close: html`<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
     <path d="M3.5 3.5l9 9m0-9l-9 9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none" />
   </svg>`,
+  /** A bin: the conversation goes. */
+  bin: html`<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+    <path
+      d="M3 4.5h10M6.2 4.5V3h3.6v1.5M4.4 4.5l.6 8.3c0 .4.4.7.8.7h4.4c.4 0 .8-.3.8-.7l.6-8.3M6.8 7v4M9.2 7v4"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.4"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>`,
   /** The conversation as text: a few lines on a page. */
   lines: html`<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
     <path d="M3 4h10M3 7.3h10M3 10.6h6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none" />
@@ -78,7 +92,7 @@ const ICON = {
 
 /**
  * The question box: always there, just above the timeline. It owns the draft, the event chip ("the open event is
- * added to the question"), the settings (speed of the answers, "Harita takibi", clearing the conversation) and
+ * added to the question"), "Sohbeti temizle" (always on the box), the settings (speed of the answers, "Harita takibi") and
  * the notes about where the answers come from. It does not know how an answer is shown: that is the caption
  * over the map (Watch) and the reader (Read).
  */
@@ -112,6 +126,8 @@ export class AskBox {
         this.element.querySelector<HTMLElement>('[data-menu-button]')?.focus();
       }
     });
+    // the box is narrower when the reader is open beside the map: its placeholder never wraps, a shorter wording takes over
+    new ResizeObserver(() => this.fitPlaceholder()).observe(this.element);
     this.element.addEventListener('focusin', () => this.setFocused(true));
     this.element.addEventListener('focusout', (e) => {
       if (!this.element.contains(e.relatedTarget as Node | null)) this.setFocused(false);
@@ -175,6 +191,26 @@ export class AskBox {
     } finally {
       this.drawing = false;
     }
+    this.fitPlaceholder();
+  }
+
+  private readonly measure = document.createElement('canvas').getContext('2d');
+
+  /**
+   * A narrow box (the reader is open beside the map) keeps only the bin of "Sohbeti temizle", so the question has room to be
+   * typed; and the first wording the box has that fits its width on one line is the placeholder (the last one always is).
+   */
+  private fitPlaceholder() {
+    this.element.classList.toggle('is-tight', this.element.clientWidth > 0 && this.element.clientWidth < TIGHT);
+    const box = this.element.querySelector<HTMLTextAreaElement>('textarea');
+    if (!box || !this.measure || !box.dataset.wordings) return;
+    const wordings = JSON.parse(box.dataset.wordings) as string[];
+    const cs = getComputedStyle(box);
+    const room = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    if (!(room > 0)) return;
+    this.measure.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const fits = wordings.find((w) => this.measure!.measureText(w).width <= room) ?? wordings[wordings.length - 1]!;
+    if (box.placeholder !== fits) box.placeholder = fits;
   }
 
   /** Where the answers come from, and what stops them. */
@@ -265,7 +301,15 @@ export class AskBox {
     const ev = ctx.event;
     const place = ctx.places[0];
     const hasChat = session.items.length > 0;
-    const narrow = window.matchMedia('(max-width: 900px)').matches;
+    // what the box may say while empty, from the most specific wording to the shortest; the first that fits is shown
+    const wordings = blocked
+      ? ['Claude bu sayfada kullanılamıyor']
+      : [
+          ...(ev ? [`“${ev.title}” hakkında sorun…`, `“${ev.title}” hakkında…`] : []),
+          ...(place ? [`${place.title} hakkında sorun…`, `${place.title} hakkında…`, `${place.title}…`] : []),
+          'Bu dönem hakkında sorun…',
+          'Bir şey sorun…',
+        ];
     const reading = presentation.shown && presentation.view === 'read';
     const submit = (e: Event) => {
       e.preventDefault();
@@ -285,17 +329,8 @@ export class AskBox {
           rows="1"
           data-testid="chat-input"
           aria-label="Sorunuz"
-          placeholder=${
-            blocked
-              ? 'Claude bu sayfada kullanılamıyor'
-              : narrow
-                ? 'Bir şey sorun…' // the box is narrow; the question is about whatever the card shows
-                : ev
-                  ? `“${ev.title}” hakkında sorun…`
-                  : place
-                    ? `${place.title} hakkında sorun…`
-                    : 'Bu dönem hakkında sorun…'
-          }
+          placeholder=${wordings[0]}
+          data-wordings=${JSON.stringify(wordings)}
           ?disabled=${blocked}
           @input=${(e: Event) => {
             this.resize(e.target as HTMLTextAreaElement);
@@ -305,6 +340,20 @@ export class AskBox {
             if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) submit(e);
           }}
         ></textarea>
+        <button
+          type="button"
+          class="ask-clear"
+          data-testid="chat-new"
+          title="Sohbeti temizle: bu oturumdaki konuşma silinir, model de onu bir daha görmez"
+          aria-label="Sohbeti temizle"
+          ?disabled=${!hasChat && !busy}
+          @click=${() => {
+            this.menuOpen = false;
+            actions.newChat();
+          }}
+        >
+          ${ICON.bin}<span>Sohbeti temizle</span>
+        </button>
         ${
           hasChat
             ? html`<button
@@ -363,7 +412,7 @@ export class AskBox {
     </form>`;
   }
 
-  /** The settings: the speed of the answers, the camera, and a fresh start. */
+  /** The settings: the speed of the answers and the camera. (The fresh start, "Sohbeti temizle", is always on the box itself.) */
   private menu(): TemplateResult {
     const { session, director, actions } = this.deps;
     const following = director.following;
@@ -399,17 +448,6 @@ export class AskBox {
           ></span
         >
       </label>
-      <button
-        type="button"
-        class="ask-menu-clear"
-        data-testid="chat-new"
-        @click=${() => {
-          this.menuOpen = false;
-          actions.newChat();
-        }}
-      >
-        Sohbeti temizle
-      </button>
     </div>`;
   }
 

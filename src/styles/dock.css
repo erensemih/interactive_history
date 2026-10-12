@@ -250,16 +250,7 @@
   border-radius: 6px;
 }
 
-/* the selected range, and the year the map shows, run through the whole plot */
-.tl-range {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  background: var(--accent-wash);
-  border-left: 1px solid rgb(207 58 33 / 0.4);
-  border-right: 1px solid rgb(207 58 33 / 0.4);
-}
-
+/* the year the map shows runs through the whole plot (the plot is the selected range, nothing more) */
 .tl-cursor {
   position: absolute;
   top: 0;
@@ -364,17 +355,6 @@
   z-index: 3;
 }
 
-.tl-ev.is-context {
-  opacity: 0.62;
-}
-
-.tl-ev.is-context:hover,
-.tl-ev.is-context.is-hover,
-.tl-ev.is-context:focus-visible,
-.tl-ev.is-context.is-selected {
-  opacity: 1;
-}
-
 /* a ranged event (a siege, a war) runs as a thin bar behind its dot */
 .tl-span {
   position: absolute;
@@ -385,10 +365,6 @@
   border: 1px solid color-mix(in oklab, var(--c) 70%, transparent);
   z-index: 1;
   pointer-events: none;
-}
-
-.tl-span.is-context {
-  opacity: 0.6;
 }
 
 /* The opened event keeps its name beside its dot (nothing else on the timeline is named until hovered). */
@@ -480,6 +456,12 @@
 }
 
 /* ------------------------------------------------- the ruler as a narration's progress bar */
+/* The step points take the brush's row, so its own label gives way while they are there (the range is still written, large, in the
+   label beside the ruler). */
+.ruler.has-steps .brush-label {
+  display: none;
+}
+
 /* While an answer in steps is on screen, each step is a small numbered point at its year on the ruler's axis;
    the ones already seen are filled, the one on screen is the accent, and a line runs from the first to it. */
 .ruler-steps {

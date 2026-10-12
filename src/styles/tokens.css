@@ -33,18 +33,34 @@
   --accent-ink: #a5301d; /* text on paper, 6:1 */
   --accent-wash: rgb(207 58 33 / 0.12);
 
-  /* nine polity tints: graph-coloured at build time so neighbours differ; identity is carried by labels
-     and borders, never by colour alone. No blue, teal, indigo or violet anywhere in this set: on a map
-     those read as water, and blue belongs to the sea and the lakes alone. (tests/palette.test.ts keeps it so.) */
-  --tint-0: #e2d9c6; /* sand */
-  --tint-1: #b9dca8; /* green */
-  --tint-2: #f1b8c2; /* rose */
-  --tint-3: #f7eeb0; /* butter */
-  --tint-4: #f6bd8a; /* apricot */
-  --tint-5: #d9c3a5; /* tan */
-  --tint-6: #c6cb98; /* olive */
-  --tint-7: #e6b3a6; /* clay */
-  --tint-8: #b6b5a7; /* greige: a spare, the data's colouring never needs it */
+  /* nine polity tints, graph-coloured at build time so neighbours differ. The order is the data's: index 0 is the
+     most used and so on, and the colours were dealt to the indices by how often each pair of them touches on
+     the map, so the pairs that meet most are the ones furthest apart (a plain pastel set, every pair at least
+     ΔE 8.5 apart, none grey or sand-like, none near the dotted no-data ground). No blue, teal, indigo or violet:
+     on a map those read as water, and blue belongs to the sea and the lakes alone. Index 8 is a spare the data
+     does not use. (tests/palette.test.ts keeps all of this so.) */
+  --tint-0: #b1e8a1; /* light green */
+  --tint-1: #feb5e1; /* pink */
+  --tint-2: #88c383; /* green */
+  --tint-3: #eb9b77; /* apricot */
+  --tint-4: #e9d07a; /* straw */
+  --tint-5: #ea96b9; /* rose */
+  --tint-6: #c9b15d; /* ochre */
+  --tint-7: #ffba9c; /* peach */
+  --tint-8: #b7ce77; /* lime: the spare */
+
+  /* the spotlight: the same nine hues, darker and as saturated as a screen allows, laid solid over the focus
+     polities while the rest of the map fades back (the orange ones are turned towards amber, away from vermilion,
+     which is reserved for the user's own choices) */
+  --vivid-0: #74c859;
+  --vivid-1: #ef79c5;
+  --vivid-2: #43a53e;
+  --vivid-3: #c37902;
+  --vivid-4: #cba80c;
+  --vivid-5: #d95b97;
+  --vivid-6: #8d8307;
+  --vivid-7: #eb8d07;
+  --vivid-8: #8eab08;
 
   /* event markers are plain dots told apart by colour alone (see src/domain/categories.ts); this is the
      hairline that keeps a light dot readable on a pale tint */

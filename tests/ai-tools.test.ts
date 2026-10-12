@@ -17,17 +17,11 @@ function setup() {
 }
 
 describe('the map tools', () => {
-  it('offer the small set the brief asked for, each described and with an object schema', () => {
+  it('offer five tools, none of them about looks or the camera: what to show, never how', () => {
     const { tools } = setup();
-    expect(tools.map((t) => t.name)).toEqual([
-      'step',
-      'highlight',
-      'connect',
-      'show_event',
-      'mark',
-      'set_year',
-      'focus', // last: the first to go when a view allows fewer tools
-    ]);
+    expect(tools.map((t) => t.name)).toEqual(['step', 'show_event', 'highlight', 'connect', 'mark']);
+    // no tool for the camera (the app frames what a step shows) and none for the year (a step names it)
+    expect(tools.some((t) => ['focus', 'set_year', 'clear'].includes(t.name))).toBe(false);
     for (const t of tools) {
       expect(t.description.length).toBeGreaterThan(20);
       expect(t.description.length).toBeLessThanOrEqual(1024);
@@ -53,13 +47,38 @@ describe('the map tools', () => {
     tool('step').execute({ n: 1, title: 'Yalnız başlık' });
     expect(plan.captionOf(1)).toBeNull();
     tool('step').execute({ n: 2, title: 'Uzun', caption: 'Çok uzun bir altyazı. '.repeat(40) });
-    expect(plan.captionOf(2)!.length).toBeLessThanOrEqual(280);
+    expect(plan.captionOf(2)!.length).toBeLessThanOrEqual(340);
+  });
+
+  it('a caption keeps the names of events as references, and a cut never leaves half of one', () => {
+    const { plan, tool } = setup();
+    const ref = '[Çaldıran Muharebesi](olay:caldiran-1514)';
+    tool('step').execute({ n: 1, title: 'A', caption: `1514’te ${ref}’nde Osmanlı kazandı.` });
+    expect(plan.captionOf(1)).toBe(`1514’te ${ref}’nde Osmanlı kazandı.`);
+    // cut in the middle of the name: the open reference is dropped, the rest stays
+    tool('step').execute({ n: 2, title: 'B', caption: `${'Söz '.repeat(75)}${ref} sonrası` });
+    const cut = plan.captionOf(2)!;
+    expect(cut.length).toBeLessThanOrEqual(340);
+    expect(cut).not.toMatch(/\[[^\]]*$/);
+    expect(cut).not.toMatch(/\]\(olay:[^)]*$/);
+  });
+
+  it('a step may carry its border year; one outside the range is left out and the step is still declared', () => {
+    const { plan, tool } = setup();
+    expect(tool('step').execute({ n: 1, title: 'A', caption: 'a', year: 1536 })).toBe('tamam');
+    expect(tool('step').execute({ n: 2, title: 'B', caption: 'b', year: 1600 })).toMatch(/^tamam; yıl atlandı/);
+    expect(tool('step').execute({ n: 3, title: 'C', caption: 'c', year: 'bin' })).toMatch(/^tamam; yıl atlandı/);
+    expect(plan.drawingAt(1).year).toBe(1536);
+    expect(plan.drawingAt(2).year).toBeUndefined();
+    expect(plan.titleOf(2)).toBe('B');
+    expect(plan.drawingAt(3).year).toBeUndefined();
   });
 
   it('the step tool asks for the two short texts, and says where the long one goes', () => {
     const { tool } = setup();
     const step = tool('step');
-    expect(step.inputSchema.required).toEqual(['n', 'title', 'caption']);
+    expect(step.inputSchema.required).toEqual(['n', 'title', 'caption']); // the year is optional
+    expect(Object.keys(step.inputSchema.properties)).toContain('year');
     expect(step.description).toContain('altyazı');
     expect(step.description).toContain('## n. Başlık');
   });
@@ -129,13 +148,12 @@ describe('the map tools', () => {
     expect(plan.drawingAt(1).marks.map((m) => m.label)).toEqual(['Konya', 'Kayseri']);
   });
 
-  it('set_year takes a year inside the range and nothing else', () => {
-    const { plan, tool } = setup();
-    expect(tool('set_year').execute({ step: 1, year: 1536 })).toBe('tamam');
-    expect(tool('set_year').execute({ step: 2, year: 1600 })).toMatch(/^atlandı/);
-    expect(tool('set_year').execute({ step: 2, year: 'bin' })).toMatch(/^atlandı/);
-    expect(plan.drawingAt(1).year).toBe(1536);
-    expect(plan.drawingAt(2).year).toBeUndefined(); // a step owns its year: step 2 asked for none that was valid
+  it('the tools that draw say what the app does with their input, so the model asks for what and never for how', () => {
+    const { tool } = setup();
+    expect(tool('show_event').description).toContain('aynı biçimde'); // always drawn the same way
+    expect(tool('connect').description).toContain('OLAYLAR'); // for what the data has no event for
+    expect(tool('mark').description).toContain('OLAYLAR');
+    expect(tool('highlight').description).toContain('öne çıkacağını');
   });
 
   it('show_event takes an event of the app by id, or by a title that names exactly one', () => {
@@ -179,25 +197,6 @@ describe('the map tools', () => {
   it('there is no clear: every step owns its map', () => {
     const { tools } = setup();
     expect(tools.some((t) => t.name === 'clear')).toBe(false);
-  });
-
-  it('focus shows a region: polities and points the camera should include, nothing drawn', () => {
-    const { plan, tool } = setup();
-    const out = tool('focus').execute({
-      step: 2,
-      polities: ['kingdom-of-france', 'atlantis'],
-      points: [{ lon: 14.5, lat: 35.9 }, { lon: 999, lat: 0 }, 'x'],
-    }) as string;
-    expect(out).toContain('tamam');
-    expect(out).toContain('atlantis');
-    const d = plan.drawingAt(2);
-    expect(d.focus.polities).toEqual(['kingdom-of-france']);
-    expect(d.focus.points).toEqual([{ lon: 14.5, lat: 35.9 }]);
-    expect(d.highlights).toEqual([]); // nothing is drawn by it
-    expect(plan.drawingAt(1).focus).toEqual({ polities: [], points: [] }); // and it belongs to its step alone
-    expect(tool('focus').execute({ step: 3 })).toMatch(/^atlandı/);
-    expect(tool('focus').execute({ step: 3, polities: ['atlantis'] })).toMatch(/^atlandı/);
-    expect(plan.has(3)).toBe(false);
   });
 
   it('reads the step from `step` or `n`, defaults to 1 and refuses nonsense', () => {

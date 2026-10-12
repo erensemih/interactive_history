@@ -1,5 +1,5 @@
 import type { Map as MLMap } from 'maplibre-gl';
-import { RELATION_WORD, type Relation, type ResolvedDrawing, type ResolvedEvent, type ResolvedLink } from '../ai/types';
+import { RELATION_WORD, type Relation, type ResolvedDrawing, type ResolvedLink, type ResolvedWar } from '../ai/types';
 import type { Rect } from '../domain/reveal';
 import type { PlacePoint } from '../domain/types';
 import { placeFlags, type FlagAnchor, type FlagRequest } from './flags';
@@ -9,21 +9,15 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 /** The label font, as in the stylesheet (`.ai-flag`): the width is measured, not guessed. */
 const FLAG_FONT = {
   mark: '500 13px "Newsreader Variable", Georgia, serif',
-  event: '600 13px "Newsreader Variable", Georgia, serif',
   link: '600 12px "Instrument Sans Variable", system-ui, sans-serif',
 };
 const FLAG_PAD_X = 16; // padding and border on both sides
 const FLAG_H = 22;
-/** How long an event's name may be on the map. */
-const EVENT_NAME_MAX = 30;
 
 /** What a point of the drawing takes up around itself, so no label is hung over it. */
 const DIAMOND_REACH = 9;
 const GLYPH_REACH = 12;
 const END_REACH = 6;
-/** An event marker's dot with its ring, and the year hanging beside it (src/map/markers.ts). */
-const EVENT_DOT_REACH = 9;
-const EVENT_YEAR_REACH = 43;
 
 const svg = <K extends keyof SVGElementTagNameMap>(
   tag: K,
@@ -58,11 +52,19 @@ interface MarkEl {
   flagW: number;
 }
 
-/** An event the step talks about: its marker is the app's own (src/map/markers.ts); only its name hangs here. */
-interface EventEl {
-  event: ResolvedEvent;
-  flag: HTMLElement;
-  flagW: number;
+/**
+ * A war event the step shows: one line from the first side's polity, through the event's own marker (src/map/markers.ts),
+ * to the second side's. The marker sits on a paper ring where the line passes, so line and marker read as one thing; every
+ * war looks like this, and it has no name box and no glyph of its own (the marker is the glyph).
+ */
+interface WarEl {
+  war: ResolvedWar;
+  at: PlacePoint;
+  group: SVGGElement;
+  casing: SVGPathElement;
+  line: SVGPathElement;
+  ring: SVGCircleElement;
+  ends: SVGCircleElement[];
 }
 
 /**
@@ -91,10 +93,10 @@ const coverage = (a: Rect, b: Rect) =>
 const OFFSCREEN_SLACK = 14;
 
 /**
- * What the AI draws on the map, in pen and ink: relation lines between polities and labelled marks. It
- * follows the map's projection like every other overlay and never touches the camera. Polygons (the
- * highlight) are map layers drawn by MapView; this is the part that does not belong to a polygon. (The
- * events a step talks about are not drawn here: they appear with their own markers. Only their names are.)
+ * What the AI draws on the map, in pen and ink: the war lines of the events it shows, its own relation lines between
+ * polities and its own labelled marks. It follows the map's projection like every other overlay and never touches the
+ * camera. Polygons (the spotlight) are map layers drawn by MapView; this is the part that does not belong to a polygon.
+ * (The events a step talks about have their own markers; they carry no name box here, the name shows on hover.)
  *
  * The drawing looks different from the data layers on purpose, in the same visual language: ink on paper,
  * told apart by pattern (solid, double, dashed, dotted) and never by hue, so it does not compete with the
@@ -110,9 +112,7 @@ export class AiDrawingLayer {
   private readonly measure = document.createElement('canvas').getContext('2d')!;
   private readonly links = new Map<string, LinkEl>();
   private readonly marks = new Map<string, MarkEl>();
-  private readonly events = new Map<string, EventEl>();
-  /** The opened event shows its own name tag; its name here would say it twice. */
-  private selectedEventId: string | null = null;
+  private readonly wars = new Map<string, WarEl>();
   private compact = false;
   private width = 0;
   private height = 0;
@@ -161,24 +161,22 @@ export class AiDrawingLayer {
       const k = keyOfMark(mark);
       if (!this.marks.has(k)) this.marks.set(k, this.createMark(mark));
     }
-    const wantedEvents = new Set(drawing.events.map((e) => e.id));
-    for (const [k, el] of this.events) {
-      if (wantedEvents.has(k)) continue;
-      el.flag.remove();
-      this.events.delete(k);
+    const wars = drawing.events.flatMap((e) => (e.war ? [{ id: e.id, at: e.point, war: e.war }] : []));
+    const wantedWars = new Set(wars.map((w) => `${w.id}|${warKey(w.war)}`));
+    for (const [k, el] of this.wars) {
+      if (wantedWars.has(k)) continue;
+      el.group.remove();
+      this.wars.delete(k);
     }
-    for (const event of drawing.events) {
-      if (!this.events.has(event.id)) this.events.set(event.id, this.createEvent(event));
+    for (const w of wars) {
+      const k = `${w.id}|${warKey(w.war)}`;
+      if (!this.wars.has(k)) this.wars.set(k, this.createWar(w.war, w.at));
     }
-    const empty = !drawing.links.length && !drawing.marks.length && !drawing.events.length;
+    const empty = !drawing.links.length && !drawing.marks.length && !wars.length;
     this.host.hidden = empty;
     if (description) this.host.setAttribute('aria-label', `Yapay zekâ çizimi: ${description}`);
     else this.host.removeAttribute('aria-label');
     // The caller lays everything out next (it knows what else lies on the map): see `layout`.
-  }
-
-  setSelectedEvent(id: string | null) {
-    this.selectedEventId = id;
   }
 
   /** On a small map (the little window of the full-screen reader) the drawing goes without its name tags, which would crowd it. */
@@ -240,15 +238,15 @@ export class AiDrawingLayer {
     return { mark, pt, flag, flagW: this.textWidth(mark.label, FLAG_FONT.mark) + FLAG_PAD_X };
   }
 
-  private createEvent(event: ResolvedEvent): EventEl {
-    const text =
-      event.title.length > EVENT_NAME_MAX ? `${event.title.slice(0, EVENT_NAME_MAX - 1).trimEnd()}…` : event.title;
-    const flag = document.createElement('span');
-    flag.className = 'ai-flag is-event';
-    flag.dataset.event = event.id;
-    flag.textContent = text;
-    this.flags.appendChild(flag);
-    return { event, flag, flagW: this.textWidth(text, FLAG_FONT.event) + FLAG_PAD_X };
+  private createWar(war: ResolvedWar, at: PlacePoint): WarEl {
+    const group = svg('g', { class: 'ai-war' });
+    const casing = svg('path', { class: 'casing' });
+    const line = svg('path', { class: 'line' });
+    const ring = svg('circle', { class: 'ring', r: '11' });
+    const ends = [svg('circle', { class: 'end', r: '3.8' }), svg('circle', { class: 'end', r: '3.8' })];
+    group.append(casing, line, ...ends, ring);
+    this.lines.appendChild(group);
+    return { war, at, group, casing, line, ring, ends };
   }
 
   /* --------------------------------------------------------------- layout */
@@ -280,31 +278,19 @@ export class AiDrawingLayer {
     const own: Rect[] = [];
     const reach = (x: number, y: number, r: number): Rect => ({ left: x - r, top: y - r, right: x + r, bottom: y + r });
 
-    // Events first: their names hang from markers that cannot move. Then marks, then lines, whose labels can slide along them.
-    for (const [id, el] of this.events) {
-      const p = this.map.project([el.event.point.lon, el.event.point.lat]);
-      if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
-      el.flag.hidden = this.compact || id === this.selectedEventId || !onMap(p);
-      if (el.flag.hidden) continue;
-      requests.push({
-        id: `event:${id}`,
-        x: p.x,
-        y: p.y,
-        w: el.flagW,
-        h: FLAG_H,
-        prefer: ['above', 'below', 'left', 'right'],
-        gap: EVENT_DOT_REACH + 4,
-        alternates: [
-          // beyond the year that hangs at the marker's right
-          { x: p.x, y: p.y, gap: EVENT_YEAR_REACH + 3, prefer: ['right'] },
-          ...diagonals(p.x, p.y, EVENT_DOT_REACH + 3),
-          // and further out, where the nearby places are taken
-          { x: p.x, y: p.y, gap: EVENT_DOT_REACH + 26, prefer: ['above', 'below', 'left'] },
-          ...diagonals(p.x, p.y, EVENT_DOT_REACH + 28),
-          { x: p.x, y: p.y, gap: EVENT_YEAR_REACH + 30, prefer: ['right'] },
-        ],
-      });
-      pending.push({ id: `event:${id}`, el: el.flag });
+    // The war lines first (they have no label to place), then the marks, then the model's own lines, whose labels can slide along them.
+    for (const el of this.wars.values()) {
+      const a = this.map.project([el.war.a.lon, el.war.a.lat]);
+      const b = this.map.project([el.war.b.lon, el.war.b.lat]);
+      const p = this.map.project([el.at.lon, el.at.lat]);
+      if (![a.x, a.y, b.x, b.y, p.x, p.y].every(Number.isFinite)) continue;
+      const d = throughPoint(a, p, b);
+      el.casing.setAttribute('d', d);
+      el.line.setAttribute('d', d);
+      el.ends[0]!.setAttribute('transform', `translate(${a.x.toFixed(1)} ${a.y.toFixed(1)})`);
+      el.ends[1]!.setAttribute('transform', `translate(${b.x.toFixed(1)} ${b.y.toFixed(1)})`);
+      el.ring.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`);
+      own.push(reach(a.x, a.y, END_REACH), reach(b.x, b.y, END_REACH));
     }
 
     for (const [k, el] of this.marks) {
@@ -416,6 +402,32 @@ export class AiDrawingLayer {
     }
     return yields;
   }
+}
+
+const warKey = (w: ResolvedWar) =>
+  `${w.aId}>${w.bId}|${w.a.lon.toFixed(2)},${w.a.lat.toFixed(2)}|${w.b.lon.toFixed(2)},${w.b.lat.toFixed(2)}`;
+
+/**
+ * The war line: from `a` through `p` (the event's marker) to `b`, smooth where it passes `p`. Two curves that meet there
+ * with the same direction (that of the line from `a` to `b`), so it reads as one line with the marker on it.
+ */
+function throughPoint(
+  a: { x: number; y: number },
+  p: { x: number; y: number },
+  b: { x: number; y: number },
+): string {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const before = Math.hypot(p.x - a.x, p.y - a.y) * 0.5;
+  const after = Math.hypot(b.x - p.x, b.y - p.y) * 0.5;
+  const f = (n: number) => n.toFixed(1);
+  return (
+    `M${f(a.x)} ${f(a.y)}Q${f(p.x - ux * before)} ${f(p.y - uy * before)} ${f(p.x)} ${f(p.y)}` +
+    `Q${f(p.x + ux * after)} ${f(p.y + uy * after)} ${f(b.x)} ${f(b.y)}`
+  );
 }
 
 /** The four places diagonally beside a point, for a label that finds no free side. */

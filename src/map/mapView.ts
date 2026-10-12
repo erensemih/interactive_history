@@ -8,9 +8,9 @@ import { unionBoundsAll, zoomOutToRevealAll, type Rect } from '../domain/reveal'
 import type { HistoricalEvent, PlacePoint } from '../domain/types';
 import { AiDrawingLayer } from './aiLayer';
 import { PolityLabels } from './labels';
-import { EventMarkers, type MarkerStats } from './markers';
+import { EventMarkers, type MarkerStats, type Narrator } from './markers';
 import { PlacePins } from './pin';
-import { hatchImage, inkHatchImage, readTheme, stippleImage, type MapTheme } from './theme';
+import { hatchImage, readTheme, stippleImage, type MapTheme } from './theme';
 
 export interface MapCallbacks {
   /** Markers drawn vs. map events in the range, and why the rest are not drawn. */
@@ -32,6 +32,8 @@ const REVEAL_MARGIN = { top: 44, right: 60, bottom: 36, left: 36 };
 
 /** How close the camera goes to a step's drawing: a lone mark is shown with its surroundings, not at street level. */
 const FRAME_MAX_ZOOM = 5.2;
+/** How much of the map fades while the AI lights some polities: paper laid over everything that is not lit. */
+const SPOT_VEIL = 0.62;
 
 const INITIAL_BOUNDS: [[number, number], [number, number]] = [
   [-108, -34],
@@ -76,11 +78,11 @@ export class MapView {
   /** Border rows valid in the shown year: hit-testing a pointer position only looks at these. */
   private rowsNow: AppData['rows'] = [];
   private selectedIds: string[] = [];
-  /** Polities the AI has highlighted. */
-  private aiIds: string[] = [];
+  /** Polities in the AI's spotlight: lit solid and vivid while the rest of the map fades back. */
+  private spotIds: string[] = [];
   private hoverId: string | null = null;
-  /** The chat is open: the AI narrates, and the event markers other than the ones it or the reader brings are off the map. */
-  private narrator = false;
+  /** Somebody narrates the map (the AI, else the selected place): the event markers other than the ones the narrator or the reader brings are off the map. */
+  private narrator: Narrator | null = null;
   private toldIds: string[] = [];
   private selectedEventId: string | null = null;
   /** The controls lying over the map in map pixels; they only change when the map or the page is resized. */
@@ -201,7 +203,6 @@ export class MapView {
     const map = this.map;
     map.addImage('hatch', hatchImage(t.accent), { pixelRatio: 2 });
     map.addImage('stipple', stippleImage(t.ink3), { pixelRatio: 2 });
-    map.addImage('ink-hatch', inkHatchImage(t.ink), { pixelRatio: 2 });
 
     map.addSource('land', { type: 'geojson', data: this.data.land, tolerance: 0.2, buffer: 16, maxzoom: 9 });
     map.addSource('borders', {
@@ -217,6 +218,13 @@ export class MapView {
       ['get', 'tint'],
       ...t.tints.flatMap((c, i) => [i, c]),
       t.tints[0] ?? '#e7dbc4',
+    ] as unknown as ExpressionSpecification;
+    // the spotlight's twin of every tint: the same hue, darker and saturated
+    const vividExpr = [
+      'match',
+      ['get', 'tint'],
+      ...t.vivid.flatMap((c, i) => [i, c]),
+      t.vivid[0] ?? '#74c859',
     ] as unknown as ExpressionSpecification;
     const zoomWidth = (a: number, b: number, c: number): ExpressionSpecification => [
       'interpolate',
@@ -301,26 +309,33 @@ export class MapView {
       layout: { 'line-join': 'round' },
       paint: { 'line-color': t.accent, 'line-width': zoomWidth(1.4, 2.4, 3), 'line-opacity': 0.95 },
     });
-    // The AI's highlight: a light ink wash, fine ink hatching and a pen outline on a paper rim.
+    map.addLayer({
+      id: 'coast',
+      type: 'line',
+      source: 'land',
+      layout: { 'line-join': 'round' },
+      paint: { 'line-color': t.coast, 'line-width': zoomWidth(0.5, 0.9, 1.5), 'line-opacity': 0.85 },
+    });
+    // The spotlight. While the AI lights some polities, a veil of paper lies over everything below (the sea, the land,
+    // every polity, the coast) and fades it back; no blur, only less of everything. The lit polities are then drawn
+    // above it, solid in their own vivid hue, cut out of the veil by a paper rim and a pen outline.
+    map.addLayer({
+      id: 'ai-veil',
+      type: 'background',
+      paint: { 'background-color': t.paper, 'background-opacity': 0, 'background-opacity-transition': { duration: 380 } },
+    });
     map.addLayer({
       id: 'ai-fill',
       type: 'fill',
       source: 'borders',
-      filter: idsFilter(this.year, this.aiIds),
-      paint: { 'fill-color': t.ink, 'fill-opacity': 0.07 },
-    });
-    map.addLayer({
-      id: 'ai-hatch',
-      type: 'fill',
-      source: 'borders',
-      filter: idsFilter(this.year, this.aiIds),
-      paint: { 'fill-pattern': 'ink-hatch' },
+      filter: idsFilter(this.year, this.spotIds),
+      paint: { 'fill-color': vividExpr, 'fill-opacity': 1 },
     });
     map.addLayer({
       id: 'ai-casing',
       type: 'line',
       source: 'borders',
-      filter: idsFilter(this.year, this.aiIds),
+      filter: idsFilter(this.year, this.spotIds),
       layout: { 'line-join': 'round' },
       paint: { 'line-color': t.paper, 'line-width': zoomWidth(3.8, 5.6, 7.6), 'line-opacity': 0.92 },
     });
@@ -328,16 +343,9 @@ export class MapView {
       id: 'ai-line',
       type: 'line',
       source: 'borders',
-      filter: idsFilter(this.year, this.aiIds),
+      filter: idsFilter(this.year, this.spotIds),
       layout: { 'line-join': 'round' },
-      paint: { 'line-color': t.ink, 'line-width': zoomWidth(1.3, 2, 2.8), 'line-opacity': 0.95 },
-    });
-    map.addLayer({
-      id: 'coast',
-      type: 'line',
-      source: 'land',
-      layout: { 'line-join': 'round' },
-      paint: { 'line-color': t.coast, 'line-width': zoomWidth(0.5, 0.9, 1.5), 'line-opacity': 0.85 },
+      paint: { 'line-color': t.ink, 'line-width': zoomWidth(1.4, 2.1, 2.9), 'line-opacity': 0.95 },
     });
 
     this.ready = true;
@@ -357,9 +365,11 @@ export class MapView {
 
   private applyAi() {
     if (!this.ready) return;
-    for (const id of ['ai-fill', 'ai-hatch', 'ai-casing', 'ai-line']) {
-      this.map.setFilter(id, idsFilter(this.year, this.aiIds));
+    for (const id of ['ai-fill', 'ai-casing', 'ai-line']) {
+      this.map.setFilter(id, idsFilter(this.year, this.spotIds));
     }
+    // the rest of the map fades only while something is lit
+    this.map.setPaintProperty('ai-veil', 'background-opacity', this.spotIds.length ? SPOT_VEIL : 0);
   }
 
   private applySelection() {
@@ -471,17 +481,17 @@ export class MapView {
     if (ev?.id === this.selectedEventId) return;
     this.selectedEventId = ev?.id ?? null;
     this.markers.setSelected(ev);
-    this.ai.setSelectedEvent(this.selectedEventId);
     this.layoutOverlays(); // names and labels keep clear of the marker that has just come or gone, with no map frame to wait for
   }
 
   /**
-   * The chat is open (the AI narrates) or closed. Open, the event markers leave the map: only the opened
-   * event and the ones the AI talks about stay or come. Closed, everything is as it always was.
+   * Who narrates the map: the AI (its answer is on screen), the selected place, or nobody. With a narrator the
+   * event markers leave the map: only the opened event and the ones the AI talks about stay or come. With nobody,
+   * everything is as it always was.
    */
-  setNarrator(on: boolean) {
-    if (on === this.narrator) return;
-    this.narrator = on;
+  setNarrator(who: Narrator | null) {
+    if (who === this.narrator) return;
+    this.narrator = who;
     this.syncNarrator();
     this.layoutOverlays();
   }
@@ -495,7 +505,7 @@ export class MapView {
     this.labels.setAvoid(this.narratorRoom());
   }
 
-  /** What the polity names keep clear of while the AI narrates: the few markers on the map and the place dot. */
+  /** What the polity names keep clear of while somebody narrates: the few markers on the map and the place dot. */
   private narratorRoom(): Rect[] {
     return this.narrator ? [...this.markers.rects(), ...this.pins.rects()] : [];
   }
@@ -506,10 +516,10 @@ export class MapView {
    */
   setAiDrawing(drawing: ResolvedDrawing | null, description = '') {
     const d = drawing ?? EMPTY_RESOLVED;
-    const same = d.highlightIds.length === this.aiIds.length && d.highlightIds.every((id, i) => id === this.aiIds[i]);
+    const same = d.spotIds.length === this.spotIds.length && d.spotIds.every((id, i) => id === this.spotIds[i]);
     if (!same) {
-      this.aiIds = d.highlightIds;
-      this.labels.setEmphasis(this.aiIds);
+      this.spotIds = d.spotIds;
+      this.labels.setEmphasis(this.spotIds);
       this.applyAi();
     }
     this.ai.setDrawing(d, description);

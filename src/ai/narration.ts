@@ -1,5 +1,6 @@
 import { isEmptyDrawing } from './drawing';
 import type { AssistantItem } from './session';
+import { withoutOpenReference } from '../ui/read/segments';
 import { alignWithPlan, parseAnswer, type Section } from './steps';
 
 /** The longest a subtitle made from a step's text may be. (The model's own captions are kept to LIMITS.caption.) */
@@ -98,7 +99,7 @@ export function sentencesOf(text: string): string[] {
   const out: string[] = [];
   for (const part of parts) {
     const last = out[out.length - 1];
-    if (last && /(?:^|\s)(?:[A-ZÇĞİÖŞÜ]|[IVXL]+)\.$/.test(last)) out[out.length - 1] = `${last} ${part}`;
+    if (last && /(?:^|[\s[])(?:[A-ZÇĞİÖŞÜ]|[IVXL]+)\.$/.test(last)) out[out.length - 1] = `${last} ${part}`;
     else out.push(part);
   }
   return out.filter(Boolean);
@@ -106,7 +107,8 @@ export function sentencesOf(text: string): string[] {
 
 /**
  * A subtitle made from a step's text, for a model that did not write one: its first sentences, as many as fit,
- * plain (no emphasis marks). Empty when there is no text yet.
+ * without emphasis marks (a reference to an event stays: it is a link in the subtitle too). Empty when there is no
+ * text yet.
  */
 export function captionFromText(body: string, max = CAPTION_FROM_TEXT): string {
   const plain = body.replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
@@ -119,7 +121,7 @@ export function captionFromText(body: string, max = CAPTION_FROM_TEXT): string {
     if (out.length >= max * 0.6) break; // a couple of sentences is a subtitle; more is a paragraph
   }
   if (out) return out;
-  // one long sentence: cut it at a word
+  // one long sentence: cut it at a word (never in the middle of the name of an event)
   const cut = plain.slice(0, max - 1);
-  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), 20)).trimEnd()}…`;
+  return `${withoutOpenReference(cut.slice(0, Math.max(cut.lastIndexOf(' '), 20))).trimEnd()}…`;
 }

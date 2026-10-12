@@ -13,12 +13,22 @@ interface ScriptStep {
   /** The subtitle (Watch): a summary of the text. Made from the text when left out. */
   caption?: string;
   text: string;
+  /** The border year, for a step that shows no event of the data (an event's own year is used otherwise). */
+  year?: number;
   actions: [name: string, input: Record<string, unknown>][];
 }
 
 function narration(steps: ScriptStep[]): MockReply {
   const calls: MockCall[] = steps.flatMap((s, i) => [
-    { name: 'step', input: { n: i + 1, title: s.title, caption: s.caption ?? captionFromText(s.text) } },
+    {
+      name: 'step',
+      input: {
+        n: i + 1,
+        title: s.title,
+        caption: s.caption ?? captionFromText(s.text),
+        ...(s.year !== undefined ? { year: s.year } : {}),
+      },
+    },
     ...s.actions.map(([name, input]) => ({ name, input: { step: i + 1, ...input } })),
   ]);
   const text = steps.map((s, i) => `## ${i + 1}. ${s.title}\n${s.text}`).join('\n\n');
@@ -38,58 +48,49 @@ const clip = (text: string, max: number) => (text.length > max ? `${text.slice(0
 
 /**
  * The Ottoman half-century the brief's acceptance test uses: six steps from Safavid Iran to the Mediterranean,
- * each with a map of its own (a step shows only what it asks for: it states its own polities, relation, events
- * and year). Events the app has records for are shown with their own markers (`show_event`); `mark` is for the
- * one place that is not in the data. Facts are the commonly given ones; where historians disagree the text says so.
+ * each with a map of its own. The model says WHAT is shown and the app draws it: an event the data has is only
+ * named (`show_event`: its parties light up and a war's line runs through its marker), `highlight` adds the
+ * polities that stand out besides, and `connect` and `mark` are for what the data does not know (the 1536 alliance,
+ * Mercidabık). Texts mention the data's events as `[text](olay:id)`, which the page turns into links. Facts are the
+ * commonly given ones; where historians disagree the text says so.
  */
 const OTTOMAN_NARRATION: ScriptStep[] = [
   {
     title: 'Doğuda yeni bir komşu',
     caption:
-      "1501'de Şah İsmail Safevî Devleti'ni kurdu; Osmanlı'nın doğusunda, Anadolu'daki Türkmen boylarına da seslenen yeni bir güç doğdu.",
-    text: "1501'de genç Şah İsmail Tebriz'de Safevî Devleti'ni kurdu. Safevîler Şii bir düzene dayanıyordu ve Anadolu'daki Türkmen boyları arasında geniş bir yandaş kitlesi vardı. Osmanlı yönetimi için bu, doğu sınırındaki bir komşudan çok içeride bir tehditti: Kızılbaş hareketleri, özellikle 1511'deki Şahkulu ayaklanmasıyla, Anadolu'yu sarstı.",
+      "1501'de [Safevî Devleti kuruldu](olay:safevi-1501); Osmanlı'nın doğusunda, Anadolu'daki Türkmen boylarına da seslenen yeni bir güç doğdu.",
+    text: "1501'de genç Şah İsmail Tebriz'de [Safevî Devleti'ni kurdu](olay:safevi-1501). Safevîler Şii bir düzene dayanıyordu ve Anadolu'daki Türkmen boyları arasında geniş bir yandaş kitlesi vardı. Osmanlı yönetimi için bu, doğu sınırındaki bir komşudan çok içeride bir tehditti: Kızılbaş hareketleri, özellikle 1511'deki Şahkulu ayaklanmasıyla, Anadolu'yu sarstı.",
+    year: 1505,
     actions: [
-      ['highlight', { polities: ['ottoman-empire', 'safavid-dynasty'] }],
       ['show_event', { event: 'safevi-1501' }],
-      ['set_year', { year: 1505 }],
+      ['highlight', { polities: ['ottoman-empire'] }],
     ],
   },
   {
     title: 'Çaldıran: doğu sınırı çiziliyor',
     caption:
-      "1514'te Çaldıran'da Osmanlı topçusu ve tüfekli piyadesi Safevî ordusunu yendi; Doğu Anadolu Osmanlı yönetimine geçti.",
-    text: "Sultan Selim, 1514'te Safevîlere karşı sefere çıktı ve 23 Ağustos'ta Çaldıran'da Şah İsmail'in ordusunu yendi. Osmanlı topçusu ve tüfekli piyadesi belirleyici oldu. Zaferin ardından Doğu Anadolu'nun büyük bölümü birkaç yıl içinde Osmanlı yönetimine geçti; Safevîler ise batıya genişleme umudunu yitirdi.",
-    actions: [
-      ['highlight', { polities: ['ottoman-empire', 'safavid-dynasty'] }],
-      ['connect', { from: 'ottoman-empire', to: 'safavid-dynasty', relation: 'war' }],
-      ['show_event', { event: 'caldiran-1514' }],
-      ['set_year', { year: 1514 }],
-    ],
+      "1514'te [Çaldıran Muharebesi](olay:caldiran-1514)'nde Osmanlı topçusu ve tüfekli piyadesi Safevî ordusunu yendi; Doğu Anadolu Osmanlı yönetimine geçti.",
+    text: "Sultan Selim, 1514'te Safevîlere karşı sefere çıktı ve 23 Ağustos'ta [Çaldıran Muharebesi](olay:caldiran-1514)'nde Şah İsmail'in ordusunu yendi. Osmanlı topçusu ve tüfekli piyadesi belirleyici oldu. Zaferin ardından Doğu Anadolu'nun büyük bölümü birkaç yıl içinde Osmanlı yönetimine geçti; Safevîler ise batıya genişleme umudunu yitirdi.",
+    actions: [['show_event', { event: 'caldiran-1514' }]],
   },
   {
     title: 'Memlük topraklarının alınması',
     caption:
-      "1516–1517'de Selim Memlükleri yendi: Suriye ve Mısır alındı, Osmanlı Mekke ve Medine'nin koruyucusu oldu.",
-    text: "Selim, ardından Memlük Sultanlığı'na yöneldi. 1516'da Mercidabık'ta Suriye'nin, 22 Ocak 1517'de Ridaniye'de Mısır'ın kapısı açıldı ve Memlük Sultanlığı yıkıldı. Osmanlılar Kudüs, Şam ve Kahire'yi, Mekke ve Medine'nin koruyuculuğunu kazandı; toprakları bir iki yıl içinde iki katından fazla büyüdü.",
+      "1516–1517'de Selim Memlükleri yendi: Suriye ve Mısır alındı, [Ridaniye](olay:ridaniye-1517)'den sonra Osmanlı Mekke ve Medine'nin koruyucusu oldu.",
+    text: "Selim, ardından Memlük Sultanlığı'na yöneldi. 1516'da Mercidabık'ta Suriye'nin, 22 Ocak 1517'de [Ridaniye Muharebesi](olay:ridaniye-1517)'nde Mısır'ın kapısı açıldı ve Memlük Sultanlığı yıkıldı. Osmanlılar Kudüs, Şam ve Kahire'yi, Mekke ve Medine'nin koruyuculuğunu kazandı; toprakları bir iki yıl içinde iki katından fazla büyüdü.",
     actions: [
-      ['highlight', { polities: ['ottoman-empire', 'mamluk-sultanate'] }],
-      ['connect', { from: 'ottoman-empire', to: 'mamluk-sultanate', relation: 'war' }],
       ['mark', { lon: 37.1, lat: 36.68, label: 'Mercidabık' }],
       ['show_event', { event: 'ridaniye-1517' }],
-      ['set_year', { year: 1517 }],
     ],
   },
   {
     title: 'Süleyman ve Orta Avrupa',
     caption:
-      "I. Süleyman döneminde cephe Avrupa'ya kaydı: 1526'da Mohaç'ta Macar ordusu yenildi, 1529'da Viyana kuşatıldı ama alınamadı.",
-    text: "I. Süleyman döneminde cephe Avrupa'ya kaydı. 1521'de Belgrad, 1522'de Rodos alındı; 29 Ağustos 1526'da Mohaç'ta Macar ordusu yenildi, Kral II. Lajos savaş alanında öldü. Macaristan'ın büyük bölümü sonraki yıllarda Osmanlı yönetimine girdi; 1529'da Viyana kuşatıldı ama şehir alınamadan geri dönüldü.",
+      "I. Süleyman döneminde cephe Avrupa'ya kaydı: 1526'da [Mohaç](olay:mohac-1526)'ta Macar ordusu yenildi, 1529'da [Viyana](olay:viyana-1529) kuşatıldı ama alınamadı.",
+    text: "I. Süleyman döneminde cephe Avrupa'ya kaydı. 1521'de Belgrad, 1522'de Rodos alındı; 29 Ağustos 1526'da [Mohaç Muharebesi](olay:mohac-1526)'nde Macar ordusu yenildi, Kral II. Lajos savaş alanında öldü. Macaristan'ın büyük bölümü sonraki yıllarda Osmanlı yönetimine girdi; 1529'da [Viyana kuşatıldı](olay:viyana-1529) ama şehir alınamadan geri dönüldü.",
     actions: [
-      ['highlight', { polities: ['ottoman-empire', 'kingdom-of-hungary', 'habsburg-monarchy'] }],
-      ['connect', { from: 'ottoman-empire', to: 'kingdom-of-hungary', relation: 'war' }],
       ['show_event', { event: 'mohac-1526' }],
       ['show_event', { event: 'viyana-1529' }],
-      ['set_year', { year: 1526 }],
     ],
   },
   {
@@ -97,34 +98,28 @@ const OTTOMAN_NARRATION: ScriptStep[] = [
     caption:
       "Habsburg çemberindeki Fransa Osmanlı'ya yaklaştı; 1536 dolayında somutlaşan bu ittifakın niteliği tartışmalıdır.",
     text: "Bu yıllarda Osmanlı'nın asıl rakibi Habsburglardı; Fransa Kralı I. François da Habsburg çemberi altındaydı. 1525'te Pavia'da yenilip tutsak düşen François, Süleyman'dan destek istedi. Bu temas, 1536 dolayında somutlaşan Fransız–Osmanlı yakınlaşmasının başlangıcı sayılır; ittifakın ayrıntıları ve kapitülasyonların hukuki niteliği ise tarihçilerce tartışılır.",
+    year: 1536,
     actions: [
       ['highlight', { polities: ['ottoman-empire', 'kingdom-of-france'] }],
       ['connect', { from: 'ottoman-empire', to: 'kingdom-of-france', relation: 'alliance', label: 'İttifak, 1536' }],
-      ['set_year', { year: 1536 }],
     ],
   },
   {
     title: 'Akdeniz’de güç dengesi',
     caption:
-      "1538'de Preveze'de Osmanlı donanması Haçlı ittifakının filosunu yendi; Doğu Akdeniz'de üstünlük uzun süre Osmanlı'da kaldı.",
-    text: "Yakınlaşma Akdeniz'e de yansıdı. 28 Eylül 1538'de Preveze önünde Barbaros Hayreddin Paşa komutasındaki Osmanlı donanması, Papalık, Venedik, İspanya ve Malta Şövalyeleri'nin ortak filosunu yendi. Doğu Akdeniz'de Osmanlı üstünlüğü bundan sonra uzun süre sürdü.",
-    actions: [
-      ['highlight', { polities: ['ottoman-empire', 'republic-of-venice', 'papal-states'] }],
-      ['connect', { from: 'ottoman-empire', to: 'republic-of-venice', relation: 'war' }],
-      ['show_event', { event: 'preveze-1538' }],
-      ['set_year', { year: 1538 }],
-    ],
+      "1538'de [Preveze](olay:preveze-1538)'de Osmanlı donanması Haçlı ittifakının filosunu yendi; Doğu Akdeniz'de üstünlük uzun süre Osmanlı'da kaldı.",
+    text: "Yakınlaşma Akdeniz'e de yansıdı. 28 Eylül 1538'de [Preveze Deniz Muharebesi](olay:preveze-1538)'nde Barbaros Hayreddin Paşa komutasındaki Osmanlı donanması, Papalık, Venedik, İspanya ve Malta Şövalyeleri'nin ortak filosunu yendi. Doğu Akdeniz'de Osmanlı üstünlüğü bundan sonra uzun süre sürdü.",
+    actions: [['show_event', { event: 'preveze-1538' }]],
   },
 ];
 
-const FRANCE_ANSWER = (year: number | null): MockReply => ({
+const FRANCE_ANSWER = (): MockReply => ({
   calls: [
     { name: 'highlight', input: { polities: ['ottoman-empire', 'kingdom-of-france'] } },
     {
       name: 'connect',
       input: { from: 'ottoman-empire', to: 'kingdom-of-france', relation: 'alliance', label: 'İttifak, 1536' },
     },
-    ...(year ? [{ name: 'set_year', input: { year } }] : []),
   ],
   text: "Fransa Kralı I. François, 1525'te Pavia'da Habsburg ordusuna yenilip tutsak düşünce Habsburg çemberini kıracak bir müttefik aradı; Fransa'dan Süleyman'a elçi gönderildi. Bu temas, ortak düşman karşısında doğan Fransız–Osmanlı yakınlaşmasının başlangıcıdır. Anlatılarda ittifakın tarihi çoğunlukla 1536 olarak verilir; ancak o yıl imzalandığı söylenen kapitülasyon metninin hukuki niteliği tarihçiler arasında tartışmalıdır.\n\nUygulamada bu, resmî bir savunma paktından çok kalıcı bir diplomatik ve zaman zaman askerî iş birliğiydi: 1543'te Osmanlı donanması Fransız filosuyla birlikte Nitsa'yı kuşattı ve ertesi kış Toulon'da kaldı. Hristiyan Avrupa'nın Osmanlı karşısında birleşmesini güçleştirdiği için çağdaşlar arasında tepkiyle karşılandı.",
 });
@@ -161,18 +156,17 @@ export function createMockScripts(data: Pick<AppData, 'entities' | 'events'>): M
   };
 
   const franceQuestion: MockScript = (req) => {
-    const { question, context } = req.meta;
+    const { question } = req.meta;
     if (req.meta.mode !== 'qa' || !has(question, 'fransa') || !(has(question, 'ittifak') || has(question, 'osmanli')))
       return null;
-    const year = context.range.from <= 1536 && 1536 <= context.range.to ? 1536 : null;
-    return FRANCE_ANSWER(year);
+    return FRANCE_ANSWER();
   };
 
   const eventQuestion: MockScript = (req) => {
     const ev = req.meta.context.event;
     if (!ev || req.meta.mode !== 'qa') return null;
     const record = data.events.find((e) => e.id === ev.id);
-    return eventAnswer(ev, record, req.meta.context, nameOf);
+    return eventAnswer(ev, record, nameOf);
   };
 
   const placeNarration: MockScript = (req) => {
@@ -203,20 +197,15 @@ export function createMockScripts(data: Pick<AppData, 'entities' | 'events'>): M
 function eventAnswer(
   ev: NonNullable<AiContext['event']>,
   record: HistoricalEvent | undefined,
-  context: AiContext,
   nameOf: (id: string) => string,
 ): MockReply {
-  const calls: MockCall[] = [];
+  // only which event: the app lights its parties, draws its line if it is a war, and shows the borders of its year
+  const calls: MockCall[] = [{ name: 'show_event', input: { event: ev.id } }];
   const parties = record?.parties ?? [];
-  if (parties.length) calls.push({ name: 'highlight', input: { polities: parties.slice(0, 3) } });
-  calls.push({ name: 'show_event', input: { event: ev.id } });
-  if (record && record.year >= context.range.from && record.year <= context.range.to) {
-    calls.push({ name: 'set_year', input: { year: record.year } });
-  }
   const who = parties.length ? ` Olaya karışan taraflar: ${parties.map(nameOf).join(', ')}.` : '';
   return {
     calls,
-    text: `**${ev.title}** (${ev.dateLabel}, ${ev.placeName}). ${ev.summary}${who}\n\nBu olayı dönemin geri kalanıyla ilişkilendirmek için çevresindeki gelişmelere de bakmak gerekir; haritada olay kendi işaretiyle, ilgili devletler de vurgulu olarak gösterildi.`,
+    text: `**${ev.title}** (${ev.dateLabel}, ${ev.placeName}). ${ev.summary}${who}\n\nBu olayı dönemin geri kalanıyla ilişkilendirmek için çevresindeki gelişmelere de bakmak gerekir; haritada olay kendi işaretiyle, ilgili devletler de öne çıkarılarak gösterildi.`,
   };
 }
 
@@ -242,16 +231,13 @@ function narrateSovereigns(
       .sort((a, b) => b.importance - a.importance)
       .slice(0, 1);
     const eventLine = related.length
-      ? ` Aynı yıllarda öne çıkan olay: ${related[0]!.title} (${related[0]!.dateLabel}).`
+      ? ` Aynı yıllarda öne çıkan olay: [${related[0]!.title}](olay:${related[0]!.id}) (${related[0]!.dateLabel}).`
       : '';
     const text =
       `${span} arasında bu nokta ${nameOf(s.id)} sınırları içindeydi. ${sentences(entity?.summary, 2)}${eventLine}`.trim();
-    const actions: ScriptStep['actions'] = [
-      ['highlight', { polities: [s.id] }],
-      ['set_year', { year: Math.round((s.from + s.to) / 2) }],
-    ];
+    const actions: ScriptStep['actions'] = [['highlight', { polities: [s.id] }]];
     if (related.length) actions.push(['show_event', { event: related[0]!.id }]);
-    return { title: `${nameOf(s.id)} (${span})`, text, actions };
+    return { title: `${nameOf(s.id)} (${span})`, text, year: Math.round((s.from + s.to) / 2), actions };
   });
   return narration(steps);
 }
@@ -275,12 +261,8 @@ function narrateWorld(
   return narration(
     picked.map((e) => ({
       title: clip(e.title, 48),
-      text: `${e.dateLabel}, ${e.location.name}. ${e.summary}${e.parties.length ? ` Taraflar: ${e.parties.map(nameOf).join(', ')}.` : ''}`,
-      actions: [
-        ['highlight', { polities: e.parties.slice(0, 2) }],
-        ['show_event', { event: e.id }],
-        ['set_year', { year: e.year }],
-      ],
+      text: `[${e.title}](olay:${e.id}): ${e.dateLabel}, ${e.location.name}. ${e.summary}${e.parties.length ? ` Taraflar: ${e.parties.map(nameOf).join(', ')}.` : ''}`,
+      actions: [['show_event', { event: e.id }]],
     })),
   );
 }

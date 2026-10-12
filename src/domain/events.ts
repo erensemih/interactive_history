@@ -21,6 +21,7 @@ export interface RawEvent {
   importance: number;
   category: string;
   parties: string[];
+  versus?: string[];
   sources: Array<{ wikipedia?: string; wikidata?: string; lang?: string; url?: string; title?: string }>;
 }
 
@@ -91,6 +92,9 @@ export function normalizeEvent(raw: RawEvent, set: string): HistoricalEvent {
     importance: raw.importance as Importance,
     category: raw.category,
     parties: raw.parties,
+    ...(Array.isArray(raw.versus) && raw.versus.length
+      ? { versus: raw.versus.filter((p): p is string => typeof p === 'string') }
+      : {}),
     sources: raw.sources.map(sourceUrl).filter((s): s is SourceRef => s !== null),
     set,
   };

@@ -84,6 +84,11 @@ export interface HistoricalEvent {
   importance: Importance;
   category: string;
   parties: string[];
+  /**
+   * War events only, and only when the first two parties are on the same side: who the first party fought
+   * (a subset of `parties`). Without it the opponent is taken to be the second party.
+   */
+  versus?: string[];
   sources: SourceRef[];
   set: string;
 }

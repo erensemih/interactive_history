@@ -12,7 +12,10 @@ import type { AppData } from '../../data/load';
 import { dot } from '../dot';
 import { clsx, formatRange } from '../format';
 import { scrollBehavior } from '../motion';
-import { inline } from './richText';
+import { eventRefOf, inline } from './richText';
+import { withoutOpenReference } from './segments';
+
+const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ']);
 
 export interface ReadActions {
   stop(): void;
@@ -28,6 +31,8 @@ export interface ReadActions {
   close(): void;
   /** Between the panel beside the map and the full screen. */
   toggleSize(): void;
+  /** An event named in a text was clicked: the same as a click on that event in the timeline. */
+  openEvent(id: string): void;
 }
 
 export interface ReadDeps {
@@ -101,6 +106,8 @@ export class ReadView {
    * step into view, a layout that changed) must never take the map away from the step it has just shown.
    */
   private userScrollUntil = 0;
+  /** The size of the scroll area when the reader last put a hand on it: a scroll after it changed size is the layout's doing. */
+  private handSize = '';
   private scrollQueued = false;
   /** The reader scrolled the text themselves since the last question: the page stops following the answer. */
   private manual = false;
@@ -113,8 +120,18 @@ export class ReadView {
     this.element.className = 'chat';
     this.element.dataset.testid = 'chat';
     this.element.setAttribute('aria-label', 'Sohbet');
+    // one listener over every text drawn here: the names of events in a text are links
+    this.element.addEventListener('click', (e) => {
+      const id = eventRefOf(e.target);
+      if (!id) return;
+      e.preventDefault();
+      deps.actions.openEvent(id);
+    });
     this.draw();
   }
+
+  /** Is this the id of an event of the app's data? (A reference to anything else stays plain text.) */
+  private known = (id: string) => this.deps.data.eventsById.has(id);
 
   /** Asks for a redraw on the next frame (streaming text arrives many times a second). */
   update() {
@@ -162,6 +179,11 @@ export class ReadView {
     if (scroller) this.savedScroll = scroller.scrollTop;
     const now = performance.now();
     if (now >= this.userScrollUntil) return; // not the reader's doing
+    if (this.sizeOfScroller() !== this.handSize) {
+      // the text was set again in another size (the panel grew or shrank) and the browser moved the scroll with it
+      this.userScrollUntil = 0;
+      return;
+    }
     this.userScrollUntil = Math.max(this.userScrollUntil, now + 300); // a flick keeps scrolling by itself for a while
     if (this.scrollQueued) return;
     this.scrollQueued = true;
@@ -214,7 +236,7 @@ export class ReadView {
             @scroll=${this.onScroll}
             @wheel=${this.takeOver}
             @touchmove=${this.takeOver}
-            @keydown=${this.takeOver}
+            @keydown=${this.onKey}
             @pointerdown=${(e: PointerEvent) => {
               if (e.target === e.currentTarget) this.takeOver(); // the scrollbar itself
             }}
@@ -239,10 +261,21 @@ export class ReadView {
     } else this.follow();
   }
 
-  /** The reader's hand is on the scroll area: wheel, touch, keys or its scrollbar. */
+  private sizeOfScroller(): string {
+    const s = this.scroller();
+    return s ? `${s.clientWidth}x${s.clientHeight}` : '';
+  }
+
+  /** The reader's hand is on the scroll area: wheel, touch, scrolling keys or its scrollbar. */
   private takeOver = () => {
     this.manual = true;
     this.userScrollUntil = performance.now() + 1200;
+    this.handSize = this.sizeOfScroller();
+  };
+
+  /** Only the keys that scroll count (Esc, Tab and the like leave the text where it is). */
+  private onKey = (e: KeyboardEvent) => {
+    if (SCROLL_KEYS.has(e.key)) this.takeOver();
   };
 
   /**
@@ -401,7 +434,7 @@ export class ReadView {
             </p>`
           : nothing
       }
-      ${preamble ? html`<p class="prose chat-preamble">${inline(preamble)}</p>` : nothing}
+      ${preamble ? html`<p class="prose chat-preamble">${inline(streaming ? withoutOpenReference(preamble) : preamble, this.known)}</p>` : nothing}
       ${views.map((s, i) =>
         this.step(
           item,
@@ -487,7 +520,9 @@ export class ReadView {
       data-testid="chat-step"
       data-active=${active}
       aria-current=${active ? 'step' : 'false'}
-      @click=${() => this.onStepClick(item.id, s.n, mapped, active)}
+      @click=${(e: Event) => {
+        if (!eventRefOf(e.target)) this.onStepClick(item.id, s.n, mapped, active); // a click on an event's name opens the event, nothing more
+      }}
     >
       ${numbered ? html`<span class="cs-n" aria-hidden="true">${s.n}</span>` : nothing}
       <div class="cs-body">
@@ -497,12 +532,12 @@ export class ReadView {
             ? paragraphs.map(
                 (p, i) =>
                   html`<p class="prose">
-                    ${inline(p)}${caret && i === paragraphs.length - 1 ? html`<i class="caret" aria-hidden="true"></i>` : nothing}
+                    ${inline(caret ? withoutOpenReference(p) : p, this.known)}${caret && i === paragraphs.length - 1 ? html`<i class="caret" aria-hidden="true"></i>` : nothing}
                   </p>`,
               )
             : s.caption
               ? html`<p class="prose cs-pending" data-testid="chat-step-pending">
-                  ${s.caption}${caret ? html`<i class="caret" aria-hidden="true"></i>` : nothing}
+                  ${inline(withoutOpenReference(s.caption), this.known)}${caret ? html`<i class="caret" aria-hidden="true"></i>` : nothing}
                 </p>`
               : caret
                 ? html`<p class="prose"><i class="caret" aria-hidden="true"></i></p>`

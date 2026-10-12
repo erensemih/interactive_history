@@ -91,6 +91,57 @@
   color: var(--ink-2);
 }
 
+/* "Sohbeti temizle": always on the box, a plain labelled button (a bin on a narrow screen); dim while there is nothing to clear */
+.ask-clear {
+  flex: none;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+
+.ask-clear:hover:not(:disabled) {
+  background: var(--paper-3);
+  color: var(--ink);
+}
+
+.ask-clear:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* a narrow screen, or a box made narrow by the reader beside the map (.is-tight): the bin alone */
+@media (max-width: 900px) {
+  .ask-clear {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    justify-content: center;
+  }
+  .ask-clear span {
+    display: none;
+  }
+}
+
+.ask.is-tight .ask-clear {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  justify-content: center;
+}
+
+.ask.is-tight .ask-clear span {
+  display: none;
+}
+
 .ask-read.is-on {
   background: var(--ink);
   color: var(--paper);
@@ -258,15 +309,6 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
-}
-
-.ask-menu-clear {
-  justify-self: start;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink-2);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 .chat-opt {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { contextEvent, contextFromView, type AiContext } from '../src/ai/context';
+import { isEmptyDrawing } from '../src/ai/drawing';
 import { createMockProvider, MockProvider, type MockOptions, type MockScript } from '../src/ai/mockProvider';
 import { createMockScripts } from '../src/ai/mockScripts';
 import { INSTRUCTIONS_FILE } from '../src/ai/instructions';
@@ -60,19 +61,29 @@ describe('a narration', () => {
       { from: 'ottoman-empire', to: 'kingdom-of-france', relation: 'alliance', label: 'İttifak, 1536' },
     ]);
     expect(five.events).toEqual([]);
-    expect(five.year).toBe(1536);
+    expect(five.year).toBe(1536); // the step named it: it shows no event to take one from
+    // what the data has an event for is only named: the app lights its parties and draws its war line
     const three = answer.plan.drawingAt(3);
-    expect(three.links.map((l) => l.to)).toEqual(['mamluk-sultanate']);
-    expect(three.highlights).toEqual(['ottoman-empire', 'mamluk-sultanate']);
-    // events the app has records for are shown by their own markers; the one place it has none for is a mark
     expect(three.events).toEqual(['ridaniye-1517']);
-    expect(three.marks.map((m) => m.label)).toEqual(['Mercidabık']);
+    expect(three.links).toEqual([]); // no line of the model's own for a war the data has
+    expect(three.highlights).toEqual([]);
+    expect(three.marks.map((m) => m.label)).toEqual(['Mercidabık']); // the one place the data has no event for is a mark
     expect(answer.plan.drawingAt(2).events).toEqual(['caldiran-1514']);
+    expect(answer.plan.drawingAt(2).links).toEqual([]);
     expect(answer.plan.drawingAt(1).events).toEqual(['safevi-1501']);
+    expect(answer.plan.drawingAt(1).highlights).toEqual(['ottoman-empire']); // besides the event's own parties
+    expect(answer.plan.drawingAt(4).events).toEqual(['mohac-1526', 'viyana-1529']);
+    // the year of a step with events is theirs (the earliest), unless the step names one
+    expect(answer.plan.drawingAt(1).year).toBe(1505);
+    expect(answer.plan.drawingAt(2).year).toBe(1514);
+    expect(answer.plan.drawingAt(3).year).toBe(1517);
+    expect(answer.plan.drawingAt(4).year).toBe(1526);
+    expect(answer.plan.drawingAt(6).year).toBe(1538);
     for (const n of answer.plan.numbers()) {
-      // every step says what it needs by itself: a polity, a year, and none of them is left to the step before
-      expect(answer.plan.drawingAt(n).highlights.length).toBeGreaterThan(0);
-      expect(answer.plan.drawingAt(n).year).toBeDefined();
+      // every step shows something and says what it needs by itself, and none of it is left to the step before
+      const d = answer.plan.drawingAt(n);
+      expect(d.events.length + d.highlights.length).toBeGreaterThan(0);
+      expect(d.year).toBeDefined();
     }
   });
 
@@ -82,20 +93,13 @@ describe('a narration', () => {
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
     const req = provider.requests[0]!;
     expect(req.tier).toBe('quick');
-    expect(req.tools.map((t) => t.name)).toEqual([
-      'step',
-      'highlight',
-      'connect',
-      'show_event',
-      'mark',
-      'set_year',
-      'focus',
-    ]);
+    expect(req.tools.map((t) => t.name)).toEqual(['step', 'show_event', 'highlight', 'connect', 'mark']);
     expect(req.turns[0]!.content.startsWith(INSTRUCTIONS_FILE)).toBe(true); // the owner's file, as it is, in every call
     expect(req.turns.at(-1)!.content).toContain(`İSTEK\n${NARRATION_REQUEST}`);
     expect(req.turns.at(-1)!.content).toContain('ottoman-empire | Osmanlı İmparatorluğu');
     expect(req.turns.at(-1)!.content).toContain('Çaldıran Muharebesi'); // the app's own record, as a source
     expect(req.turns.at(-1)!.content).toContain('caldiran-1514 | '); // and with the id show_event takes
+    expect(req.turns.at(-1)!.content).toContain('ANLATIM İSKELETİ'); // a narration comes with the app's outline
     expect(req.meta.mode).toBe('narration');
   });
 
@@ -109,7 +113,7 @@ describe('a narration', () => {
         atFirstText.push({
           steps: a.plan.numbers(),
           captions: a.plan.numbers().filter((n) => a.plan.captionOf(n)).length,
-          drawn: a.plan.numbers().filter((n) => a.plan.drawingAt(n).highlights.length).length,
+          drawn: a.plan.numbers().filter((n) => !isEmptyDrawing(a.plan.drawingAt(n))).length,
         });
       }
     });
@@ -145,6 +149,7 @@ describe('a narration', () => {
     const sections = parseAnswer(answer.text).sections;
     expect(sections.length).toBeGreaterThanOrEqual(1);
     expect(answer.plan.drawingAt(1).highlights).toEqual(['ming-dynasty']);
+    expect(answer.plan.drawingAt(1).year).toBeDefined(); // every step of it says which year's borders it shows
   });
 
   it('and for the world when no place is chosen', async () => {
@@ -153,6 +158,12 @@ describe('a narration', () => {
     const answer = last(session);
     expect(parseAnswer(answer.text).sections.length).toBeGreaterThanOrEqual(3);
     expect(answer.plan.drawingAt(2).events.length).toBeGreaterThan(0);
+    // the mock follows the app's outline, so the world's narration is the same turning points every time
+    const second = makeSession(mock());
+    await second.send({ text: 'Bu aralıkta dünyada olanları anlat.', mode: 'narration' }, contextAt(null));
+    expect(last(second).plan.numbers().map((n) => last(second).plan.drawingAt(n).events)).toEqual(
+      answer.plan.numbers().map((n) => answer.plan.drawingAt(n).events),
+    );
   });
 });
 
@@ -170,7 +181,7 @@ describe('a model that does not write quite what was asked', () => {
         { name: 'highlight', input: { step: '1', polities: ['Osmanlı', 'Safavid Dynasty'] } },
         { name: 'step', input: { n: 2, title: 'İki' } },
         { name: 'connect', input: { step: 2, from: 'Osmanlı Devleti', to: 'Fransa', relation: 'İttifak' } },
-        { name: 'set_year', input: { step: 2, year: '1536' } },
+        { name: 'set_year', input: { step: 2, year: '1536' } }, // a tool of an older version: there is none to run it, nothing happens
       ],
       text: '**1. Başlangıç**\nİlk paragraf.\n\n**2. İki**\nİkinci paragraf.',
     });
@@ -182,7 +193,20 @@ describe('a model that does not write quite what was asked', () => {
     expect(answer.plan.drawingAt(2).links).toEqual([
       { from: 'ottoman-empire', to: 'kingdom-of-france', relation: 'alliance' },
     ]);
-    expect(answer.plan.drawingAt(2).year).toBe(1536);
+    expect(answer.plan.drawingAt(2).year).toBeUndefined();
+  });
+
+  it('takes the year from the step itself, as a number or as text, when it is in the range', async () => {
+    const answer = await run({
+      calls: [
+        { name: 'step', input: { n: 1, title: 'A', caption: 'a', year: '1536' } },
+        { name: 'step', input: { n: 2, title: 'B', caption: 'b', year: 1700 } },
+      ],
+      text: '## 1. A\nİlk.\n\n## 2. B\nİkinci.',
+    });
+    expect(answer.plan.drawingAt(1).year).toBe(1536);
+    expect(answer.plan.drawingAt(2).year).toBeUndefined(); // outside the range: left to the reader
+    expect(answer.plan.titleOf(2)).toBe('B');
   });
 
   it('writes a line before the steps: it is kept apart, and the steps still line up with the plan', async () => {
@@ -225,7 +249,7 @@ describe('a model that does not write quite what was asked', () => {
         { name: 'highlight', input: { polities: ['atlantis', 'lemuria'] } },
         { name: 'connect', input: { from: 'atlantis', to: 'ottoman-empire', relation: 'war' } },
         { name: 'mark', input: { lon: 500, lat: 500, label: 'Yok' } },
-        { name: 'set_year', input: { year: 1700 } },
+        { name: 'show_event', input: { event: 'yok-boyle-bir-olay' } },
         { name: 'draw_everything', input: {} },
         { name: 'highlight', input: { polities: ['ottoman-empire'] } },
       ],
@@ -233,7 +257,7 @@ describe('a model that does not write quite what was asked', () => {
     });
     expect(answer.status).toBe('done');
     const d = answer.plan.drawingAt(1);
-    expect(d).toMatchObject({ highlights: ['ottoman-empire'], links: [], marks: [] });
+    expect(d).toMatchObject({ highlights: ['ottoman-empire'], links: [], marks: [], events: [] });
     expect(d.year).toBeUndefined();
   });
 });
@@ -249,7 +273,7 @@ describe('a question', () => {
     const d = answer.plan.drawingAt(1);
     expect(d.highlights).toEqual(['ottoman-empire', 'kingdom-of-france']);
     expect(d.links[0]).toMatchObject({ relation: 'alliance' });
-    expect(d.year).toBe(1536);
+    expect(d.year).toBeUndefined(); // a single-part answer with no event leaves the year to the reader
     expect(provider.requests[0]!.turns.at(-1)!.content).toContain(
       'İSTEK\nOsmanlı ile Fransa arasındaki 1536 ittifakı neydi?',
     );
@@ -264,7 +288,8 @@ describe('a question', () => {
     expect(user.kind === 'user' && user.event?.id).toBe('mohac-1526');
     expect(provider.requests[0]!.turns.at(-1)!.content).toContain('Açık olay kartı: «Mohaç Muharebesi»');
     const answer = last(session);
-    expect(answer.plan.drawingAt(1).highlights).toEqual(expect.arrayContaining(['ottoman-empire']));
+    expect(answer.plan.drawingAt(1).highlights).toEqual([]); // only which event: the app lights its parties itself
+    expect(answer.plan.drawingAt(1).links).toEqual([]);
     expect(answer.plan.drawingAt(1).events).toEqual(['mohac-1526']); // its own marker, not a mark of the model's
     expect(answer.plan.drawingAt(1).marks).toEqual([]);
     expect(answer.plan.drawingAt(1).year).toBe(1526);
@@ -280,6 +305,69 @@ describe('a question', () => {
     expect(turns[1]!.content).toContain(NARRATION_REQUEST);
     expect(turns[2]!.content).toContain('## 1. Doğuda yeni bir komşu');
     expect(turns[3]!.content).toContain('Fransa ile ittifak neydi?');
+  });
+
+  it('sends the whole conversation every time, with what each answer put on the map, so the model knows what it said', async () => {
+    const provider = mock();
+    const session = makeSession(provider);
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: 'Fransa ile ittifak neydi?', mode: 'qa' }, anatolia());
+    await session.send({ text: 'Peki Venedik?', mode: 'qa' }, anatolia());
+    const turns = provider.requests[2]!.turns;
+    expect(turns.map((t) => t.role)).toEqual(['user', 'user', 'assistant', 'user', 'assistant', 'user']);
+    // the whole first answer, every step of it, and what it showed
+    expect(turns[2]!.content).toContain('[Haritada gösterdiklerim: 1. adım: öne çıkan: Osmanlı İmparatorluğu; olay: Safevî');
+    expect(turns[2]!.content).toContain('## 6. Akdeniz’de güç dengesi');
+    expect(turns[2]!.content).toContain('4. adım: olay: Mohaç Muharebesi, Birinci Viyana Kuşatması');
+    expect(turns[4]!.content).toContain('öne çıkan: Osmanlı İmparatorluğu, Fransa Krallığı'); // the second answer's own scene
+    // and the next request, when the chat is not too long, loses nothing
+    expect(provider.requests[1]!.turns[2]!.content).toBe(turns[2]!.content);
+  });
+
+  it('condenses an old answer instead of dropping it when the chat gets long, and the page keeps all of it', async () => {
+    const long = 'Çok uzun bir yanıt. '.repeat(900);
+    let n = 0;
+    const talky: MockScript = () => ({ text: `${++n}: ${long}` });
+    const provider = mock(FAST, [talky]);
+    const session = makeSession(provider);
+    for (let i = 0; i < 8; i++) await session.send({ text: `Soru ${i}`, mode: 'qa' }, anatolia());
+    const last8 = provider.requests[7]!.turns.map((t) => t.content).join('\n');
+    for (let i = 0; i < 7; i++) expect(last8).toContain(`Soru ${i}`); // every earlier question is still there
+    expect(last8).toContain(`7: ${long}`); // the newest answer is whole
+    expect(last8).toContain('sohbet uzadığı için kısaltıldı'); // the oldest are shorter
+    expect(last8).not.toContain(`1: ${long}`);
+    expect(session.items.filter((i) => i.kind === 'assistant')).toHaveLength(8); // nothing leaves the chat on screen
+    expect((session.items[1] as AssistantItem).text).toContain(`1: ${long}`);
+  });
+
+  it('tells the model when the same ask is made again in the same chat and subject, and not when it is a new subject', async () => {
+    const provider = mock();
+    const session = makeSession(provider);
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    expect(provider.requests[0]!.turns.at(-1)!.content).not.toContain('TEKRAR');
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    expect(provider.requests[1]!.turns.at(-1)!.content).toContain('TEKRAR\nBu istek (aynı sözlerle, aynı konuda) bu sohbette daha önce 1 kez yapıldı');
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, contextAt({ lon: 112, lat: 33 }));
+    expect(provider.requests[2]!.turns.at(-1)!.content).not.toContain('TEKRAR'); // another place: a new ask
+  });
+
+  it('gives the same outline for the same subject however many times it is asked, and a new one for another subject', async () => {
+    const provider = mock();
+    const session = makeSession(provider);
+    const outlineOf = (i: number) => {
+      const text = provider.requests[i]!.turns.at(-1)!.content;
+      return /ANLATIM İSKELETİ[^\n]*\n([\s\S]*?)\n\n/.exec(text)?.[1];
+    };
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    session.newChat();
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, { ...anatolia(), year: 1531 }); // another year shown
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, contextAt({ lon: 112, lat: 33 }));
+    expect(outlineOf(0)).toBeTruthy();
+    expect(outlineOf(1)).toBe(outlineOf(0));
+    expect(outlineOf(2)).not.toBe(outlineOf(0));
+    // a question is not a narration: no outline for it
+    await session.send({ text: 'Fransa ile ittifak neydi?', mode: 'qa' }, anatolia());
+    expect(provider.requests[3]!.turns.at(-1)!.content).not.toContain('ANLATIM İSKELETİ');
   });
 
   it('refuses to start a second call while one runs', async () => {
@@ -461,10 +549,10 @@ describe('tools that are not there', () => {
     };
     const session = makeSession(provider);
     await session.send({ text: 'Soru 1', mode: 'qa' }, anatolia());
-    expect(seen).toEqual([7, 0]);
+    expect(seen).toEqual([5, 0]);
     expect(last(session)).toMatchObject({ status: 'done', text: 'Yalnızca metin.', notes: [NO_TOOLS_NOTE] });
     await session.send({ text: 'Soru 2', mode: 'qa' }, anatolia());
-    expect(seen).toEqual([7, 0, 0]); // no second round trip for the same refusal
+    expect(seen).toEqual([5, 0, 0]); // no second round trip for the same refusal
   });
 
   it('a view that reports no tools gets plain text and a note, with no polity list in the prompt', async () => {
@@ -486,7 +574,7 @@ describe('tools that are not there', () => {
     const provider = mock({ ...FAST, maxTools: 3 });
     const session = makeSession(provider);
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
-    expect(provider.requests[0]!.tools.map((t) => t.name)).toEqual(['step', 'highlight', 'connect']);
+    expect(provider.requests[0]!.tools.map((t) => t.name)).toEqual(['step', 'show_event', 'highlight']);
     expect(last(session).status).toBe('done');
   });
 });

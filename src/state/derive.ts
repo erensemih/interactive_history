@@ -1,7 +1,7 @@
 import type { AppData } from '../data/load';
 import { elsewhere, mapEventsInRange, nearestEvent, timelineEvents } from '../domain/events';
 import { resolvePlace } from '../domain/geo';
-import { detailDomain, displayYear } from '../domain/time';
+import { displayYear } from '../domain/time';
 import type { Entity, HistoricalEvent, PlacePoint, PlaceResolution, YearRange } from '../domain/types';
 import type { AppState } from './store';
 
@@ -45,13 +45,17 @@ export interface ViewModel {
 }
 
 /**
- * `yearOverride` is the year the AI's current step asks for; it only counts inside the selected range.
- * The reader's own cursor stays in the state, untouched, and comes back when the override goes away.
+ * `yearOverride` is the year the AI's current step asks for, held inside the selected range. The reader's own
+ * cursor stays in the state, untouched, and comes back when the override goes away.
  */
 export function deriveView(state: AppState, data: AppData, yearOverride: number | null = null): ViewModel {
-  const asked = yearOverride !== null && yearOverride >= state.range.from && yearOverride <= state.range.to;
-  const year = asked ? yearOverride : displayYear(state.range, state.cursor);
-  const domain = detailDomain(state.range, data.extent);
+  // (a year outside the range, which only an event the reader's range does not hold can bring, is held to the nearest edge)
+  const year =
+    yearOverride !== null
+      ? Math.min(state.range.to, Math.max(state.range.from, yearOverride))
+      : displayYear(state.range, state.cursor);
+  // the place's timeline shows exactly the selected range: nothing before it, nothing after it
+  const domain = state.range;
   const mapEvents = mapEventsInRange(data.events, state.range);
 
   const places: PlaceView[] = state.places.map((point) => {

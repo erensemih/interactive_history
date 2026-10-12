@@ -3,14 +3,19 @@ import { describe, expect, it, vi } from 'vitest';
 import { subjectKey, subjectLabel, type AiContext } from '../src/ai/context';
 import { drawingOf, emptyDrawing, TurnPlan } from '../src/ai/drawing';
 import { INSTRUCTIONS_FILE } from '../src/ai/instructions';
+import { narrationOutline } from '../src/ai/outline';
 import {
   buildTurns,
+  condense,
   describeCatalog,
   describeContext,
   describeEvents,
+  describeOutline,
+  FULL_HISTORY_BYTES,
   instructions,
   NARRATION_REQUEST,
   utf8Bytes,
+  type HistoryTurn,
   type PromptInput,
 } from '../src/ai/prompt';
 import { Resolver } from '../src/ai/resolve';
@@ -71,22 +76,42 @@ describe('instructions', () => {
     const plan = new TurnPlan();
     const offered = createTools({ resolver, range, plan }).map((t) => t.name);
     const text = instructions(true);
-    for (const [action, tool] of [
-      ['devletleri vurgulamak', 'highlight'],
-      ['ilişkiye göre bağlamak', 'connect'],
-      ['kısa bir etiketle işaretlemek', 'mark'],
-      ['sınır yılını değiştirmek', 'set_year'],
-      ['bölgeyi göstermek', 'focus'],
-      ['olayı göstermek', 'show_event'],
-      ['adımları bildirmek', 'step'],
+    // what the file says the model may do, and the tool the notes give each of them
+    for (const [inFile, inNotes, tool] of [
+      ['sadece o olayı göster', 'veri setindeki bir olayı göstermek', 'show_event'],
+      ['Hangi devletlerin öne çıkacağını', 'hangi devletlerin öne çıkacağını söylemek', 'highlight'],
+      ['Kendi çizgi', 'veride olmayan bir ilişkiyi çizmek', 'connect'],
+      ['işaretlerini yalnızca veride olmayan', 'veride olmayan bir yeri işaretlemek', 'mark'],
+      ['Her adım için iki metin', 'adımları bildirmek', 'step'],
     ] as const) {
+      expect(INSTRUCTIONS_FILE).toContain(inFile);
       expect(offered).toContain(tool);
-      expect(text).toMatch(new RegExp(`${action}[^\\n]*→ \`${tool}\``)); // "action → `tool`"
+      expect(text).toMatch(new RegExp(`${inNotes}[^\\n]*→ \`${tool}\``)); // "action → `tool`"
     }
-    // every tool of the page is named in the notes
+    // every tool of the page is named in the notes, and no tool the file does not have a use for is offered
+    expect(offered).toEqual(['step', 'show_event', 'highlight', 'connect', 'mark']);
     for (const name of offered) expect(text).toContain(`\`${name}\``);
     expect(text).toContain('POLİTİLER');
     expect(text).toContain('OLAYLAR');
+  });
+
+  it('say what the app does so the model does not have to: no camera, no looks, the year from the events', () => {
+    const text = instructions(true);
+    expect(text).toContain('NASIL görüneceğini (renk, vurgu, çizgi, kamera) uygulama belirler');
+    expect(text).toContain('Kamera diye bir aracın yok');
+    expect(text).not.toContain('`focus`');
+    expect(text).not.toContain('`set_year`');
+    expect(text).toContain('`year`'); // the step's own, for a step with no event
+    expect(text).toMatch(/savaşlarda iki taraf arasındaki çizgiyi o işaretin üzerinden geçirir/);
+    expect(text).toMatch(/Aynı olay için ayrıca `connect` ya da `mark` çağırma/);
+  });
+
+  it('teach the way an event is named in a text, so the reader can click it', () => {
+    const text = instructions(true);
+    expect(INSTRUCTIONS_FILE).toContain('onu olay olarak işaretle');
+    expect(text).toContain('`[olay adı](olay:KİMLİK)`');
+    expect(text).toContain("`[Çaldıran Muharebesi](olay:caldiran-1514)'nde`");
+    expect(text).toMatch(/başlıklarda da kullanma/);
   });
 
   it('give the two-phase protocol of a stepped answer: the tools first, in one round, then the numbered texts', () => {
@@ -105,16 +130,24 @@ describe('instructions', () => {
     expect(text).toContain('kendi başına bildirmeli');
     expect(text).not.toContain('devral'); // nothing is inherited from the step before
     expect(text).not.toContain('`clear`');
-    expect(text).toMatch(/OLAYLAR listesindeki kimlikle; kendi işaretini çizme/);
-    expect(text).toMatch(/`mark` yalnızca OLAYLAR'da bulunmayan yerler/);
-    expect(text).toContain('Harita takibi');
+    expect(text).toMatch(/OLAYLAR listesindeki kimlikle\)\. Yalnızca hangi olay olduğunu söylersin/);
+    expect(text).toMatch(/`mark`\s*\(kent, geçit, liman/);
+  });
+
+  it('give the narration outline rule: the same steps for the same subject, in the outline’s order', () => {
+    const text = instructions(true);
+    expect(text).toContain('ANLATIM İSKELETİ');
+    expect(text).toMatch(/sıra ve adım sayısı iskeletindir/);
+    expect(text).toMatch(/İskeletin dışına çıkıp adım ekleme/);
+    expect(text).toMatch(/Kullanıcı başka bir biçim isterse/);
   });
 
   it('show the protocol on a worked example', () => {
     const text = instructions(true);
     expect(text).toContain('ÖRNEK');
-    expect(text).toMatch(/step\{n:1,title:"[^"]+",caption:"[^"]+"\}/);
+    expect(text).toMatch(/step\{n:1,title:"[^"]+",caption:"[^"]+"/);
     expect(text).toMatch(/\n ## 2\. Çaldıran\n/);
+    expect(text).toContain('show_event{step:1,event:"safevi-1501"}');
     expect(instructions(false)).not.toContain('ÖRNEK');
   });
 
@@ -232,7 +265,7 @@ describe('buildTurns', () => {
       { kind: 'event', step: 1, id: 'caldiran-1514' },
     ]);
     const turn = buildTurns(base({ drawing, eventTitleOf: (id) => resolver.eventById(id)?.title ?? id })).at(-1)!;
-    expect(turn.content).toContain('vurgulanan: Osmanlı İmparatorluğu');
+    expect(turn.content).toContain('öne çıkan: Osmanlı İmparatorluğu');
     expect(turn.content).toContain('olay: Çaldıran Muharebesi');
     expect(buildTurns(base({ drawing: emptyDrawing() })).at(-1)!.content).not.toContain('çizdiklerin');
   });
@@ -273,22 +306,54 @@ describe('buildTurns', () => {
     expect(turns[7]!.content).toContain('İSTEK\nFransa ile ittifak neydi?');
   });
 
-  it('keeps the input under the limit by dropping the oldest exchanges first, never the rules or the request', () => {
+  it('keeps the input under the limit by condensing the oldest exchanges, never by dropping any, nor the rules or the request', () => {
     const long = 'Eski yanıt. '.repeat(400);
     const history = Array.from({ length: 12 }, (_, i) => [
       { role: 'user' as const, text: `Soru ${i}` },
-      { role: 'assistant' as const, text: `${i}: ${long}` },
+      { role: 'assistant' as const, text: `${i}: ${long}`, digest: `${i}. adım — özet.` },
     ]).flat();
     const turns = buildTurns(base({ history }), 30_000);
     const bytes = turns.reduce((n, t) => n + utf8Bytes(t.content), 0);
     expect(bytes).toBeLessThanOrEqual(30_000);
     expect(turns[0]!.content.startsWith(INSTRUCTIONS_FILE)).toBe(true);
     expect(turns.at(-1)!.content).toContain('İSTEK');
-    // what remains is the newest, still in pairs
-    const kept = turns.slice(1, -1);
-    expect(kept.length % 2).toBe(0);
-    expect(kept.at(-1)!.content.startsWith('11: ')).toBe(true);
-    expect(kept.some((t) => t.content.startsWith('0: '))).toBe(false);
+    // the newest answer is still whole
+    expect(turns.some((t) => t.role === 'assistant' && t.content.startsWith('11: Eski yanıt.'))).toBe(true);
+    // the oldest are shorter, and every question of the chat is still somewhere in what the model is sent
+    const all = turns.map((t) => t.content).join('\n');
+    for (let i = 0; i < 12; i++) expect(all).toContain(`Soru ${i}`);
+    expect(all).not.toContain(`0: ${long}`);
+  });
+
+  it('sends a long chat whole when it fits, and keeps the page’s own hard limit in mind', () => {
+    const history = Array.from({ length: 6 }, (_, i) => [
+      { role: 'user' as const, text: `Soru ${i}` },
+      { role: 'assistant' as const, text: `Yanıt ${i}.`, scenes: `${i}. adım: olay: X` },
+    ]).flat();
+    const turns = buildTurns(base({ history }));
+    expect(turns).toHaveLength(1 + 12 + 1);
+    expect(turns.filter((t) => t.role === 'assistant')).toHaveLength(6);
+    expect(turns[2]!.content).toBe('[Haritada gösterdiklerim: 0. adım: olay: X]\nYanıt 0.'); // what it showed goes with what it wrote
+  });
+
+  it('tells the model how many times the same ask has been made, and only then', () => {
+    const none = buildTurns(base()).at(-1)!.content;
+    expect(none).not.toContain('TEKRAR');
+    const again = buildTurns(base({ repeats: 2 })).at(-1)!.content;
+    expect(again).toMatch(/\nTEKRAR\nBu istek \(aynı sözlerle, aynı konuda\) bu sohbette daha önce 2 kez yapıldı/);
+    expect(again.indexOf('TEKRAR')).toBeLessThan(again.indexOf('İSTEK\n')); // before the request, like the other facts
+  });
+
+  it('gives the app’s outline with a narration, in the request, and nothing of the kind without tools', () => {
+    const outline = narrationOutline(context, data.events);
+    expect(outline.length).toBeGreaterThanOrEqual(3);
+    const last = buildTurns(base({ outline })).at(-1)!.content;
+    expect(last).toContain('ANLATIM İSKELETİ (');
+    expect(last).toContain(describeOutline(outline));
+    expect(last).toMatch(/\n1\. [a-z0-9-]+ \| [^|]+ \| [^|]+ \| [^|\n]+\n/);
+    expect(last.indexOf('ANLATIM İSKELETİ')).toBeGreaterThan(last.indexOf('OLAYLAR ('));
+    expect(buildTurns(base({ outline, tools: false })).at(-1)!.content).not.toContain('ANLATIM İSKELETİ');
+    expect(buildTurns(base({ outline: [] })).at(-1)!.content).not.toContain('ANLATIM İSKELETİ');
   });
 
   it('thins the records before it gives up the request', async () => {
@@ -347,5 +412,67 @@ describe('sources', () => {
     const chars = groups[0]!.passages.reduce((n, p) => n + p.title.length + p.text.length, 0);
     expect(chars).toBeLessThanOrEqual(5_000);
     expect(groups[0]!.passages.length).toBeGreaterThan(0);
+  });
+});
+
+describe('condense (the conversation as the model is sent it)', () => {
+  const exchange = (i: number, size = 300): HistoryTurn[] => [
+    { role: 'user', text: `Soru ${i}`, subject: 'Dünya · 1500–1550' },
+    {
+      role: 'assistant',
+      text: `Yanıt ${i}. ${'ayrıntı '.repeat(size)}`,
+      scenes: `${i}. adım: olay: Olay ${i}`,
+      digest: `1. Başlık ${i} — özet ${i}.`,
+    },
+  ];
+  const chat = (n: number, size?: number) => Array.from({ length: n }, (_, i) => exchange(i, size)).flat();
+  const bytes = (turns: { content: string }[]) => turns.reduce((n, t) => n + utf8Bytes(t.content), 0);
+
+  it('sends everything in full while the chat is short', () => {
+    const turns = condense(chat(4));
+    expect(turns).toHaveLength(8);
+    expect(turns.filter((t) => t.role === 'assistant').every((t) => t.content.includes('ayrıntı ayrıntı'))).toBe(true);
+    expect(turns.some((t) => t.content.includes('kısaltıldı'))).toBe(false);
+  });
+
+  it('starts sending the oldest answers in short once the chat is longer than the full-text budget, the newest stay whole', () => {
+    const history = chat(40, 400); // far more than FULL_HISTORY_BYTES in full
+    expect(bytes(condense(history, { fullBytes: 1e9, maxBytes: 1e9 }))).toBeGreaterThan(FULL_HISTORY_BYTES);
+    const turns = condense(history);
+    expect(bytes(turns)).toBeLessThanOrEqual(FULL_HISTORY_BYTES + 3_000);
+    const answers = turns.filter((t) => t.role === 'assistant');
+    expect(answers).toHaveLength(40); // none is gone
+    expect(answers[0]!.content).toContain('[Önceki cevabımın özeti; sohbet uzadığı için kısaltıldı]');
+    expect(answers[0]!.content).toContain('1. Başlık 0 — özet 0.');
+    expect(answers[0]!.content).toContain('[Haritada gösterdiklerim: 0. adım: olay: Olay 0]'); // what it showed is kept in short too
+    expect(answers.at(-1)!.content).toContain('ayrıntı ayrıntı'); // the last one is whole
+    expect(answers.at(-1)!.content).not.toContain('kısaltıldı');
+    // the shortening goes from the oldest on: once an answer is whole, every later one is
+    const whole = answers.map((a) => !a.content.includes('kısaltıldı'));
+    expect(whole.indexOf(true)).toBeGreaterThan(0);
+    expect(whole.slice(whole.indexOf(true)).every(Boolean)).toBe(true);
+  });
+
+  it('folds the oldest exchanges into one short summary turn when even the digests do not fit', () => {
+    const turns = condense(chat(30, 50), { fullBytes: 2_000, maxBytes: 5_000 });
+    expect(bytes(turns)).toBeLessThanOrEqual(5_000);
+    expect(turns[0]!.role).toBe('user');
+    expect(turns[0]!.content).toContain('[Sohbetin başı, kısaca');
+    // every question that is not in a turn of its own is in the summary, so no question is lost
+    const text = turns.map((t) => t.content).join('\n');
+    for (let i = 0; i < 30; i++) expect(text).toContain(`Soru ${i}`);
+    // and the newest exchange is still a real pair
+    expect(turns.at(-2)!.content).toContain('Soru 29');
+    expect(turns.at(-1)!.role).toBe('assistant');
+  });
+
+  it('keeps an unanswered reader turn, and skips the empty ones', () => {
+    const turns = condense([
+      { role: 'user', text: 'Cevapsız soru' },
+      { role: 'user', text: 'Boş', subject: 'x' },
+      { role: 'assistant', text: '   ' },
+      { role: 'user', text: 'Son soru' },
+    ]);
+    expect(turns.map((t) => t.content)).toEqual(['Cevapsız soru', '[x] Boş', 'Son soru']);
   });
 });

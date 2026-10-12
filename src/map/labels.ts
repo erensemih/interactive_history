@@ -53,7 +53,7 @@ export class PolityLabels {
   private readonly elements = new Map<string, HTMLElement>();
   private candidates: Candidate[] = [];
   private selected = new Set<string>();
-  /** Polities the AI points at: labelled like the selected ones, in ink. */
+  /** Polities in the AI's spotlight: labelled in ink, while the names of all the others fade with the map. */
   private emphasis = new Set<string>();
   private readonly measureCtx: CanvasRenderingContext2D;
   private readonly widthCache = new Map<string, number>();
@@ -278,6 +278,8 @@ export class PolityLabels {
       el.classList.toggle('is-italic', italic);
       el.classList.toggle('is-selected', this.selected.has(row.id));
       el.classList.toggle('is-ai', emphasised);
+      // the spotlight fades the names of everything that is not lit along with the map under them
+      el.classList.toggle('is-faded', this.emphasis.size > 0 && !emphasised);
       el.classList.toggle('is-yielded', this.yielded.has(k));
       el.classList.remove('is-hidden');
     }

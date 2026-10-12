@@ -1,7 +1,9 @@
 import { pointInPolygon } from '../domain/geo';
 import { overlaps } from '../domain/time';
 import type { Bounds, BorderRow, Entity, HistoricalEvent, PlacePoint, PolygonCoords, YearRange } from '../domain/types';
+import { eventKindOf, warSides } from './eventKinds';
 import { shortName } from '../ui/format';
+import { withoutOpenReference } from '../ui/read/segments';
 
 /** What the resolver needs of the app's data (`AppData` fits). */
 export interface ResolveData {
@@ -58,7 +60,8 @@ export function cleanLabel(value: unknown, max: number): string | null {
 
 /**
  * A sentence or two for the page to show as it is (a subtitle): emphasis marks and markup are taken out without
- * leaving gaps in the sentence, and it is cut at `max` characters on a word.
+ * leaving gaps in the sentence (the references to events, `[text](olay:id)`, stay: they are links), and it is cut
+ * at `max` characters on a word.
  */
 export function cleanCaption(value: unknown, max: number): string | null {
   if (typeof value !== 'string') return null;
@@ -70,7 +73,8 @@ export function cleanCaption(value: unknown, max: number): string | null {
   if (!text) return null;
   if (text.length <= max) return text;
   const cut = text.slice(0, max - 1);
-  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), Math.floor(max / 2))).trimEnd()}…`;
+  // (never in the middle of the name of an event: `[Mohaç](olay:moh` would be half a link)
+  return `${withoutOpenReference(cut.slice(0, Math.max(cut.lastIndexOf(' '), Math.floor(max / 2)))).trimEnd()}…`;
 }
 
 /** Great-circle distance in kilometres. */
@@ -247,6 +251,22 @@ export class Resolver {
   /** The app's event with this id, or null. */
   eventById(id: string): HistoricalEvent | null {
     return this.eventsById.get(id) ?? null;
+  }
+
+  /**
+   * The border year a step about this event shows: the event's own year, unless the event is what ended one of its
+   * parties (Granada fell on 2 January 1492, Constantinople in 1453): that polity has no borders in the year of its
+   * end, and a map without it could not show the war. Then the latest of the three years before it in which the
+   * parties are all there. (A war needs both its sides; any other event needs one party.)
+   */
+  showYearOf(ev: HistoricalEvent): number {
+    const sides = eventKindOf(ev.category) === 'war' ? warSides(ev) : null;
+    const present = (y: number) =>
+      sides
+        ? sides.first.some((p) => this.rowAt(p, y)) && sides.second.some((p) => this.rowAt(p, y))
+        : ev.parties.some((p) => this.rowAt(p, y));
+    for (let y = ev.year; y >= ev.year - 3; y--) if (present(y)) return y;
+    return ev.year;
   }
 
   /**

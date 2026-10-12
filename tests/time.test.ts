@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   axisTicks,
   cursorFor,
-  detailDomain,
   displayYear,
   formatDateRange,
   overlaps,
@@ -74,16 +73,6 @@ describe('range helpers', () => {
   it('shifting keeps the window length', () => {
     expect(shiftRange({ from: 1450, to: 1500 }, 200, extent)).toEqual({ from: 1550, to: 1600 });
     expect(shiftRange({ from: 1450, to: 1500 }, -200, extent)).toEqual({ from: 1400, to: 1450 });
-  });
-
-  it('detail domain adds context around short ranges and never leaves the extent', () => {
-    const one = detailDomain({ from: 1500, to: 1500 }, extent);
-    expect(one.to - one.from + 1).toBeGreaterThanOrEqual(30);
-    expect(one.from).toBeLessThanOrEqual(1500);
-    expect(one.to).toBeGreaterThanOrEqual(1500);
-    expect(detailDomain({ from: 1400, to: 1400 }, extent).from).toBe(1400);
-    expect(detailDomain({ from: 1600, to: 1600 }, extent).to).toBe(1600);
-    expect(detailDomain({ from: 1450, to: 1550 }, extent)).toEqual(extent);
   });
 
   it('axis ticks adapt to the available width', () => {

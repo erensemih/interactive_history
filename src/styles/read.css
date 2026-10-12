@@ -142,21 +142,23 @@
   font-style: italic;
 }
 
-/* the question box floats over the text: the text fades out under it */
+/* the question box floats over the text: the text fades out under it. Its height is not fixed (a focused box shows its
+   suggestions, a long question wraps), so the page measures it (--foot-h) and the room under the text follows it:
+   the end of the text can always be scrolled clear of the box. */
 .stage[data-read='full'] .read::after {
   content: '';
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 150px;
-  background: linear-gradient(to top, var(--paper) 52%, transparent);
+  height: calc(var(--foot-h, 96px) + 30px);
+  background: linear-gradient(to top, var(--paper) 60%, transparent);
   pointer-events: none;
 }
 
 /* full screen: a reading column, with room for the small map at the top right and for the question box below */
 .stage[data-read='full'] .chat-scroll {
-  padding: 24px var(--gutter) 150px;
+  padding: 24px var(--gutter) calc(var(--foot-h, 96px) + 40px);
 }
 
 .stage[data-read='full'] .chat-scroll > * {
@@ -170,7 +172,7 @@
 }
 
 .stage[data-read='side'] .chat-scroll {
-  padding-bottom: 130px;
+  padding-bottom: calc(var(--foot-h, 96px) + 40px);
 }
 
 .chat-notice {
@@ -627,7 +629,7 @@ button.chat-chip:not(:disabled):hover {
     padding-top: 138px;
   }
   .stage[data-read='full'] .chat-scroll {
-    padding: 14px var(--gutter) 130px;
+    padding: 14px var(--gutter) calc(var(--foot-h, 96px) + 40px);
   }
   .chat-bar-subject {
     display: none;

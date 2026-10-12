@@ -18,9 +18,16 @@ export interface MarkerStats {
   thinned: number;
   /** Outside the current viewport: panning reveals them. */
   offscreen: number;
-  /** The AI is the narrator: only the opened event and the ones it talks about are on the map (the rest stay on the timeline). */
-  narrator: boolean;
+  /**
+   * Who narrates the map, when someone does: only the opened event and what the narrator talks about are on the map,
+   * the range's other events stay on the timeline. The AI while its answer is on screen, else the selected place
+   * (which talks through its card and its own timeline lane, so no marker comes for it).
+   */
+  narrator: Narrator | null;
 }
+
+/** The one narrator the map has at a time. */
+export type Narrator = 'ai' | 'place';
 
 /** The pointer target of every marker (WCAG 2.5.8 asks for at least 24 × 24 px); the dot itself is smaller. */
 const HIT = 24;
@@ -43,9 +50,12 @@ const YEAR_REACH = 13 + 30;
  * The one exception is the event the user has opened: it is always drawn, even when the zoom budget
  * or its importance would have hidden it, and it is unmistakable (halo, ripple, name beside it).
  *
- * While the AI narrates (the chat is open) it is the map's one narrator: every marker leaves the map, they
- * all stay on the timeline, and only two kinds come back: the event the reader opened, and the events the
- * AI talks about. Those are drawn like the opened one is, whatever the budget or the collisions say.
+ * The map has one narrator at a time. Nobody narrating, the range's globally important events are drawn (above).
+ * While the AI narrates (its answer is on screen) every marker leaves the map, they all stay on the timeline, and
+ * only two kinds come back: the event the reader opened, and the events the AI talks about. Those are drawn like
+ * the opened one is, whatever the budget or the collisions say. A selected place is a narrator too (it speaks
+ * through its card, its highlight and its lane on the timeline): while one is selected the global events leave the
+ * map the same way, and come back when it is deselected.
  *
  * Keyboard: the markers form one group with a single Tab stop; the arrow keys move between the visible
  * ones in reading order, so a screen full of markers does not turn into dozens of Tab stops.
@@ -57,8 +67,9 @@ export class EventMarkers {
   private events: HistoricalEvent[] = [];
   /** The opened event; may be one the range's set does not contain. */
   private selected: HistoricalEvent | null = null;
-  /** The chat is open: the AI narrates the map, and no marker is drawn that it or the reader has not brought. */
+  /** Somebody narrates the map, and no marker is drawn that the narrator or the reader has not brought. */
   private narrator = false;
+  private who: Narrator = 'ai';
   /** The events the AI talks about now; each has a marker of its own however the range's set looks. */
   private told: HistoricalEvent[] = [];
   /** Where each drawn marker (and its name tag) lies, in map pixels, from the last layout. */
@@ -144,13 +155,21 @@ export class EventMarkers {
   }
 
   /**
-   * The chat is open or closed, and the events the AI talks about right now. With the chat open the map shows
-   * only those and the opened event; the range's other markers are gone until the chat closes.
+   * Somebody narrates the map or nobody does, and the events the AI talks about right now. With a narrator the map
+   * shows only those and the opened event; the range's other markers are gone until the narrator is.
    */
-  setNarrator(on: boolean, told: readonly HistoricalEvent[]) {
+  setNarrator(who: Narrator | null, told: readonly HistoricalEvent[]) {
+    const on = who !== null;
     const next = on ? told : [];
-    if (on === this.narrator && next.length === this.told.length && next.every((e, i) => e === this.told[i])) return;
+    if (
+      on === this.narrator &&
+      (who ?? this.who) === this.who &&
+      next.length === this.told.length &&
+      next.every((e, i) => e === this.told[i])
+    )
+      return;
     this.narrator = on;
+    if (who) this.who = who;
     this.told = [...next];
     this.sync();
   }
@@ -308,7 +327,7 @@ export class EventMarkers {
       total: this.events.length,
       thinned: this.narrator ? 0 : thinned,
       offscreen: this.narrator ? 0 : offscreen,
-      narrator: this.narrator,
+      narrator: this.narrator ? this.who : null,
     };
     const statsKey = `${stats.shown}/${stats.total}/${stats.thinned}/${stats.offscreen}/${stats.narrator}`;
     if (statsKey !== this.lastStats) {

@@ -444,6 +444,7 @@
       "importance": 4,
       "category": "military",
       "parties": ["joseon", "ming-dynasty", "warring-states-japan"],
+      "versus": ["warring-states-japan"],
       "sources": [
         {
           "wikipedia": "Imjin War"
