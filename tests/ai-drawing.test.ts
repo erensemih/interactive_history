@@ -35,6 +35,12 @@ const mark = (step: number, lon: number, lat: number, label: string): MapAction 
 });
 const event = (step: number, id: string): MapAction => ({ kind: 'event', step, id });
 const year = (step: number, y: number): MapAction => ({ kind: 'set_year', step, year: y });
+const focus = (step: number, polities: string[], ...points: [number, number][]): MapAction => ({
+  kind: 'focus',
+  step,
+  polities,
+  points: points.map(([lon, lat]) => ({ lon, lat })),
+});
 
 describe('drawingOf', () => {
   it('is what the actions ask for, without repeating a polity, a link, a mark or an event', () => {
@@ -77,6 +83,18 @@ describe('drawingOf', () => {
     expect(drawingOf([])).toEqual(emptyDrawing());
     expect(isEmptyDrawing(drawingOf([]))).toBe(true);
     expect(isEmptyDrawing(drawingOf([event(1, 'x')]))).toBe(false);
+  });
+
+  it('a region to show is a drawing of its own: nothing drawn, something to bring into view', () => {
+    const d = drawingOf([focus(1, ['a', 'b'], [10, 20]), focus(1, ['b', 'c'], [10.04, 20.04], [30, 40])]);
+    expect(d.focus.polities).toEqual(['a', 'b', 'c']);
+    expect(d.focus.points).toEqual([
+      { lon: 10, lat: 20 },
+      { lon: 30, lat: 40 },
+    ]); // the second point is the first again, to a tenth of a degree
+    expect(d.highlights).toEqual([]);
+    expect(isEmptyDrawing(d)).toBe(false);
+    expect(drawingOf(Array.from({ length: 9 }, (_, i) => focus(1, [`p${i}`]))).focus.polities).toHaveLength(4);
   });
 });
 
@@ -129,15 +147,19 @@ describe('TurnPlan', () => {
     for (const n of [1, 2, 3]) expect(backward.drawingAt(n)).toEqual(forward.drawingAt(n));
   });
 
-  it('knows its steps, their titles and whether it is empty', () => {
+  it('knows its steps, their titles and captions, and whether it is empty', () => {
     const plan = new TurnPlan();
     expect(plan.empty).toBe(true);
-    plan.declare(2, 'İkinci');
+    plan.declare(2, 'İkinci', 'İkinci adımın altyazısı.');
     plan.add(hl(1, 'a'));
     expect(plan.empty).toBe(false);
     expect(plan.numbers()).toEqual([1, 2]);
     expect(plan.titleOf(1)).toBeNull();
+    expect(plan.captionOf(1)).toBeNull();
     expect(plan.titleOf(2)).toBe('İkinci');
+    expect(plan.captionOf(2)).toBe('İkinci adımın altyazısı.');
+    plan.declare(2, null, null); // declaring again without texts keeps the ones it has
+    expect(plan.captionOf(2)).toBe('İkinci adımın altyazısı.');
     expect(plan.has(3)).toBe(false);
   });
 
@@ -202,6 +224,20 @@ describe('resolveDrawing and frameTargetOf (shipped data)', () => {
     for (const b of target.boxes) expect(b[0]).toBeLessThan(b[2]);
   });
 
+  it('a region the step asks to show is framed too, though nothing of it is drawn', () => {
+    const drawing = drawingOf([hl(1, 'ottoman-empire'), focus(1, ['kingdom-of-france'], [14.5, 35.9])]);
+    const resolved = resolveDrawing(drawing, resolver, 1520);
+    expect(resolved.highlightIds).toEqual(['ottoman-empire']);
+    expect(resolved.focusIds).toEqual(['kingdom-of-france']);
+    const target = frameTargetOf(resolved, resolver, 1520)!;
+    expect(target.boxes).toHaveLength(2); // the Ottoman box and France's
+    expect(target.points).toContainEqual({ lon: 14.5, lat: 35.9 });
+    // a step with nothing but a region still has a camera target
+    expect(
+      frameTargetOf(resolveDrawing(drawingOf([focus(1, ['kingdom-of-france'])]), resolver, 1520), resolver, 1520),
+    ).not.toBeNull();
+  });
+
   it('a step that puts nothing on the map has nothing to bring into view', () => {
     expect(frameTargetOf(resolveDrawing(drawingOf([year(1, 1520)]), resolver, 1520), resolver, 1520)).toBeNull();
     expect(frameTargetOf(resolveDrawing(emptyDrawing(), resolver, 1520), resolver, 1520)).toBeNull();
@@ -221,9 +257,10 @@ describe('describeDrawing', () => {
       event(1, 'caldiran-1514'),
       mark(1, 1, 1, 'Kent'),
       year(1, 1536),
+      focus(1, ['b']),
     ]);
     expect(describeDrawing(d, name, () => 'Çaldıran Muharebesi')).toBe(
-      'vurgulanan: Alfa; Alfa – Beta: ittifak (Pakt); olay: Çaldıran Muharebesi; işaretli: Kent; sınır yılı 1536',
+      'vurgulanan: Alfa; Alfa – Beta: ittifak (Pakt); olay: Çaldıran Muharebesi; işaretli: Kent; gösterilen bölge: Beta; sınır yılı 1536',
     );
     expect(describeDrawing(emptyDrawing(), name)).toBe('');
     expect(isEmptyDrawing(emptyDrawing())).toBe(true);

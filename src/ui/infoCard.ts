@@ -6,25 +6,35 @@ import type { Entity, HistoricalEvent, SourceRef } from '../domain/types';
 import { selectionsOf, type PlaceView, type SelectionRef, type ViewModel } from '../state/derive';
 import { panelLayout } from '../state/panelLayout';
 import type { Store } from '../state/store';
-import type { ChatView } from './chat/chatView';
 import { dot } from './dot';
 import { clsx, formatArea, formatRange } from './format';
-import { scrollBehavior } from './motion';
 
 /** A card is either read in full or folded into a one-line header. */
 type Variant = 'full' | 'compact';
 
-/** What the panel needs of the reading companion: its view, and the three things a card can start. */
-export interface PanelAi {
-  chat: ChatView;
-  /** "Bu yerin tarihini anlat": opens the chat and starts a narration. */
+/** What the card needs of the reading companion: the things a card can start. */
+export interface CardAi {
+  /** "Bu yerin tarihini anlat": asks for a narration of the place. */
   narrate(): void;
-  /** Opens the chat to ask something. */
-  openChat(): void;
+  /** With no place chosen: a narration of what happened in the range. */
+  narrateWorld(): void;
+  /** Takes the reader to the question box. */
+  ask(): void;
   /** "Bunu sohbette sor": sends the event into the conversation. */
   askAboutEvent(ev: HistoricalEvent): void;
   /** One question at a time: while an answer is being written, asking about an event waits. */
   busy(): boolean;
+  /** The card stepped aside when the reader asked something; this brings it back. */
+  untuck(): void;
+}
+
+/** What the page knows about the card's surroundings at the time of a render. */
+export interface CardState {
+  /** The reader asked something and the card stepped aside: only its tab is shown, the selection is kept. */
+  tucked: boolean;
+  /** The introduction (shown while nothing is selected) has not been closed. */
+  introOpen: boolean;
+  closeIntro(): void;
 }
 
 const SPARK = html`<svg class="spark" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
@@ -32,41 +42,64 @@ const SPARK = html`<svg class="spark" viewBox="0 0 16 16" width="13" height="13"
 </svg>`;
 
 /**
- * The right-hand info panel. What it shows is decided by `panelLayout` from a list of selection
- * references (type + id); each reference becomes a card through `card()`, in one of two sizes. The
- * selected place is the context and an opened event the focus: with only a place selected the panel
- * describes the place; with an event open it describes the event and the place folds into a header
- * above it. Nothing here is written for "one place plus one event": a comparison mode would pass two
- * references and lay the focus cards out in two columns.
+ * The info card: a small card at the right edge of the map. What it shows is decided by `panelLayout` from a list
+ * of selection references (type + id); each reference becomes a card through `card()`, in one of two sizes. The
+ * selected place is the context and an opened event the focus: with only a place selected the card describes the
+ * place; with an event open it describes the event and the place folds into a one-line header above it. Nothing
+ * here is written for "one place plus one event": a comparison mode would pass two references.
  *
- * Below the cards sits the "elsewhere at the same time" list.
- *
- * With the chat open the panel is the conversation instead: the place (or "Dünya") is its one-line
- * header, and an opened event is a sheet over it, so closing the event returns to the same chat.
+ * It is small, closes with its cross, and steps aside by itself when the reader asks something: the selection
+ * stays (the question is about it), only the card gives way to a tab that brings it back. Below the card, folded
+ * until asked for, is the "elsewhere at the same time" list.
  */
-export class InfoPanel {
+export class InfoCard {
   /** Entities whose long summary the reader has unfolded. */
   private readonly unfolded = new Set<string>();
-
-  /** Was the chat on screen at the last render? (It is put back, not rebuilt: see ChatView.attached.) */
-  private chatShown = false;
+  private elsewhereOpen = false;
+  private moreOpen = false;
 
   constructor(
     private readonly host: HTMLElement,
     private readonly store: Store,
     private readonly data: AppData,
-    private readonly ai: PanelAi,
+    private readonly ai: CardAi,
   ) {}
 
-  render(vm: ViewModel) {
+  /** The element the card stands in (hidden when there is nothing to show). */
+  private get shell(): HTMLElement {
+    return this.host.closest('aside') ?? this.host;
+  }
+
+  render(vm: ViewModel, state: CardState) {
     const { places, event } = selectionsOf(vm);
-    const layout = panelLayout(places, event, this.store.state.chatOpen);
-    this.host.classList.toggle('is-chat', layout.chat);
-    if (layout.chat) {
-      this.renderChat(vm, layout.sheet);
+    const layout = panelLayout(places, event);
+    const selected = layout.context.length > 0 || layout.focus.length > 0;
+    const shell = this.shell;
+    shell.classList.toggle('is-tab', selected && state.tucked);
+    if (!selected && !state.introOpen) {
+      shell.hidden = true;
+      render(nothing, this.host);
       return;
     }
-    this.chatShown = false;
+    shell.hidden = false;
+    if (selected && state.tucked) {
+      const label = event ? (vm.selectedEvent?.title ?? '') : (vm.places[0]?.title ?? '');
+      render(
+        html`<button
+          type="button"
+          class="card-tab"
+          data-testid="card-tab"
+          title="Bilgi kartını geri getir"
+          aria-label=${`Bilgi kartını geri getir: ${label}`}
+          @click=${() => this.ai.untuck()}
+        >
+          <span class="card-tab-icon" aria-hidden="true">‹</span>
+          <span class="card-tab-name">${label}</span>
+        </button>`,
+        this.host,
+      );
+      return;
+    }
     render(
       html`
         ${
@@ -85,57 +118,12 @@ export class InfoPanel {
               >
                 ${layout.focus.map((ref) => this.card(ref, vm, 'full'))}
               </div>`
-            : this.introCard()
+            : this.introCard(state)
         }
         ${this.elsewhereList(vm)}
       `,
       this.host,
     );
-  }
-
-  /* ----------------------------------------------------------------- chat */
-
-  private renderChat(vm: ViewModel, sheet: SelectionRef | null) {
-    const ev = sheet ? this.data.eventsById.get(sheet.id) : null;
-    this.ai.chat.setSheet(ev ? this.eventCard(ev, vm) : null);
-    const entering = !this.chatShown;
-    this.chatShown = true;
-    render(
-      html`<div class="panel-context panel-context-chat" data-testid="panel-context">${this.chatSubject(vm, !!ev)}</div>
-        ${this.ai.chat.element}`,
-      this.host,
-    );
-    if (entering) {
-      // On a touch screen focusing the question box would pop the keyboard up over the conversation.
-      this.ai.chat.attached(!window.matchMedia('(pointer: coarse)').matches);
-      // One column: bring the conversation up under the map, which stays in sight above it.
-      if (window.matchMedia('(max-width: 900px)').matches) {
-        requestAnimationFrame(() =>
-          this.host.closest('aside')?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' }),
-        );
-      }
-    }
-  }
-
-  /**
-   * What the conversation is about, in the one-line form the place takes whenever it is context: its name and
-   * the range. It is also the way back: out of the event sheet into the chat, out of the chat into the place card.
-   */
-  private chatSubject(vm: ViewModel, sheetOpen: boolean): TemplateResult {
-    const place = vm.places[0];
-    const label = place?.title ?? 'Dünya';
-    return html`<button
-      type="button"
-      class="line line-place"
-      data-testid="place-line"
-      title=${sheetOpen ? 'Sohbete dön' : 'Bilgi paneline dön'}
-      aria-label=${`${sheetOpen ? 'Sohbete dön' : 'Bilgi paneline dön'}: ${label}, ${formatRange(vm.range)}`}
-      @click=${() => (sheetOpen ? this.store.selectEvent(null) : this.store.setChat(false))}
-    >
-      <span class="line-back" aria-hidden="true">‹</span>
-      <span class="line-name">${label}</span>
-      <span class="line-range">${formatRange(vm.range)}</span>
-    </button>`;
   }
 
   /** One card for one selection reference. Unknown references (a place that was cleared meanwhile) draw nothing. */
@@ -159,25 +147,31 @@ export class InfoPanel {
 
   /* ---------------------------------------------------------------- intro */
 
-  private introCard(): TemplateResult {
-    return html`<section class="card card-intro">
-      <p class="eyebrow">Aynı Zamanda</p>
+  private introCard(state: CardState): TemplateResult {
+    return html`<section class="card card-intro" data-testid="intro-card">
+      <div class="card-top">
+        <span class="eyebrow">Aynı Zamanda</span>
+        <button
+          type="button"
+          class="icon-btn"
+          aria-label="Tanıtımı kapat"
+          title="Kapat"
+          data-testid="intro-close"
+          @click=${() => this.close(() => state.closeIntro())}
+        >
+          ${closeIcon()}
+        </button>
+      </div>
       <h2 class="card-title">Aynı sırada, dünyanın başka yerlerinde ne oluyordu?</h2>
-      <p class="prose">
-        Alttaki cetvelden bir zaman aralığı, haritadan bir yer seçin. Harita o dönemin sınırlarını ve dünyanın dört bir
-        yanından bir olay seçkisini gösterir; seçtiğiniz yerin kendi olayları ise aşağıdaki çizelgede ayrıca belirir.
-      </p>
       <ul class="intro-steps">
         <li><span class="step">1</span> Cetvelde aralığı sürükleyin; kenarlarından uzunluğunu ayarlayın.</li>
         <li><span class="step">2</span> Haritada bir devletin üzerine tıklayın. Harita yerinden oynamaz.</li>
-        <li><span class="step">3</span> İşaretçilere ve çizelgedeki noktalara tıklayıp ayrıntıyı buradan okuyun.</li>
-        <li>
-          <span class="step">4</span> Bir yer seçtikten sonra sohbette tarihini dinleyin; harita anlatılanı çizer.
-        </li>
+        <li><span class="step">3</span> İşaretçilere ve çizelgedeki noktalara tıklayıp ayrıntıyı burada okuyun.</li>
+        <li><span class="step">4</span> Alttaki kutudan sorun: harita anlatılanı gösterir.</li>
       </ul>
       <div class="card-actions">
-        <button type="button" class="btn" data-testid="intro-chat" @click=${() => this.ai.openChat()}>
-          ${SPARK} Sohbeti aç
+        <button type="button" class="btn btn-solid" data-testid="intro-narrate" @click=${() => this.ai.narrateWorld()}>
+          ${SPARK} Bu aralıkta dünyada olanları anlat
         </button>
       </div>
     </section>`;
@@ -217,7 +211,8 @@ export class InfoPanel {
           type="button"
           class="icon-btn"
           aria-label="Yer seçimini kaldır"
-          title="Seçimi kaldır"
+          title="Kapat (Esc)"
+          data-testid="place-close"
           @click=${() => this.close(() => this.store.selectPlace(null))}
         >
           ${closeIcon()}
@@ -250,45 +245,57 @@ export class InfoPanel {
         <button type="button" class="btn btn-solid" data-testid="place-narrate" @click=${() => this.ai.narrate()}>
           ${SPARK} Bu yerin tarihini anlat
         </button>
-        <button type="button" class="link" data-testid="place-ask" @click=${() => this.ai.openChat()}>Soru sor</button>
+        <button type="button" class="link" data-testid="place-ask" @click=${() => this.ai.ask()}>Soru sor</button>
       </div>
       ${
-        inWindowSeq.length > 1
-          ? html`<div class="facts">
-              <h3 class="facts-title">Bu noktanın egemenleri</h3>
-              <ol class="sovereigns">
-                ${inWindowSeq.map((s) => {
-                  const e = this.data.entities.get(s.id);
-                  return html`<li class=${clsx(s.id === holder?.id && 'is-now')}>
-                    <i
-                      class="sw"
-                      style=${`background: ${e?.tint != null ? `var(--tint-${e.tint})` : 'var(--paper-3)'}`}
-                    ></i>
-                    <span class="sv-name">${e?.name ?? s.id}</span>
-                    <span class="sv-years">${s.from === s.to ? s.from : `${s.from}–${s.to}`}</span>
-                  </li>`;
-                })}
-              </ol>
-            </div>`
+        inWindowSeq.length > 1 || row || holder
+          ? html`<details
+              class="card-more"
+              data-testid="place-more"
+              ?open=${this.moreOpen}
+              @toggle=${(e: Event) => (this.moreOpen = (e.currentTarget as HTMLDetailsElement).open)}
+            >
+              <summary>Egemenler ve ayrıntılar</summary>
+              ${
+                inWindowSeq.length > 1
+                  ? html`<div class="facts">
+                      <h3 class="facts-title">Bu noktanın egemenleri</h3>
+                      <ol class="sovereigns">
+                        ${inWindowSeq.map((s) => {
+                          const e = this.data.entities.get(s.id);
+                          return html`<li class=${clsx(s.id === holder?.id && 'is-now')}>
+                            <i
+                              class="sw"
+                              style=${`background: ${e?.tint != null ? `var(--tint-${e.tint})` : 'var(--paper-3)'}`}
+                            ></i>
+                            <span class="sv-name">${e?.name ?? s.id}</span>
+                            <span class="sv-years">${s.from === s.to ? s.from : `${s.from}–${s.to}`}</span>
+                          </li>`;
+                        })}
+                      </ol>
+                    </div>`
+                  : nothing
+              }
+              ${
+                row
+                  ? html`<dl class="facts-grid">
+                      <div>
+                        <dt>Sınır verisi dönemi</dt>
+                        <dd>
+                          ${formatRange({ from: Math.max(row.from, this.data.extent.from), to: Math.min(row.to, this.data.extent.to) })}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Yüzölçümü (veri kümesine göre)</dt>
+                        <dd>≈ ${formatArea(row.area)}</dd>
+                      </div>
+                    </dl>`
+                  : nothing
+              }
+              ${holder ? this.entityLinks(holder) : nothing}
+            </details>`
           : nothing
       }
-      ${
-        row
-          ? html`<dl class="facts-grid">
-              <div>
-                <dt>Sınır verisi dönemi</dt>
-                <dd>
-                  ${formatRange({ from: Math.max(row.from, this.data.extent.from), to: Math.min(row.to, this.data.extent.to) })}
-                </dd>
-              </div>
-              <div>
-                <dt>Yüzölçümü (veri kümesine göre)</dt>
-                <dd>≈ ${formatArea(row.area)}</dd>
-              </div>
-            </dl>`
-          : nothing
-      }
-      ${holder ? this.entityLinks(holder) : nothing}
     </section>`;
   }
 
@@ -362,7 +369,8 @@ export class InfoPanel {
           type="button"
           class="icon-btn"
           aria-label="Olayı kapat"
-          title="Olayı kapat"
+          title="Kapat (Esc)"
+          data-testid="event-close"
           @click=${() => this.close(() => this.store.selectEvent(null))}
         >
           ${closeIcon()}
@@ -397,13 +405,6 @@ export class InfoPanel {
         <button type="button" class="btn" @click=${() => this.store.focusYear(ev.year, span)}>
           Haritayı ${ev.year} yılına getir
         </button>
-        <button
-          type="button"
-          class="link only-narrow"
-          @click=${() => document.querySelector('.map-col')?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })}
-        >
-          ↑ Haritaya dön
-        </button>
       </div>
     </section>`;
   }
@@ -424,11 +425,16 @@ export class InfoPanel {
     const list = vm.elsewhere;
     const title = vm.places.length ? 'Aynı sırada, başka yerlerde' : 'Bu aralıkta dünyada olanlar';
     const sorted = [...list].sort((a, b) => a.start - b.start || (a.id < b.id ? -1 : 1));
-    return html`<section class="elsewhere" aria-labelledby="elsewhere-title" data-testid="elsewhere">
-      <div class="elsewhere-head">
-        <h3 id="elsewhere-title" class="eyebrow">${title}</h3>
+    return html`<details
+      class="elsewhere"
+      data-testid="elsewhere"
+      ?open=${this.elsewhereOpen}
+      @toggle=${(e: Event) => (this.elsewhereOpen = (e.currentTarget as HTMLDetailsElement).open)}
+    >
+      <summary class="elsewhere-head">
+        <span id="elsewhere-title" class="eyebrow">${title}</span>
         <span class="count">${sorted.length}</span>
-      </div>
+      </summary>
       ${
         sorted.length === 0
           ? html`<p class="prose muted">
@@ -438,7 +444,7 @@ export class InfoPanel {
               ${sorted.map((e) => this.listItem(e))}
             </ul>`
       }
-    </section>`;
+    </details>`;
   }
 
   private listItem(e: HistoricalEvent): TemplateResult {

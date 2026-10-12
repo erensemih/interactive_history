@@ -1,4 +1,4 @@
-import { html, nothing, render } from 'lit-html';
+import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { styleMap } from 'lit-html/directives/style-map.js';
 import type { AppData } from '../data/load';
 import { clamp, presetRange } from '../domain/time';
@@ -6,6 +6,24 @@ import type { Store } from '../state/store';
 import { clsx, formatRange } from './format';
 
 type Drag = { mode: 'start' | 'end' | 'move' | 'cursor'; grab: number; pointerId: number } | null;
+
+/** A step of the narration on screen, at the year its scene shows. */
+export interface StepMark {
+  n: number;
+  year: number;
+  title: string;
+  active: boolean;
+}
+
+/** The ruler's part in a narration: a step can be chosen by its point on the ruler. */
+export interface RulerActions {
+  goStep(n: number): void;
+}
+
+/** Closest two step points may sit (px, centre to centre); a point that would touch the one before it is moved along. */
+const STEP_PITCH = 16;
+/** How far a point may be moved from its year: any further and it would say the wrong date. */
+const STEP_DRIFT = 26;
 
 /**
  * The time control: one slim ruler over the whole dataset (1400–1600) with a brush for the selected
@@ -18,12 +36,21 @@ export class Ruler {
   private track: HTMLElement | null = null;
   /** The year whose borders are drawn: the reader's cursor, or the one the AI's current step asks for. */
   private shown: number | null = null;
+  private last: { year?: number; steps: readonly StepMark[] } | null = null;
+  private lastWidth = 0;
 
   constructor(
     private readonly host: HTMLElement,
     private readonly store: Store,
     private readonly data: AppData,
-  ) {}
+    private readonly actions: RulerActions = { goStep: () => undefined },
+  ) {
+    // The step points are placed in pixels: when the ruler's width changes they are placed again.
+    new ResizeObserver(() => {
+      const width = this.track?.clientWidth ?? 0;
+      if (this.last?.steps.length && Math.abs(width - this.lastWidth) > 1) this.render(this.last.year, this.last.steps);
+    }).observe(host);
+  }
 
   private get span() {
     const e = this.data.extent;
@@ -129,9 +156,63 @@ export class Ruler {
     }
   };
 
+  /* ------------------------------------------------------------ progress */
+
+  private progress(steps: readonly StepMark[]): TemplateResult | typeof nothing {
+    if (steps.length < 2 || !this.track) return nothing;
+    const width = this.track.clientWidth || 1;
+    // left to right by year (and by number within a year); a point that would touch the one before is moved on
+    const ordered = [...steps].sort((a, b) => a.year - b.year || a.n - b.n);
+    let prev = -Infinity;
+    const placed = ordered.map((m) => {
+      const own = (this.pct(m.year + 0.5) / 100) * width;
+      const x = Math.min(own + STEP_DRIFT, Math.max(own, prev + STEP_PITCH));
+      prev = x;
+      return { ...m, x };
+    });
+    const first = placed[0]!;
+    const active = placed.find((m) => m.active);
+    const rank = active ? placed.indexOf(active) : -1;
+    return html`<div class="ruler-steps" data-testid="ruler-steps">
+      ${
+        active
+          ? html`<i
+              class="ruler-run"
+              style=${styleMap({ left: `${first.x}px`, width: `${Math.max(0, active.x - first.x)}px` })}
+              aria-hidden="true"
+            ></i>`
+          : nothing
+      }
+      ${placed.map(
+        (m, i) =>
+          html`<button
+            type="button"
+            class=${clsx('ruler-step', m.active && 'is-on', rank >= 0 && i < rank && 'is-past')}
+            data-testid="ruler-step"
+            data-n=${m.n}
+            style=${styleMap({ left: `${m.x}px` })}
+            title=${`${m.n}. adım${m.title ? `: ${m.title}` : ''} · ${m.year}`}
+            tabindex="-1"
+            aria-hidden="true"
+            @pointerdown=${(e: PointerEvent) => e.stopPropagation()}
+            @click=${() => this.actions.goStep(m.n)}
+          >
+            ${m.n}
+          </button>`,
+      )}
+    </div>`;
+  }
+
   /* ------------------------------------------------------------ render */
 
-  render(shownYear?: number) {
+  /**
+   * While a narration is on screen the ruler is also its progress bar: each step is a point at its year, those
+   * already seen are filled, the one on screen is marked, and a line runs from the first to it. Steps without a year
+   * are left out of it (there is nowhere to put them). Fewer than two dated steps are no progress to speak of.
+   */
+  render(shownYear?: number, steps: readonly StepMark[] = []) {
+    this.last = { year: shownYear, steps };
+    const wasLaidOut = !!this.track;
     const { range } = this.store.state;
     const year = shownYear ?? this.store.shownYear;
     this.shown = year;
@@ -169,7 +250,7 @@ export class Ruler {
                   >${t.major ? html`<b>${t.year}</b>` : nothing}</span
                 >`,
             )}
-
+            ${this.progress(steps)}
             <div
               class="brush"
               style=${styleMap({ left: `${left}%`, width: `${width}%` })}
@@ -250,5 +331,8 @@ export class Ruler {
       this.host,
     );
     this.track = this.host.querySelector('.ruler-track');
+    this.lastWidth = this.track?.clientWidth ?? 0;
+    // the very first pass had no width to place the points in: once the track exists they are placed for real
+    if (steps.length >= 2 && !wasLaidOut && this.lastWidth) this.render(shownYear, steps);
   }
 }

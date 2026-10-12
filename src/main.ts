@@ -6,8 +6,11 @@ import './styles/base.css';
 import './styles/layout.css';
 import './styles/map.css';
 import './styles/panel.css';
+import './styles/card.css';
 import './styles/dock.css';
-import './styles/chat.css';
+import './styles/read.css';
+import './styles/ask.css';
+import './styles/watch.css';
 import './styles/ai.css';
 import { startApp } from './app';
 

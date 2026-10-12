@@ -113,6 +113,7 @@ export class AiDrawingLayer {
   private readonly events = new Map<string, EventEl>();
   /** The opened event shows its own name tag; its name here would say it twice. */
   private selectedEventId: string | null = null;
+  private compact = false;
   private width = 0;
   private height = 0;
 
@@ -178,6 +179,11 @@ export class AiDrawingLayer {
 
   setSelectedEvent(id: string | null) {
     this.selectedEventId = id;
+  }
+
+  /** On a small map (the little window of the full-screen reader) the drawing goes without its name tags, which would crowd it. */
+  setCompact(on: boolean) {
+    this.compact = on;
   }
 
   /* ------------------------------------------------------------- creation */
@@ -278,7 +284,7 @@ export class AiDrawingLayer {
     for (const [id, el] of this.events) {
       const p = this.map.project([el.event.point.lon, el.event.point.lat]);
       if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
-      el.flag.hidden = id === this.selectedEventId || !onMap(p);
+      el.flag.hidden = this.compact || id === this.selectedEventId || !onMap(p);
       if (el.flag.hidden) continue;
       requests.push({
         id: `event:${id}`,
@@ -306,7 +312,7 @@ export class AiDrawingLayer {
       if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
       el.pt.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
       own.push(reach(p.x, p.y, DIAMOND_REACH));
-      el.flag.hidden = !onMap(p);
+      el.flag.hidden = this.compact || !onMap(p);
       if (el.flag.hidden) continue;
       requests.push({
         id: `mark:${k}`,
@@ -375,7 +381,7 @@ export class AiDrawingLayer {
         );
       }
       own.push(reach(glyph.x, glyph.y, GLYPH_REACH), reach(a.x, a.y, END_REACH), reach(b.x, b.y, END_REACH));
-      el.flag.hidden = !spots.length; // the line lies outside the map: its label would name nothing
+      el.flag.hidden = this.compact || !spots.length; // (off the map, the line's label would name nothing)
       if (el.flag.hidden) continue;
       const prefer: FlagAnchor['prefer'] = arc.bulgesUp
         ? ['above', 'below', 'right', 'left']

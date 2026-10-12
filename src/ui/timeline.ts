@@ -11,10 +11,10 @@ import { dot } from './dot';
 import { clsx, formatRange } from './format';
 import type { Tooltip } from './tooltip';
 
-/** Dots that would touch are stacked into this many rows above the axis. */
-const ROWS = 3;
+/** Dots that would touch are stacked into this many rows above the axis (two: the dock is a thin strip). */
+const ROWS = 2;
 /** Distance between rows. The dots are 13 px, so neighbouring rows touch but do not cover each other. */
-const PITCH = 14;
+const PITCH = 13;
 const DOT_AREA = ROWS * PITCH;
 /** The strip under the dots: it carries the years and, in colour, who held the place. */
 const BAND_TOP = DOT_AREA + 2;
@@ -26,6 +26,8 @@ export const TIMELINE_H = BAND_TOP + BAND_H;
 const SPACING = MARKER_DIAMETER + 3;
 /** Height of the selected event's name tag. */
 const TAG_H = 20;
+/** …and of the one that lies over the strip under the dots. */
+const STRIP_TAG_H = 16;
 /** A year label this close to the right edge would be cut off, so it is left out (its tick stays). */
 const EDGE_ROOM = 30;
 
@@ -104,9 +106,9 @@ export class Timeline {
       html`
         <div class="dock-label">
           <span class="eyebrow">Zaman çizelgesi</span>
-          <h3 class="tl-name" data-testid="timeline-name" title=${place ? place.title : ''}>
+          <h2 class="tl-name" data-testid="timeline-name" title=${place ? place.title : ''}>
             ${place ? place.title : 'Yer seçilmedi'}
-          </h3>
+          </h2>
           ${
             place
               ? html`<p class="tl-sub">
@@ -284,8 +286,8 @@ export class Timeline {
 
   /**
    * The opened event keeps its name beside its dot. It sits where it covers the fewest other dots: to the
-   * right of the dot in its own row if that is clear, else to the left, else in a neighbouring row. It
-   * never takes pointer events from the dots beneath it.
+   * right of the dot in its own row if that is clear, else to the left, else in a neighbouring row, else over the
+   * strip under the dots (where no dot lies, only the years). It never takes pointer events from the dots beneath it.
    */
   private tag(picked: Item, items: Item[]): TemplateResult {
     const { ev, x, row } = picked;
@@ -297,28 +299,38 @@ export class Timeline {
         return o.x + 8 > left - 1 && o.x - 8 < left + lw + 1 && cy + 8 > top - 1 && cy - 8 < top + TAG_H + 1;
       }).length;
     const byDistance = [...Array(ROWS).keys()].sort((a, b) => Math.abs(a - row) - Math.abs(b - row) || a - b);
-    let best: { left: number; top: number; left_of_dot: boolean; n: number } | null = null;
+    let best: { left: number; top: number; height: number; left_of_dot: boolean; n: number } | null = null;
     for (const r of byDistance) {
       const top = Math.min(DOT_AREA - TAG_H, Math.max(0, rowCentre(r) - TAG_H / 2));
       for (const leftOfDot of [false, true]) {
         const left = leftOfDot ? x - 14 - lw : x + 14;
         if (left < 2 || left + lw > this.width - 2) continue; // would be cut off by the plot's edge
         const n = covered(left, top);
-        if (!best || n < best.n) best = { left, top, left_of_dot: leftOfDot, n };
+        if (!best || n < best.n) best = { left, top, height: TAG_H, left_of_dot: leftOfDot, n };
         if (n === 0) break;
       }
       if (best?.n === 0) break;
+    }
+    if (!best || best.n > 0) {
+      // every place among the dots is taken: the strip under them has none (it holds the years and who ruled)
+      for (const leftOfDot of [false, true]) {
+        const left = leftOfDot ? x - 14 - lw : x + 14;
+        if (left < 2 || left + lw > this.width - 2) continue;
+        best = { left, top: TIMELINE_H - STRIP_TAG_H, height: STRIP_TAG_H, left_of_dot: leftOfDot, n: 0 };
+        break;
+      }
     }
     // A tag wider than either side of the dot can hold: keep it inside the plot anyway.
     const fallback = {
       left: Math.max(2, Math.min(this.width - lw - 2, x + 14)),
       top: Math.min(DOT_AREA - TAG_H, Math.max(0, rowCentre(row) - TAG_H / 2)),
+      height: TAG_H,
       left_of_dot: false,
     };
     const at = best ?? fallback;
     return html`<div
       class=${clsx('tl-tag', at.left_of_dot && 'is-flipped')}
-      style=${styleMap({ left: `${at.left}px`, top: `${at.top}px`, height: `${TAG_H}px` })}
+      style=${styleMap({ left: `${at.left}px`, top: `${at.top}px`, height: `${at.height}px` })}
       aria-hidden="true"
       data-testid="timeline-tag"
     >

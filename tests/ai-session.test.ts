@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { contextEvent, contextFromView, type AiContext } from '../src/ai/context';
 import { createMockProvider, MockProvider, type MockOptions, type MockScript } from '../src/ai/mockProvider';
 import { createMockScripts } from '../src/ai/mockScripts';
+import { INSTRUCTIONS_FILE } from '../src/ai/instructions';
 import { NARRATION_REQUEST } from '../src/ai/prompt';
 import { ModelError, type CompletionRequest, type ModelProvider } from '../src/ai/provider';
 import { AiSession, NO_TOOLS_NOTE, type AssistantItem } from '../src/ai/session';
@@ -45,6 +46,12 @@ describe('a narration', () => {
     expect(sections).toHaveLength(6);
     expect(answer.plan.numbers()).toEqual([1, 2, 3, 4, 5, 6]);
     for (const s of sections) expect(answer.plan.titleOf(s.n)).toBe(s.title);
+    // every step has its subtitle, a summary shorter than the text it belongs to
+    for (const s of sections) {
+      const caption = answer.plan.captionOf(s.n);
+      expect(caption).toBeTruthy();
+      expect(caption!.length).toBeLessThan(s.body.length);
+    }
 
     // each step owns its map state: step 5 is the French alliance and shows nothing of the Hungarian war before it
     const five = answer.plan.drawingAt(5);
@@ -75,12 +82,39 @@ describe('a narration', () => {
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
     const req = provider.requests[0]!;
     expect(req.tier).toBe('quick');
-    expect(req.tools.map((t) => t.name)).toEqual(['step', 'highlight', 'connect', 'show_event', 'mark', 'set_year']);
-    expect(req.turns.at(-1)!.content).toContain('İSTEK [ANLATIM]');
+    expect(req.tools.map((t) => t.name)).toEqual([
+      'step',
+      'highlight',
+      'connect',
+      'show_event',
+      'mark',
+      'set_year',
+      'focus',
+    ]);
+    expect(req.turns[0]!.content.startsWith(INSTRUCTIONS_FILE)).toBe(true); // the owner's file, as it is, in every call
+    expect(req.turns.at(-1)!.content).toContain(`İSTEK\n${NARRATION_REQUEST}`);
     expect(req.turns.at(-1)!.content).toContain('ottoman-empire | Osmanlı İmparatorluğu');
     expect(req.turns.at(-1)!.content).toContain('Çaldıran Muharebesi'); // the app's own record, as a source
     expect(req.turns.at(-1)!.content).toContain('caldiran-1514 | '); // and with the id show_event takes
     expect(req.meta.mode).toBe('narration');
+  });
+
+  it('has the whole plan, captions and scenes included, before the first word of the long text', async () => {
+    const provider = mock({ ...FAST, chunkChars: 60 });
+    const session = makeSession(provider);
+    const atFirstText: { steps: number[]; captions: number; drawn: number }[] = [];
+    session.subscribe(() => {
+      const a = session.items.at(-1);
+      if (a?.kind === 'assistant' && a.status === 'streaming' && !atFirstText.length) {
+        atFirstText.push({
+          steps: a.plan.numbers(),
+          captions: a.plan.numbers().filter((n) => a.plan.captionOf(n)).length,
+          drawn: a.plan.numbers().filter((n) => a.plan.drawingAt(n).highlights.length).length,
+        });
+      }
+    });
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    expect(atFirstText).toEqual([{ steps: [1, 2, 3, 4, 5, 6], captions: 6, drawn: 6 }]);
   });
 
   it('streams: the text only grows, and the answer is waiting, then streaming, then done', async () => {
@@ -216,7 +250,9 @@ describe('a question', () => {
     expect(d.highlights).toEqual(['ottoman-empire', 'kingdom-of-france']);
     expect(d.links[0]).toMatchObject({ relation: 'alliance' });
     expect(d.year).toBe(1536);
-    expect(provider.requests[0]!.turns.at(-1)!.content).toContain('İSTEK [SORU]');
+    expect(provider.requests[0]!.turns.at(-1)!.content).toContain(
+      'İSTEK\nOsmanlı ile Fransa arasındaki 1536 ittifakı neydi?',
+    );
   });
 
   it('sees the open event: the question about an event carries it as context, and the user item shows it', async () => {
@@ -299,7 +335,7 @@ describe('when the subject changes mid-conversation', () => {
     expect(provider.requests[2]!.turns.at(-1)!.content).not.toContain('Konu değişti');
     // each earlier question keeps the subject it was asked about
     expect(provider.requests[2]!.turns.map((t) => t.content).join('\n')).toContain(
-      '[SORU · Fransa Krallığı · 1500–1550] Peki burada ne oluyordu?',
+      '[Fransa Krallığı · 1500–1550] Peki burada ne oluyordu?',
     );
   });
 });
@@ -425,10 +461,10 @@ describe('tools that are not there', () => {
     };
     const session = makeSession(provider);
     await session.send({ text: 'Soru 1', mode: 'qa' }, anatolia());
-    expect(seen).toEqual([6, 0]);
+    expect(seen).toEqual([7, 0]);
     expect(last(session)).toMatchObject({ status: 'done', text: 'Yalnızca metin.', notes: [NO_TOOLS_NOTE] });
     await session.send({ text: 'Soru 2', mode: 'qa' }, anatolia());
-    expect(seen).toEqual([6, 0, 0]); // no second round trip for the same refusal
+    expect(seen).toEqual([7, 0, 0]); // no second round trip for the same refusal
   });
 
   it('a view that reports no tools gets plain text and a note, with no polity list in the prompt', async () => {

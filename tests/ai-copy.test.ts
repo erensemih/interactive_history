@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ERROR_COPY, errorCopy } from '../src/ai/errorCopy';
 import { openPermissionsPanel } from '../src/ai/permissions';
 import type { ModelErrorCode } from '../src/ai/provider';
-import { segmentsOf } from '../src/ui/chat/segments';
+import { segmentsOf } from '../src/ui/read/segments';
 
 describe('error copy', () => {
   const codes: ModelErrorCode[] = [

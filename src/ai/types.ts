@@ -11,7 +11,18 @@ export const RELATION_WORD: Record<Relation, string> = {
 };
 
 /** What one drawing may hold at most: a map stays readable however much the model asks for. */
-export const LIMITS = { highlights: 8, links: 6, marks: 8, events: 6, label: 28, steps: 12, title: 64 } as const;
+export const LIMITS = {
+  highlights: 8,
+  links: 6,
+  marks: 8,
+  events: 6,
+  focus: 4,
+  label: 28,
+  steps: 12,
+  title: 64,
+  /** A step's caption (the subtitle over the map): a sentence or two. */
+  caption: 280,
+} as const;
 
 /**
  * One map action the model asked for, already checked against the data: polity ids exist and have borders
@@ -23,6 +34,7 @@ export type MapAction =
   | { kind: 'connect'; step: number; from: string; to: string; relation: Relation; label?: string }
   | { kind: 'mark'; step: number; point: PlacePoint; label: string }
   | { kind: 'event'; step: number; id: string }
+  | { kind: 'focus'; step: number; polities: string[]; points: PlacePoint[] }
   | { kind: 'set_year'; step: number; year: number };
 
 export interface Link {
@@ -49,8 +61,16 @@ export interface Drawing {
   marks: Mark[];
   /** Events of the app's own data the step talks about: they appear with their own markers, not as marks. */
   events: string[];
+  /** A region the step wants in view without drawing anything on it: polities (by their main parts) and points. */
+  focus: Focus;
   /** The border year the step asked for (inside the selected range); undefined leaves the year to the reader. */
   year?: number;
+}
+
+/** What a step asks the camera to include besides its drawing. Nothing of it is drawn. */
+export interface Focus {
+  polities: string[];
+  points: PlacePoint[];
 }
 
 /** A drawing with its polities turned into places on the map, for the year shown. */
@@ -72,9 +92,19 @@ export interface ResolvedDrawing {
   links: ResolvedLink[];
   marks: Mark[];
   events: ResolvedEvent[];
+  /** Polities (with borders that year) and points the step wants in view; the map draws none of them. */
+  focusIds: string[];
+  focusPoints: PlacePoint[];
 }
 
-export const EMPTY_RESOLVED: ResolvedDrawing = { highlightIds: [], links: [], marks: [], events: [] };
+export const EMPTY_RESOLVED: ResolvedDrawing = {
+  highlightIds: [],
+  links: [],
+  marks: [],
+  events: [],
+  focusIds: [],
+  focusPoints: [],
+};
 
 /**
  * Everything a step put on the map, as the camera sees it: boxes (the main parts of the highlighted

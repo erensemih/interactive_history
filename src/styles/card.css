@@ -1,0 +1,283 @@
+/* ------------------------------------------------------------------ the info card */
+/* A small card at the right edge of the map: the place or the event being read. It closes with its cross, and
+   steps aside to a tab when the reader asks something (the selection stays). */
+.card-host {
+  position: absolute;
+  top: 12px;
+  right: calc(var(--side-w) + 12px);
+  z-index: 6;
+  width: var(--card-w);
+  max-width: calc(100% - 24px);
+  max-height: calc(100% - 24px);
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
+  animation: card-in 0.22s ease;
+}
+
+.card-host[hidden] {
+  display: none;
+}
+
+.card-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 16px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--paper-4) transparent;
+  outline: none;
+}
+
+/* the sections inside it are not cards of their own any more */
+.card-host .card {
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+  border-bottom: 0;
+}
+
+.card-host .card-top {
+  min-height: 30px;
+}
+
+.card-host .icon-btn {
+  width: 32px;
+  height: 32px;
+  margin: -2px -6px -2px 0;
+  color: var(--ink-2);
+}
+
+.card-host .card-title {
+  font-size: 23px;
+  margin: 4px 0 8px;
+}
+
+.card-host .card-sub {
+  font-size: 14px;
+  margin: -2px 0 8px;
+}
+
+.card-host .prose {
+  font-size: 14.5px;
+  line-height: 1.52;
+}
+
+.card-host .prose + .prose {
+  margin-top: 8px;
+}
+
+.card-host .prose.is-folded {
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+}
+
+.card-host .card-actions {
+  margin-top: 12px;
+  gap: 8px 14px;
+}
+
+.card-host .btn {
+  padding: 7px 12px;
+  font-size: 12.5px;
+}
+
+.card-host .card-intro .card-title {
+  font-size: 21px;
+}
+
+.card-host .intro-steps {
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.card-host .intro-steps li {
+  font-size: 13px;
+}
+
+/* the event: the category colour is a line down its side, the card around it is the one card */
+.card-host .card-event {
+  background: transparent;
+  border: 0;
+  border-left: 4px solid var(--c, var(--ink));
+  border-radius: 2px;
+  box-shadow: none;
+  padding: 0 0 0 12px;
+  margin: 0 0 8px;
+  animation: none;
+}
+
+.card-host .card-event .card-title {
+  font-size: 22px;
+}
+
+.card-host .event-when {
+  font-size: 12.5px;
+  margin-bottom: 8px;
+}
+
+.card-host .parties {
+  margin-top: 10px;
+}
+
+/* the place above an event: one line, at the top of the card */
+.card-host .panel-context {
+  position: static;
+  margin: -12px -16px 10px;
+}
+
+.card-host .line {
+  min-height: 38px;
+  padding: 7px 16px;
+}
+
+.card-host .line-name {
+  font-size: 15.5px;
+}
+
+/* what the place's card keeps behind a fold */
+.card-more {
+  margin: 12px 0 2px;
+  border-top: 1px solid var(--rule);
+}
+
+.card-more > summary,
+.elsewhere > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 34px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--ink-2);
+}
+
+.card-more > summary::-webkit-details-marker,
+.elsewhere > summary::-webkit-details-marker {
+  display: none;
+}
+
+.card-more > summary::after,
+.elsewhere > summary::after {
+  content: '＋';
+  flex: none;
+  order: 3;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+
+.card-more[open] > summary::after,
+.elsewhere[open] > summary::after {
+  content: '－';
+}
+
+.elsewhere > summary .eyebrow {
+  flex: 1 1 auto;
+}
+
+.card-more .facts {
+  margin-top: 4px;
+}
+
+.elsewhere {
+  margin-top: 6px;
+  border-top: 1px solid var(--rule);
+}
+
+.elsewhere-head {
+  margin-bottom: 0;
+}
+
+.elsewhere .evlist {
+  margin: 0 -8px 4px;
+}
+
+.elsewhere .row-title {
+  font-size: 14.5px;
+}
+
+.elsewhere .prose {
+  margin-bottom: 8px;
+}
+
+/* ------------------------------------------------------------------ the tab */
+/* The card stepped aside: only a small tab with the place's name remains, to bring it back. */
+.card-host.is-tab {
+  width: auto;
+  max-width: min(260px, calc(100% - 24px));
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.card-host.is-tab .card-scroll {
+  padding: 0;
+  overflow: visible;
+}
+
+.card-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  height: 36px;
+  padding: 0 14px 0 10px;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  border-radius: 99px;
+  box-shadow: var(--shadow-float);
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.card-tab:hover {
+  background: var(--paper-2);
+}
+
+.card-tab-icon {
+  flex: none;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink-3);
+  transform: translateY(-1px);
+}
+
+.card-tab-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1180px) {
+  /* a narrower stage: the card keeps clear of the foot of the stage (the caption and the question box) */
+  .card-host {
+    max-height: calc(100% - 24px - var(--foot-h, 0px));
+  }
+}
+
+@media (max-width: 900px) {
+  /* a phone: the card is a small sheet over the top of the map, full width */
+  .card-host {
+    top: 8px;
+    right: 8px;
+    left: 8px;
+    width: auto;
+    max-width: none;
+    max-height: min(46%, calc(100% - 16px - var(--foot-h, 0px)));
+  }
+  .card-host.is-tab {
+    left: auto;
+  }
+}

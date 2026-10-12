@@ -1,6 +1,8 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import { subjectKey, subjectLabel, type AiContext } from '../src/ai/context';
-import { drawingOf, emptyDrawing } from '../src/ai/drawing';
+import { drawingOf, emptyDrawing, TurnPlan } from '../src/ai/drawing';
+import { INSTRUCTIONS_FILE } from '../src/ai/instructions';
 import {
   buildTurns,
   describeCatalog,
@@ -12,6 +14,7 @@ import {
   type PromptInput,
 } from '../src/ai/prompt';
 import { Resolver } from '../src/ai/resolve';
+import { createTools } from '../src/ai/tools';
 import { appEventsSource, gatherPassages, type SourceProvider } from '../src/ai/sources';
 import { shippedData } from './helpers/shipped';
 
@@ -38,7 +41,6 @@ const context: AiContext = {
 };
 
 const base = (patch: Partial<PromptInput> = {}): PromptInput => ({
-  mode: 'narration',
   question: NARRATION_REQUEST,
   context,
   previous: null,
@@ -53,23 +55,57 @@ const base = (patch: Partial<PromptInput> = {}): PromptInput => ({
 });
 
 describe('instructions', () => {
-  it('state the protocol the page relies on: tools first in one round, then the numbered text', () => {
+  it("are the owner's file, as it is, followed by the page's own notes", () => {
+    const file = readFileSync(new URL('../instructions/okuma-arkadasi.txt', import.meta.url), 'utf8');
+    expect(INSTRUCTIONS_FILE).toBe(file.replace(/\r\n?/g, '\n').trimEnd());
+    for (const tools of [true, false]) {
+      const text = instructions(tools);
+      expect(text.startsWith(INSTRUCTIONS_FILE)).toBe(true);
+      expect(text.slice(INSTRUCTIONS_FILE.length)).toMatch(/^\n\nUYGULAMA NOTLARI\n/);
+    }
+    expect(INSTRUCTIONS_FILE).toContain('Sen, tarih okuyan birine harita üzerinden eşlik eden bir okuma arkadaşısın.');
+    expect(INSTRUCTIONS_FILE).toContain('Her adım için iki metin yazarsın:');
+  });
+
+  it('map every action the file names onto a tool the page really offers', () => {
+    const plan = new TurnPlan();
+    const offered = createTools({ resolver, range, plan }).map((t) => t.name);
     const text = instructions(true);
-    expect(text).toContain('TEK turda');
-    expect(text).toContain('## n. Kısa başlık');
-    for (const name of ['step', 'highlight', 'connect', 'show_event', 'mark', 'set_year']) expect(text).toContain(name);
+    for (const [action, tool] of [
+      ['devletleri vurgulamak', 'highlight'],
+      ['ilişkiye göre bağlamak', 'connect'],
+      ['kısa bir etiketle işaretlemek', 'mark'],
+      ['sınır yılını değiştirmek', 'set_year'],
+      ['bölgeyi göstermek', 'focus'],
+      ['olayı göstermek', 'show_event'],
+      ['adımları bildirmek', 'step'],
+    ] as const) {
+      expect(offered).toContain(tool);
+      expect(text).toMatch(new RegExp(`${action}[^\\n]*→ \`${tool}\``)); // "action → `tool`"
+    }
+    // every tool of the page is named in the notes
+    for (const name of offered) expect(text).toContain(`\`${name}\``);
     expect(text).toContain('POLİTİLER');
     expect(text).toContain('OLAYLAR');
   });
 
+  it('give the two-phase protocol of a stepped answer: the tools first, in one round, then the numbered texts', () => {
+    const text = instructions(true);
+    expect(text).toContain('TEK turda');
+    expect(text).toContain('HİÇ METİN YAZMADAN');
+    expect(text).toMatch(/step`\{n, title, caption\}/);
+    expect(text).toContain('"## n. Başlık"');
+    expect(text).toContain('Altyazı bu metnin özeti olmalı');
+    expect(text).toMatch(/Tek parça cevap: `step` çağırma/);
+  });
+
   it('say that every step owns the map, and that an event of the app is shown by its own marker', () => {
     const text = instructions(true);
-    expect(text).toContain('HER ADIM HARİTANIN SAHİBİDİR');
-    expect(text).toContain('KENDİ başına');
+    expect(text).toContain('Her adım haritanın sahibidir');
+    expect(text).toContain('kendi başına bildirmeli');
     expect(text).not.toContain('devral'); // nothing is inherited from the step before
     expect(text).not.toContain('`clear`');
-    expect(text).not.toContain('`focus`'); // the camera is not the model's business
-    expect(text).toMatch(/OLAYLAR listesindeki bir olayı anlatıyorsan onu `show_event` ile göster/);
+    expect(text).toMatch(/OLAYLAR listesindeki kimlikle; kendi işaretini çizme/);
     expect(text).toMatch(/`mark` yalnızca OLAYLAR'da bulunmayan yerler/);
     expect(text).toContain('Harita takibi');
   });
@@ -77,7 +113,7 @@ describe('instructions', () => {
   it('show the protocol on a worked example', () => {
     const text = instructions(true);
     expect(text).toContain('ÖRNEK');
-    expect(text).toMatch(/step\{n:1,title:"[^"]+"\}/);
+    expect(text).toMatch(/step\{n:1,title:"[^"]+",caption:"[^"]+"\}/);
     expect(text).toMatch(/\n ## 2\. Çaldıran\n/);
     expect(instructions(false)).not.toContain('ÖRNEK');
   });
@@ -86,7 +122,8 @@ describe('instructions', () => {
     const text = instructions(false);
     expect(text).toContain('yalnızca metin');
     expect(text).not.toContain('highlight');
-    expect(text).toContain('## n. Kısa başlık');
+    expect(text).not.toContain('show_event');
+    expect(text).toContain('## n. Başlık');
   });
 });
 
@@ -162,14 +199,15 @@ describe('buildTurns', () => {
     const turns = buildTurns(base({ sources }));
     expect(turns).toHaveLength(2);
     expect(turns.every((t) => t.role === 'user')).toBe(true);
-    expect(turns[0]!.content).toContain('tarih anlatıcısısın');
+    expect(turns[0]!.content.startsWith(INSTRUCTIONS_FILE)).toBe(true);
     const last = turns[1]!.content;
     expect(last).toMatch(/^BAĞLAM\n/);
     expect(last).toContain('POLİTİLER');
     expect(last).toContain('ottoman-empire | Osmanlı İmparatorluğu');
     expect(last).toContain('KAYITLAR\nUygulamanın olay kayıtları:');
     expect(last).toContain('Çaldıran Muharebesi');
-    expect(last.endsWith(`İSTEK [ANLATIM]\n${NARRATION_REQUEST}`)).toBe(true);
+    expect(last.endsWith(`İSTEK\n${NARRATION_REQUEST}`)).toBe(true);
+    expect(last).not.toMatch(/ANLATIM|SORU/); // the model decides the form of the answer; the page does not tag the request
   });
 
   it('leaves the polity and event lists out when there are no tools', () => {
@@ -199,33 +237,52 @@ describe('buildTurns', () => {
     expect(buildTurns(base({ drawing: emptyDrawing() })).at(-1)!.content).not.toContain('çizdiklerin');
   });
 
-  it('carries the chat so far, in order, with each reader turn marked by its kind and subject', () => {
+  it('carries the chat so far, in order, with each reader turn marked by its subject', () => {
     const turns = buildTurns(
       base({
-        mode: 'qa',
         question: 'Fransa ile ittifak neydi?',
         history: [
-          { role: 'user', text: NARRATION_REQUEST, mode: 'narration', subject: 'Osmanlı İmparatorluğu · 1500–1550' },
+          { role: 'user', text: NARRATION_REQUEST, subject: 'Osmanlı İmparatorluğu · 1500–1550' },
           { role: 'assistant', text: '## 1. Başlık\nMetin.' },
+          {
+            role: 'user',
+            text: 'Bunu açar mısın?',
+            subject: 'Osmanlı İmparatorluğu · 1500–1550',
+            event: 'Mohaç Muharebesi',
+          },
+          { role: 'assistant', text: 'Açıklama.' },
+          { role: 'user', text: 'Daha kısa anlat.' },
+          { role: 'assistant', text: 'Kısa.' },
         ],
       }),
     );
-    expect(turns.map((t) => t.role)).toEqual(['user', 'user', 'assistant', 'user']);
-    expect(turns[1]!.content).toBe(`[ANLATIM · Osmanlı İmparatorluğu · 1500–1550] ${NARRATION_REQUEST}`);
+    expect(turns.map((t) => t.role)).toEqual([
+      'user',
+      'user',
+      'assistant',
+      'user',
+      'assistant',
+      'user',
+      'assistant',
+      'user',
+    ]);
+    expect(turns[1]!.content).toBe(`[Osmanlı İmparatorluğu · 1500–1550] ${NARRATION_REQUEST}`);
     expect(turns[2]!.content).toBe('## 1. Başlık\nMetin.');
-    expect(turns[3]!.content).toContain('İSTEK [SORU]\nFransa ile ittifak neydi?');
+    expect(turns[3]!.content).toBe('[Osmanlı İmparatorluğu · 1500–1550 · olay: «Mohaç Muharebesi»] Bunu açar mısın?');
+    expect(turns[5]!.content).toBe('Daha kısa anlat.'); // no subject, no tag
+    expect(turns[7]!.content).toContain('İSTEK\nFransa ile ittifak neydi?');
   });
 
   it('keeps the input under the limit by dropping the oldest exchanges first, never the rules or the request', () => {
     const long = 'Eski yanıt. '.repeat(400);
     const history = Array.from({ length: 12 }, (_, i) => [
-      { role: 'user' as const, text: `Soru ${i}`, mode: 'qa' as const },
+      { role: 'user' as const, text: `Soru ${i}` },
       { role: 'assistant' as const, text: `${i}: ${long}` },
     ]).flat();
     const turns = buildTurns(base({ history }), 30_000);
     const bytes = turns.reduce((n, t) => n + utf8Bytes(t.content), 0);
     expect(bytes).toBeLessThanOrEqual(30_000);
-    expect(turns[0]!.content).toContain('tarih anlatıcısısın');
+    expect(turns[0]!.content.startsWith(INSTRUCTIONS_FILE)).toBe(true);
     expect(turns.at(-1)!.content).toContain('İSTEK');
     // what remains is the newest, still in pairs
     const kept = turns.slice(1, -1);
@@ -247,7 +304,7 @@ describe('buildTurns', () => {
     const turns = buildTurns(
       base({
         history: [
-          { role: 'user', text: 'Soru', mode: 'qa' },
+          { role: 'user', text: 'Soru' },
           { role: 'assistant', text: '  ' },
         ],
       }),

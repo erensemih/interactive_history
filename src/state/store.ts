@@ -14,8 +14,6 @@ export interface AppState {
   places: PlacePoint[];
   selectedEventId: string | null;
   hoverEventId: string | null;
-  /** The reading-companion chat takes the info panel's place. Not part of the link: a conversation does not travel with it. */
-  chatOpen: boolean;
 }
 
 export type Listener = (state: AppState, prev: AppState) => void;
@@ -102,10 +100,6 @@ export class Store {
     this.set({ hoverEventId: id });
   }
 
-  setChat(open: boolean) {
-    this.set({ chatOpen: open });
-  }
-
   get shownYear(): number {
     return displayYear(this.current.range, this.current.cursor);
   }
@@ -117,5 +111,4 @@ export const DEFAULT_STATE: AppState = {
   places: [],
   selectedEventId: null,
   hoverEventId: null,
-  chatOpen: false,
 };

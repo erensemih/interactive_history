@@ -19,7 +19,15 @@ function setup() {
 describe('the map tools', () => {
   it('offer the small set the brief asked for, each described and with an object schema', () => {
     const { tools } = setup();
-    expect(tools.map((t) => t.name)).toEqual(['step', 'highlight', 'connect', 'show_event', 'mark', 'set_year']);
+    expect(tools.map((t) => t.name)).toEqual([
+      'step',
+      'highlight',
+      'connect',
+      'show_event',
+      'mark',
+      'set_year',
+      'focus', // last: the first to go when a view allows fewer tools
+    ]);
     for (const t of tools) {
       expect(t.description.length).toBeGreaterThan(20);
       expect(t.description.length).toBeLessThanOrEqual(1024);
@@ -29,12 +37,31 @@ describe('the map tools', () => {
     }
   });
 
-  it('step declares a step with a clean title', () => {
+  it('step declares a step with a clean title and its subtitle', () => {
     const { plan, tool } = setup();
-    expect(tool('step').execute({ n: 2, title: '  **Çaldıran**  ' })).toBe('tamam');
+    expect(
+      tool('step').execute({ n: 2, title: '  **Çaldıran**  ', caption: '  1514’te Safevîler **yenildi**.  ' }),
+    ).toBe('tamam');
     expect(plan.titleOf(2)).toBe('Çaldıran');
-    expect(tool('step').execute({ n: 99, title: 'x' })).toMatch(/^atlandı/);
+    expect(plan.captionOf(2)).toBe('1514’te Safevîler yenildi.');
+    expect(tool('step').execute({ n: 99, title: 'x', caption: 'y' })).toMatch(/^atlandı/);
     expect(plan.has(99)).toBe(false);
+  });
+
+  it('a step may come without a caption (the page then makes one from the text), and an over-long one is cut', () => {
+    const { plan, tool } = setup();
+    tool('step').execute({ n: 1, title: 'Yalnız başlık' });
+    expect(plan.captionOf(1)).toBeNull();
+    tool('step').execute({ n: 2, title: 'Uzun', caption: 'Çok uzun bir altyazı. '.repeat(40) });
+    expect(plan.captionOf(2)!.length).toBeLessThanOrEqual(280);
+  });
+
+  it('the step tool asks for the two short texts, and says where the long one goes', () => {
+    const { tool } = setup();
+    const step = tool('step');
+    expect(step.inputSchema.required).toEqual(['n', 'title', 'caption']);
+    expect(step.description).toContain('altyazı');
+    expect(step.description).toContain('## n. Başlık');
   });
 
   it('a step without a number takes the next free one, so titles never overwrite each other', () => {
@@ -149,9 +176,28 @@ describe('the map tools', () => {
     expect(plan.drawingAt(1).marks.map((m) => m.label)).toEqual(['Mercidabık', 'Kahire', 'Mohaç', 'Mohaç, 1683']);
   });
 
-  it('there is no clear and no focus: every step owns its map and the camera is the reader’s setting', () => {
+  it('there is no clear: every step owns its map', () => {
     const { tools } = setup();
-    expect(tools.some((t) => t.name === 'clear' || t.name === 'focus')).toBe(false);
+    expect(tools.some((t) => t.name === 'clear')).toBe(false);
+  });
+
+  it('focus shows a region: polities and points the camera should include, nothing drawn', () => {
+    const { plan, tool } = setup();
+    const out = tool('focus').execute({
+      step: 2,
+      polities: ['kingdom-of-france', 'atlantis'],
+      points: [{ lon: 14.5, lat: 35.9 }, { lon: 999, lat: 0 }, 'x'],
+    }) as string;
+    expect(out).toContain('tamam');
+    expect(out).toContain('atlantis');
+    const d = plan.drawingAt(2);
+    expect(d.focus.polities).toEqual(['kingdom-of-france']);
+    expect(d.focus.points).toEqual([{ lon: 14.5, lat: 35.9 }]);
+    expect(d.highlights).toEqual([]); // nothing is drawn by it
+    expect(plan.drawingAt(1).focus).toEqual({ polities: [], points: [] }); // and it belongs to its step alone
+    expect(tool('focus').execute({ step: 3 })).toMatch(/^atlandı/);
+    expect(tool('focus').execute({ step: 3, polities: ['atlantis'] })).toMatch(/^atlandı/);
+    expect(plan.has(3)).toBe(false);
   });
 
   it('reads the step from `step` or `n`, defaults to 1 and refuses nonsense', () => {

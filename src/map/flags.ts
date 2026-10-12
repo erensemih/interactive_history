@@ -63,12 +63,39 @@ interface Candidate {
   side: Side;
 }
 
+const shifted = (r: Rect, dx: number, dy: number): Rect => ({
+  left: r.left + dx,
+  top: r.top + dy,
+  right: r.right + dx,
+  bottom: r.bottom + dy,
+});
+
 function candidatesOf(f: FlagRequest): Candidate[] {
   const anchors: FlagAnchor[] = [f, ...(f.alternates ?? [])];
   const out: Candidate[] = [];
   for (const a of anchors) {
     const order = [...new Set([...a.prefer, ...ALL])];
     for (const side of order) out.push({ rect: rectAt(f, a, side), side });
+  }
+  // Last resorts, tried only when every place above is taken: the first point's sides slid along (the corners), then
+  // a little further out. A crowded spot still gets a label clear of the others, only not quite so near its point.
+  const order = [...new Set([...f.prefer, ...ALL])];
+  const reach = [
+    { gap: f.gap, slide: true },
+    { gap: f.gap * 2.2, slide: false },
+    { gap: f.gap * 2.2, slide: true },
+    { gap: f.gap * 3.6, slide: false },
+  ];
+  for (const { gap, slide } of reach) {
+    for (const side of order) {
+      const base = rectAt(f, { x: f.x, y: f.y, gap }, side);
+      if (!slide) {
+        out.push({ rect: base, side });
+        continue;
+      }
+      const along = side === 'left' || side === 'right' ? { dx: 0, dy: f.h * 1.05 } : { dx: f.w * 0.5 + 6, dy: 0 };
+      out.push({ rect: shifted(base, along.dx, along.dy), side }, { rect: shifted(base, -along.dx, -along.dy), side });
+    }
   }
   return out;
 }

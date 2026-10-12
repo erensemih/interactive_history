@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { contextFromView, type AiContext } from '../src/ai/context';
-import { Director } from '../src/ai/director';
+import { Director, FRAME_SETTLE_MS } from '../src/ai/director';
 import { createMockProvider, type MockScript } from '../src/ai/mockProvider';
 import { createMockScripts } from '../src/ai/mockScripts';
 import { NARRATION_REQUEST } from '../src/ai/prompt';
@@ -30,6 +30,8 @@ function setup(scripts: MockScript[] = createMockScripts(data)) {
   return { session, director, framed };
 }
 const answer = (s: AiSession) => s.items.at(-1) as AssistantItem;
+/** The camera is moved once the plan has stopped changing for a moment: wait for that. */
+const settle = () => new Promise<void>((resolve) => setTimeout(resolve, FRAME_SETTLE_MS + 40));
 
 describe('the director', () => {
   it('shows nothing until an answer has started, then the first step', async () => {
@@ -84,7 +86,8 @@ describe('the director', () => {
     const { session, director, framed } = setup();
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
     const id = answer(session).id;
-    expect(framed).toHaveLength(1); // the first step, as soon as the answer began
+    await settle();
+    expect(framed).toHaveLength(1); // the first step, once the plan was in: one frame, not one per tool call
     expect(framed[0]!.highlights).toEqual(['ottoman-empire', 'safavid-dynasty']);
     director.activate(id, 3);
     director.activate(id, 4);
@@ -100,12 +103,14 @@ describe('the director', () => {
         : null;
     const { session, framed } = setup([quiet, ...createMockScripts(data)]);
     await session.send({ text: 'sessiz', mode: 'qa' }, anatolia());
+    await settle();
     expect(framed).toEqual([]);
   });
 
   it('small moves of the map by the reader change nothing; the camera keeps following', async () => {
     const { session, director, framed } = setup();
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await settle();
     const id = answer(session).id;
     director.userMovedCamera(false);
     director.userMovedCamera(false);
@@ -118,6 +123,7 @@ describe('the director', () => {
   it('a substantial move asks whether to let go, and does not let go by itself', async () => {
     const { session, director, framed } = setup();
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await settle();
     const id = answer(session).id;
     director.userMovedCamera(true);
     expect(director.askingToRelease).toBe(true);
@@ -131,6 +137,7 @@ describe('the director', () => {
   it('"let go" turns the following off: steps still change the drawing but the camera stays', async () => {
     const { session, director, framed } = setup();
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await settle();
     const id = answer(session).id;
     director.userMovedCamera(true);
     director.setFollowing(false);
@@ -179,6 +186,7 @@ describe('the director', () => {
     expect(director.askingToRelease).toBe(false);
     expect(director.following).toBe(true);
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await settle();
     director.activate(answer(session).id, 2);
     expect(framed).toHaveLength(2);
     expect(director.following).toBe(true);
@@ -202,15 +210,20 @@ describe('the director', () => {
     const { session, director, framed } = setup();
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
     const item = answer(session);
+    await settle();
     const before = framed.length;
     item.plan.add({ kind: 'mark', step: 1, point: { lon: 10, lat: 10 }, label: 'Geç' });
     (session as unknown as { notify(): void }).notify();
-    expect(framed).toHaveLength(before + 1);
+    item.plan.add({ kind: 'mark', step: 1, point: { lon: 10.5, lat: 10.5 }, label: 'Hemen ardından' });
+    (session as unknown as { notify(): void }).notify();
+    await settle();
+    expect(framed).toHaveLength(before + 1); // two changes in a burst, one frame
     director.userMovedCamera(false);
     item.plan.add({ kind: 'mark', step: 1, point: { lon: 11, lat: 11 }, label: 'Daha geç' });
     (session as unknown as { notify(): void }).notify();
+    await settle();
     expect(framed).toHaveLength(before + 1);
-    expect(director.drawing?.marks.map((m) => m.label)).toEqual(['Geç', 'Daha geç']);
+    expect(director.drawing?.marks.map((m) => m.label)).toEqual(['Geç', 'Hemen ardından', 'Daha geç']);
   });
 
   it('the year the AI asks for steps aside when the reader moves time, and returns with the next step', async () => {

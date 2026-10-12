@@ -33,12 +33,14 @@ body {
 }
 
 /* ------------------------------------------------------------------ top bar */
+/* One thin bar above the map: the name of the page, the place being read with the year of the borders drawn,
+   and the credits. It sits outside the map, so it never covers a border or a marker, and its height is fixed. */
 .topbar {
   flex: none;
   height: var(--topbar-h);
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 18px;
   padding: 0 var(--gutter);
   background: var(--paper);
   border-bottom: 1px solid var(--rule);
@@ -47,6 +49,7 @@ body {
 }
 
 .brand {
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -56,60 +59,60 @@ body {
 
 .brand-name {
   font-family: var(--font-serif);
-  font-size: 21px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 .tagline {
+  flex: none;
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 15px;
+  font-size: 14.5px;
   color: var(--ink-3);
   white-space: nowrap;
 }
 
+.map-head {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 4px 14px;
+  padding-left: 18px;
+  border-left: 1px solid var(--rule-strong);
+  overflow: hidden;
+}
+
 .credits {
+  flex: none;
+  max-width: 34%;
   margin-left: auto;
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--ink-3);
   text-align: right;
   line-height: 1.3;
 }
 
 /* -------------------------------------------------------------------- stage */
+/* The map fills it. The cards, the captions, the question box and the reading panel are laid over it. */
 .stage {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--panel-w);
+  overflow: hidden;
+  background: var(--sea);
 }
 
 .map-col {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
-
-/* The place name and the border year sit above the map, never on it. */
-.map-head {
-  flex: none;
-  height: var(--head-h);
-  display: flex;
-  align-items: center;
-  gap: 6px 16px;
-  padding: 0 var(--gutter);
-  overflow: hidden;
-  background: var(--paper);
-  border-bottom: 1px solid var(--rule);
+  position: absolute;
+  inset: 0;
 }
 
 .map-wrap {
-  position: relative;
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   background: var(--sea);
 }
@@ -120,22 +123,42 @@ body {
   inset: 0;
 }
 
-.panel {
-  min-height: 0;
-  background: var(--paper);
-  border-left: 1px solid var(--rule-strong);
+/* The question box, and the caption (or short answer) above it, share one column at the foot of the stage. They
+   stay clear of the reading panel when it is open beside the map. */
+.bottom {
+  position: absolute;
+  left: 0;
+  right: var(--side-w);
+  bottom: 12px;
+  z-index: 8;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 0 var(--gutter);
+  pointer-events: none;
 }
 
-.panel-scroll {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 24px var(--gutter) 48px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--paper-4) transparent;
+.bottom > * {
+  width: min(var(--stack-w), calc(100% - 460px));
+  min-width: min(100%, 400px);
+  pointer-events: auto;
+}
+
+.bottom > :empty {
+  display: none;
+}
+
+/* what the camera keeps the drawing clear of at the foot of the stage: the question box and the caption or answer
+   over it (for a single-part answer, as tall as it can grow). Invisible; its height is set by the page. */
+.foot-guard {
+  position: absolute;
+  left: 0;
+  right: var(--side-w);
+  bottom: 0;
+  height: var(--guard-h, 0px);
+  pointer-events: none;
+  visibility: hidden;
 }
 
 /* --------------------------------------------------------------------- dock */
@@ -144,12 +167,12 @@ body {
   height: var(--dock-h);
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   background: var(--paper);
   border-top: 1px solid var(--rule-strong);
-  padding: 5px var(--gutter) 3px;
+  padding: 4px var(--gutter) 2px;
   position: relative;
-  z-index: 4;
+  z-index: 9;
   box-shadow: 0 -10px 24px -18px rgb(60 45 20 / 0.45);
 }
 
@@ -209,56 +232,44 @@ body {
 }
 
 /* ---------------------------------------------------------------- responsive */
-@media (max-width: 1180px) {
-  :root {
-    --panel-w: 360px;
-    --panel-w-chat: 460px;
-    --dock-label-w: 136px;
-  }
+@media (max-width: 1360px) {
   .tagline {
     display: none;
   }
 }
 
-@media (max-width: 900px) {
-  /* Phone/tablet: one column. Order = map, time controls, then the reading panel. */
+@media (max-width: 1180px) {
   :root {
-    --gutter: 16px;
-    --head-h: 40px;
-    --dock-label-w: 86px;
+    --dock-label-w: 136px;
   }
-  html,
-  body {
-    overflow: auto;
-  }
-  .app {
-    height: auto;
-    min-height: 100dvh;
-  }
-  .stage {
-    display: contents;
-  }
-  .map-col {
-    order: 1;
-    flex: none;
-  }
-  .map-wrap {
-    flex: none;
-    height: 58vh;
-    min-height: 360px;
-  }
-  .dock {
-    order: 2;
-  }
-  .panel {
-    order: 3;
-    border-left: 0;
-    border-top: 1px solid var(--rule-strong);
-  }
-  .panel-scroll {
-    overflow: visible;
+}
+
+/* Phone and tablet: the same stage, smaller. The map is still the whole screen between the bar and the dock. */
+@media (max-width: 900px) {
+  :root {
+    --gutter: 14px;
+    --topbar-h: 40px;
+    --dock-label-w: 80px;
   }
   .credits {
+    display: none;
+  }
+  .brand-name {
+    font-size: 18px;
+  }
+  .map-head {
+    padding-left: 12px;
+  }
+  .bottom {
+    bottom: 8px;
+    padding: 0 10px;
+  }
+  .bottom > * {
+    width: 100%;
+    min-width: 0;
+  }
+  /* an answer is on the map: the colour key would only cover what it is showing */
+  .stage[data-narrating='true'] .legend {
     display: none;
   }
 }

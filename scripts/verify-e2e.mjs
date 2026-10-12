@@ -106,7 +106,8 @@ const geometry = () =>
       const b = document.querySelector(s).getBoundingClientRect();
       return [Math.round(b.left), Math.round(b.top), Math.round(b.width), Math.round(b.height)].join(',');
     };
-    return { head: r('.map-head'), dock: r('.dock'), map: r('.map-wrap'), panel: r('.panel') };
+    // the info card is a layer over the map, so what must not shift is the bar, the map, the dock and the question box
+    return { head: r('.map-head'), dock: r('.dock'), map: r('.map-wrap'), ask: r('[data-testid=ask]') };
   });
 const markerIds = () => page.evaluate(() => window.__ayni.visibleMarkerIds().sort());
 /** Sets the range the way the ruler would (the ruler's own pointer and keyboard use is checked separately). */
@@ -214,6 +215,13 @@ try {
   check('Başlık "Dünya" ve seçili yer yok', (await text('[data-testid=title-main]')) === 'Dünya');
   check('Çizelge "yer seçilmedi" durumunda', (await text('[data-testid=timeline-name]')).includes('seçilmedi'));
   await page.screenshot({ path: join(OUT, '01-acilis.png') });
+  // the introduction is a small card over the right of the map; the reader closes it with its cross and it stays closed
+  await page.click('[data-testid=intro-close]');
+  await settle(300);
+  check(
+    'Tanıtım kartı ✕ ile kapanır (sağ taraf boşalır)',
+    (await page.locator('.card-host').isHidden()) || !(await page.locator('[data-testid=intro-card]').isVisible()),
+  );
 
   /* ---- 1. 1500 + Anatolia */
   console.log("\n1. 1500 yılı, Anadolu'da bir nokta");
@@ -292,7 +300,7 @@ try {
     ) === JSON.stringify(mapEventsBefore),
   );
   check(
-    'Düzen kaymadı (harita/panel/alt bölüm aynı boyutta)',
+    'Düzen kaymadı (üst çubuk, harita, soru kutusu ve alt bölüm aynı boyutta; kart haritanın üstünde bir katman)',
     JSON.stringify(await geometry()) === JSON.stringify(baseGeo),
   );
   const pin = await page.locator('.pin:not([hidden])').boundingBox();
@@ -304,6 +312,13 @@ try {
 
   /* ---- 2. China */
   console.log("\n2. Çin'de bir nokta");
+  // the info card covers that corner of the map while the Ottoman place is open: it is closed (✕) before the next click
+  await page.click('[data-testid=place-close]');
+  await settle(400);
+  check(
+    'Karttaki ✕ kartı kapatır ve yer seçimini kaldırır; harita yerinde',
+    (await text('[data-testid=title-main]')) === 'Dünya' && sameCamera(baseCam, await camera()),
+  );
   const china = await pixelOf(112.0, 33.0);
   await page.mouse.click(china.x, china.y);
   await page.waitForFunction(
@@ -404,9 +419,11 @@ try {
     const vm = window.__ayni.view();
     const m = window.__ayni.map;
     const box = document.querySelector('#map').getBoundingClientRect();
-    const covered = [...document.querySelectorAll('.map-zoom, .legend, .map-stats:not([hidden])')].map((el) =>
-      el.getBoundingClientRect(),
-    );
+    const covered = [
+      ...document.querySelectorAll(
+        '.map-zoom, .legend, .map-stats:not([hidden]), [data-avoid]:not(.foot-guard):not([hidden])',
+      ),
+    ].map((el) => el.getBoundingClientRect());
     const ev = vm.places[0].timeline.find((e) => {
       const p = m.project([e.location.lon, e.location.lat]);
       const x = box.left + p.x;
@@ -818,7 +835,8 @@ try {
     const { ctx, p } = await open('#t=1500', { width: 860, height: 800 });
     const z0 = (await cameraOf(p)).zoom;
     const r = await p.locator('#map').boundingBox();
-    await p.mouse.move(r.x + r.width / 2, r.y + r.height / 3);
+    // (in a narrow window the info card is a sheet over the top of the map: the wheel is turned below it)
+    await p.mouse.move(r.x + r.width / 2, r.y + r.height * 0.62);
     await p.mouse.wheel(0, -300);
     await p.waitForTimeout(900);
     check('Dar pencerede de fare tekerleği haritayı yakınlaştırır', (await cameraOf(p)).zoom > z0);
@@ -871,7 +889,7 @@ try {
     check('"SEÇİLİ YER" etiketi yok', !/seçili yer/i.test(head.text) && !head.eyebrow, head.text);
     check('Başlığın yazı tipi aynı kaldı (Newsreader, serif)', /Newsreader/.test(head.family), head.family);
     check('"1505 yılının sınırları" notu başlığın yanında', head.text.includes('1505 yılının sınırları'), head.text);
-    await p.screenshot({ path: join(OUT, '07-baslik.png'), clip: { x: 0, y: 46, width: 1030, height: 150 } });
+    await p.screenshot({ path: join(OUT, '07-baslik.png'), clip: { x: 0, y: 0, width: 1030, height: 90 } });
 
     // -- colours: no polity is blue
     const tints = await p.evaluate(() =>
@@ -939,8 +957,8 @@ try {
       };
     });
     check(
-      'Alt bölüm (cetvel + çizelge) eski yüksekliğin (286 px) yaklaşık üçte biri',
-      dock.h >= 85 && dock.h <= 105,
+      'Alt bölüm (cetvel + çizelge) ince: en çok 84 px (ilk sürümün 286 px’inin dörtte biri kadar), ekranın %10’undan az',
+      dock.h >= 70 && dock.h <= 84 && dock.h / 900 < 0.1,
       `${dock.h} px = %${Math.round((dock.h / 286) * 100)}`,
     );
     check(
@@ -948,7 +966,7 @@ try {
       dock.labels === 0 && dock.titles.length >= 3 && dock.titles.every((t) => !dock.plot.includes(t)),
       `${dock.titles.length} olay`,
     );
-    await p.screenshot({ path: join(OUT, '08-alt-bolum.png'), clip: { x: 0, y: 796, width: 1440, height: 104 } });
+    await p.screenshot({ path: join(OUT, '08-alt-bolum.png'), clip: { x: 0, y: 816, width: 1440, height: 84 } });
 
     // -- the selected place: a solid dot with a fading glow, no ring
     const pin = await p.evaluate(() => {
@@ -992,10 +1010,10 @@ try {
     // -- every event dot is the same shape and size, told apart by colour alone
     const dots = await p.evaluate(() => {
       const info = (sel) =>
-        [...document.querySelectorAll(sel)].map((el) => {
-          const r = el.getBoundingClientRect();
-          return `${Math.round(r.width)}x${Math.round(r.height)}`;
-        });
+        [...document.querySelectorAll(sel)]
+          .map((el) => el.getBoundingClientRect())
+          .filter((r) => r.width > 0) // what a closed fold of the card keeps is not on screen
+          .map((r) => `${Math.round(r.width)}x${Math.round(r.height)}`);
       const radius = [...document.querySelectorAll('.dot')].map((el) => getComputedStyle(el).borderRadius);
       const visible = [...document.querySelectorAll('.evt:not(.is-hidden)')].map((el) => el.dataset.id);
       const importances = [...new Set(visible.map((id) => window.__ayni.data.eventsById.get(id).importance))];
@@ -1013,7 +1031,7 @@ try {
         map: info('.evt:not(.is-hidden) .dot'),
         timeline: info('.tl-ev .dot'),
         legend: info('.legend .dot'),
-        panel: info('.panel .dot'),
+        panel: info('.card-host .dot'),
         radius: [...new Set(radius)],
         importances,
         colours: Object.values(legendColour),
@@ -1054,11 +1072,11 @@ try {
       return {
         items: [...lg.querySelectorAll('li')].map((li) => li.innerText.trim()),
         cats: window.__ayni.data.categories.map((c) => c.label),
-        details: document.querySelectorAll('details, summary').length,
+        details: lg.querySelectorAll('details, summary').length,
         heading: !!lg.querySelector('h1, h2, h3, h4, p, legend, summary, .eyebrow'),
         text: lg.innerText,
         inside: r.width > 0 && r.left >= map.left && r.right <= map.right && r.top >= map.top && r.bottom <= map.bottom,
-        corner: r.left - map.left <= 20 && map.bottom - r.bottom <= 20,
+        corner: r.left - map.left <= 20 && (r.top - map.top <= 20 || map.bottom - r.bottom <= 20),
         height: r.height,
       };
     });
@@ -1087,7 +1105,7 @@ try {
           /sınır verisi yok/i.test(document.querySelector('.tip').textContent),
       ),
     );
-    const mingAt = await toPx(112, 33);
+    const mingAt = await toPx(105, 24); // southern China: the open place's card lies over the north-east of the map
     await p.mouse.move(mingAt[0], mingAt[1]);
     await p.waitForTimeout(500);
     check(
@@ -1137,9 +1155,11 @@ try {
         const box = document.querySelector('#map').getBoundingClientRect();
         const ev = window.__ayni.data.eventsById.get('mohac-1526');
         const q = m.project([ev.location.lon, ev.location.lat]);
-        const rects = [...document.querySelectorAll('.map-zoom, .legend, .map-stats:not([hidden])')].map((el) =>
-          el.getBoundingClientRect(),
-        );
+        const rects = [
+          ...document.querySelectorAll(
+            '.map-zoom, .legend, .map-stats:not([hidden]), [data-avoid]:not(.foot-guard):not([hidden])',
+          ),
+        ].map((el) => el.getBoundingClientRect());
         const x = box.left + q.x;
         const y = box.top + q.y;
         const el = document.querySelector('.evt[data-id="mohac-1526"]');
@@ -1427,8 +1447,8 @@ try {
       };
     });
     check(
-      'Telefon: yatay taşma yok, başlık haritanın üstünde, alt bölüm ≈ 100 px',
-      !m.overflow && m.above && m.dock >= 85 && m.dock <= 105,
+      'Telefon: yatay taşma yok, başlık haritanın üstünde, alt bölüm ince (≈ 80 px)',
+      !m.overflow && m.above && m.dock >= 70 && m.dock <= 90,
       `${m.dock} px`,
     );
     check('Telefon: lejant haritanın içinde ve sayaçla çakışmıyor', m.legendInside && !m.legendClash);
@@ -1510,7 +1530,7 @@ const lines = [
   '- `05-olay-detayi.png`: işaretçi tıklaması → olay bilgi panelinde (yer tek satırlık başlıkta)',
   '- `06-surukleme-sonrasi.png`: kullanıcı sürükleyip yakınlaştırdıktan sonra',
   '- `07-baslik.png`: yer başlığı: küçük, etiketsiz, haritanın üstünde; yanında "… yılının sınırları" notu',
-  '- `08-alt-bolum.png`: alt bölüm (≈ 100 px): cetvel + çizelge; olay adları yok; seçili olayın adı yanında',
+  '- `08-alt-bolum.png`: alt bölüm (≈ 80 px): cetvel + çizelge; olay adları yok; seçili olayın adı yanında',
   '- `09-yer-noktasi.png`: seçili yer: dolu kırmızı nokta ve yarıçapsal sönen ışıma, halka yok',
   '- `10-isaretciler-lejant.png`: aynı şekil ve boyutta işaretçiler, yalnızca renkleri açıklayan lejant, mavisiz devlet renkleri',
   "- `11-mohac-once-cin.png`: Çin'e yakınlaşılmış görünüm (Mohaç'tan önce)",

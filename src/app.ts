@@ -6,6 +6,7 @@ import { errorCopy } from './ai/errorCopy';
 import { createMockProvider } from './ai/mockProvider';
 import { createMockScripts } from './ai/mockScripts';
 import { openPermissionsPanel } from './ai/permissions';
+import { Presentation } from './ai/presentation';
 import { eventRequest, NARRATION_REQUEST, WORLD_NARRATION_REQUEST } from './ai/prompt';
 import { createSampleProvider } from './ai/sampleProvider';
 import { AiSession, type AssistantItem } from './ai/session';
@@ -19,16 +20,16 @@ import { MapView } from './map/mapView';
 import { deriveView, type ViewModel } from './state/derive';
 import { DEFAULT_STATE, Store, type AppState } from './state/store';
 import { hashToPartialState, parseCamera, stateToHash } from './state/url';
-import { ChatView } from './ui/chat/chatView';
-import { InfoPanel } from './ui/infoPanel';
-import { MapChrome, MapHead } from './ui/mapChrome';
+import { AskBox } from './ui/ask/askBox';
 import { FollowPrompt } from './ui/followPrompt';
 import { formatRange } from './ui/format';
-import { scrollBehavior } from './ui/motion';
-import { PanelWidth } from './ui/panelWidth';
+import { InfoCard } from './ui/infoCard';
+import { MapChrome, MapHead } from './ui/mapChrome';
+import { ReadView } from './ui/read/readView';
 import { Ruler } from './ui/ruler';
 import { Timeline, eventTip } from './ui/timeline';
 import { Tooltip } from './ui/tooltip';
+import { WatchView } from './ui/watch/watchView';
 
 declare global {
   interface Window {
@@ -40,7 +41,7 @@ declare global {
       view: () => ViewModel;
       visibleMarkerIds: () => string[];
       /** The reading companion (tests read what it has drawn and said; nothing writes through this). */
-      ai: { session: AiSession; director: Director };
+      ai: { session: AiSession; director: Director; presentation: Presentation };
     };
   }
 }
@@ -50,7 +51,7 @@ const NOTICE_URL: string = import.meta.env.VITE_NOTICE_URL || './NOTICE.txt';
 
 const SHELL = `
   <a class="skip" href="#dock-ruler">Zaman denetimine geç</a>
-  <a class="skip" href="#panel">Bilgi paneline geç</a>
+  <a class="skip" href="#panel">Bilgi kartına geç</a>
   <header class="topbar">
     <div class="brand">
       <svg class="brand-mark" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
@@ -60,22 +61,26 @@ const SHELL = `
       <span class="brand-name">Aynı Zamanda</span>
     </div>
     <p class="tagline">Aynı sırada, başka yerlerde ne oluyordu?</p>
+    <div class="map-head" id="map-head"></div>
     <p class="credits" id="credits"></p>
   </header>
-  <div class="stage">
+  <div class="stage" id="stage" data-view="none" data-read="">
     <main class="map-col" aria-label="Harita">
-      <div class="map-head" id="map-head"></div>
       <div class="map-wrap" role="region" aria-label="Harita alanı">
         <div class="map" id="map" lang="tr"></div>
         <div class="map-chrome" id="map-chrome"></div>
-        <div class="map-stats" id="map-stats" hidden></div>
+        <div class="map-stats" id="map-stats" data-avoid hidden></div>
         <div class="toast" id="toast" role="status" hidden></div>
         <div id="follow-host"></div>
+        <button type="button" class="mini-expand" id="mini-expand" data-testid="mini-expand" aria-label="Haritayı büyüt" title="Haritayı büyüt"></button>
       </div>
     </main>
-    <aside class="panel" aria-label="Bilgi paneli">
-      <div class="panel-scroll" id="panel" tabindex="-1"></div>
+    <aside class="card-host" id="card-host" aria-label="Bilgi kartı" hidden>
+      <div class="card-scroll" id="panel" tabindex="-1" data-avoid></div>
     </aside>
+    <div class="read" id="read" data-avoid></div>
+    <div class="bottom" id="bottom"></div>
+    <div class="foot-guard" id="foot-guard" data-avoid aria-hidden="true"></div>
   </div>
   <section class="dock" aria-label="Zaman">
     <div class="dock-ruler" id="dock-ruler" tabindex="-1"></div>
@@ -127,7 +132,8 @@ export async function startApp(root: HTMLElement): Promise<void> {
   }
 
   const store = new Store(stateFromHash(), data.extent);
-  const tip = new Tooltip(root);
+  // (inside the map's landmark: a hint that floats over the page belongs to something on it)
+  const tip = new Tooltip(root.querySelector<HTMLElement>('main') ?? root);
 
   /* ------------------------------------------------------- UI pieces */
   // The map is created last: its initial fit must see the final layout of the dock and panel.
@@ -166,56 +172,91 @@ export async function startApp(root: HTMLElement): Promise<void> {
 
   /* ------------------------------------------------ reading companion (AI) */
   // The model is the reader's own Claude (the artifact runtime's `sample`); where there is none, a scripted
-  // stand-in answers and the chat says so. Nothing is asked of either until the first question.
+  // stand-in answers and the page says so. Nothing is asked of either until the first question.
   const provider = createSampleProvider().then((p) => p ?? createMockProvider(createMockScripts(data)));
   const session = new AiSession({
     provider,
     data,
     sources: [appEventsSource(data)],
     tier: readTier(),
-    drawing: () => director.drawing,
+    // what the model is told is on the map: what the reader can see, which is nothing of ours once the answer is closed
+    drawing: () => (presentation.narrating ? director.drawing : null),
   });
   const director: Director = new Director(session, { frame: (drawing) => frameDrawing(drawing) });
+  /** Watch and Read: two ways to follow an answer, over the one step the director is on. */
+  const presentation: Presentation = new Presentation(session, director);
   /** What the reader is looking at, as the model will be told: set by every render. */
   let liveContext: AiContext = { range: store.state.range, year: 0, places: [], event: null };
 
   const eventTitle = (id: string) => data.eventsById.get(id)?.title ?? id;
   const describe = (drawing: Drawing) => describeDrawing(drawing, (id) => session.resolver.nameOf(id), eventTitle);
 
+  /** The reading panel is only ever full screen on a phone: there is no room beside the map. */
+  const narrowScreen = window.matchMedia('(max-width: 900px)');
+  /** Read as it is on screen: beside the map or full screen (with the map shrunk into a corner). */
+  const readMode = (): 'side' | 'full' | null =>
+    presentation.shown && presentation.view === 'read' ? (narrowScreen.matches ? 'full' : presentation.readMode) : null;
+  const miniMap = () => readMode() === 'full';
+
   /**
    * Brings what a step puts on the map into view, at the year that step shows (the camera follows the narration).
    * When the drawing is already framed the camera stays, and that is where the reader's moves are measured from.
    */
   function frameDrawing(drawing: Drawing) {
-    if (!mapView || !store.state.chatOpen) return; // with the chat closed nothing of the AI's is on the map to bring into view
+    if (!mapView || !presentation.narrating) return; // with the answer closed nothing of the AI's is on the map to bring into view
     const year = director.year ?? vm.year;
     const target = frameTargetOf(resolveDrawing(drawing, session.resolver, year), session.resolver, year);
     if (target && mapView.frameTarget(target)) return; // moving: the reference is taken when the move ends
     watch.settle(cameraNow());
   }
 
+  /** The info card steps aside when the reader asks something (the selection stays: the question is about it). */
+  let cardTucked = false;
+  /** The card was a tab when an event was opened over it. */
+  let tuckedBeforeEvent = false;
+  let introOpen = true;
+  const tuck = () => {
+    if (cardTucked) return;
+    cardTucked = true;
+    store.refresh();
+  };
+
   /** One question at a time, about whatever is open; an open event card is closed once it is in the conversation. */
   function ask(text: string) {
     const event = liveContext.event;
+    tuck();
+    presentation.show();
     void session.send({ text, mode: 'qa', event }, liveContext);
     if (event) store.selectEvent(null);
   }
-  const chat = new ChatView({
+  function narrate() {
+    tuck();
+    presentation.show();
+    const context = { ...liveContext, event: null };
+    const text = context.places.length ? NARRATION_REQUEST : WORLD_NARRATION_REQUEST;
+    void session.send({ text, mode: 'narration' }, context);
+  }
+  function askAboutEvent(ev: HistoricalEvent) {
+    tuck();
+    presentation.show();
+    store.selectEvent(null);
+    void session.send(
+      { text: eventRequest(ev), mode: 'qa', event: contextEvent(ev, data) },
+      { ...liveContext, event: null },
+    );
+  }
+
+  const askBox = new AskBox({
     session,
     director,
+    presentation,
     data,
     context: () => liveContext,
     actions: {
       send: ask,
-      narrate: () => narrate(),
+      narrate,
       stop: () => session.stop(),
-      retry: () => void session.retry(),
       newChat: () => session.newChat(),
-      selectStep: (itemId, n) => {
-        director.activate(itemId, n);
-        announceStep(itemId, n);
-      },
-      readStep: (itemId, n) => director.activate(itemId, n),
       setFollowing: (on) => director.setFollowing(on),
       setTier: (tier) => {
         session.setTier(tier);
@@ -223,10 +264,46 @@ export async function startApp(root: HTMLElement): Promise<void> {
       },
       openPermissions: () => void openPermissionsPanel(),
       dropEvent: () => store.selectEvent(null),
+      toggleRead: () =>
+        presentation.shown && presentation.view === 'read' ? presentation.closeRead() : presentation.openRead(),
     },
   });
+  const watchView = new WatchView({
+    session,
+    presentation,
+    actions: {
+      stop: () => session.stop(),
+      retry: () => void session.retry(),
+      openPermissions: () => void openPermissionsPanel(),
+      read: () => presentation.openRead(),
+      close: () => presentation.hide(),
+    },
+  });
+  const readView = new ReadView({
+    session,
+    director,
+    presentation,
+    data,
+    context: () => liveContext,
+    canResize: () => !narrowScreen.matches,
+    actions: {
+      stop: () => session.stop(),
+      retry: () => void session.retry(),
+      selectStep: (itemId, n) => {
+        director.activate(itemId, n);
+        announceStep(itemId, n);
+      },
+      readStep: (itemId, n) => director.activate(itemId, n),
+      openPermissions: () => void openPermissionsPanel(),
+      watch: () => presentation.closeRead(),
+      close: () => presentation.closeRead(),
+      toggleSize: () => presentation.setReadMode(presentation.readMode === 'full' ? 'side' : 'full'),
+    },
+  });
+  $('bottom').append(watchView.element, askBox.element);
+  $('read').append(readView.element);
   /** The small question over the map, after the reader has taken the map a long way while it was following. */
-  const followPrompt = new FollowPrompt($('follow-host'), { director, openSettings: () => chat.openSettings() });
+  const followPrompt = new FollowPrompt($('follow-host'), { director, openSettings: () => askBox.openSettings() });
   /** Pointing at a step is announced with what it puts on the map (reading on is not: that would be noise). */
   function announceStep(itemId: string, n: number) {
     const item = session.find(itemId);
@@ -235,33 +312,18 @@ export async function startApp(root: HTMLElement): Promise<void> {
     const drawn = director.drawing ? describe(director.drawing) : '';
     announce(`${title ? `Adım ${n}: ${title}. ` : `Adım ${n}. `}${drawn ? `Haritada: ${drawn}.` : ''}`);
   }
-  function narrate() {
-    store.setChat(true);
-    const context = { ...liveContext, event: null };
-    const text = context.places.length ? NARRATION_REQUEST : WORLD_NARRATION_REQUEST;
-    void session.send({ text, mode: 'narration' }, context);
-  }
-  const panel = new InfoPanel($('panel'), store, data, {
-    chat,
+  const card = new InfoCard($('panel'), store, data, {
     narrate,
-    openChat: () => store.setChat(true),
-    askAboutEvent: (ev) => {
-      store.setChat(true);
-      store.selectEvent(null);
-      void session.send(
-        { text: eventRequest(ev), mode: 'qa', event: contextEvent(ev, data) },
-        { ...liveContext, event: null },
-      );
-    },
+    narrateWorld: narrate,
+    ask: () => askBox.focus(),
+    askAboutEvent,
     busy: () => session.busy,
+    untuck: () => {
+      cardTucked = false;
+      store.refresh();
+    },
   });
-  const panelWidth = new PanelWidth(
-    root,
-    root.querySelector<HTMLElement>('aside.panel')!,
-    $('panel'),
-    () => mapView?.map,
-  );
-  const ruler = new Ruler($('dock-ruler'), store, data);
+  const ruler = new Ruler($('dock-ruler'), store, data, { goStep: (n) => presentation.go(n) });
   const timeline = new Timeline($('dock-timeline'), store, data, tip);
 
   const credits = $('credits');
@@ -308,7 +370,10 @@ export async function startApp(root: HTMLElement): Promise<void> {
   /** The year the AI asked for when `vm` was derived. */
   let vmAiYear: number | null = null;
   let drawnDrawing: unknown = null;
-  let chatWasOpen = store.state.chatOpen;
+  let wasNarrating = false;
+  /** The map is a small window in a corner (the full-screen reader): where the camera was, if it must come back to it. */
+  let wasMini = false;
+  let miniSaved: Camera | null = null;
   let drawnYear = NaN;
   let queued = false;
   let hashTimer = 0;
@@ -327,11 +392,97 @@ export async function startApp(root: HTMLElement): Promise<void> {
   );
   window.addEventListener('pointerdown', () => (keyboardUser = false), true);
 
+  const stage = $('stage');
+  let lastReadMode: 'side' | 'full' | null = null;
+  // The small window's way back to the whole map, and the overlays that change what the map has room for: the
+  // labels are placed around them, and the cards keep clear of the foot of the stage.
+  $('mini-expand').innerHTML =
+    '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5l-4.5 4.5M2.5 13.5L7 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  $('mini-expand').addEventListener('click', () => presentation.closeRead());
+  /**
+   * The foot of the stage (the caption or short answer, and the question box) is what the camera keeps the drawing
+   * clear of, and what the cards keep clear of. A single-part answer grows as its text is written, so room is kept
+   * for the longest it can be: the camera frames the scene once, before the text is all there.
+   */
+  function syncFoot() {
+    const foot = $('bottom').offsetHeight + 12;
+    const single = presentation.shown && presentation.view === 'watch' && !!presentation.item && !presentation.stepped;
+    const textMax = Math.min(window.innerHeight * 0.3, 300); // the same as the short text's own limit (watch.css)
+    const room = single ? Math.min(askBox.element.offsetHeight + 12 + textMax + 70, stage.clientHeight * 0.6) : 0;
+    stage.style.setProperty('--foot-h', `${foot}px`);
+    stage.style.setProperty('--guard-h', `${Math.max(foot, room)}px`);
+  }
+  const overlaysObserver = new ResizeObserver(() => {
+    syncFoot();
+    mapView?.overlaysChanged();
+  });
+  for (const id of ['stage', 'bottom', 'card-host', 'read', 'foot-guard']) overlaysObserver.observe($(id));
+  /**
+   * The stage tells the style sheet what is on it: which view, and whether the reader is beside the map or over
+   * it. The map itself stays the whole stage, except in the full-screen reader, where it is a small window in a corner.
+   */
+  function syncStage() {
+    const mode = readMode();
+    if (mode !== lastReadMode) {
+      const was = lastReadMode;
+      lastReadMode = mode;
+      // The reader beside the map covers part of it: the step is brought into view in what is left (and back again).
+      if (mode !== 'full' && was !== 'full') {
+        window.setTimeout(() => {
+          if (presentation.narrating && director.following && director.drawing) frameDrawing(director.drawing);
+        }, 260);
+      }
+    }
+    stage.dataset.view = presentation.shown ? presentation.view : 'none';
+    stage.dataset.read = mode ?? '';
+    stage.dataset.narrating = String(presentation.narrating);
+    const read = $('read');
+    read.hidden = mode === null;
+    read.toggleAttribute('data-avoid', mode === 'side'); // beside the map it covers part of it; over the map it is the map's frame
+    const mini = mode === 'full';
+    if (mini !== wasMini) {
+      wasMini = mini;
+      onMiniChange(mini);
+    }
+  }
+
+  /**
+   * The map became a small window (or the whole stage again): once it has its new size, the step on screen is brought
+   * into view in it. Where the camera had been left to the reader (Harita takibi off), leaving the window puts the
+   * camera back where the reader had it.
+   */
+  function onMiniChange(mini: boolean) {
+    if (!mapView) return;
+    mapView.setCompact(mini);
+    if (mini && !director.following) miniSaved = cameraNow();
+    let done = false;
+    const settled = () => {
+      if (done) return;
+      done = true;
+      if (!presentation.narrating || !director.drawing) return;
+      if (mini || director.following) frameDrawing(director.drawing);
+      else if (miniSaved) mapView.map.jumpTo({ center: [miniSaved.lng, miniSaved.lat], zoom: miniSaved.zoom });
+      if (!mini) miniSaved = null;
+    };
+    mapView.map.once('resize', () => window.setTimeout(settled, 30));
+    window.setTimeout(settled, 400); // the map did not need to change size
+  }
+
+  /** The steps of the answer on screen, for the timeline: each at the year its scene shows. */
+  function stepMarks() {
+    if (!presentation.narrating || !presentation.stepped) return [];
+    const active = presentation.step?.n ?? null;
+    return presentation.steps.flatMap((s) =>
+      s.year === null ? [] : [{ n: s.n, year: s.year, title: s.title, active: s.n === active }],
+    );
+  }
+
   function update() {
     queued = false;
     const state = store.state;
-    // The AI's year counts only while its chat is open; it overlays the reader's own cursor.
-    const aiYear = state.chatOpen ? director.year : null;
+    // The AI's year counts only while its answer is on screen; it overlays the reader's own cursor.
+    const narrating = presentation.narrating;
+    const aiYear = narrating ? director.year : null;
     // The view model depends on range, cursor, places and the open event only (not on hover).
     if (
       state.range !== vmState.range ||
@@ -358,19 +509,19 @@ export async function startApp(root: HTMLElement): Promise<void> {
     mapView.setHoverEvent(state.hoverEventId);
     revealIfNew(open);
 
-    // While the chat is open the AI is the map's narrator: the event markers leave the map (they stay on the
+    // While an answer is on screen the AI is the map's narrator: the event markers leave the map (they stay on the
     // timeline) and only the opened event and the ones the AI talks about are drawn.
-    mapView.setNarrator(state.chatOpen);
-    // The chat comes back with a narration in it: its step's drawing returns to the map, and the camera follows it
-    // (once the panel has finished opening and the map has taken its new size).
-    if (state.chatOpen && !chatWasOpen && director.following && director.drawing) {
+    mapView.setNarrator(narrating);
+    // The answer comes back (the reader opened it again): its step's drawing returns to the map, and the camera
+    // follows it.
+    if (narrating && !wasNarrating && director.following && director.drawing) {
       window.setTimeout(() => {
-        if (store.state.chatOpen && director.following && director.drawing) frameDrawing(director.drawing);
-      }, 420);
+        if (presentation.narrating && director.following && director.drawing) frameDrawing(director.drawing);
+      }, 120);
     }
-    chatWasOpen = state.chatOpen;
-    // What the AI has drawn is shown while its chat is open, for the year shown.
-    const drawing = state.chatOpen ? director.drawing : null;
+    wasNarrating = narrating;
+    // What the AI has drawn is shown while its answer is on screen, for the year shown.
+    const drawing = narrating ? director.drawing : null;
     if (drawing !== drawnDrawing || vm.year !== drawnYear) {
       drawnDrawing = drawing;
       drawnYear = vm.year;
@@ -381,12 +532,14 @@ export async function startApp(root: HTMLElement): Promise<void> {
     }
 
     head.render(vm);
-    // The panel's width changes first (once, smoothly), then its content is drawn for the new shape.
-    panelWidth.sync(state.chatOpen);
-    followPrompt.update(state.chatOpen);
-    panel.render(vm);
-    if (state.chatOpen) chat.update();
-    ruler.render(vm.year);
+    syncStage();
+    syncFoot();
+    followPrompt.update(narrating && !miniMap());
+    card.render(vm, { tucked: cardTucked, introOpen, closeIntro: () => ((introOpen = false), store.refresh()) });
+    askBox.update();
+    watchView.update();
+    readView.update();
+    ruler.render(vm.year, stepMarks());
     timeline.render(vm);
 
     announceChanges(vm);
@@ -479,13 +632,16 @@ export async function startApp(root: HTMLElement): Promise<void> {
     if (state.range !== prev.range || state.cursor !== prev.cursor) director.userChangedTime();
     if (state.selectedEventId && state.selectedEventId !== prev.selectedEventId) {
       focusCardAfterUpdate = keyboardUser;
-      if (window.matchMedia('(max-width: 900px)').matches) {
-        // single-column layout: the reading panel is below the map, bring the card into view
-        $('panel').scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
-      } else if (!state.chatOpen) {
-        $('panel').scrollTo({ top: 0, behavior: scrollBehavior() });
-      }
+      $('panel').scrollTo({ top: 0, behavior: 'instant' });
     }
+    // The card steps aside when the reader asks; choosing something to read brings it back. An event opened over a
+    // tucked card goes away again to where it was when it is closed.
+    const eventOpened = !!state.selectedEventId && state.selectedEventId !== prev.selectedEventId;
+    const eventClosed = !state.selectedEventId && !!prev.selectedEventId;
+    if (eventOpened && !prev.selectedEventId) tuckedBeforeEvent = cardTucked;
+    if ((state.places.length && state.places !== prev.places) || eventOpened) cardTucked = false;
+    else if (eventClosed && tuckedBeforeEvent && presentation.shown) cardTucked = true;
+    if (!state.selectedEventId) tuckedBeforeEvent = false;
     if (queued) return;
     queued = true;
     requestAnimationFrame(update);
@@ -496,10 +652,34 @@ export async function startApp(root: HTMLElement): Promise<void> {
     // Text fields use Esc to undo their own edit.
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     tip.hide(); // hover content can always be dismissed
+    // The topmost thing goes first: the open event, then the reader (full screen, then the panel), then the
+    // answer over the map, then the place.
     if (store.state.selectedEventId) store.selectEvent(null);
-    else if (store.state.chatOpen) store.setChat(false);
+    else if (readMode() === 'full' && !narrowScreen.matches) presentation.setReadMode('side');
+    else if (readMode() !== null) presentation.closeRead();
+    else if (presentation.shown) presentation.hide();
     else if (store.state.places.length) store.selectPlace(null);
   });
+
+  // Watch is stepped with the arrow keys. They are heard before the map hears them (a map that has focus would
+  // pan), and not at all where they already mean something: a text field, a slider, a menu of choices.
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      if (!presentation.shown || presentation.view !== 'watch' || !presentation.stepped) return;
+      const t = e.target instanceof HTMLElement ? e.target : null;
+      if (t?.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"], [role=slider]')) return;
+      if (e.key === 'ArrowRight') presentation.next();
+      else if (e.key === 'ArrowLeft') presentation.prev();
+      else if (e.key === 'Home') presentation.first();
+      else if (e.key === 'End') presentation.last();
+      else return;
+      e.preventDefault();
+      e.stopPropagation();
+    },
+    true,
+  );
 
   // A link pasted into this tab (or an edited address) replaces the view; the map's own camera is not touched.
   // (history.replaceState, which this app uses to keep the address current, does not fire this event.)
@@ -521,7 +701,9 @@ export async function startApp(root: HTMLElement): Promise<void> {
   let lastBusy = session.busy;
   let lastStatus: string | null = null;
   session.subscribe(() => {
-    chat.update();
+    askBox.update();
+    watchView.update();
+    readView.update();
     if (session.busy !== lastBusy) {
       lastBusy = session.busy;
       store.refresh(); // the event card's "ask" button is off while an answer is being written
@@ -535,13 +717,26 @@ export async function startApp(root: HTMLElement): Promise<void> {
   });
   let wasAsking = false;
   director.subscribe(() => {
-    chat.update();
-    followPrompt.update(store.state.chatOpen);
+    askBox.update();
+    watchView.update();
+    readView.update();
+    followPrompt.update(presentation.narrating && !miniMap());
     // A question the reader let pass starts the measure again from where the map is now: it comes back after
     // another far move, not after a nudge of the map that already lies far from where the page left it.
     if (wasAsking && !director.askingToRelease && director.following) watch.settle(cameraNow());
     wasAsking = director.askingToRelease;
+    // in the small window of the full-screen reader the step on screen is always in view, followed or not
+    const at = director.active ? `${director.active.itemId}:${director.active.n}` : '';
+    if (miniMap() && at !== miniAt && director.drawing && !director.following) frameDrawing(director.drawing);
+    miniAt = at;
     store.refresh(); // the drawing, the year and the camera follow the active step
+  });
+  /** What the director was on at its last change (for the small window to know when the step changed). */
+  let miniAt = '';
+  // The reader's own choices (the view, the mode, the autoplay) redraw the page too; with the answer closed the card is back.
+  presentation.subscribe(() => {
+    if (!presentation.shown) cardTucked = false;
+    store.refresh();
   });
 
   // First paint of everything except the map, then the map itself.
@@ -549,8 +744,8 @@ export async function startApp(root: HTMLElement): Promise<void> {
   vmState = store.state;
   liveContext = contextFromView(vm, data);
   head.render(vm);
-  panel.render(vm);
-  ruler.render(vm.year);
+  card.render(vm, { tucked: cardTucked, introOpen, closeIntro: () => ((introOpen = false), store.refresh()) });
+  ruler.render(vm.year, []);
   timeline.render(vm);
   announceChanges(vm);
   await new Promise((r) => requestAnimationFrame(() => r(null)));
@@ -597,7 +792,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
           // Controls drawn over the map: a revealed event must not end up hidden behind one of them.
           const origin = $('map').getBoundingClientRect();
           const pad = 8;
-          return [...root.querySelectorAll<HTMLElement>('.map-zoom, .legend, .map-stats:not([hidden])')].map((el) => {
+          return [...root.querySelectorAll<HTMLElement>('.map-zoom, .legend, [data-avoid]:not([hidden])')].map((el) => {
             const r = el.getBoundingClientRect();
             return {
               left: r.left - origin.left - pad,
@@ -643,7 +838,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
       watch.settle(camera);
       return;
     }
-    if (!store.state.chatOpen) return;
+    if (!presentation.narrating || miniMap()) return; // in the small window the reader is only looking
     const box = mapView.map.getCanvas();
     director.userMovedCamera(watch.judge(camera, { width: box.clientWidth, height: box.clientHeight }));
   });
@@ -661,6 +856,6 @@ export async function startApp(root: HTMLElement): Promise<void> {
     data,
     view: () => vm,
     visibleMarkerIds: () => mapView.visibleMarkerIds(),
-    ai: { session, director },
+    ai: { session, director, presentation },
   };
 }

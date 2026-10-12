@@ -127,6 +127,26 @@ describe('framePadding', () => {
     expect(huge.top + huge.bottom).toBeLessThanOrEqual(size.height * 0.8 + 1);
     expect(huge.left + huge.right).toBeLessThanOrEqual(size.width * 0.8 + 1);
   });
+
+  it('keeps a smaller margin on a small map, and ignores what lies beside the map rather than over it', () => {
+    const small = { width: 177, height: 126 };
+    expect(framePadding([], small)).toEqual({ top: 13, right: 13, bottom: 13, left: 13 });
+    // the question box of the page, far below a little window: it takes nothing of it
+    const beside = { left: -190, top: 600, right: 180, bottom: 660 };
+    expect(framePadding([beside], small)).toEqual({ top: 13, right: 13, bottom: 13, left: 13 });
+  });
+
+  it('lets the foot of the map take more: the caption (or a short answer) and the question box are there', () => {
+    // a block over the lower half, as tall as a short answer with its question box
+    const block = { left: 200, top: size.height - 330, right: 700, bottom: size.height };
+    const p = framePadding([block], size);
+    expect(p.bottom).toBe(330 + 12);
+    expect(p.bottom).toBeGreaterThan(size.height * 0.4);
+    // …but not so much that the drawing is left with nothing
+    const tall = framePadding([{ left: 0, top: size.height - 600, right: size.width, bottom: size.height }], size);
+    expect(tall.bottom).toBeLessThanOrEqual(size.height * 0.62 + 1e-9);
+    expect(tall.top + tall.bottom).toBeLessThanOrEqual(size.height * 0.8 + 1e-9);
+  });
 });
 
 describe('frameBounds', () => {

@@ -54,14 +54,17 @@
   --radius-sm: 6px;
   --shadow-float: 0 1px 0 rgb(60 45 20 / 0.06), 0 8px 22px -10px rgb(60 45 20 / 0.35);
 
-  --panel-w: 410px;
-  /* wider while the chat is open: a long narration reads better on a longer line */
-  --panel-w-chat: 540px;
-  --topbar-h: 46px;
-  /* the strip above the map (place name + border year) and the time dock below it: both fixed, so
-     selecting a place can never resize the map and make it look as if it had moved */
-  --head-h: 44px;
-  --dock-h: 100px;
+  /* map first: the map is the whole stage; everything else is a small thing laid over it or a thin strip under it */
+  --topbar-h: 44px;
+  /* the time dock: the range ruler over the place's timeline, as thin as they can be; fixed, so a place being
+     selected can never change the stage under it */
+  --dock-h: 80px;
   --dock-label-w: 156px;
   --gutter: 24px;
+  /* the width the reading panel takes from the right of the stage when it is open beside the map (set by the page) */
+  --side-w: 0px;
+  /* the small cards over the map */
+  --card-w: 328px;
+  --stack-w: 660px;
+  --read-w: clamp(380px, 32vw, 500px);
 }

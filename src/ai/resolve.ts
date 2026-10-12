@@ -56,6 +56,23 @@ export function cleanLabel(value: unknown, max: number): string | null {
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
 }
 
+/**
+ * A sentence or two for the page to show as it is (a subtitle): emphasis marks and markup are taken out without
+ * leaving gaps in the sentence, and it is cut at `max` characters on a word.
+ */
+export function cleanCaption(value: unknown, max: number): string | null {
+  if (typeof value !== 'string') return null;
+  const text = value
+    .replace(/[*_`#]+/g, '')
+    .replace(/[\u0000-\u001f\u007f<>]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!text) return null;
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 1);
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), Math.floor(max / 2))).trimEnd()}…`;
+}
+
 /** Great-circle distance in kilometres. */
 export function distanceKm(a: PlacePoint, b: PlacePoint): number {
   const rad = Math.PI / 180;

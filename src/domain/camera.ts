@@ -93,9 +93,13 @@ export const FRAME_MARGIN: Padding = { top: 48, right: 48, bottom: 48, left: 48 
  * in a corner is cleared along its shorter way out (the zoom buttons by the right edge, the legend by the
  * bottom one), not by shrinking the view on both sides.
  */
-export function framePadding(controls: readonly Rect[], size: MapSize, base: Padding = FRAME_MARGIN): Padding {
-  const out = { ...base };
+export function framePadding(controls: readonly Rect[], size: MapSize, base?: Padding): Padding {
+  // a small map (the little window of the full-screen reader) keeps a proportionally smaller margin
+  const margin = Math.round(Math.max(10, Math.min(FRAME_MARGIN.top, Math.min(size.width, size.height) * 0.1)));
+  const out = { ...(base ?? { top: margin, right: margin, bottom: margin, left: margin }) };
   for (const r of controls) {
+    // something that lies beside the map (not over it) takes nothing of it
+    if (r.right <= 0 || r.bottom <= 0 || r.left >= size.width || r.top >= size.height) continue;
     const way = [
       { side: 'top' as const, by: r.bottom, ok: r.top < size.height * 0.4 },
       { side: 'bottom' as const, by: size.height - r.top, ok: r.bottom > size.height * 0.6 },
@@ -106,13 +110,16 @@ export function framePadding(controls: readonly Rect[], size: MapSize, base: Pad
     const best = way.reduce((a, b) => (b.by < a.by ? b : a));
     out[best.side] = Math.max(out[best.side], best.by + 12);
   }
-  // never so much that nothing is left to frame in
-  const maxX = size.width * 0.4;
-  const maxY = size.height * 0.4;
-  out.left = Math.min(out.left, maxX);
-  out.right = Math.min(out.right, maxX);
-  out.top = Math.min(out.top, maxY);
-  out.bottom = Math.min(out.bottom, maxY);
+  // Never so much that nothing is left to frame in. The foot of the map may take more than the other sides: the
+  // caption (or a short answer) and the question box are there; two opposite sides together stay within four fifths.
+  out.left = Math.min(out.left, size.width * 0.4);
+  out.right = Math.min(out.right, size.width * 0.4);
+  out.top = Math.min(out.top, size.height * 0.4);
+  out.bottom = Math.min(out.bottom, size.height * 0.62);
+  const share = (a: number, b: number, room: number): [number, number] =>
+    a + b > room ? [(a * room) / (a + b), (b * room) / (a + b)] : [a, b];
+  [out.top, out.bottom] = share(out.top, out.bottom, size.height * 0.8);
+  [out.left, out.right] = share(out.left, out.right, size.width * 0.8);
   return out;
 }
 

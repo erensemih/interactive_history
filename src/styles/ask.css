@@ -1,0 +1,320 @@
+/* ------------------------------------------------------------ the foot of the stage */
+/* The caption (or short answer) over the map and the question box under it are one column at the foot of the
+   stage; the caption's place never moves, because the column grows upward from the question box. */
+.bottom .watch,
+.bottom .ask {
+  width: min(var(--stack-w), calc(100% - 460px));
+  min-width: min(100%, 400px);
+  pointer-events: auto;
+}
+
+.bottom > .watch-host {
+  display: contents;
+}
+
+@media (max-width: 900px) {
+  .bottom .watch,
+  .bottom .ask {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* ------------------------------------------------------------------ the question box */
+.ask {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+}
+
+.composer {
+  display: block;
+}
+
+.composer-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 5px 6px 5px 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 26px;
+  background: var(--paper);
+  box-shadow: var(--shadow-float);
+}
+
+.composer-row:focus-within {
+  box-shadow:
+    0 0 0 3px rgb(31 27 22 / 0.13),
+    var(--shadow-float);
+}
+
+.composer-mark {
+  flex: none;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  color: var(--ink-3);
+}
+
+.composer-row textarea {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-height: 132px;
+  margin: 0 4px 0 8px;
+  padding: 8px 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.composer-row textarea::placeholder {
+  color: var(--ink-3);
+}
+
+.composer-row textarea:disabled {
+  cursor: not-allowed;
+}
+
+.composer-row .icon-btn {
+  position: relative;
+  flex: none;
+  align-self: center;
+  width: 34px;
+  height: 34px;
+  color: var(--ink-2);
+}
+
+.ask-read.is-on {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.ask-read.is-on:hover {
+  background: var(--ink-2);
+  color: var(--paper);
+}
+
+/* an answer is being written and the text is closed */
+.ask-read-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 1.5px var(--paper);
+  animation: dot-pulse 1.2s ease-in-out infinite;
+}
+
+.send {
+  flex: none;
+  align-self: center;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  transition: opacity 0.15s;
+}
+
+.send.is-idle,
+.send:disabled {
+  opacity: 0.35;
+}
+
+.send.is-stop {
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* the open event is added to the question */
+.composer-event {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 3px 6px 3px 4px;
+  border-radius: 99px;
+  background: rgb(245 240 228 / 0.94);
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.composer-event-hint {
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* notes over the map: where the answers come from, what stops them, the camera that was let go */
+.ask-note,
+.ask-free {
+  align-self: center;
+  max-width: 100%;
+  margin: 0;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: rgb(245 240 228 / 0.94);
+  border: 1px solid var(--rule);
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--ink-2);
+  text-align: center;
+}
+
+.ask-note b {
+  color: var(--ink);
+}
+
+.ask-note.is-blocked {
+  border-radius: 12px;
+  border-color: var(--rule-strong);
+  font-size: 12.5px;
+}
+
+.ask-note .btn {
+  margin-left: 8px;
+}
+
+.ask-free {
+  padding: 4px 12px;
+  border-color: var(--rule-strong);
+}
+
+.ask-free span {
+  font-weight: 650;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ask-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.ask-suggest .chat-chip {
+  background: rgb(250 246 236 / 0.97);
+  box-shadow: var(--shadow-float);
+}
+
+.chat-chip.is-primary {
+  border-color: var(--ink);
+  background: var(--ink) !important;
+  color: var(--paper);
+}
+
+.chat-chip.is-primary:hover {
+  background: var(--ink-2) !important;
+  color: var(--paper) !important;
+}
+
+/* the settings: over the question box, like a menu of a toolbar */
+.ask-menu {
+  position: absolute;
+  z-index: 6;
+  right: 0;
+  bottom: calc(100% + 8px);
+  width: min(320px, 100%);
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  box-shadow: var(--shadow-float);
+  animation: card-in 0.16s ease;
+}
+
+.ask-menu fieldset {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ask-menu legend {
+  margin-bottom: 4px;
+  padding: 0;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.ask-menu-clear {
+  justify-self: start;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.chat-opt {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 9px;
+  align-items: start;
+  cursor: pointer;
+}
+
+.chat-opt input {
+  margin: 2px 0 0;
+  accent-color: var(--ink);
+}
+
+.chat-opt b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.chat-opt small {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+/* "Harita takibi" marked for a moment, when the question over the map sends the reader to the setting */
+.chat-opt.is-pointed {
+  margin: -6px;
+  padding: 6px;
+  border-radius: 8px;
+  background: var(--paper-2);
+  box-shadow: 0 0 0 2px var(--ink);
+  animation: pointed 0.9s ease 2;
+}
+
+@keyframes pointed {
+  50% {
+    box-shadow: 0 0 0 5px rgb(31 27 22 / 0.18);
+  }
+}
+
+@media (max-width: 900px) {
+  .composer-row {
+    padding-left: 12px;
+  }
+  .composer-row textarea {
+    font-size: 16px; /* anything smaller makes a phone zoom into the field */
+  }
+}

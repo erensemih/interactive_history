@@ -13,10 +13,17 @@ import {
   type ResolvedLink,
 } from './types';
 
-export const emptyDrawing = (): Drawing => ({ highlights: [], links: [], marks: [], events: [] });
+export const emptyDrawing = (): Drawing => ({
+  highlights: [],
+  links: [],
+  marks: [],
+  events: [],
+  focus: { polities: [], points: [] },
+});
 
 const linkKey = (l: Pick<Link, 'from' | 'to' | 'relation'>) => `${[l.from, l.to].sort().join('|')}|${l.relation}`;
 const markKey = (m: Mark) => `${m.point.lon.toFixed(1)},${m.point.lat.toFixed(1)}|${normalizeName(m.label)}`;
+const pointKey = (p: PlacePoint) => `${p.lon.toFixed(1)},${p.lat.toFixed(1)}`;
 
 /** The newest `max` entries: when a step asks for too much, the earlier requests give way. */
 const newest = <T>(list: T[], max: number): T[] => (list.length > max ? list.slice(list.length - max) : list);
@@ -41,6 +48,9 @@ export function drawingOf(actions: readonly MapAction[]): Drawing {
       if (!d.marks.some((m) => markKey(m) === markKey(mark))) d.marks.push(mark);
     } else if (a.kind === 'event') {
       if (!d.events.includes(a.id)) d.events.push(a.id);
+    } else if (a.kind === 'focus') {
+      for (const id of a.polities) if (!d.focus.polities.includes(id)) d.focus.polities.push(id);
+      for (const p of a.points) if (!d.focus.points.some((q) => pointKey(q) === pointKey(p))) d.focus.points.push(p);
     }
   }
   for (const a of actions) if (a.kind === 'set_year') d.year = a.year;
@@ -48,18 +58,23 @@ export function drawingOf(actions: readonly MapAction[]): Drawing {
   d.links = newest(d.links, LIMITS.links);
   d.marks = newest(d.marks, LIMITS.marks);
   d.events = newest(d.events, LIMITS.events);
+  d.focus.polities = newest(d.focus.polities, LIMITS.focus);
+  d.focus.points = newest(d.focus.points, LIMITS.focus);
   return d;
 }
 
 export interface PlannedStep {
   n: number;
   title: string | null;
+  /** The subtitle: a sentence or two that the reader reads while watching the map. */
+  caption: string | null;
   actions: MapAction[];
 }
 
 /**
  * What the model asked for during one turn, collected by the page functions while the call runs. A step is
- * a number (1-based) with an optional title and its actions; a question's single answer is step 1.
+ * a number (1-based) with an optional title and caption (the two short texts that come with its scene) and
+ * its actions; a single-part answer's one scene is step 1.
  */
 export class TurnPlan {
   private readonly steps = new Map<number, PlannedStep>();
@@ -69,15 +84,16 @@ export class TurnPlan {
   private ensure(n: number): PlannedStep {
     let step = this.steps.get(n);
     if (!step) {
-      step = { n, title: null, actions: [] };
+      step = { n, title: null, caption: null, actions: [] };
       this.steps.set(n, step);
     }
     return step;
   }
 
-  declare(n: number, title: string | null) {
+  declare(n: number, title: string | null, caption: string | null = null) {
     const step = this.ensure(n);
     if (title) step.title = title;
+    if (caption) step.caption = caption;
     this.version++;
   }
 
@@ -101,6 +117,10 @@ export class TurnPlan {
 
   titleOf(n: number): string | null {
     return this.steps.get(n)?.title ?? null;
+  }
+
+  captionOf(n: number): string | null {
+    return this.steps.get(n)?.caption ?? null;
   }
 
   /** Actions of one step, in the order they arrived. */
@@ -139,7 +159,8 @@ export function resolveDrawing(drawing: Drawing, resolver: Resolver, year: numbe
     const ev = resolver.eventById(id);
     if (ev) events.push({ id, title: ev.title, point: { lon: ev.location.lon, lat: ev.location.lat } });
   }
-  return { highlightIds, links, marks: drawing.marks, events };
+  const focusIds = drawing.focus.polities.filter((id) => resolver.rowAt(id, year));
+  return { highlightIds, links, marks: drawing.marks, events, focusIds, focusPoints: drawing.focus.points };
 }
 
 /**
@@ -151,10 +172,15 @@ export function frameTargetOf(resolved: ResolvedDrawing, resolver: Resolver, yea
     const box = resolver.boundsAt(id, year);
     return box ? [box] : [];
   });
+  for (const id of resolved.focusIds) {
+    const box = resolver.boundsAt(id, year);
+    if (box) boxes.push(box);
+  }
   const points: PlacePoint[] = [];
   for (const l of resolved.links) points.push(l.a, l.b);
   for (const m of resolved.marks) points.push(m.point);
   for (const e of resolved.events) points.push(e.point);
+  points.push(...resolved.focusPoints);
   return boxes.length || points.length ? { boxes, points } : null;
 }
 
@@ -172,9 +198,17 @@ export function describeDrawing(
   }
   if (drawing.events.length) parts.push(`olay: ${drawing.events.map(eventTitleOf).join(', ')}`);
   if (drawing.marks.length) parts.push(`işaretli: ${drawing.marks.map((m) => m.label).join(', ')}`);
+  const region = [...drawing.focus.polities.map(nameOf), ...drawing.focus.points.map(() => 'bir nokta')];
+  if (region.length) parts.push(`gösterilen bölge: ${region.join(', ')}`);
   if (drawing.year !== undefined) parts.push(`sınır yılı ${drawing.year}`);
   return parts.join('; ');
 }
 
+/** Does the step put nothing on the map and ask for no region? (A step with only a year has nothing to show or frame.) */
 export const isEmptyDrawing = (d: Drawing): boolean =>
-  !d.highlights.length && !d.links.length && !d.marks.length && !d.events.length;
+  !d.highlights.length &&
+  !d.links.length &&
+  !d.marks.length &&
+  !d.events.length &&
+  !d.focus.polities.length &&
+  !d.focus.points.length;

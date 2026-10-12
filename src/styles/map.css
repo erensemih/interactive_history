@@ -7,7 +7,7 @@
   font-family: var(--font-serif);
   font-optical-sizing: auto;
   font-weight: 500;
-  font-size: clamp(20px, 1.7vw, 24px);
+  font-size: 21px;
   line-height: 1.12;
   letter-spacing: -0.012em;
   color: var(--ink);
@@ -56,8 +56,8 @@
 
 .map-zoom {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  bottom: 12px;
+  right: calc(var(--side-w) + 12px);
   display: flex;
   flex-direction: column;
   background: var(--paper);
@@ -87,7 +87,7 @@
 
 .map-stats {
   position: absolute;
-  right: 12px;
+  left: 12px;
   bottom: 12px;
   z-index: 3;
   padding: 5px 11px;
@@ -109,22 +109,12 @@
   display: none;
 }
 
-@media (max-width: 560px) {
-  /* a narrow map: the counter moves to the free top-left corner instead of crowding the legend */
-  .map-stats {
-    right: auto;
-    left: 12px;
-    bottom: auto;
-    top: 12px;
-  }
-}
-
 /* ------------------------------------------------------------------ legend */
 /* Untitled, always visible, and only about colour: which kind of event each dot colour is. */
 .legend {
   position: absolute;
   left: 12px;
-  bottom: 12px;
+  top: 12px;
   display: grid;
   grid-auto-flow: column;
   grid-template-rows: repeat(3, auto);
@@ -462,7 +452,7 @@
 .toast {
   position: absolute;
   left: 50%;
-  bottom: 22px;
+  top: 14px;
   transform: translateX(-50%);
   z-index: 6;
   max-width: min(520px, 90%);
@@ -482,7 +472,7 @@
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translate(-50%, 6px);
+    transform: translate(-50%, -6px);
   }
 }
 
@@ -560,5 +550,15 @@
   from {
     transform: scale(0.4);
     opacity: 0;
+  }
+}
+
+/* ------------------------------------------------------------------ a narrow map */
+/* The caption (or short answer) and the question box take the whole width at the foot of the map: the zoom buttons
+   and the note ride above them instead of lying under them. (--foot-h is the height of that stack, set by the page.) */
+@media (max-width: 900px) {
+  .map-zoom,
+  .map-stats {
+    bottom: calc(var(--foot-h, 0px) + 8px);
   }
 }

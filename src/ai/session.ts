@@ -241,7 +241,7 @@ export class AiSession {
       if (ask?.kind !== 'user' || answer?.kind !== 'assistant') continue;
       if ((answer.status !== 'done' && answer.status !== 'stopped') || !answer.text.trim()) continue;
       out.push(
-        { role: 'user', text: ask.text, mode: ask.mode, subject: ask.subject, event: ask.event?.title },
+        { role: 'user', text: ask.text, subject: ask.subject, event: ask.event?.title },
         { role: 'assistant', text: answer.text },
       );
     }
@@ -318,7 +318,6 @@ export class AiSession {
     const query = { mode: request.mode, question: request.text, context };
     const sources = await gatherPassages(this.sources, query);
     const turns = buildTurns({
-      mode: request.mode,
       question: request.text,
       context,
       previous,

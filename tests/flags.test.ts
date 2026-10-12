@@ -117,6 +117,20 @@ describe('placeFlags', () => {
     expect(p!.yields.length).toBeGreaterThan(0);
   });
 
+  it('when every side of its point is taken it slides to a corner or a little further out, clear of them all', () => {
+    const walls = [
+      { left: 311, top: 189, right: 401, bottom: 211 }, // right
+      { left: 199, top: 189, right: 289, bottom: 211 }, // left
+      { left: 255, top: 167, right: 345, bottom: 189 }, // above
+      { left: 255, top: 211, right: 345, bottom: 233 }, // below
+    ];
+    const [p] = placeFlags([flag('a', 300, 200)], size, walls);
+    expect(p!.clear).toBe(true);
+    for (const w of walls) expect(overlaps(rect(p!), w)).toBe(false);
+    // …and it is still near its point: no more than a few label sizes away
+    expect(Math.hypot(p!.left + 45 - 300, p!.top + 11 - 200)).toBeLessThan(120);
+  });
+
   it('when nothing at all is free it takes the place that covers the least', () => {
     const wall = { left: 4, top: 4, right: 796, bottom: 496 };
     const [p] = placeFlags([flag('a', 400, 250)], size, [wall]);

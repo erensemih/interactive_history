@@ -8,6 +8,12 @@ export interface ActiveStep {
   n: number;
 }
 
+/**
+ * Tool calls of one round arrive within a few milliseconds of each other and each one changes the step on
+ * screen; the camera is moved once, after they have all been heard, instead of once per call.
+ */
+export const FRAME_SETTLE_MS = 90;
+
 export interface DirectorHooks {
   /**
    * The step's drawing should be brought into view (smoothly, by whatever pan and zoom it takes). Called only
@@ -43,6 +49,7 @@ export class Director {
   private seenVersion = -1;
   /** The answer whose first words have already moved the director to its first step. */
   private autoFor: string | null = null;
+  private frameTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly listeners = new Set<() => void>();
 
   constructor(
@@ -89,6 +96,7 @@ export class Director {
     if (on === this.follow && !this.asking) return;
     this.follow = on;
     this.asking = false;
+    this.cancelFrame();
     if (on) this.frameActive();
     this.notify();
   }
@@ -130,21 +138,29 @@ export class Director {
 
   /** Makes a step the active one: by reading on, by going back, or by pointing at it. */
   activate(itemId: string, n: number) {
-    if (this.ref?.itemId === itemId && this.ref.n === n) return;
+    if (!this.begin(itemId, n)) return;
+    this.cancelFrame();
+    this.frameActive();
+    this.notify();
+  }
+
+  /** Switches to the step without moving the camera; false when it already is the active one (or is no answer). */
+  private begin(itemId: string, n: number): boolean {
+    if (this.ref?.itemId === itemId && this.ref.n === n) return false;
     const item = this.session.find(itemId);
-    if (item?.kind !== 'assistant') return;
+    if (item?.kind !== 'assistant') return false;
     this.ref = { itemId, n };
     this.yearReleased = false;
     this.touched = false;
     this.asking = false;
     this.seenVersion = item.plan.version;
     if (!item.plan.empty) this.current = item.plan.drawingAt(n);
-    this.frameActive();
-    this.notify();
+    return true;
   }
 
   /** The conversation was cleared: nothing is drawn any more. */
   reset() {
+    this.cancelFrame();
     this.ref = null;
     this.current = null;
     this.follow = true; // a new conversation starts with the camera following again
@@ -163,16 +179,34 @@ export class Director {
     this.hooks.frame(this.current);
   }
 
+  /** The same, once the plan has stopped changing for a moment (a round of tool calls has all arrived). */
+  private frameSoon() {
+    this.cancelFrame();
+    this.frameTimer = setTimeout(() => {
+      this.frameTimer = null;
+      if (!this.touched) this.frameActive();
+    }, FRAME_SETTLE_MS);
+  }
+
+  private cancelFrame() {
+    if (this.frameTimer !== null) clearTimeout(this.frameTimer);
+    this.frameTimer = null;
+  }
+
   private onSession() {
     if (this.ref && !this.session.find(this.ref.itemId)) return this.reset();
 
-    // An answer that has started to write moves the director to its first step, once. After that the
-    // reader's scrolling decides.
+    // An answer that has something to show moves the director to its first step, once: as soon as the plan is in
+    // (the tool round, with the captions and the scenes, comes before the long texts) or the text has begun. After
+    // that the reader's choices (stepping, scrolling) decide.
     const latest = [...this.session.items].reverse().find((i): i is AssistantItem => i.kind === 'assistant');
-    if (latest && latest.id !== this.autoFor && latest.text.trim()) {
+    if (latest && latest.id !== this.autoFor && (latest.text.trim() || !latest.plan.empty)) {
       this.autoFor = latest.id;
-      const first = parseAnswer(latest.text).sections[0]?.n ?? 1;
-      this.activate(latest.id, first);
+      const first = parseAnswer(latest.text).sections[0]?.n ?? latest.plan.numbers()[0] ?? 1;
+      if (this.begin(latest.id, first)) {
+        this.frameSoon();
+        this.notify();
+      }
       return;
     }
 
@@ -182,7 +216,7 @@ export class Director {
       if (item?.kind === 'assistant' && item.plan.version !== this.seenVersion) {
         this.seenVersion = item.plan.version;
         this.current = item.plan.drawingAt(this.ref.n);
-        if (!this.touched) this.frameActive();
+        if (!this.touched) this.frameSoon();
         this.notify();
       }
     }

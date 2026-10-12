@@ -1,7 +1,7 @@
-import type { YearRange } from '../domain/types';
+import type { PlacePoint, YearRange } from '../domain/types';
 import type { TurnPlan } from './drawing';
 import type { ToolSpec } from './provider';
-import { cleanLabel, type Resolver } from './resolve';
+import { cleanCaption, cleanLabel, type Resolver } from './resolve';
 import { LIMITS, RELATIONS, type Relation } from './types';
 
 export interface ToolEnv {
@@ -62,7 +62,7 @@ const STEP_PROP = {
  * and never throws: a declined drawing is not an error worth a round trip. They only record; what is
  * drawn, and when, is decided later by the step the reader is on (and each step shows only its own).
  *
- * Listed in the order they should be dropped from the end if a view allows fewer tools than six.
+ * Listed in the order they should be dropped from the end if a view allows fewer tools than seven.
  */
 export function createTools(env: ToolEnv): ToolSpec[] {
   const { resolver, range, plan } = env;
@@ -88,14 +88,18 @@ export function createTools(env: ToolEnv): ToolSpec[] {
     {
       name: 'step',
       description:
-        'ANLATIM için bir adımı bildirir: numarası ve kısa başlığı. Her adım için bir kez, ilk turda diğer araçlarla birlikte çağır. Her adım haritanın sahibidir: etkin olduğunda harita yalnızca o adımın çizimlerini gösterir. Metni burada yazma; metin sonra, nihai yanıtta gelir. Dönüş: "tamam".',
+        'ADIMLI cevapta bir adımı bildirir: numarası, kısa başlığı ve altyazısı (adımın özü, bir iki cümle; okur haritayı izlerken bunu okur). Her adım için bir kez, ilk turda, o adımın gösterim araçlarıyla birlikte çağır. Her adım haritanın sahibidir: etkin olunca harita yalnızca o adımın gösterimini gösterir. Tam metni burada yazma; o sonra, nihai yanıtta "## n. Başlık" altında gelir. Tek parça cevapta çağırma. Dönüş: "tamam".',
       inputSchema: {
         type: 'object',
         properties: {
           n: { ...STEP_PROP, description: "Adım numarası, 1'den başlar." },
           title: { type: 'string', description: 'Adımın kısa başlığı (en çok 6 sözcük).' },
+          caption: {
+            type: 'string',
+            description: 'Altyazı: adımın özü, bir iki cümle (en çok ~200 karakter). Tam metnin özeti olmalı.',
+          },
         },
-        required: ['n', 'title'],
+        required: ['n', 'title', 'caption'],
       },
       execute(input) {
         // A step without a number (or with a nonsensical one) takes the next free one, so the titles do not overwrite each other.
@@ -103,7 +107,7 @@ export function createTools(env: ToolEnv): ToolSpec[] {
         const next = Math.min(LIMITS.steps, Math.max(0, ...plan.numbers()) + 1);
         const n = numbered ? stepOf(input) : next;
         if (n === null) return 'atlandı: adım numarası 1 ile 12 arasında olmalı';
-        plan.declare(n, cleanLabel(input.title, LIMITS.title));
+        plan.declare(n, cleanLabel(input.title, LIMITS.title), cleanCaption(input.caption, LIMITS.caption));
         env.onChange?.();
         return OK;
       },
@@ -220,6 +224,43 @@ export function createTools(env: ToolEnv): ToolSpec[] {
         const year = resolver.year(input.year, range);
         if (year === null) return `atlandı: yıl ${range.from}–${range.to} aralığında olmalı`;
         return accept({ kind: 'set_year', step, year });
+      },
+    },
+    {
+      name: 'focus',
+      description:
+        'Bir bölgeyi gösterir: haritayı, hiçbir şey çizmeden, bu devletlerin (POLİTİLER kimlikleri) ya da noktaların (boylam, enlem) bulunduğu bölgeye getirir. Adımın öteki gösterimleri zaten görünür kılınır; yalnızca onların kapsamadığı bir bölgeyi göstermek istediğinde kullan. Konumdan emin değilsen çağırma. Dönüş: "tamam" ya da neden atlandığı.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          step: STEP_PROP,
+          polities: { type: 'array', items: { type: 'string' }, maxItems: 4, description: 'Devlet kimlikleri.' },
+          points: {
+            type: 'array',
+            maxItems: 4,
+            description: 'Boylam ve enlem verilen noktalar.',
+            items: {
+              type: 'object',
+              properties: { lon: { type: 'number' }, lat: { type: 'number' } },
+              required: ['lon', 'lat'],
+            },
+          },
+        },
+      },
+      execute(input) {
+        const step = stepOf(input);
+        if (step === null) return 'atlandı: adım numarası 1 ile 12 arasında olmalı';
+        const { ids, skipped } = polities(listOf(input.polities).slice(0, 6));
+        const points = listOf(input.points)
+          .map((p) => {
+            const at = p && typeof p === 'object' ? (p as Record<string, unknown>) : {};
+            return resolver.point(at.lon, at.lat);
+          })
+          .filter((p): p is PlacePoint => !!p)
+          .slice(0, LIMITS.focus);
+        if (!ids.length && !points.length)
+          return `atlandı: tanınan devlet ya da harita içinde nokta yok${note(skipped)}`;
+        return accept({ kind: 'focus', step, polities: ids, points }) + note(skipped);
       },
     },
   ];

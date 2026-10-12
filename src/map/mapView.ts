@@ -423,6 +423,18 @@ export class MapView {
     this.controls = null;
   }
 
+  /** The map is a small window (the full-screen reader): what the AI drew keeps its shapes and leaves its name tags out. */
+  setCompact(on: boolean) {
+    this.ai.setCompact(on);
+    if (this.ready) this.layoutOverlays(true);
+  }
+
+  /** Something over the map appeared, went or changed size: the labels are placed again around what is there now. */
+  overlaysChanged() {
+    this.controls = null;
+    if (this.ready) this.layoutOverlays(true);
+  }
+
   /* --------------------------------------------------------- public API */
 
   /** The year whose borders are drawn. */

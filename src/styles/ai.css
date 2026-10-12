@@ -216,12 +216,13 @@
 }
 
 /* ------------------------------------------- "Harita takibi": the small question over the map */
+/* centred in the part of the map the reader's panel leaves free (--side-w is the panel's width when it is beside the map) */
 .follow-host {
   position: absolute;
   z-index: 4;
   top: 12px;
-  left: 50%;
-  width: min(420px, calc(100% - 140px));
+  left: calc((100% - var(--side-w)) / 2);
+  width: min(420px, calc(100% - var(--side-w) - 140px));
   transform: translateX(-50%);
   pointer-events: none;
 }
