@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------ the foot of the stage */
-/* The caption (or short answer) over the map and the question box under it are one column at the foot of the
+/* The caption over the map and the question box under it are one column at the foot of the
    stage; the caption's place never moves, because the column grows upward from the question box. */
 .bottom .watch,
 .bottom .ask {

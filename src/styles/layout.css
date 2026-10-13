@@ -123,7 +123,7 @@ body {
   inset: 0;
 }
 
-/* The question box, and the caption (or short answer) above it, share one column at the foot of the stage. They
+/* The question box, and the caption above it, share one column at the foot of the stage. They
    stay clear of the reading panel when it is open beside the map. */
 .bottom {
   position: absolute;

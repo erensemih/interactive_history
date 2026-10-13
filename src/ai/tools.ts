@@ -91,7 +91,7 @@ export function createTools(env: ToolEnv): ToolSpec[] {
     {
       name: 'step',
       description:
-        'ADIMLI cevapta bir adımı (bir sahneyi) bildirir: numarası, kısa başlığı ve altyazısı (adımın özü, bir iki cümle; okur haritayı izlerken bunu okur). Her adım için bir kez, ilk turda, o adımın gösterim araçlarıyla (show_event, highlight, connect, mark) birlikte çağır. Her adım haritanın sahibidir: etkin olunca harita yalnızca o adımın gösterimini gösterir. Adımda bir olay gösteriyorsan yıl vermen gerekmez; harita o olayın yılının sınırlarını gösterir. Yılı yalnızca olay göstermeyen ya da başka bir yıl isteyen adımda ver. Tam metni burada yazma; o sonra, nihai yanıtta "## n. Başlık" altında gelir. Tek parça cevapta çağırma. Dönüş: "tamam".',
+        'Bir adımı (bir sahneyi) bildirir: numarası, kısa başlığı ve altyazısı (adımın özü, bir iki cümle; okur haritayı izlerken bunu okur). Her cevap adımlıdır: tek bir şeyi anlatıyorsan tek adım (n:1), birkaç sahne gerekiyorsa her biri için bir adım. Her adım için bir kez, ilk turda, o adımın gösterim araçlarıyla (show_event, highlight, connect, mark) birlikte çağır. Her adım haritanın sahibidir: etkin olunca harita yalnızca o adımın gösterimini gösterir. Adımda bir olay gösteriyorsan yıl vermen gerekmez; harita o olayın yılının sınırlarını gösterir. Yılı yalnızca olay göstermeyen ya da başka bir yıl isteyen adımda ver. Tam metni burada yazma; o sonra, nihai yanıtta "## n. Başlık" altında gelir. Dönüş: "tamam".',
       inputSchema: {
         type: 'object',
         properties: {

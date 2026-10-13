@@ -559,7 +559,7 @@
 }
 
 /* ------------------------------------------------------------------ a narrow map */
-/* The caption (or short answer) and the question box take the whole width at the foot of the map: the zoom buttons
+/* The caption and the question box take the whole width at the foot of the map: the zoom buttons
    and the note ride above them instead of lying under them. (--foot-h is the height of that stack, set by the page.) */
 @media (max-width: 900px) {
   .map-zoom,

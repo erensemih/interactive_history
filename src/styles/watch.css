@@ -186,6 +186,13 @@
   margin-bottom: 8px;
 }
 
+/* the box is a flex row: the cross must not be squeezed narrower than a finger needs */
+.watch-error .icon-btn {
+  flex: none;
+  width: 30px;
+  height: 30px;
+}
+
 .watch-stopped {
   margin: 0 0 8px;
   font-size: 12.5px;

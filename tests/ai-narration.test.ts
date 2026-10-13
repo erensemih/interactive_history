@@ -159,13 +159,44 @@ describe('a single-step answer and its caption', () => {
     expect(hasMore({ caption: 'x', body: '', hasText: false })).toBe(false);
   });
 
-  it('while it is being written the caption follows the first sentences, and the rest waits behind “Devamını oku”', () => {
+  it('while it is being written the caption follows the first sentence, and the rest waits behind “Devamını oku”', () => {
+    const first = stepsOf(
+      item('Stalingrad 1942-43 kışında savaşın dönüm noktası oldu.', new TurnPlan(), 'streaming'),
+    )[0]!;
+    expect(first.caption).toBe('Stalingrad 1942-43 kışında savaşın dönüm noktası oldu.');
+    expect(hasMore(first)).toBe(false); // nothing beyond the caption yet
     const half = stepsOf(
       item('Stalingrad 1942-43 kışında savaşın dönüm noktası oldu. Alman 6. Ord', new TurnPlan(), 'streaming'),
     )[0]!;
-    expect(half.caption).toBe('Stalingrad 1942-43 kışında savaşın dönüm noktası oldu. Alman 6. Ord');
-    expect(hasMore(half)).toBe(false); // nothing beyond the caption yet
+    // the second sentence is still being written: it is not in the caption (the caption would grow and shrink back)
+    expect(half.caption).toBe('Stalingrad 1942-43 kışında savaşın dönüm noktası oldu.');
+    expect(hasMore(half)).toBe(true);
     const more = stepsOf(item(long, new TurnPlan(), 'streaming'))[0]!;
     expect(hasMore(more)).toBe(true);
+  });
+});
+
+describe('the caption of a text that is still arriving', () => {
+  const text =
+    "Hava gücü, İkinci Dünya Savaşı'nın sonucunu belirleyen etkenlerden biriydi. Savaşın başında Almanya'nın yıldırım savaşı, yoğun hava desteğiyle ilerleyen zırhlı birliklere dayanıyordu; Britanya Muharebesi'nde bu üstünlüğü kuramaması ise Almanya'nın ilk büyük başarısızlığı oldu.\n\nSavaşın ilerleyen yıllarında Müttefikler stratejik bombardıman kampanyalarıyla Alman sanayisini hedef aldı.";
+
+  it('never shrinks as more of the text comes in: the first sentence grows as it is written, then holds', () => {
+    let previous = 0;
+    for (let n = 1; n <= text.length; n++) {
+      const caption = captionFromText(text.slice(0, n));
+      expect(caption.length, `after ${n} characters`).toBeGreaterThanOrEqual(previous);
+      previous = caption.length;
+    }
+    expect(captionFromText(text)).toBe("Hava gücü, İkinci Dünya Savaşı'nın sonucunu belirleyen etkenlerden biriydi.");
+  });
+
+  it('adds a second sentence only once it is whole (and fits)', () => {
+    expect(captionFromText('Birinci cümle bitti. İkinci cüm')).toBe('Birinci cümle bitti.');
+    expect(captionFromText('Birinci cümle bitti. İkinci cümle de bitti.')).toBe(
+      'Birinci cümle bitti. İkinci cümle de bitti.',
+    );
+    expect(captionFromText('Birinci cümle bitti. İkinci cümle de bitti. Üçüncü yazılıyor')).toBe(
+      'Birinci cümle bitti. İkinci cümle de bitti.',
+    );
   });
 });

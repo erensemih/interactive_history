@@ -1,8 +1,8 @@
 # Doğrulama raporu
 
-Çalıştırma: 2026-10-13T08:05:05.430Z · Chromium (başsız) · 1440×900
+Çalıştırma: 2026-10-13T12:26:11.624Z · Chromium (başsız) · 1440×900
 
-**153/154 denetim geçti.**
+**154/154 denetim geçti.**
 
 | Durum | Denetim | Ayrıntı |
 |---|---|---|
@@ -124,15 +124,15 @@
 | ✓ | Çin'e yakınlaşılmış; Stalingrad şu an görünümün dışında ve haritada çizili değil | yakınlaştırma 4.60 |
 | ✓ | Stalingrad, Nazi Almanyası çizelgesinde bir nokta olarak duruyor |  |
 | ✓ | Harita uzaklaştı (en az bir yakınlaştırma düzeyi) | 1.83 düzey |
-| ✓ | Hareket yumuşak: atlama yok, ara kareler var (tek karede en çok %45 yol) | 5 ara kare (en az 5; 21.0 kare/sn), en büyük adım 0.47 / 1.83 |
-| ✓ | Hareket takip edilebilecek kadar uzun sürer (≥ 0,8 sn) | 1184 ms |
+| ✓ | Hareket yumuşak: atlama yok, ara kareler var (tek karede en çok %45 yol) | 5 ara kare (en az 5; 20.7 kare/sn), en büyük adım 0.50 / 1.83 |
+| ✓ | Hareket takip edilebilecek kadar uzun sürer (≥ 0,8 sn) | 1136 ms |
 | ✓ | Yalnızca uzaklaşır: hareket sırasında geri yakınlaşma yok |  |
 | ✓ | Stalingrad artık görünümde: kenarlardan uzakta, kontrollerin arkasında değil, işaretçisi çizili | 127,185 / 1440×776 |
 | ✓ | Önceki görünüm yeni görünümün içinde kalır (Çin hâlâ ekranda) | [91,23,133,42] ⊂ [31,-5,180,60] |
 | ✓ | Harita yalnızca gerektiği kadar uzaklaştı (en az gereken düzey + küçük pay) | kullanılan 1.83 düzey, gereken 1.77 |
 | ✓ | Stalingrad işaretçisi belirgin biçimde vurgulu: ≥ 3 px vurgu halkası, ışıma, adı yanında | {"ring":3,"colour":"rgb(207, 58, 33)","callout":"Stalingrad Muharebesi"} |
 | ✓ | Vurgu yalnızca seçili olayda: haritada başka işaretçi yok (yer seçili, anlatıcı o) ya da varsa halkası yok | null |
-| ✓ | Vurgu gözle de seçilir: işaretçinin çevresinde yüzlerce vurgu rengi pikseli | 351 piksel |
+| ✓ | Vurgu gözle de seçilir: işaretçinin çevresinde yüzlerce vurgu rengi pikseli | 368 piksel |
 | ✓ | Çizelgede seçili nokta vurgulu ve adı yanında kalır (seçili olayın etiketi görünür kalabilir) | 1942Stalingrad Muharebesi |
 | ✓ | Ad etiketi başka bir noktayı örtmez | 0 |
 | ✓ | Panel: olay odakta (tam kart); yer tek satırlık başlığa küçüldü (ad + aralık), yer kartı gizli | ‹ Nazi Almanyası 1940–1944 (38 px) |
@@ -153,7 +153,7 @@
 | ✓ | İlk yıllar: sınır yılı 1803, harita hazır, başlıkta “yükleniyor…” yok |  |
 | ✓ | 1803’te Paris, Fransa Konsolosluğu’dur; vurgusu pencereli kaynaktan çizilir | Fransa Konsolosluğu · 3 parça |
 | ✓ | Uzun sıçramadan sonra (1803 → 1942) pencere gelir: süzgeç gösterilen yılı kullanır, başlıkta “yükleniyor…” kalmaz | ["all",["<=",["get","from"],1942],[">=",["get","to"],1942]] |
-| ✗ | Aynı nokta artık Nazi Almanyası (Paris, 1942) ve vurgusu çizili | Nazi Almanyası |
+| ✓ | Aynı nokta artık Nazi Almanyası (Paris, 1942) ve vurgusu çizili | Nazi Almanyası |
 | ✓ | Son yıllar: sınır yılı 1997, Paris Fransa Beşinci Cumhuriyeti | 1997 · Fransa Beşinci Cumhuriyeti |
 | ✓ | Verinin son yılı (2000) gösterilir | 2000 |
 | ✓ | Verinin ilk yılı (1800) gösterilir | 1800 |

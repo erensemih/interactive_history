@@ -434,7 +434,7 @@ export class ReadView {
             </p>`
           : nothing
       }
-      ${preamble ? html`<p class="prose chat-preamble">${inline(streaming ? withoutOpenReference(preamble) : preamble, this.known)}</p>` : nothing}
+      ${preamble ? html`<p class="prose chat-preamble">${inline(item.status !== 'done' ? withoutOpenReference(preamble) : preamble, this.known)}</p>` : nothing}
       ${views.map((s, i) =>
         this.step(
           item,
@@ -515,7 +515,7 @@ export class ReadView {
             ? paragraphs.map(
                 (p, i) =>
                   html`<p class="prose">
-                    ${inline(caret ? withoutOpenReference(p) : p, this.known)}${caret && i === paragraphs.length - 1 ? html`<i class="caret" aria-hidden="true"></i>` : nothing}
+                    ${inline(item.status !== 'done' ? withoutOpenReference(p) : p, this.known)}${caret && i === paragraphs.length - 1 ? html`<i class="caret" aria-hidden="true"></i>` : nothing}
                   </p>`,
               )
             : s.caption

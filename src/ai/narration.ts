@@ -119,9 +119,14 @@ export function sentencesOf(text: string): string[] {
 export function captionFromText(body: string, max = CAPTION_FROM_TEXT, maxSentences = 2): string {
   const plain = body.replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
   if (!plain) return '';
+  const sentences = sentencesOf(plain);
+  // A text that is still arriving ends in a sentence that is not whole yet. The first one is the caption as it is written;
+  // a second one is added only when it is whole, or the caption would grow with every word and then shrink back.
+  const endsClean = /[.!?…]["”’')»\]]*$/.test(plain);
   let out = '';
   let taken = 0;
-  for (const sentence of sentencesOf(plain)) {
+  for (const [i, sentence] of sentences.entries()) {
+    if (i > 0 && i === sentences.length - 1 && !endsClean) break;
     const next = out ? `${out} ${sentence}` : sentence;
     if (next.length > max) break;
     out = next;

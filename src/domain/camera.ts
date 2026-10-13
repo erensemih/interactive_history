@@ -111,7 +111,7 @@ export function framePadding(controls: readonly Rect[], size: MapSize, base?: Pa
     out[best.side] = Math.max(out[best.side], best.by + 12);
   }
   // Never so much that nothing is left to frame in. The foot of the map may take more than the other sides: the
-  // caption (or a short answer) and the question box are there; two opposite sides together stay within four fifths.
+  // caption and the question box are there; two opposite sides together stay within four fifths.
   out.left = Math.min(out.left, size.width * 0.4);
   out.right = Math.min(out.right, size.width * 0.4);
   out.top = Math.min(out.top, size.height * 0.4);

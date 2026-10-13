@@ -272,7 +272,7 @@ export class WatchView {
               </div>`
             : nothing
         }
-        <h2 class="watch-title" data-testid="watch-title">${step.title}</h2>
+        ${step.title ? html`<h2 class="watch-title" data-testid="watch-title">${step.title}</h2>` : nothing}
         ${
           writing
             ? html`<span class="watch-wip" data-testid="watch-writing"
