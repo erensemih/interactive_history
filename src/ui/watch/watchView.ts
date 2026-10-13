@@ -1,9 +1,8 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { errorCopy } from '../../ai/errorCopy';
-import { shortOf } from '../../ai/narration';
+import { hasMore } from '../../ai/narration';
 import { SPEED_IDS, SPEEDS, type Presentation, type SpeedId } from '../../ai/presentation';
 import type { AiSession, AssistantItem } from '../../ai/session';
-import { paragraphsOf } from '../../ai/steps';
 import { clsx } from '../format';
 import { eventRefOf, inline } from '../read/richText';
 import { plainText, withoutOpenReference } from '../read/segments';
@@ -63,10 +62,12 @@ const ICON = {
 };
 
 /**
- * Watch: what the answer says, over the map, in one fixed place like a subtitle. A narration is its step's short
- * caption with the controls to step through it (buttons, ← →, optional autoplay at a chosen speed); a
- * single-part answer is its short text. While the model is still thinking it says so, and a failure is said
- * where the answer would have been. The map itself is drawn by the page from the director's active step.
+ * Watch: what the answer says, over the map, in one fixed place like a subtitle. Every answer is its step's short
+ * caption: a narration with the controls to step through it (buttons, ← →, optional autoplay at a chosen speed), an
+ * answer to a plain question as one step with nothing to step through and, under the caption, "Devamını oku" for the
+ * full text (Read). The caption is never the whole of a long text. While the model is still thinking it says so, and a
+ * failure is said where the answer would have been. The map itself is drawn by the page from the director's active
+ * step.
  */
 export class WatchView {
   readonly element: HTMLElement;
@@ -115,8 +116,7 @@ export class WatchView {
     let body: TemplateResult;
     if (nothingYet && (item.status === 'waiting' || item.status === 'streaming')) body = this.thinking();
     else if (nothingYet) body = this.ended(item);
-    else if (presentation.stepped) body = this.captions(item);
-    else body = this.short(item);
+    else body = this.captions(item);
     render(body, this.element);
   }
 
@@ -218,48 +218,60 @@ export class WatchView {
     const { presentation: p, actions } = this.deps;
     const steps = p.steps;
     const i = Math.max(0, p.index);
-    const step = steps[i]!;
+    const step = steps[i] ?? steps[0]!;
+    // an answer to a plain question is one step: nothing to step through, so none of the stepping controls
+    const several = steps.length > 1;
     const writing = item.status === 'streaming' || item.status === 'waiting';
     const err = item.error ? this.error(item) : null;
+    const more = !several && hasMore(step);
     return html`<section
-      class="watch watch-steps"
+      class=${clsx('watch', several ? 'watch-steps' : 'watch-single')}
       data-testid="watch"
       data-step=${step.n}
+      data-steps=${steps.length}
       role="region"
       aria-roledescription="anlatım"
-      aria-label="Anlatım: ${plainText(step.title) || `adım ${i + 1}`}"
+      aria-label="Anlatım: ${plainText(step.title) || (several ? `adım ${i + 1}` : 'yanıt')}"
       data-avoid
     >
       <div class="watch-head">
-        <div class="watch-nav">
-          <button
-            type="button"
-            class="watch-btn watch-nav-btn"
-            data-testid="watch-prev"
-            aria-label="Önceki adım"
-            aria-keyshortcuts="ArrowLeft"
-            title="Önceki adım (←)"
-            ?disabled=${!p.hasPrev}
-            @click=${() => p.prev()}
-          >
-            ${ICON.prev}
-          </button>
-          <span class="watch-count" data-testid="watch-count" aria-label=${`${i + 1}. adım, toplam ${steps.length}`}>
-            ${i + 1} / ${steps.length}
-          </span>
-          <button
-            type="button"
-            class="watch-btn watch-nav-btn"
-            data-testid="watch-next"
-            aria-label="Sonraki adım"
-            aria-keyshortcuts="ArrowRight"
-            title="Sonraki adım (→)"
-            ?disabled=${!p.hasNext}
-            @click=${() => p.next()}
-          >
-            ${ICON.next}
-          </button>
-        </div>
+        ${
+          several
+            ? html`<div class="watch-nav">
+                <button
+                  type="button"
+                  class="watch-btn watch-nav-btn"
+                  data-testid="watch-prev"
+                  aria-label="Önceki adım"
+                  aria-keyshortcuts="ArrowLeft"
+                  title="Önceki adım (←)"
+                  ?disabled=${!p.hasPrev}
+                  @click=${() => p.prev()}
+                >
+                  ${ICON.prev}
+                </button>
+                <span
+                  class="watch-count"
+                  data-testid="watch-count"
+                  aria-label=${`${i + 1}. adım, toplam ${steps.length}`}
+                >
+                  ${i + 1} / ${steps.length}
+                </span>
+                <button
+                  type="button"
+                  class="watch-btn watch-nav-btn"
+                  data-testid="watch-next"
+                  aria-label="Sonraki adım"
+                  aria-keyshortcuts="ArrowRight"
+                  title="Sonraki adım (→)"
+                  ?disabled=${!p.hasNext}
+                  @click=${() => p.next()}
+                >
+                  ${ICON.next}
+                </button>
+              </div>`
+            : nothing
+        }
         <h2 class="watch-title" data-testid="watch-title">${step.title}</h2>
         ${
           writing
@@ -270,43 +282,47 @@ export class WatchView {
             : nothing
         }
         <div class="watch-tools">
-          <button
-            type="button"
-            class=${clsx('watch-btn', 'watch-play', p.playing && 'is-on')}
-            data-testid="watch-play"
-            aria-pressed=${p.playing}
-            aria-label=${p.playing ? 'Otomatik oynatmayı duraklat' : 'Otomatik oynat'}
-            title=${p.playing ? 'Duraklat' : 'Kendiliğinden ilerlesin'}
-            @click=${() => p.toggle()}
-          >
-            ${p.playing ? ICON.pause : ICON.play}<span>${p.playing ? 'Duraklat' : 'Oynat'}</span>
-          </button>
-          <label class="watch-speed">
-            <span class="sr-only">Oynatma hızı</span>
-            <select
-              data-testid="watch-speed"
-              aria-label="Oynatma hızı"
-              title="Oynatma hızı"
-              @change=${(e: Event) => p.setSpeed((e.target as HTMLSelectElement).value as SpeedId)}
-            >
-              ${SPEED_IDS.map((id) => html`<option value=${id} ?selected=${p.speed === id}>${SPEEDS[id].label}</option>`)}
-            </select>
-          </label>
-          <button
-            type="button"
-            class="watch-btn watch-read"
-            data-testid="watch-read"
-            aria-label="Metni oku"
-            title="Metni oku"
-            @click=${() => actions.read()}
-          >
-            ${ICON.lines}<span>Metni oku</span>
-          </button>
+          ${
+            several
+              ? html`<button
+                    type="button"
+                    class=${clsx('watch-btn', 'watch-play', p.playing && 'is-on')}
+                    data-testid="watch-play"
+                    aria-pressed=${p.playing}
+                    aria-label=${p.playing ? 'Otomatik oynatmayı duraklat' : 'Otomatik oynat'}
+                    title=${p.playing ? 'Duraklat' : 'Kendiliğinden ilerlesin'}
+                    @click=${() => p.toggle()}
+                  >
+                    ${p.playing ? ICON.pause : ICON.play}<span>${p.playing ? 'Duraklat' : 'Oynat'}</span>
+                  </button>
+                  <label class="watch-speed">
+                    <span class="sr-only">Oynatma hızı</span>
+                    <select
+                      data-testid="watch-speed"
+                      aria-label="Oynatma hızı"
+                      title="Oynatma hızı"
+                      @change=${(e: Event) => p.setSpeed((e.target as HTMLSelectElement).value as SpeedId)}
+                    >
+                      ${SPEED_IDS.map((id) => html`<option value=${id} ?selected=${p.speed === id}>${SPEEDS[id].label}</option>`)}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    class="watch-btn watch-read"
+                    data-testid="watch-read"
+                    aria-label="Metni oku"
+                    title="Metni oku"
+                    @click=${() => actions.read()}
+                  >
+                    ${ICON.lines}<span>Metni oku</span>
+                  </button>`
+              : nothing
+          }
           <button
             type="button"
             class="watch-btn"
             data-testid="watch-close"
-            aria-label="Anlatımı kapat"
+            aria-label=${several ? 'Anlatımı kapat' : 'Yanıtı kapat'}
             title="Kapat: harita yeniden sizin"
             @click=${() => actions.close()}
           >
@@ -317,62 +333,18 @@ export class WatchView {
       <p class="watch-caption" data-testid="watch-caption" aria-live="polite" aria-atomic="true">
         ${inline(withoutOpenReference(step.caption), this.known)}
       </p>
+      ${
+        several
+          ? nothing
+          : // The place of "Devamını oku" is kept from the first moment (it shows once the text has more than the caption):
+            // the box must not grow after the camera has framed the scene above it.
+            html`<p class=${clsx('watch-more', !more && 'is-reserved')}>
+              <button type="button" class="link" data-testid="watch-more" @click=${() => actions.read()}>
+                Devamını oku
+              </button>
+            </p>`
+      }
       ${this.notesOf(item)}${err ?? nothing}${this.stoppedLine(item)}
-    </section>`;
-  }
-
-  /* ----------------------------------------------------- a single-part answer */
-
-  private short(item: AssistantItem): TemplateResult {
-    const { actions } = this.deps;
-    const text = shortOf(item);
-    const paragraphs = paragraphsOf(text.body);
-    const writing = item.status === 'streaming' || item.status === 'waiting';
-    const err = item.error ? this.error(item) : null;
-    return html`<section
-      class="watch watch-short"
-      data-testid="watch-short"
-      role="region"
-      aria-label="Yanıt"
-      data-avoid
-    >
-      <div class="watch-text" data-testid="watch-text" aria-live="polite">
-        ${text.title ? html`<h2 class="watch-title">${text.title}</h2>` : nothing}
-        ${
-          paragraphs.length
-            ? paragraphs.map(
-                (p, i) =>
-                  html`<p>
-                    ${inline(writing ? withoutOpenReference(p) : p, this.known)}${writing && i === paragraphs.length - 1 ? html`<i class="caret" aria-hidden="true"></i>` : nothing}
-                  </p>`,
-              )
-            : html`<p><i class="caret" aria-hidden="true"></i></p>`
-        }
-      </div>
-      ${this.notesOf(item)}${err ?? nothing}${this.stoppedLine(item)}
-      <div class="watch-controls">
-        <span class="watch-spacer"></span>
-        <button
-          type="button"
-          class="watch-btn watch-read"
-          data-testid="watch-read"
-          aria-label="Metni oku"
-          title="Metni oku"
-          @click=${() => actions.read()}
-        >
-          ${ICON.lines}<span>Metni oku</span>
-        </button>
-        <button
-          type="button"
-          class="watch-btn"
-          data-testid="watch-close"
-          aria-label="Yanıtı kapat"
-          title="Kapat: harita yeniden sizin"
-          @click=${() => actions.close()}
-        >
-          ${ICON.close}
-        </button>
-      </div>
     </section>`;
   }
 }

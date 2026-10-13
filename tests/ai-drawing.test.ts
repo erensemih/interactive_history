@@ -11,7 +11,7 @@ import {
 import { eventKindOf, warSides } from '../src/ai/eventKinds';
 import { Resolver } from '../src/ai/resolve';
 import type { MapAction } from '../src/ai/types';
-import { shippedData } from './helpers/shipped';
+import { archivedData } from './helpers/shipped';
 
 const hl = (step: number, ...polities: string[]): MapAction => ({ kind: 'highlight', step, polities });
 const link = (
@@ -185,7 +185,7 @@ describe('TurnPlan', () => {
 describe('how the app draws an event of the data, by its kind', () => {
   it('a war (military) is drawn as a line through its marker; every other kind lights its parties and shows its marker', () => {
     expect(eventKindOf('military')).toBe('war');
-    for (const category of ['politics', 'exploration', 'culture', 'religion', 'disaster', 'something-new'])
+    for (const category of ['politics', 'economy', 'culture', 'society', 'disaster', 'something-new'])
       expect(eventKindOf(category)).toBe('plain');
   });
 
@@ -207,7 +207,7 @@ describe('how the app draws an event of the data, by its kind', () => {
 });
 
 describe('resolveDrawing and frameTargetOf (shipped data)', () => {
-  const data = shippedData();
+  const data = archivedData('1400-1600');
   const resolver = new Resolver(data);
 
   it('puts in the spotlight what the model named, the parties of its events and the ends of its own lines', () => {

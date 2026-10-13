@@ -1,10 +1,40 @@
 {
   "categories": [
-    { "id": "military", "label": { "tr": "Savaş ve fetih" } },
-    { "id": "politics", "label": { "tr": "Devlet ve siyaset" } },
-    { "id": "exploration", "label": { "tr": "Keşif ve ticaret" } },
-    { "id": "religion", "label": { "tr": "Din ve inanç" } },
-    { "id": "culture", "label": { "tr": "Bilim, sanat ve kültür" } },
-    { "id": "disaster", "label": { "tr": "Doğal afet" } }
+    {
+      "id": "military",
+      "label": {
+        "tr": "Savaş ve çatışma"
+      }
+    },
+    {
+      "id": "politics",
+      "label": {
+        "tr": "Devlet ve siyaset"
+      }
+    },
+    {
+      "id": "economy",
+      "label": {
+        "tr": "Ekonomi ve teknoloji"
+      }
+    },
+    {
+      "id": "society",
+      "label": {
+        "tr": "Toplum ve insan hakları"
+      }
+    },
+    {
+      "id": "culture",
+      "label": {
+        "tr": "Bilim, sanat ve kültür"
+      }
+    },
+    {
+      "id": "disaster",
+      "label": {
+        "tr": "Afet ve salgın"
+      }
+    }
   ]
 }

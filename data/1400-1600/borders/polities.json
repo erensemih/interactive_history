@@ -1,0 +1,2521 @@
+{
+ "meta": {
+  "range": [
+   1400,
+   1600
+  ],
+  "tintCount": 9,
+  "source": {
+   "name": "Seshat Cliopatria (polities only, file cliopatria_polities_only_v021)",
+   "url": "https://github.com/Seshat-Global-History-Databank/cliopatria",
+   "license": "CC BY 4.0",
+   "citation": "Bennett, J. S. et al. (2025). Cliopatria: a geospatial database of world-wide political entities from 3400BCE to 2024CE. Scientific Data. doi:10.1038/s41597-025-04516-9",
+   "changes": "Filtered to the year range, umbrella rows removed, clipped to the Natural Earth coastline, simplified and rounded to 0.01 degrees."
+  },
+  "generated": "2026-10-09"
+ },
+ "entities": {
+  "adal-sultanate": {
+   "dataName": "Adal Sultanate",
+   "wikipedia": "Adal Sultanate",
+   "wikidata": "Q2365048",
+   "from": 1415,
+   "to": 1546,
+   "umbrella": false,
+   "tint": 0
+  },
+  "ahmadnagar-sultanate": {
+   "dataName": "Ahmadnagar Sultanate",
+   "wikipedia": "Ahmadnagar Sultanate",
+   "wikidata": "Q400998",
+   "from": 1492,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 4
+  },
+  "albanian-principalities": {
+   "dataName": "Albanian Principalities",
+   "wikipedia": "Albanian principalities",
+   "wikidata": "Q2658979",
+   "from": 1400,
+   "to": 1421,
+   "umbrella": false,
+   "tint": 2
+  },
+  "alodia": {
+   "dataName": "Alodia",
+   "wikipedia": "Alodia",
+   "wikidata": "Q449639",
+   "from": 1400,
+   "to": 1506,
+   "umbrella": false,
+   "tint": 1
+  },
+  "ambrosian-republic": {
+   "dataName": "Ambrosian Republic",
+   "wikipedia": "Golden Ambrosian Republic",
+   "wikidata": "Q746443",
+   "from": 1450,
+   "to": 1452,
+   "umbrella": false,
+   "tint": 7
+  },
+  "aq-qoyunlu": {
+   "dataName": "Aq Qoyunlu",
+   "wikipedia": "Aq Qoyunlu",
+   "wikidata": "Q555994",
+   "from": 1407,
+   "to": 1511,
+   "umbrella": false,
+   "tint": 4
+  },
+  "ashikaga-shogunate": {
+   "dataName": "Ashikaga Shogunate",
+   "wikipedia": "Ashikaga shogunate",
+   "wikidata": "Q1154406",
+   "from": 1400,
+   "to": 1571,
+   "umbrella": false,
+   "tint": 1
+  },
+  "astrakhan-khanate": {
+   "dataName": "Astrakhan Khanate",
+   "wikipedia": "Astrakhan Khanate",
+   "wikidata": "Q210163",
+   "from": 1468,
+   "to": 1555,
+   "umbrella": false,
+   "tint": 0
+  },
+  "ava-kingdom": {
+   "dataName": "Ava Kingdom",
+   "wikipedia": "Kingdom of Ava",
+   "wikidata": "Q2500952",
+   "from": 1400,
+   "to": 1528,
+   "umbrella": false,
+   "tint": 2
+  },
+  "ayutthaya-kingdom": {
+   "dataName": "Ayutthaya Kingdom",
+   "wikipedia": "Ayutthaya Kingdom",
+   "wikidata": "Q841364",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 3
+  },
+  "aztec-triple-alliance": {
+   "dataName": "Aztec Triple Alliance",
+   "wikipedia": "Aztec Empire",
+   "wikidata": "Q2608489",
+   "from": 1429,
+   "to": 1520,
+   "umbrella": false,
+   "tint": 1
+  },
+  "bahmani-sultanate": {
+   "dataName": "Bahmani Sultanate",
+   "wikipedia": "Bahmani Sultanate",
+   "wikidata": "Q374521",
+   "from": 1400,
+   "to": 1491,
+   "umbrella": false,
+   "tint": 1
+  },
+  "bahrani-dynasty": {
+   "dataName": "Bahrani Dynasty",
+   "wikipedia": "Al-Ahsa Oasis",
+   "wikidata": "Q311341",
+   "from": 1400,
+   "to": 1520,
+   "umbrella": false,
+   "tint": 0
+  },
+  "balinese-kingdom": {
+   "dataName": "Balinese Kingdom",
+   "wikipedia": "Bali Kingdom",
+   "wikidata": "Q12491027",
+   "from": 1519,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "berar-sultanate": {
+   "dataName": "Berar Sultanate",
+   "wikipedia": "Berar Sultanate",
+   "wikidata": "Q818666",
+   "from": 1492,
+   "to": 1578,
+   "umbrella": false,
+   "tint": 2
+  },
+  "beylik-of-aydin": {
+   "dataName": "Beylik of Aydin",
+   "wikipedia": "Aydinids",
+   "wikidata": "Q717112",
+   "from": 1400,
+   "to": 1428,
+   "umbrella": false,
+   "tint": 3
+  },
+  "beylik-of-dulkadir": {
+   "dataName": "Beylik of Dulkadir",
+   "wikipedia": "Beylik of Dulkadir",
+   "wikidata": "Q1264808",
+   "from": 1400,
+   "to": 1515,
+   "umbrella": false,
+   "tint": 6
+  },
+  "beylik-of-isfendiyar": {
+   "dataName": "Beylik of Isfendiyar",
+   "wikipedia": "Candar dynasty",
+   "wikidata": "Q2096678",
+   "from": 1400,
+   "to": 1462,
+   "umbrella": false,
+   "tint": 3
+  },
+  "beylik-of-karaman": {
+   "dataName": "Beylik of Karaman",
+   "wikipedia": "Karamanids",
+   "wikidata": "Q1469100",
+   "from": 1400,
+   "to": 1467,
+   "umbrella": false,
+   "tint": 3
+  },
+  "beylik-of-menteshe": {
+   "dataName": "Beylik of Menteshe",
+   "wikipedia": "Menteshe",
+   "wikidata": "Q1400572",
+   "from": 1400,
+   "to": 1414,
+   "umbrella": false,
+   "tint": 0
+  },
+  "beylik-of-saruhan": {
+   "dataName": "Beylik of Saruhan",
+   "wikipedia": "Sarukhanids",
+   "wikidata": "Q1968654",
+   "from": 1400,
+   "to": 1414,
+   "umbrella": false,
+   "tint": 1
+  },
+  "beylik-of-teke": {
+   "dataName": "Beylik of Teke",
+   "wikipedia": "Beylik of Teke",
+   "wikidata": "Q373988",
+   "from": 1400,
+   "to": 1428,
+   "umbrella": false,
+   "tint": 1
+  },
+  "bidar-sultanate": {
+   "dataName": "Bidar Sultanate",
+   "wikipedia": "Bidar Sultanate",
+   "wikidata": "Q669317",
+   "from": 1492,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 3
+  },
+  "bijapur-sultanate": {
+   "dataName": "Bijapur Sultanate",
+   "wikipedia": "Adil Shahi dynasty",
+   "wikidata": "Q83821",
+   "from": 1492,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "blambangan-kingdom": {
+   "dataName": "Blambangan Kingdom",
+   "wikipedia": "Blambangan Kingdom",
+   "wikidata": "Q287996",
+   "from": 1519,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "blue-horde": {
+   "dataName": "Blue Horde",
+   "wikipedia": "Blue Horde",
+   "wikidata": "Q644979",
+   "from": 1400,
+   "to": 1449,
+   "umbrella": false,
+   "tint": 5
+  },
+  "bornu-empire": {
+   "dataName": "Bornu Empire",
+   "wikipedia": "Kanem-Bornu Empire",
+   "wikidata": "Q1139762",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "byzantine-empire": {
+   "dataName": "Byzantine Empire",
+   "wikipedia": "Byzantine Empire",
+   "wikidata": "Q112039853",
+   "from": 1400,
+   "to": 1474,
+   "umbrella": false,
+   "tint": 5
+  },
+  "ceylon": {
+   "dataName": "Ceylon",
+   "wikipedia": "Sri Lanka",
+   "wikidata": "Q918153",
+   "from": 1400,
+   "to": 1506,
+   "umbrella": false,
+   "tint": 0
+  },
+  "chagatai-khanate": {
+   "dataName": "Chagatai Khanate",
+   "wikipedia": "Chagatai Khanate",
+   "wikidata": "Q487829",
+   "from": 1400,
+   "to": 1462,
+   "umbrella": false,
+   "tint": 4
+  },
+  "champa": {
+   "dataName": "Chámpa",
+   "wikipedia": "Champa",
+   "wikidata": "Q216786",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "chimu-empire": {
+   "dataName": "Chimu Empire",
+   "wikipedia": "Chimor",
+   "wikidata": "Q581741",
+   "from": 1400,
+   "to": 1481,
+   "umbrella": false,
+   "tint": 1
+  },
+  "chuzan": {
+   "dataName": "Chüzan",
+   "wikipedia": "Chūzan",
+   "wikidata": "Q55521",
+   "from": 1400,
+   "to": 1428,
+   "umbrella": false,
+   "tint": 0
+  },
+  "comtat-venaissin": {
+   "dataName": "Comtat Venaissin",
+   "wikipedia": "Comtat Venaissin",
+   "wikidata": "Q1122980",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "county-of-ampuria": {
+   "dataName": "County of Ampuria",
+   "wikipedia": "County of Empúries",
+   "wikidata": "Q1541699",
+   "from": 1402,
+   "to": 1414,
+   "umbrella": false,
+   "tint": 0
+  },
+  "county-of-armagnac": {
+   "dataName": "County of Armagnac",
+   "wikipedia": "County of Armagnac",
+   "wikidata": "Q676745",
+   "from": 1400,
+   "to": 1496,
+   "umbrella": false,
+   "tint": 4
+  },
+  "county-of-auvergne": {
+   "dataName": "County of Auvergne",
+   "wikipedia": "Auvergne",
+   "wikidata": "Q1152",
+   "from": 1400,
+   "to": 1501,
+   "umbrella": false,
+   "tint": 0
+  },
+  "county-of-bearn": {
+   "dataName": "County of Béarn",
+   "wikipedia": "Béarn",
+   "wikidata": "Q213763",
+   "from": 1400,
+   "to": 1452,
+   "umbrella": false,
+   "tint": 1
+  },
+  "county-of-blois": {
+   "dataName": "County of Blôis",
+   "wikipedia": "County of Blois",
+   "wikidata": "Q19336869",
+   "from": 1400,
+   "to": 1401,
+   "umbrella": false,
+   "tint": 0
+  },
+  "county-of-brabant": {
+   "dataName": "County of Brabant",
+   "wikipedia": "Landgraviate of Brabant",
+   "wikidata": "Q751868",
+   "from": 1400,
+   "to": 1430,
+   "umbrella": false,
+   "tint": 2
+  },
+  "county-of-foix": {
+   "dataName": "County of Foix",
+   "wikipedia": "County of Foix",
+   "wikidata": "Q1481436",
+   "from": 1400,
+   "to": 1555,
+   "umbrella": false,
+   "tint": 0
+  },
+  "county-of-maine": {
+   "dataName": "County of Maine",
+   "wikipedia": "Maine (province)",
+   "wikidata": "Q732738",
+   "from": 1450,
+   "to": 1481,
+   "umbrella": false,
+   "tint": 2
+  },
+  "county-of-nevers": {
+   "dataName": "County of Nevers",
+   "wikipedia": "County of Nevers",
+   "wikidata": "Q2070440",
+   "from": 1407,
+   "to": 1520,
+   "umbrella": false,
+   "tint": 2
+  },
+  "county-of-perigord": {
+   "dataName": "County of Périgord",
+   "wikipedia": "County of Périgord",
+   "wikidata": "Q1947408",
+   "from": 1400,
+   "to": 1481,
+   "umbrella": false,
+   "tint": 0
+  },
+  "county-of-savoy": {
+   "dataName": "County of Savoy",
+   "wikipedia": "County of Savoy",
+   "wikidata": "Q1232887",
+   "from": 1400,
+   "to": 1539,
+   "umbrella": false,
+   "tint": 6
+  },
+  "county-of-touraine": {
+   "dataName": "County of Touraine",
+   "wikipedia": "Touraine",
+   "wikidata": "Q605051",
+   "from": 1400,
+   "to": 1491,
+   "umbrella": false,
+   "tint": 2
+  },
+  "county-of-urgell": {
+   "dataName": "County of Urgell",
+   "wikipedia": "County of Urgell",
+   "wikidata": "Q1514510",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 4
+  },
+  "crimean-khanate": {
+   "dataName": "Crimean Khanate",
+   "wikipedia": "Crimean Khanate",
+   "wikidata": "Q160440",
+   "from": 1450,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 6
+  },
+  "crown-of-aragon": {
+   "dataName": "Crown of Aragon",
+   "wikipedia": "Crown of Aragon",
+   "wikidata": "Q204920",
+   "from": 1400,
+   "to": 1515,
+   "umbrella": false,
+   "tint": 2
+  },
+  "crown-of-castile": {
+   "dataName": "Crown of Castile",
+   "wikipedia": "Crown of Castile",
+   "wikidata": "Q217196",
+   "from": 1400,
+   "to": 1515,
+   "umbrella": false,
+   "tint": 4
+  },
+  "cuzco": {
+   "dataName": "Cuzco",
+   "wikipedia": "Cusco",
+   "wikidata": "Q5582862",
+   "from": 1400,
+   "to": 1439,
+   "umbrella": false,
+   "tint": 0
+  },
+  "dai-viet": {
+   "dataName": "Đại Việt",
+   "wikipedia": "Mạc dynasty",
+   "wikidata": "Q1317991",
+   "from": 1529,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 3
+  },
+  "delhi-sultanate": {
+   "dataName": "Delhi Sultanate",
+   "wikipedia": "Delhi Sultanate",
+   "wikidata": "Q229411",
+   "from": 1400,
+   "to": 1528,
+   "umbrella": true,
+   "tint": null
+  },
+  "demak-sultanate": {
+   "dataName": "Demak Sultanate",
+   "wikipedia": "Demak Sultanate",
+   "wikidata": "Q49322",
+   "from": 1475,
+   "to": 1551,
+   "umbrella": false,
+   "tint": 0
+  },
+  "denmark-norway": {
+   "dataName": "Denmark-Norway",
+   "wikipedia": "Denmark-Norway",
+   "wikidata": "Q62651",
+   "from": 1526,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 4
+  },
+  "despotate-of-arta": {
+   "dataName": "Despotate of Arta",
+   "wikipedia": "Despotate of Arta",
+   "wikidata": "Q2331954",
+   "from": 1400,
+   "to": 1421,
+   "umbrella": false,
+   "tint": 3
+  },
+  "despotate-of-epirus": {
+   "dataName": "Despotate of Epirus",
+   "wikipedia": "Despotate of Epirus",
+   "wikidata": "Q187684",
+   "from": 1400,
+   "to": 1481,
+   "umbrella": false,
+   "tint": 2
+  },
+  "despotate-of-vidin": {
+   "dataName": "Despotate of Vidin",
+   "wikipedia": "Tsardom of Vidin",
+   "wikidata": "Q927154",
+   "from": 1400,
+   "to": 1401,
+   "umbrella": false,
+   "tint": 2
+  },
+  "don-cossacks": {
+   "dataName": "Don Cossacks",
+   "wikipedia": "Don Cossacks",
+   "wikidata": "Q1057292",
+   "from": 1552,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "duchy-of-aquitaine": {
+   "dataName": "Duchy of Aquitaine",
+   "wikipedia": "Duchy of Aquitaine",
+   "wikidata": "Q7703611",
+   "from": 1400,
+   "to": 1439,
+   "umbrella": false,
+   "tint": 4
+  },
+  "duchy-of-bavaria": {
+   "dataName": "Duchy of Bavaria",
+   "wikipedia": "Duchy of Bavaria",
+   "wikidata": "Q47261",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 7
+  },
+  "duchy-of-brittany": {
+   "dataName": "Duchy of Brittany",
+   "wikipedia": "Duchy of Brittany",
+   "wikidata": "Q71747",
+   "from": 1400,
+   "to": 1491,
+   "umbrella": false,
+   "tint": 0
+  },
+  "duchy-of-burgundy": {
+   "dataName": "Duchy of Burgundy",
+   "wikipedia": "Duchy of Burgundy",
+   "wikidata": "Q4712",
+   "from": 1400,
+   "to": 1481,
+   "umbrella": false,
+   "tint": 4
+  },
+  "duchy-of-lorraine": {
+   "dataName": "Duchy of Lorraine",
+   "wikipedia": "Duchy of Lorraine",
+   "wikidata": "Q155019",
+   "from": 1431,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 6
+  },
+  "duchy-of-luxembourg": {
+   "dataName": "Duchy of Luxembourg",
+   "wikipedia": "Duchy of Luxembourg",
+   "wikidata": "Q2719360",
+   "from": 1429,
+   "to": 1449,
+   "umbrella": false,
+   "tint": 1
+  },
+  "duchy-of-milan": {
+   "dataName": "Duchy of Milan",
+   "wikipedia": "Duchy of Milan",
+   "wikidata": "Q153529",
+   "from": 1402,
+   "to": 1539,
+   "umbrella": false,
+   "tint": 7
+  },
+  "duchy-of-prussia": {
+   "dataName": "Duchy of Prussia",
+   "wikipedia": "Duchy of Prussia",
+   "wikidata": "Q153091",
+   "from": 1526,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "duchy-of-saint-sava": {
+   "dataName": "Duchy of Saint Sava",
+   "wikipedia": "Duchy of Saint Sava",
+   "wikidata": "Q106311455",
+   "from": 1453,
+   "to": 1474,
+   "umbrella": false,
+   "tint": 1
+  },
+  "duchy-of-styria": {
+   "dataName": "Duchy of Styria",
+   "wikipedia": "Duchy of Styria",
+   "wikidata": "Q580447",
+   "from": 1400,
+   "to": 1501,
+   "umbrella": false,
+   "tint": 0
+  },
+  "dutch-republic": {
+   "dataName": "Dutch Republic",
+   "wikipedia": "Dutch Republic",
+   "wikidata": "Q170072",
+   "from": 1582,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 3
+  },
+  "earldom-of-desmond": {
+   "dataName": "Earldom of Desmond",
+   "wikipedia": "Earl of Desmond",
+   "wikidata": "Q2991012",
+   "from": 1400,
+   "to": 1458,
+   "umbrella": false,
+   "tint": 0
+  },
+  "east-turkestan": {
+   "dataName": "East Turkestan",
+   "wikipedia": "East Turkestan",
+   "wikidata": "Q840601",
+   "from": 1463,
+   "to": 1474,
+   "umbrella": false,
+   "tint": 3
+  },
+  "eastern-chagatai-khanate": {
+   "dataName": "Eastern Chagatai Khanate",
+   "wikipedia": "Moghulistan",
+   "wikidata": "Q1191125",
+   "from": 1492,
+   "to": 1511,
+   "umbrella": false,
+   "tint": 2
+  },
+  "eastern-hungarian-kingdom": {
+   "dataName": "Eastern Hungarian Kingdom",
+   "wikipedia": "Eastern Hungarian Kingdom",
+   "wikidata": "Q625380",
+   "from": 1529,
+   "to": 1571,
+   "umbrella": false,
+   "tint": 6
+  },
+  "eastern-moghulistan": {
+   "dataName": "Eastern Moghulistan",
+   "wikipedia": "Moghulistan",
+   "wikidata": "Q1191125",
+   "from": 1519,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 3
+  },
+  "electorate-of-brandenburg": {
+   "dataName": "Electorate of Brandenburg",
+   "wikipedia": "Margraviate of Brandenburg",
+   "wikidata": "Q148499",
+   "from": 1422,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 5
+  },
+  "electorate-of-saxony": {
+   "dataName": "Electorate of Saxony",
+   "wikipedia": "Electorate of Saxony",
+   "wikidata": "Q156199",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 3
+  },
+  "electorate-of-trier": {
+   "dataName": "Electorate of Trier",
+   "wikipedia": "Electorate of Trier",
+   "wikidata": "Q1794352",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "emirate-of-granada": {
+   "dataName": "Emirate of Granada",
+   "wikipedia": "Emirate of Granada",
+   "wikidata": "Q238445",
+   "from": 1400,
+   "to": 1491,
+   "umbrella": false,
+   "tint": 0
+  },
+  "empire-of-trebizond": {
+   "dataName": "Empire of Trebizond",
+   "wikipedia": "Empire of Trebizond",
+   "wikidata": "Q178913",
+   "from": 1400,
+   "to": 1462,
+   "umbrella": false,
+   "tint": 2
+  },
+  "ethiopian-empire": {
+   "dataName": "Ethiopian Empire",
+   "wikipedia": "Ethiopian Empire",
+   "wikidata": "Q207521",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "first-toungoo-empire": {
+   "dataName": "First Toungoo Empire",
+   "wikipedia": "First Toungoo Empire",
+   "wikidata": "Q23039102",
+   "from": 1502,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "four-oirats": {
+   "dataName": "Four Oirats",
+   "wikipedia": "Oirat Confederation",
+   "wikidata": "Q4332415",
+   "from": 1402,
+   "to": 1474,
+   "umbrella": false,
+   "tint": 2
+  },
+  "france-antarctique": {
+   "dataName": "France Antarctique",
+   "wikipedia": "France Antarctique",
+   "wikidata": "Q1353951",
+   "from": 1556,
+   "to": 1571,
+   "umbrella": false,
+   "tint": 0
+  },
+  "funj-sultanate": {
+   "dataName": "Funj Sultanate",
+   "wikipedia": "Funj Sultanate",
+   "wikidata": "Q1475713",
+   "from": 1507,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "galuh-kingdom": {
+   "dataName": "Galuh Kingdom",
+   "wikipedia": "Galuh Kingdom",
+   "wikidata": "Q5519387",
+   "from": 1475,
+   "to": 1481,
+   "umbrella": false,
+   "tint": 0
+  },
+  "germiyanids": {
+   "dataName": "Germiyanids",
+   "wikipedia": "Germiyanids",
+   "wikidata": "Q1324889",
+   "from": 1400,
+   "to": 1439,
+   "umbrella": false,
+   "tint": 2
+  },
+  "giudicato-of-arborea": {
+   "dataName": "Giudicato of Arborea",
+   "wikipedia": "Judicate of Arborea",
+   "wikidata": "Q1241847",
+   "from": 1400,
+   "to": 1421,
+   "umbrella": false,
+   "tint": 0
+  },
+  "golconda-sultanate": {
+   "dataName": "Golconda Sultanate",
+   "wikipedia": "Qutb Shahi dynasty",
+   "wikidata": "Q1148042",
+   "from": 1519,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "golden-horde": {
+   "dataName": "Golden Horde",
+   "wikipedia": "Golden Horde",
+   "wikidata": "Q79965",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "gorkha-kingdom": {
+   "dataName": "Gorkha Kingdom",
+   "wikipedia": "Gorkha Kingdom",
+   "wikidata": "Q3332217",
+   "from": 1588,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "grand-duchy-of-lithuania": {
+   "dataName": "Grand Duchy of Lithuania",
+   "wikipedia": "Grand Duchy of Lithuania",
+   "wikidata": "Q49683",
+   "from": 1400,
+   "to": 1449,
+   "umbrella": false,
+   "tint": 3
+  },
+  "grand-principality-of-moscow": {
+   "dataName": "Grand Principality of Moscow",
+   "wikipedia": "Principality of Moscow",
+   "wikidata": "Q170770",
+   "from": 1400,
+   "to": 1546,
+   "umbrella": false,
+   "tint": 0
+  },
+  "habsburg-monarchy": {
+   "dataName": "Habsburg Monarchy",
+   "wikipedia": "Habsburg Austria",
+   "wikidata": "Q66504140",
+   "from": 1487,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 4
+  },
+  "hafsid-dynasty": {
+   "dataName": "Hafsid Dynasty",
+   "wikipedia": "Hafsid dynasty",
+   "wikidata": "Q752662",
+   "from": 1400,
+   "to": 1571,
+   "umbrella": false,
+   "tint": 5
+  },
+  "hanthawaddy-kingdom": {
+   "dataName": "Hanthawaddy Kingdom",
+   "wikipedia": "Hanthawaddy Kingdom",
+   "wikidata": "Q1572529",
+   "from": 1400,
+   "to": 1546,
+   "umbrella": false,
+   "tint": 0
+  },
+  "hashemite-arab-federation": {
+   "dataName": "Hashemite Arab Federation",
+   "wikipedia": "Arab Iraq",
+   "wikidata": "Q6000379",
+   "from": 1415,
+   "to": 1439,
+   "umbrella": false,
+   "tint": 2
+  },
+  "haudenosaunee": {
+   "dataName": "Haudenosaunee",
+   "wikipedia": "Iroquois",
+   "wikidata": "Q68518",
+   "from": 1450,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "hokuzan": {
+   "dataName": "Hokuzan",
+   "wikipedia": "Hokuzan",
+   "wikidata": "Q55523",
+   "from": 1400,
+   "to": 1421,
+   "umbrella": false,
+   "tint": 1
+  },
+  "holy-roman-empire": {
+   "dataName": "Holy Roman Empire",
+   "wikipedia": "Holy Roman Empire",
+   "wikidata": "Q12548",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": true,
+   "tint": null
+  },
+  "holy-roman-empire-minor-states": {
+   "dataName": "Holy Roman Empire Minor States",
+   "wikipedia": "Holy Roman Empire",
+   "wikidata": "Q12548",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "house-of-ascania": {
+   "dataName": "House of Ascania",
+   "wikipedia": "House of Ascania",
+   "wikidata": "Q168352",
+   "from": 1400,
+   "to": 1486,
+   "umbrella": false,
+   "tint": 4
+  },
+  "house-of-bourbon": {
+   "dataName": "House of Bourbon",
+   "wikipedia": "House of Bourbon",
+   "wikidata": "Q58389",
+   "from": 1400,
+   "to": 1594,
+   "umbrella": false,
+   "tint": 3
+  },
+  "house-of-habsburg": {
+   "dataName": "House of Habsburg",
+   "wikipedia": "House of Habsburg",
+   "wikidata": "Q65968",
+   "from": 1400,
+   "to": 1515,
+   "umbrella": false,
+   "tint": 2
+  },
+  "house-of-jagiellon": {
+   "dataName": "House of Jagiellon",
+   "wikipedia": "Jagiellonian dynasty",
+   "wikidata": "Q194355",
+   "from": 1450,
+   "to": 1571,
+   "umbrella": false,
+   "tint": 3
+  },
+  "house-of-luxembourg": {
+   "dataName": "House of Luxembourg",
+   "wikipedia": "House of Luxembourg",
+   "wikidata": "Q122293",
+   "from": 1400,
+   "to": 1414,
+   "umbrella": false,
+   "tint": 1
+  },
+  "house-of-oldenburg": {
+   "dataName": "House of Oldenburg",
+   "wikipedia": "House of Oldenburg",
+   "wikidata": "Q155594",
+   "from": 1450,
+   "to": 1458,
+   "umbrella": false,
+   "tint": 2
+  },
+  "house-of-savoy": {
+   "dataName": "House of Savoy",
+   "wikipedia": "House of Savoy",
+   "wikidata": "Q200229",
+   "from": 1564,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 6
+  },
+  "house-of-tocco": {
+   "dataName": "House of Tocco",
+   "wikipedia": "County Palatine of Cephalonia and Zakynthos",
+   "wikidata": "Q149846",
+   "from": 1400,
+   "to": 1414,
+   "umbrella": false,
+   "tint": 0
+  },
+  "house-of-valois-anjou": {
+   "dataName": "House of Valois-Anjou",
+   "wikipedia": "House of Valois-Anjou",
+   "wikidata": "Q1716871",
+   "from": 1400,
+   "to": 1486,
+   "umbrella": false,
+   "tint": 5
+  },
+  "hussain-shahi-dynasty": {
+   "dataName": "Hussain Shahi Dynasty",
+   "wikipedia": "Hussain Shahi dynasty",
+   "wikidata": "Q5949588",
+   "from": 1534,
+   "to": 1539,
+   "umbrella": false,
+   "tint": 1
+  },
+  "iberian-union": {
+   "dataName": "Iberian Union",
+   "wikipedia": "Iberian Union",
+   "wikidata": "Q377350",
+   "from": 1582,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "ifat-sultanate": {
+   "dataName": "Ifat Sultanate",
+   "wikipedia": "Sultanate of Ifat",
+   "wikidata": "Q157727",
+   "from": 1400,
+   "to": 1414,
+   "umbrella": false,
+   "tint": 0
+  },
+  "inca-empire": {
+   "dataName": "Inca Empire",
+   "wikipedia": "Inca Empire",
+   "wikidata": "Q28573",
+   "from": 1440,
+   "to": 1571,
+   "umbrella": false,
+   "tint": 0
+  },
+  "isle-of-man": {
+   "dataName": "Isle of Man",
+   "wikipedia": "Isle of Man",
+   "wikidata": "Q9676",
+   "from": 1400,
+   "to": 1401,
+   "umbrella": false,
+   "tint": 1
+  },
+  "itza-mayans": {
+   "dataName": "Itza Mayans",
+   "wikipedia": "Itza people",
+   "wikidata": "Q606377",
+   "from": 1547,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "jaffna-kingdom": {
+   "dataName": "Jaffna kingdom",
+   "wikipedia": "Jaffna kingdom",
+   "wikidata": "Q1311219",
+   "from": 1400,
+   "to": 1594,
+   "umbrella": false,
+   "tint": 1
+  },
+  "jalayirid-sultanate": {
+   "dataName": "Jalayirid Sultanate",
+   "wikipedia": "Jalayirid Sultanate",
+   "wikidata": "Q866716",
+   "from": 1400,
+   "to": 1401,
+   "umbrella": false,
+   "tint": 4
+  },
+  "jaunpur-sultanate": {
+   "dataName": "Jaunpur Sultanate",
+   "wikipedia": "Jaunpur Sultanate",
+   "wikidata": "Q167134",
+   "from": 1400,
+   "to": 1481,
+   "umbrella": false,
+   "tint": 2
+  },
+  "jesuit-reducciones": {
+   "dataName": "Jesuit Reducciones",
+   "wikipedia": "Jesuit missions among the Guaraní",
+   "wikidata": "Q465960",
+   "from": 1595,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "joseon": {
+   "dataName": "Joseon",
+   "wikipedia": "Joseon",
+   "wikidata": "Q28405",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "kalmar-union": {
+   "dataName": "Kalmar Union",
+   "wikipedia": "Kalmar Union",
+   "wikidata": "Q62623",
+   "from": 1402,
+   "to": 1525,
+   "umbrella": false,
+   "tint": 3
+  },
+  "kapisa": {
+   "dataName": "Kapisa",
+   "wikipedia": "Kapisa",
+   "wikidata": "Q28336424",
+   "from": 1475,
+   "to": 1506,
+   "umbrella": false,
+   "tint": 2
+  },
+  "kashmiri-sultanate": {
+   "dataName": "Kashmiri Sultanate",
+   "wikipedia": "Kashmir Sultanate",
+   "wikidata": "Q123027565",
+   "from": 1400,
+   "to": 1587,
+   "umbrella": false,
+   "tint": 5
+  },
+  "kathmandu": {
+   "dataName": "Kathmandu",
+   "wikipedia": "Kathmandu",
+   "wikidata": "Q3037",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "kazakh-khanate": {
+   "dataName": "Kazakh Khanate",
+   "wikipedia": "Kazakh Khanate",
+   "wikidata": "Q1433867",
+   "from": 1468,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "khanate-of-bukhara": {
+   "dataName": "Khanate of Bukhara",
+   "wikipedia": "Khanate of Bukhara",
+   "wikidata": "Q577668",
+   "from": 1516,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 5
+  },
+  "khanate-of-kazan": {
+   "dataName": "Khanate of Kazan",
+   "wikipedia": "Khanate of Kazan",
+   "wikidata": "Q186537",
+   "from": 1440,
+   "to": 1551,
+   "umbrella": false,
+   "tint": 3
+  },
+  "khanate-of-khiva": {
+   "dataName": "Khanate of Khiva",
+   "wikipedia": "Khanate of Khiva",
+   "wikidata": "Q491106",
+   "from": 1512,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 3
+  },
+  "khanate-of-sibir": {
+   "dataName": "Khanate of Sibir",
+   "wikipedia": "Khanate of Sibir",
+   "wikidata": "Q190513",
+   "from": 1429,
+   "to": 1587,
+   "umbrella": false,
+   "tint": 3
+  },
+  "khmer-empire": {
+   "dataName": "Khmer Empire",
+   "wikipedia": "Khmer Empire",
+   "wikidata": "Q201705",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "khoshut-khanate": {
+   "dataName": "Khoshut Khanate",
+   "wikipedia": "Khoshut Khanate",
+   "wikidata": "Q10921634",
+   "from": 1582,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "kingdom-of-bohemia": {
+   "dataName": "Kingdom of Bohemia",
+   "wikipedia": "Kingdom of Bohemia",
+   "wikidata": "Q42585",
+   "from": 1400,
+   "to": 1528,
+   "umbrella": false,
+   "tint": 6
+  },
+  "kingdom-of-bosnia": {
+   "dataName": "Kingdom of Bosnia",
+   "wikipedia": "Kingdom of Bosnia",
+   "wikidata": "Q2980623",
+   "from": 1400,
+   "to": 1481,
+   "umbrella": false,
+   "tint": 5
+  },
+  "kingdom-of-cyprus": {
+   "dataName": "Kingdom of Cyprus",
+   "wikipedia": "Kingdom of Cyprus",
+   "wikidata": "Q213638",
+   "from": 1400,
+   "to": 1491,
+   "umbrella": false,
+   "tint": 2
+  },
+  "kingdom-of-denmark": {
+   "dataName": "Kingdom of Denmark",
+   "wikipedia": "Danish Realm",
+   "wikidata": "Q756617",
+   "from": 1400,
+   "to": 1406,
+   "umbrella": false,
+   "tint": 1
+  },
+  "kingdom-of-england": {
+   "dataName": "Kingdom of England",
+   "wikipedia": "Kingdom of England",
+   "wikidata": "Q179876",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 3
+  },
+  "kingdom-of-france": {
+   "dataName": "Kingdom of France",
+   "wikipedia": "Kingdom of France",
+   "wikidata": "Q207162",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "kingdom-of-georgia": {
+   "dataName": "Kingdom of Georgia",
+   "wikipedia": "Kingdom of Georgia",
+   "wikidata": "Q154667",
+   "from": 1400,
+   "to": 1578,
+   "umbrella": false,
+   "tint": 3
+  },
+  "kingdom-of-hungary": {
+   "dataName": "Kingdom of Hungary",
+   "wikipedia": "Kingdom of Hungary",
+   "wikidata": "Q171150",
+   "from": 1400,
+   "to": 1546,
+   "umbrella": false,
+   "tint": 1
+  },
+  "kingdom-of-imereti": {
+   "dataName": "Kingdom of Imereti",
+   "wikipedia": "Kingdom of Imereti",
+   "wikidata": "Q1069959",
+   "from": 1468,
+   "to": 1578,
+   "umbrella": false,
+   "tint": 4
+  },
+  "kingdom-of-kakheti": {
+   "dataName": "Kingdom of Kakheti",
+   "wikipedia": "Kingdom of Kakheti",
+   "wikidata": "Q1209822",
+   "from": 1468,
+   "to": 1578,
+   "umbrella": false,
+   "tint": 4
+  },
+  "kingdom-of-kartli": {
+   "dataName": "Kingdom of Kartli",
+   "wikipedia": "Kingdom of Kartli",
+   "wikidata": "Q195972",
+   "from": 1463,
+   "to": 1467,
+   "umbrella": false,
+   "tint": 2
+  },
+  "kingdom-of-kongo": {
+   "dataName": "Kingdom of Kongo",
+   "wikipedia": "Kingdom of Kongo",
+   "wikidata": "Q796583",
+   "from": 1440,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "kingdom-of-mrauk-u": {
+   "dataName": "Kingdom of Mrauk U",
+   "wikipedia": "Kingdom of Mrauk U",
+   "wikidata": "Q10791211",
+   "from": 1429,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 4
+  },
+  "kingdom-of-mysore": {
+   "dataName": "Kingdom of Mysore",
+   "wikipedia": "Kingdom of Mysore",
+   "wikidata": "Q266923",
+   "from": 1572,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "kingdom-of-naples": {
+   "dataName": "Kingdom of Naples",
+   "wikipedia": "Kingdom of Naples",
+   "wikidata": "Q173065",
+   "from": 1400,
+   "to": 1501,
+   "umbrella": false,
+   "tint": 0
+  },
+  "kingdom-of-navarre": {
+   "dataName": "Kingdom of Navarre",
+   "wikipedia": "Kingdom of Navarre",
+   "wikidata": "Q200262",
+   "from": 1400,
+   "to": 1428,
+   "umbrella": false,
+   "tint": 1
+  },
+  "kingdom-of-pajana": {
+   "dataName": "Kingdom of Pajana",
+   "wikipedia": "Lontara script",
+   "wikidata": "Q1074947",
+   "from": 1572,
+   "to": 1587,
+   "umbrella": false,
+   "tint": 4
+  },
+  "kingdom-of-poland": {
+   "dataName": "Kingdom of Poland",
+   "wikipedia": "Kingdom of Poland",
+   "wikidata": "Q577867",
+   "from": 1400,
+   "to": 1449,
+   "umbrella": false,
+   "tint": 4
+  },
+  "kingdom-of-portugal": {
+   "dataName": "Kingdom of Portugal",
+   "wikipedia": "Kingdom of Portugal",
+   "wikidata": "Q45670",
+   "from": 1400,
+   "to": 1581,
+   "umbrella": false,
+   "tint": 5
+  },
+  "kingdom-of-scotland": {
+   "dataName": "Kingdom of Scotland",
+   "wikipedia": "Kingdom of Scotland",
+   "wikidata": "Q230791",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "kingdom-of-singapura": {
+   "dataName": "Kingdom of Singapura",
+   "wikipedia": "Kingdom of Singapura",
+   "wikidata": "Q27842",
+   "from": 1400,
+   "to": 1401,
+   "umbrella": false,
+   "tint": 0
+  },
+  "kingdom-of-spain": {
+   "dataName": "Kingdom of Spain",
+   "wikipedia": "Spain",
+   "wikidata": "Q29",
+   "from": 1516,
+   "to": 1581,
+   "umbrella": false,
+   "tint": 2
+  },
+  "kingdom-of-sweden": {
+   "dataName": "Kingdom of Sweden",
+   "wikipedia": "Sweden",
+   "wikidata": "Q34",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "lan-na": {
+   "dataName": "Lan Na",
+   "wikipedia": "Lan Na",
+   "wikidata": "Q1059707",
+   "from": 1600,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 4
+  },
+  "lan-na-kingdom": {
+   "dataName": "Lan Na Kingdom",
+   "wikipedia": "Lan Na",
+   "wikidata": "Q1059707",
+   "from": 1400,
+   "to": 1563,
+   "umbrella": false,
+   "tint": 4
+  },
+  "lan-xang": {
+   "dataName": "Lan Xang",
+   "wikipedia": "Lan Xang",
+   "wikidata": "Q853477",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "later-mayan-city-states": {
+   "dataName": "Later Mayan City-States",
+   "wikipedia": "Maya civilization",
+   "wikidata": "Q28567",
+   "from": 1400,
+   "to": 1546,
+   "umbrella": false,
+   "tint": 0
+  },
+  "le-dynasty": {
+   "dataName": "Lê Dynasty",
+   "wikipedia": "Lê dynasty",
+   "wikidata": "Q10800789",
+   "from": 1429,
+   "to": 1571,
+   "umbrella": false,
+   "tint": 4
+  },
+  "livonian-conference": {
+   "dataName": "Livonian Conference",
+   "wikipedia": "Livonian language",
+   "wikidata": "Q33698",
+   "from": 1422,
+   "to": 1563,
+   "umbrella": false,
+   "tint": 2
+  },
+  "lodi-dynasty": {
+   "dataName": "Lodi Dynasty",
+   "wikipedia": "Lodi dynasty",
+   "wikidata": "Q11709",
+   "from": 1453,
+   "to": 1528,
+   "umbrella": false,
+   "tint": 0
+  },
+  "mahdids": {
+   "dataName": "Mahdids",
+   "wikipedia": "Mahdids",
+   "wikidata": "Q1884830",
+   "from": 1400,
+   "to": 1506,
+   "umbrella": false,
+   "tint": 1
+  },
+  "majapahit": {
+   "dataName": "Majapahit",
+   "wikipedia": "Majapahit",
+   "wikidata": "Q49326",
+   "from": 1400,
+   "to": 1518,
+   "umbrella": false,
+   "tint": 1
+  },
+  "makuria": {
+   "dataName": "Makuria",
+   "wikipedia": "Makuria",
+   "wikidata": "Q829356",
+   "from": 1400,
+   "to": 1414,
+   "umbrella": false,
+   "tint": 0
+  },
+  "makuria-kingdom": {
+   "dataName": "Makuria Kingdom",
+   "wikipedia": "Makuria",
+   "wikidata": "Q829356",
+   "from": 1415,
+   "to": 1518,
+   "umbrella": false,
+   "tint": 0
+  },
+  "mali-empire": {
+   "dataName": "Mali Empire",
+   "wikipedia": "Mali Empire",
+   "wikidata": "Q184536",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "mamluk-sultanate": {
+   "dataName": "Mamluk Sultanate",
+   "wikipedia": "Mamluk Sultanate",
+   "wikidata": "Q282428",
+   "from": 1400,
+   "to": 1518,
+   "umbrella": false,
+   "tint": 3
+  },
+  "margraviate-of-brandenburg": {
+   "dataName": "Margraviate of Brandenburg",
+   "wikipedia": "Margraviate of Brandenburg",
+   "wikidata": "Q148499",
+   "from": 1400,
+   "to": 1414,
+   "umbrella": false,
+   "tint": 1
+  },
+  "margraviate-of-moravia": {
+   "dataName": "Margraviate of Moravia",
+   "wikipedia": "Margraviate of Moravia",
+   "wikidata": "Q2670751",
+   "from": 1400,
+   "to": 1414,
+   "umbrella": false,
+   "tint": 0
+  },
+  "marinid-sultanate": {
+   "dataName": "Marinid Sultanate",
+   "wikipedia": "Marinid Sultanate",
+   "wikidata": "Q582861",
+   "from": 1400,
+   "to": 1467,
+   "umbrella": false,
+   "tint": 0
+  },
+  "mataram-sultanate": {
+   "dataName": "Mataram Sultanate",
+   "wikipedia": "Mataram Sultanate",
+   "wikidata": "Q402145",
+   "from": 1588,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "maynila": {
+   "dataName": "Maynila",
+   "wikipedia": "Maynila (historical polity)",
+   "wikidata": "Q4401247",
+   "from": 1521,
+   "to": 1599,
+   "umbrella": false,
+   "tint": 2
+  },
+  "michoacan": {
+   "dataName": "Michoacán",
+   "wikipedia": "Michoacán",
+   "wikidata": "Q79861",
+   "from": 1400,
+   "to": 1533,
+   "umbrella": false,
+   "tint": 0
+  },
+  "ming-dynasty": {
+   "dataName": "Ming Dynasty",
+   "wikipedia": "Ming dynasty",
+   "wikidata": "Q9903",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "moghulistan": {
+   "dataName": "Moghulistan",
+   "wikipedia": "Moghulistan",
+   "wikidata": "Q1191125",
+   "from": 1463,
+   "to": 1518,
+   "umbrella": false,
+   "tint": 4
+  },
+  "mongol-khanate": {
+   "dataName": "Mongol Khanate",
+   "wikipedia": "Mongol khanate",
+   "wikidata": "Q19927420",
+   "from": 1468,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "mughal-empire": {
+   "dataName": "Mughal Empire",
+   "wikipedia": "Mughal Empire",
+   "wikidata": "Q33296",
+   "from": 1529,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "nalyvaiko-uprising": {
+   "dataName": "Nalyvaiko Uprising",
+   "wikipedia": "Nalyvaiko Uprising",
+   "wikidata": "Q2560470",
+   "from": 1595,
+   "to": 1599,
+   "umbrella": false,
+   "tint": 0
+  },
+  "namayan": {
+   "dataName": "Namayan",
+   "wikipedia": "Namayan",
+   "wikidata": "Q4401026",
+   "from": 1400,
+   "to": 1571,
+   "umbrella": false,
+   "tint": 3
+  },
+  "nanzan": {
+   "dataName": "Nanzan",
+   "wikipedia": "Nanzan",
+   "wikidata": "Q55522",
+   "from": 1400,
+   "to": 1401,
+   "umbrella": false,
+   "tint": 1
+  },
+  "nayaks-of-madurai": {
+   "dataName": "Nayaks of Madurai",
+   "wikipedia": "Madurai Nayak dynasty",
+   "wikidata": "Q1530838",
+   "from": 1529,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "nayaks-of-thanjavur": {
+   "dataName": "Nayaks of Thanjavur",
+   "wikipedia": "Thanjavur Nayak kingdom",
+   "wikidata": "Q1588434",
+   "from": 1534,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "ngo-dynasty": {
+   "dataName": "Ngô Dynasty",
+   "wikipedia": "Ngô dynasty",
+   "wikidata": "Q703919",
+   "from": 1400,
+   "to": 1406,
+   "umbrella": false,
+   "tint": 3
+  },
+  "nguyen-lords": {
+   "dataName": "Nguyễn lords",
+   "wikipedia": "Nguyễn lords",
+   "wikidata": "Q2301908",
+   "from": 1572,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 3
+  },
+  "nogai-horde": {
+   "dataName": "Nogai Horde",
+   "wikipedia": "Nogai Horde",
+   "wikidata": "Q631210",
+   "from": 1450,
+   "to": 1563,
+   "umbrella": false,
+   "tint": 4
+  },
+  "northern-yuan": {
+   "dataName": "Northern Yuan",
+   "wikipedia": "Northern Yuan",
+   "wikidata": "Q8959",
+   "from": 1400,
+   "to": 1439,
+   "umbrella": false,
+   "tint": 1
+  },
+  "novgorod-republic": {
+   "dataName": "Novgorod Republic",
+   "wikipedia": "Novgorod Republic",
+   "wikidata": "Q151536",
+   "from": 1400,
+   "to": 1481,
+   "umbrella": false,
+   "tint": 1
+  },
+  "old-kingdom-of-norway": {
+   "dataName": "Old Kingdom of Norway",
+   "wikipedia": "Norway",
+   "wikidata": "Q202266",
+   "from": 1400,
+   "to": 1401,
+   "umbrella": false,
+   "tint": 3
+  },
+  "ottoman-empire": {
+   "dataName": "Ottoman Empire",
+   "wikipedia": "Ottoman Empire",
+   "wikidata": "Q12560",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "papal-states": {
+   "dataName": "Papal States",
+   "wikipedia": "Papal States",
+   "wikidata": "Q170174",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 4
+  },
+  "patani-kingdom": {
+   "dataName": "Patani Kingdom",
+   "wikipedia": "Patani Kingdom",
+   "wikidata": "Q584435",
+   "from": 1572,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 4
+  },
+  "patriarchate-of-aquileia": {
+   "dataName": "Patriarchate of Aquileia",
+   "wikipedia": "Patriarchate of Aquileia",
+   "wikidata": "Q836894",
+   "from": 1400,
+   "to": 1449,
+   "umbrella": false,
+   "tint": 1
+  },
+  "polish-lithuania-kingdom": {
+   "dataName": "Polish-Lithuania Kingdom",
+   "wikipedia": "Jagiellonian dynasty",
+   "wikidata": "Q194355",
+   "from": 1400,
+   "to": 1449,
+   "umbrella": true,
+   "tint": null
+  },
+  "polish-lithuanian-commonwealth": {
+   "dataName": "Polish-Lithuanian Commonwealth",
+   "wikipedia": "Polish-Lithuanian Commonwealth",
+   "wikidata": "Q172107",
+   "from": 1572,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 3
+  },
+  "portuguese-africa": {
+   "dataName": "Portuguese Africa",
+   "wikipedia": "Portuguese Africa",
+   "wikidata": "Q16879646",
+   "from": 1507,
+   "to": 1581,
+   "umbrella": false,
+   "tint": 1
+  },
+  "portuguese-ceylon": {
+   "dataName": "Portuguese Ceylon",
+   "wikipedia": "Portuguese Ceylon",
+   "wikidata": "Q1709007",
+   "from": 1507,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "portuguese-colonies": {
+   "dataName": "Portuguese Colonies",
+   "wikipedia": "Portuguese Empire",
+   "wikidata": "Q200464",
+   "from": 1564,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 3
+  },
+  "portuguese-empire": {
+   "dataName": "Portuguese Empire",
+   "wikipedia": "Portuguese Empire",
+   "wikidata": "Q200464",
+   "from": 1502,
+   "to": 1581,
+   "umbrella": false,
+   "tint": 1
+  },
+  "principality-of-abkhazia": {
+   "dataName": "Principality of Abkhazia",
+   "wikipedia": "Principality of Abkhazia",
+   "wikidata": "Q1760473",
+   "from": 1468,
+   "to": 1578,
+   "umbrella": false,
+   "tint": 2
+  },
+  "principality-of-achaea": {
+   "dataName": "Principality of Achaea",
+   "wikipedia": "Principality of Achaea",
+   "wikidata": "Q332005",
+   "from": 1400,
+   "to": 1439,
+   "umbrella": false,
+   "tint": 4
+  },
+  "principality-of-guria": {
+   "dataName": "Principality of Guria",
+   "wikipedia": "Principality of Guria",
+   "wikidata": "Q2195101",
+   "from": 1468,
+   "to": 1578,
+   "umbrella": false,
+   "tint": 3
+  },
+  "principality-of-mingrelia": {
+   "dataName": "Principality of Mingrelia",
+   "wikipedia": "Principality of Mingrelia",
+   "wikidata": "Q2907860",
+   "from": 1468,
+   "to": 1578,
+   "umbrella": false,
+   "tint": 1
+  },
+  "principality-of-moldavia": {
+   "dataName": "Principality of Moldavia",
+   "wikipedia": "Moldavia",
+   "wikidata": "Q10957559",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 5
+  },
+  "principality-of-orange": {
+   "dataName": "Principality of Orange",
+   "wikipedia": "Principality of Orange",
+   "wikidata": "Q2281221",
+   "from": 1400,
+   "to": 1571,
+   "umbrella": false,
+   "tint": 2
+  },
+  "principality-of-smolensk": {
+   "dataName": "Principality of Smolensk",
+   "wikipedia": "Principality of Smolensk",
+   "wikidata": "Q1483495",
+   "from": 1400,
+   "to": 1406,
+   "umbrella": false,
+   "tint": 1
+  },
+  "principality-of-theodoro": {
+   "dataName": "Principality of Theodoro",
+   "wikipedia": "Principality of Theodoro",
+   "wikidata": "Q874954",
+   "from": 1400,
+   "to": 1474,
+   "umbrella": false,
+   "tint": 0
+  },
+  "principality-of-transylvania": {
+   "dataName": "Principality of Transylvania",
+   "wikipedia": "Principality of Transylvania (1570-1711)",
+   "wikidata": "Q655621",
+   "from": 1572,
+   "to": 1599,
+   "umbrella": false,
+   "tint": 1
+  },
+  "principality-of-valona-and-kanina": {
+   "dataName": "Principality of Valona and Kanina",
+   "wikipedia": "Principality of Valona",
+   "wikidata": "Q7245121",
+   "from": 1400,
+   "to": 1421,
+   "umbrella": false,
+   "tint": 1
+  },
+  "principality-of-vladimir-suzdal": {
+   "dataName": "Principality of Vladimir-Suzdal",
+   "wikipedia": "Vladimir-Suzdal",
+   "wikidata": "Q83546",
+   "from": 1400,
+   "to": 1486,
+   "umbrella": false,
+   "tint": 2
+  },
+  "principality-of-wallachia": {
+   "dataName": "Principality of Wallachia",
+   "wikipedia": "Wallachia",
+   "wikidata": "Q171393",
+   "from": 1400,
+   "to": 1599,
+   "umbrella": false,
+   "tint": 3
+  },
+  "prome-kingdom": {
+   "dataName": "Prome Kingdom",
+   "wikipedia": "Prome Kingdom",
+   "wikidata": "Q13576027",
+   "from": 1482,
+   "to": 1546,
+   "umbrella": false,
+   "tint": 5
+  },
+  "pskov-republic": {
+   "dataName": "Pskov Republic",
+   "wikipedia": "Pskov Republic",
+   "wikidata": "Q317078",
+   "from": 1400,
+   "to": 1511,
+   "umbrella": false,
+   "tint": 4
+  },
+  "qara-qoyunlu": {
+   "dataName": "Qara Qoyunlu",
+   "wikipedia": "Qara Qoyunlu",
+   "wikidata": "Q324470",
+   "from": 1400,
+   "to": 1467,
+   "umbrella": false,
+   "tint": 5
+  },
+  "qasim-khanate": {
+   "dataName": "Qasim Khanate",
+   "wikipedia": "Qasim Khanate",
+   "wikidata": "Q836169",
+   "from": 1453,
+   "to": 1551,
+   "umbrella": false,
+   "tint": 3
+  },
+  "rajahnate-of-cebu": {
+   "dataName": "Rajahnate of Cebu",
+   "wikipedia": "Cebu (historical polity)",
+   "wikidata": "Q4401071",
+   "from": 1497,
+   "to": 1571,
+   "umbrella": false,
+   "tint": 0
+  },
+  "ramadanid-emirate": {
+   "dataName": "Ramadanid Emirate",
+   "wikipedia": "Ramadanid Emirate",
+   "wikidata": "Q2261321",
+   "from": 1400,
+   "to": 1515,
+   "umbrella": false,
+   "tint": 1
+  },
+  "rasulid-dynasty": {
+   "dataName": "Rasulid Dynasty",
+   "wikipedia": "Rasulid dynasty",
+   "wikidata": "Q2132267",
+   "from": 1400,
+   "to": 1458,
+   "umbrella": false,
+   "tint": 0
+  },
+  "republic-of-florence": {
+   "dataName": "Republic of Florence",
+   "wikipedia": "Republic of Florence",
+   "wikidata": "Q148540",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "republic-of-genoa": {
+   "dataName": "Republic of Genoa",
+   "wikipedia": "Republic of Genoa",
+   "wikidata": "Q174306",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 4
+  },
+  "republic-of-pisa": {
+   "dataName": "Republic of Pisa",
+   "wikipedia": "Republic of Pisa",
+   "wikidata": "Q1365493",
+   "from": 1400,
+   "to": 1401,
+   "umbrella": false,
+   "tint": 2
+  },
+  "republic-of-ragusa": {
+   "dataName": "Republic of Ragusa",
+   "wikipedia": "Republic of Ragusa",
+   "wikidata": "Q208169",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "republic-of-venice": {
+   "dataName": "Republic of Venice",
+   "wikipedia": "Republic of Venice",
+   "wikidata": "Q4948",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 3
+  },
+  "ryazan": {
+   "dataName": "Ryazan",
+   "wikipedia": "Ryazan",
+   "wikidata": "Q269109",
+   "from": 1453,
+   "to": 1520,
+   "umbrella": false,
+   "tint": 1
+  },
+  "ryukyu-kingdom": {
+   "dataName": "Ryukyu Kingdom",
+   "wikipedia": "Ryukyu Kingdom",
+   "wikidata": "Q28025",
+   "from": 1429,
+   "to": 1520,
+   "umbrella": false,
+   "tint": 0
+  },
+  "saadi-sultanate": {
+   "dataName": "Saadi Sultanate",
+   "wikipedia": "Saadi Sultanate",
+   "wikidata": "Q1136188",
+   "from": 1556,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "safavid-dynasty": {
+   "dataName": "Safavid Dynasty",
+   "wikipedia": "Safavid dynasty",
+   "wikidata": "Q161205",
+   "from": 1502,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "samtskhe-saatabago": {
+   "dataName": "Samtskhe-Saatabago",
+   "wikipedia": "Samtskhe-Saatabago",
+   "wikidata": "Q2029317",
+   "from": 1468,
+   "to": 1506,
+   "umbrella": false,
+   "tint": 1
+  },
+  "samudera-pasai-sultanate": {
+   "dataName": "Samudera Pasai Sultanate",
+   "wikipedia": "Samudera Pasai Sultanate",
+   "wikidata": "Q3284315",
+   "from": 1400,
+   "to": 1520,
+   "umbrella": false,
+   "tint": 2
+  },
+  "sayyid-dynasty": {
+   "dataName": "Sayyid Dynasty",
+   "wikipedia": "Sayyid dynasty",
+   "wikidata": "Q1331421",
+   "from": 1415,
+   "to": 1452,
+   "umbrella": false,
+   "tint": 0
+  },
+  "serbian-despots": {
+   "dataName": "Serbian Despots",
+   "wikipedia": "Serbian Despotate",
+   "wikidata": "Q878319",
+   "from": 1400,
+   "to": 1421,
+   "umbrella": false,
+   "tint": 1
+  },
+  "serbian-empire": {
+   "dataName": "Serbian Empire",
+   "wikipedia": "Serbian Empire",
+   "wikidata": "Q1406298",
+   "from": 1400,
+   "to": 1458,
+   "umbrella": false,
+   "tint": 4
+  },
+  "shan-states": {
+   "dataName": "Shan States",
+   "wikipedia": "Shan States",
+   "wikidata": "Q4765854",
+   "from": 1400,
+   "to": 1563,
+   "umbrella": false,
+   "tint": 3
+  },
+  "shaybanids": {
+   "dataName": "Shaybanids",
+   "wikipedia": "Shaybanids",
+   "wikidata": "Q856361",
+   "from": 1497,
+   "to": 1511,
+   "umbrella": false,
+   "tint": 3
+  },
+  "shirvan": {
+   "dataName": "Shirvan",
+   "wikipedia": "Shirvan",
+   "wikidata": "Q638064",
+   "from": 1415,
+   "to": 1539,
+   "umbrella": false,
+   "tint": 0
+  },
+  "sind-samma-dynasty": {
+   "dataName": "Sind-Samma Dynasty",
+   "wikipedia": "Samma dynasty",
+   "wikidata": "Q27260",
+   "from": 1400,
+   "to": 1525,
+   "umbrella": false,
+   "tint": 0
+  },
+  "small-horde": {
+   "dataName": "Small Horde",
+   "wikipedia": "Nogai Horde",
+   "wikidata": "Q631210",
+   "from": 1564,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "songhai-empire": {
+   "dataName": "Songhai Empire",
+   "wikipedia": "Songhai Empire",
+   "wikidata": "Q202687",
+   "from": 1463,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "spanish-empire": {
+   "dataName": "Spanish Empire",
+   "wikipedia": "Spanish Empire",
+   "wikidata": "Q80702",
+   "from": 1516,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "sukhothai-kingdom": {
+   "dataName": "Sukhothai Kingdom",
+   "wikipedia": "Sukhothai Kingdom",
+   "wikidata": "Q863279",
+   "from": 1400,
+   "to": 1458,
+   "umbrella": false,
+   "tint": 1
+  },
+  "sultanate-of-aceh": {
+   "dataName": "Sultanate of Aceh",
+   "wikipedia": "Aceh Sultanate",
+   "wikidata": "Q1061057",
+   "from": 1516,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "sultanate-of-banjar": {
+   "dataName": "Sultanate of Banjar",
+   "wikipedia": "Sultanate of Banjar",
+   "wikidata": "Q1660566",
+   "from": 1526,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "sultanate-of-banten": {
+   "dataName": "Sultanate of Banten",
+   "wikipedia": "Banten Sultanate",
+   "wikidata": "Q734867",
+   "from": 1529,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "sultanate-of-bengal": {
+   "dataName": "Sultanate of Bengal",
+   "wikipedia": "Bengal Sultanate",
+   "wikidata": "Q4083686",
+   "from": 1400,
+   "to": 1533,
+   "umbrella": false,
+   "tint": 1
+  },
+  "sultanate-of-bone": {
+   "dataName": "Sultanate of Bone",
+   "wikipedia": "Sultan",
+   "wikidata": "Q43292",
+   "from": 1512,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "sultanate-of-brunei": {
+   "dataName": "Sultanate of Brunei",
+   "wikipedia": "Bruneian Sultanate (1368-1888)",
+   "wikidata": "Q887803",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "sultanate-of-cirebon": {
+   "dataName": "Sultanate of Cirebon",
+   "wikipedia": "Sultanate of Cirebon",
+   "wikidata": "Q2077648",
+   "from": 1482,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 3
+  },
+  "sultanate-of-gowa": {
+   "dataName": "Sultanate of Gowa",
+   "wikipedia": "Sultanate of Gowa",
+   "wikidata": "Q1408641",
+   "from": 1512,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "sultanate-of-harar": {
+   "dataName": "Sultanate of Harar",
+   "wikipedia": "Adal Sultanate",
+   "wikidata": "Q2365048",
+   "from": 1547,
+   "to": 1578,
+   "umbrella": false,
+   "tint": 2
+  },
+  "sultanate-of-johor": {
+   "dataName": "Sultanate of Johor",
+   "wikipedia": "Johor Sultanate",
+   "wikidata": "Q1150344",
+   "from": 1529,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "sultanate-of-kedah": {
+   "dataName": "Sultanate of Kedah",
+   "wikipedia": "Kedah Sultanate",
+   "wikidata": "Q1317579",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "sultanate-of-maguindanao": {
+   "dataName": "Sultanate of Maguindanao",
+   "wikipedia": "Sultanate of Maguindanao",
+   "wikidata": "Q248572",
+   "from": 1521,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "sultanate-of-malacca": {
+   "dataName": "Sultanate of Malacca",
+   "wikipedia": "Malacca Sultanate",
+   "wikidata": "Q46652",
+   "from": 1459,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "sultanate-of-palembang": {
+   "dataName": "Sultanate of Palembang",
+   "wikipedia": "Palembang Sultanate",
+   "wikidata": "Q3503555",
+   "from": 1459,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 3
+  },
+  "sultanate-of-perak": {
+   "dataName": "Sultanate of Perak",
+   "wikipedia": "Sultan of Perak",
+   "wikidata": "Q2649311",
+   "from": 1529,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "sultanate-of-sulu": {
+   "dataName": "Sultanate of Sulu",
+   "wikipedia": "Sultanate of Sulu",
+   "wikidata": "Q422065",
+   "from": 1459,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "sunda-kingdom": {
+   "dataName": "Sunda Kingdom",
+   "wikipedia": "Sunda Kingdom",
+   "wikidata": "Q1469742",
+   "from": 1400,
+   "to": 1578,
+   "umbrella": false,
+   "tint": 2
+  },
+  "sur-empire": {
+   "dataName": "Sur Empire",
+   "wikipedia": "Sur Empire",
+   "wikidata": "Q373650",
+   "from": 1540,
+   "to": 1594,
+   "umbrella": false,
+   "tint": 1
+  },
+  "swiss-confederation": {
+   "dataName": "Swiss Confederation",
+   "wikipedia": "Switzerland",
+   "wikidata": "Q39",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 5
+  },
+  "tahirid-sultanate": {
+   "dataName": "Tahirid Sultanate",
+   "wikipedia": "Tahirid dynasty",
+   "wikidata": "Q373981",
+   "from": 1459,
+   "to": 1515,
+   "umbrella": false,
+   "tint": 0
+  },
+  "tenochtitlan": {
+   "dataName": "Tenochtitlan",
+   "wikipedia": "Tenochtitlan",
+   "wikidata": "Q13695",
+   "from": 1400,
+   "to": 1428,
+   "umbrella": false,
+   "tint": 0
+  },
+  "teutonic-order": {
+   "dataName": "Teutonic Order",
+   "wikipedia": "Teutonic Order",
+   "wikidata": "Q48189",
+   "from": 1400,
+   "to": 1525,
+   "umbrella": false,
+   "tint": 2
+  },
+  "texcoco": {
+   "dataName": "Texcoco",
+   "wikipedia": "Texcoco",
+   "wikidata": "Q1178043",
+   "from": 1400,
+   "to": 1428,
+   "umbrella": false,
+   "tint": 1
+  },
+  "tibet": {
+   "dataName": "Tibet",
+   "wikipedia": "History of Tibet",
+   "wikidata": "Q521263",
+   "from": 1400,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "timurid-empire": {
+   "dataName": "Timurid Empire",
+   "wikipedia": "Timurid Empire",
+   "wikidata": "Q484195",
+   "from": 1400,
+   "to": 1528,
+   "umbrella": false,
+   "tint": 1
+  },
+  "tokugawa-shogunate": {
+   "dataName": "Tokugawa Shogunate",
+   "wikipedia": "Tokugawa shogunate",
+   "wikidata": "Q205662",
+   "from": 1600,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "tondo": {
+   "dataName": "Tondo",
+   "wikipedia": "Tondo (historical polity)",
+   "wikidata": "Q1642472",
+   "from": 1400,
+   "to": 1571,
+   "umbrella": false,
+   "tint": 1
+  },
+  "trinh-lords": {
+   "dataName": "Trịnh lords",
+   "wikipedia": "Trịnh lords",
+   "wikidata": "Q2267508",
+   "from": 1572,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 4
+  },
+  "tsardom-of-russia": {
+   "dataName": "Tsardom of Russia",
+   "wikipedia": "Tsardom of Russia",
+   "wikidata": "Q186096",
+   "from": 1547,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 1
+  },
+  "tughlaq-dynasty": {
+   "dataName": "Tughlaq Dynasty",
+   "wikipedia": "Tughlaq dynasty",
+   "wikidata": "Q1124402",
+   "from": 1400,
+   "to": 1414,
+   "umbrella": false,
+   "tint": 0
+  },
+  "tumed": {
+   "dataName": "Tümed",
+   "wikipedia": "Tumed",
+   "wikidata": "Q3402317",
+   "from": 1547,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 4
+  },
+  "tver": {
+   "dataName": "Tver",
+   "wikipedia": "Tver",
+   "wikidata": "Q2288",
+   "from": 1400,
+   "to": 1486,
+   "umbrella": false,
+   "tint": 3
+  },
+  "union-of-utrecht": {
+   "dataName": "Union of Utrecht",
+   "wikipedia": "Union of Utrecht",
+   "wikidata": "Q216165",
+   "from": 1579,
+   "to": 1581,
+   "umbrella": false,
+   "tint": 3
+  },
+  "vijayanagara-empire": {
+   "dataName": "Vijayanagara Empire",
+   "wikipedia": "Vijayanagara Empire",
+   "wikidata": "Q167639",
+   "from": 1400,
+   "to": 1571,
+   "umbrella": false,
+   "tint": 0
+  },
+  "warring-states-japan": {
+   "dataName": "Warring States Japan",
+   "wikipedia": "Sengoku period",
+   "wikidata": "Q204023",
+   "from": 1468,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 0
+  },
+  "wattasid-dynasty": {
+   "dataName": "Wattasid dynasty",
+   "wikipedia": "Wattasid dynasty",
+   "wikidata": "Q970799",
+   "from": 1468,
+   "to": 1555,
+   "umbrella": false,
+   "tint": 0
+  },
+  "western-moghulistan": {
+   "dataName": "Western Moghulistan",
+   "wikipedia": "Moghulistan",
+   "wikidata": "Q1191125",
+   "from": 1519,
+   "to": 1600,
+   "umbrella": false,
+   "tint": 2
+  },
+  "zayyanid-dynasty": {
+   "dataName": "Zayyanid dynasty",
+   "wikipedia": "Kingdom of Tlemcen",
+   "wikidata": "Q307697",
+   "from": 1400,
+   "to": 1555,
+   "umbrella": false,
+   "tint": 3
+  }
+ }
+}

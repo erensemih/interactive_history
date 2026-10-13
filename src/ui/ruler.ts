@@ -30,7 +30,7 @@ const STEP_PITCH = 22;
 const STEP_RADIUS = 10;
 
 /**
- * The time control: one slim ruler over the whole dataset (1400–1600) with a brush for the selected
+ * The time control: one slim ruler over the whole dataset (the years of the border data) with a brush for the selected
  * range and a small marker inside it for the year whose borders the map draws. Dragging the brush
  * moves the range, its two edges resize it, a click on the empty track recentres it. There are no
  * number fields or presets: the ruler is the whole control. It selects *time*; it never knows about places.

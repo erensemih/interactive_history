@@ -2,21 +2,18 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { assembleData, type AppData, type RawFiles } from '../../src/data/load';
 
-const dir = join(__dirname, '..', '..', 'public', 'data');
-const read = <T>(path: string): T => JSON.parse(readFileSync(join(dir, path), 'utf8')) as T;
+const root = join(__dirname, '..', '..');
 
-let cached: AppData | null = null;
-
-/** The shipped data files, assembled exactly as the app assembles them. Read once per test file. */
-export function shippedData(): AppData {
-  if (cached) return cached;
+function load(dir: string): AppData {
+  const read = <T>(path: string): T => JSON.parse(readFileSync(join(dir, path), 'utf8')) as T;
   const index = read<RawFiles['index']>('borders/polities.json');
   const [from, to] = index.meta.range;
-  const eventsIndex = read<{ files: string[] }>('events/index.json');
-  cached = assembleData({
+  const eventsIndex = read<{ files: string[]; open?: { from: number; to: number } }>('events/index.json');
+  return assembleData({
     index,
     entitiesDoc: read<RawFiles['entitiesDoc']>('entities.json'),
     categoriesDoc: read<RawFiles['categoriesDoc']>('categories.json'),
+    open: eventsIndex.open,
     eventSets: eventsIndex.files.map((file) => ({
       file,
       doc: read<RawFiles['eventSets'][number]['doc']>(`events/${file}`),
@@ -24,5 +21,20 @@ export function shippedData(): AppData {
     land: read<RawFiles['land']>('geo/land.json'),
     bordersRaw: read<RawFiles['bordersRaw']>(`borders/cliopatria-${from}-${to}.json`),
   });
-  return cached;
 }
+
+const cache = new Map<string, AppData>();
+const once = (dir: string) => {
+  let data = cache.get(dir);
+  if (!data) cache.set(dir, (data = load(dir)));
+  return data;
+};
+
+/** The published data (public/data: 1800–2000), assembled exactly as the app assembles it. Read once per test file. */
+export const shippedData = (): AppData => once(join(root, 'public', 'data'));
+
+/**
+ * An archived period (data/<period>, for example "1400-1600"): the same files, outside the published build. Tests of
+ * the mechanics that do not care which era they run on use one, and so keep the archive honest.
+ */
+export const archivedData = (period: string): AppData => once(join(root, 'data', period));

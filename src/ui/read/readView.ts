@@ -4,7 +4,7 @@ import { pickActive, type StepBox } from '../../ai/activeStep';
 import type { AiContext } from '../../ai/context';
 import type { Director } from '../../ai/director';
 import { errorCopy } from '../../ai/errorCopy';
-import { isStepped, shortOf, stepsOf, type StepView } from '../../ai/narration';
+import { stepsOf, type StepView } from '../../ai/narration';
 import type { Presentation } from '../../ai/presentation';
 import type { AiSession, AssistantItem, ContextItem, UserItem } from '../../ai/session';
 import { paragraphsOf, parseAnswer } from '../../ai/steps';
@@ -415,10 +415,10 @@ export class ReadView {
 
   private assistant(item: AssistantItem): TemplateResult {
     const { session, director, actions } = this.deps;
-    const stepped = isStepped(item);
-    // A narration is its steps; a single-part answer is one unnumbered step, so it has a map to point at too.
-    const views: StepView[] = stepped ? stepsOf(item) : this.shortAsStep(item);
-    const preamble = stepped ? parseAnswer(item.text).preamble : '';
+    // A narration is its steps; an answer to a plain question is one unnumbered step, so it has a map to point at too.
+    const views: StepView[] = stepsOf(item);
+    const stepped = views.length > 1;
+    const preamble = parseAnswer(item.text).preamble;
     const active = director.active;
     const isLast = session.items[session.items.length - 1] === item;
     const streaming = item.status === 'streaming';
@@ -491,23 +491,6 @@ export class ReadView {
           : nothing
       }
     </article>`;
-  }
-
-  /** A single-part answer as the one step it is. */
-  private shortAsStep(item: AssistantItem): StepView[] {
-    const short = shortOf(item);
-    if (!short.body.trim() && !short.title && item.plan.empty) return [];
-    return [
-      {
-        n: 1,
-        title: short.title,
-        caption: '',
-        body: short.body,
-        hasText: short.body.trim().length > 0,
-        hasScene: short.hasScene,
-        year: null,
-      },
-    ];
   }
 
   private step(item: AssistantItem, s: StepView, numbered: boolean, active: boolean, caret: boolean): TemplateResult {

@@ -1,0 +1,4 @@
+{
+  "open": { "from": 1490, "to": 1520 },
+  "files": ["global.json", "ottoman.json", "ming.json"]
+}

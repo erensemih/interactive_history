@@ -21,9 +21,9 @@ import {
 import { Resolver } from '../src/ai/resolve';
 import { createTools } from '../src/ai/tools';
 import { appEventsSource, gatherPassages, type SourceProvider } from '../src/ai/sources';
-import { shippedData } from './helpers/shipped';
+import { archivedData } from './helpers/shipped';
 
-const data = shippedData();
+const data = archivedData('1400-1600');
 const resolver = new Resolver(data);
 const range = { from: 1500, to: 1550 };
 
@@ -110,7 +110,7 @@ describe('instructions', () => {
     const text = instructions(true);
     expect(INSTRUCTIONS_FILE).toContain('onu olay olarak işaretle');
     expect(text).toContain('`[olay adı](olay:KİMLİK)`');
-    expect(text).toContain("`[Çaldıran Muharebesi](olay:caldiran-1514)'nde`");
+    expect(text).toContain("`[Stalingrad Muharebesi](olay:stalingrad-1942)'nde`");
     expect(text).toMatch(/başlıklarda da kullanma/);
   });
 
@@ -121,7 +121,12 @@ describe('instructions', () => {
     expect(text).toMatch(/step`\{n, title, caption\}/);
     expect(text).toContain('"## n. Başlık"');
     expect(text).toContain('Altyazı bu metnin özeti olmalı');
-    expect(text).toMatch(/Tek parça cevap: `step` çağırma/);
+    // every answer is a narration: a plain question is one step (n:1), never a different format the model has to choose
+    expect(text).toContain('Her cevap adımlıdır');
+    expect(text).toMatch(/Tek bir şeyi anlatıyorsan tek adım yaz \(n:1\)/);
+    expect(text).toContain('Biçim seçmen gerekmez');
+    expect(text).toContain('"Devamını oku"');
+    expect(text).not.toContain('Tek parça cevap');
   });
 
   it('say that every step owns the map, and that an event of the app is shown by its own marker', () => {
@@ -146,8 +151,12 @@ describe('instructions', () => {
     const text = instructions(true);
     expect(text).toContain('ÖRNEK');
     expect(text).toMatch(/step\{n:1,title:"[^"]+",caption:"[^"]+"/);
-    expect(text).toMatch(/\n ## 2\. Çaldıran\n/);
-    expect(text).toContain('show_event{step:1,event:"safevi-1501"}');
+    expect(text).toMatch(/\n ## 2\. Stalingrad\n/);
+    expect(text).toContain('show_event{step:1,event:"barbarossa-1941"}');
+    // and one of a single step: a plain question has a caption and a text too
+    expect(text).toContain('ÖRNEK (tek adımlı');
+    expect(text).toMatch(/step\{n:1,title:"Stalingrad",caption:"[^"]+"\}/);
+    expect(text).toMatch(/\n ## 1\. Stalingrad\n/);
     expect(instructions(false)).not.toContain('ÖRNEK');
   });
 
@@ -157,6 +166,9 @@ describe('instructions', () => {
     expect(text).not.toContain('highlight');
     expect(text).not.toContain('show_event');
     expect(text).toContain('## n. Başlık');
+    // the caption is made from the text: its first sentences, with the rest behind "Devamını oku"
+    expect(text).toContain('ilk bir iki cümlesi');
+    expect(text).toContain('tek adım yaz');
   });
 });
 
@@ -360,8 +372,8 @@ describe('buildTurns', () => {
     const sources = [
       { label: 'Kaynak', passages: Array.from({ length: 40 }, (_, i) => ({ title: `T${i}`, text: 'x'.repeat(1000) })) },
     ];
-    const turns = buildTurns(base({ sources }), 20_000);
-    expect(turns.reduce((n, t) => n + utf8Bytes(t.content), 0)).toBeLessThanOrEqual(20_000);
+    const turns = buildTurns(base({ sources }), 26_000);
+    expect(turns.reduce((n, t) => n + utf8Bytes(t.content), 0)).toBeLessThanOrEqual(26_000);
     expect(turns.at(-1)!.content).toContain('İSTEK');
   });
 

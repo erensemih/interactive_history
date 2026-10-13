@@ -12,11 +12,13 @@ import { shippedData } from './helpers/shipped';
 
 const data = shippedData();
 const FAST = { thinkMs: 0, roundMs: 0, chunkChars: 500, chunkMs: 0 };
-const anatolia = (): AiContext =>
+/** A place in Germany (Berlin) over the war years: the scripted narration of Germany at war is for it. */
+const berlin = (): AiContext =>
   contextFromView(
-    deriveView({ ...DEFAULT_STATE, range: { from: 1500, to: 1550 }, places: [{ lon: 35.5, lat: 38.9 }] }, data),
+    deriveView({ ...DEFAULT_STATE, range: { from: 1939, to: 1945 }, places: [{ lon: 13.4, lat: 52.52 }] }, data),
     data,
   );
+const AXIS_QUESTION = 'Almanya ile İtalya arasındaki ittifak neydi?';
 
 function setup(scripts: MockScript[] = createMockScripts(data)) {
   const framed: Drawing[] = [];
@@ -40,44 +42,44 @@ describe('the director', () => {
     expect(director.active).toBeNull();
     const seenActive: (number | undefined)[] = [];
     director.subscribe(() => seenActive.push(director.active?.n));
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     expect(director.active).toEqual({ itemId: answer(session).id, n: 1 });
-    expect(director.drawing?.highlights).toEqual(['ottoman-empire']);
-    expect(director.drawing?.events).toEqual(['safevi-1501']);
-    expect(director.year).toBe(1505);
+    expect(director.drawing?.highlights).toEqual(['nazi-germany']);
+    expect(director.drawing?.events).toEqual(['polonya-isgali-1939']);
+    expect(director.year).toBe(1939);
     expect(seenActive.length).toBeGreaterThan(0);
   });
 
   it('each step owns the map: moving to another step swaps the drawing, and going back restores it', async () => {
     const { session, director } = setup();
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     const id = answer(session).id;
-    director.activate(id, 5);
-    expect(director.drawing?.links.map((l) => l.relation)).toEqual(['alliance']);
-    expect(director.drawing?.events).toEqual([]);
-    expect(director.year).toBe(1536);
+    director.activate(id, 6);
+    expect(director.drawing?.events).toEqual(['stalingrad-1942', 'el-alamein-1942']);
+    expect(director.drawing?.highlights).toEqual([]);
+    expect(director.year).toBe(1942);
     director.activate(id, 2);
-    // only step 2's own: the battle of Çaldıran (the app draws its war line); nothing of the alliance on the way back
+    // only step 2's own: the Battle of France and the armistice (the app draws the war line); nothing of Stalingrad on the way back
     expect(director.drawing?.links).toEqual([]);
-    expect(director.drawing?.events).toEqual(['caldiran-1514']);
-    expect(director.year).toBe(1514);
+    expect(director.drawing?.events).toEqual(['fransa-muharebesi-1940', 'compiegne-ateskesi-1940']);
+    expect(director.year).toBe(1940);
     director.activate(id, 1);
     expect(director.drawing?.links).toEqual([]);
-    expect(director.drawing?.events).toEqual(['safevi-1501']);
-    expect(director.year).toBe(1505);
+    expect(director.drawing?.events).toEqual(['polonya-isgali-1939']);
+    expect(director.year).toBe(1939);
   });
 
   it('no step shows anything of another: every pair of steps has a map of its own', async () => {
     const { session, director } = setup();
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     const id = answer(session).id;
-    const states = [1, 2, 3, 4, 5, 6].map((n) => {
+    const states = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => {
       director.activate(id, n);
       return JSON.stringify(director.drawing);
     });
-    expect(new Set(states).size).toBe(6);
+    expect(new Set(states).size).toBe(8);
     // and going back to any of them gives what it gave the first time
-    for (const n of [4, 2, 6, 1, 3, 5]) {
+    for (const n of [4, 2, 6, 1, 8, 3, 5, 7]) {
       director.activate(id, n);
       expect(JSON.stringify(director.drawing)).toBe(states[n - 1]);
     }
@@ -85,33 +87,36 @@ describe('the director', () => {
 
   it('brings the drawing of each step into view as the step becomes the active one', async () => {
     const { session, director, framed } = setup();
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     const id = answer(session).id;
     await settle();
     expect(framed).toHaveLength(1); // the first step, once the plan was in: one frame, not one per tool call
-    expect(framed[0]!.highlights).toEqual(['ottoman-empire']);
-    expect(framed[0]!.events).toEqual(['safevi-1501']);
+    expect(framed[0]!.highlights).toEqual(['nazi-germany']);
+    expect(framed[0]!.events).toEqual(['polonya-isgali-1939']);
     director.activate(id, 3);
     director.activate(id, 4);
     director.activate(id, 4); // the same step again changes nothing
-    expect(framed.map((d) => d.year)).toEqual([1505, 1517, 1526]);
-    expect(framed.at(-1)!.events).toEqual(['mohac-1526', 'viyana-1529']);
+    expect(framed.map((d) => d.year)).toEqual([1939, 1940, 1941]);
+    expect(framed.at(-1)!.events).toEqual(['barbarossa-1941', 'leningrad-kusatmasi-1941']);
   });
 
   it('a step that draws nothing leaves the camera alone', async () => {
     const quiet: MockScript = (req) =>
       req.meta.question === 'sessiz'
-        ? { calls: [{ name: 'step', input: { n: 1, title: 'Yıl', caption: 'Sadece bir yıl.', year: 1520 } }], text: 'Sadece bir yıl.' }
+        ? {
+            calls: [{ name: 'step', input: { n: 1, title: 'Yıl', caption: 'Sadece bir yıl.', year: 1942 } }],
+            text: 'Sadece bir yıl.',
+          }
         : null;
     const { session, framed } = setup([quiet, ...createMockScripts(data)]);
-    await session.send({ text: 'sessiz', mode: 'qa' }, anatolia());
+    await session.send({ text: 'sessiz', mode: 'qa' }, berlin());
     await settle();
     expect(framed).toEqual([]);
   });
 
   it('small moves of the map by the reader change nothing; the camera keeps following', async () => {
     const { session, director, framed } = setup();
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     await settle();
     const id = answer(session).id;
     director.userMovedCamera(false);
@@ -124,7 +129,7 @@ describe('the director', () => {
 
   it('a substantial move asks whether to let go, and does not let go by itself', async () => {
     const { session, director, framed } = setup();
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     await settle();
     const id = answer(session).id;
     director.userMovedCamera(true);
@@ -138,7 +143,7 @@ describe('the director', () => {
 
   it('"let go" turns the following off: steps still change the drawing but the camera stays', async () => {
     const { session, director, framed } = setup();
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     await settle();
     const id = answer(session).id;
     director.userMovedCamera(true);
@@ -148,19 +153,19 @@ describe('the director', () => {
     director.activate(id, 4);
     director.activate(id, 5);
     expect(framed).toHaveLength(1);
-    expect(director.drawing?.links[0]!.relation).toBe('alliance'); // drawings keep following the step
-    expect(director.year).toBe(1536);
+    expect(director.drawing?.events).toEqual(['wannsee-1942']); // drawings keep following the step
+    expect(director.year).toBe(1942);
     director.userMovedCamera(true); // not following: nothing to ask
     expect(director.askingToRelease).toBe(false);
 
     director.setFollowing(true); // switched back on: the active step is brought into view at once
     expect(framed).toHaveLength(2);
-    expect(framed[1]!.links[0]!.relation).toBe('alliance');
+    expect(framed[1]!.events).toEqual(['wannsee-1942']);
   });
 
   it('"keep following" is remembered: the question is not asked again in this conversation', async () => {
     const { session, director } = setup();
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     const id = answer(session).id;
     director.userMovedCamera(true);
     director.keepFollowing();
@@ -173,7 +178,7 @@ describe('the director', () => {
 
   it('an unanswered question can go away without deciding anything, and comes back after another far move', async () => {
     const { session, director } = setup();
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     director.userMovedCamera(true);
     director.dismissQuestion();
     expect(director.askingToRelease).toBe(false);
@@ -187,7 +192,7 @@ describe('the director', () => {
     director.userMovedCamera(true);
     expect(director.askingToRelease).toBe(false);
     expect(director.following).toBe(true);
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     await settle();
     director.activate(answer(session).id, 2);
     expect(framed).toHaveLength(2);
@@ -196,21 +201,21 @@ describe('the director', () => {
 
   it('a new conversation starts with the camera following again, and with a fresh question', async () => {
     const { session, director } = setup();
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     director.userMovedCamera(true);
     director.keepFollowing();
     director.setFollowing(false);
     session.newChat();
     expect(director.following).toBe(true);
     expect(director.askingToRelease).toBe(false);
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     director.userMovedCamera(true);
     expect(director.askingToRelease).toBe(true);
   });
 
   it('a late change in the active step is brought into view too, unless the reader has moved the map since', async () => {
     const { session, director, framed } = setup();
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     const item = answer(session);
     await settle();
     const before = framed.length;
@@ -230,43 +235,43 @@ describe('the director', () => {
 
   it('the year the AI asks for steps aside when the reader moves time, and returns with the next step', async () => {
     const { session, director } = setup();
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     const id = answer(session).id;
-    expect(director.year).toBe(1505);
+    expect(director.year).toBe(1939);
     director.userChangedTime();
     expect(director.year).toBeNull();
-    expect(director.drawing?.year).toBe(1505); // still part of the step, just not applied
+    expect(director.drawing?.year).toBe(1939); // still part of the step, just not applied
     director.activate(id, 2);
-    expect(director.year).toBe(1514);
+    expect(director.year).toBe(1940);
   });
 
   it('an answer without map actions leaves the map as it was', async () => {
     const plain: MockScript = (req) => (req.meta.question === 'düz' ? { text: 'Sadece metin.' } : null);
     const { session, director } = setup([plain, ...createMockScripts(data)]);
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     const before = director.drawing;
-    await session.send({ text: 'düz', mode: 'qa' }, anatolia());
+    await session.send({ text: 'düz', mode: 'qa' }, berlin());
     expect(director.active?.itemId).toBe(answer(session).id);
     expect(director.drawing).toBe(before);
   });
 
   it('a new answer takes over once, and reading an older step later takes the map back', async () => {
     const { session, director } = setup();
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     const first = answer(session).id;
     director.activate(first, 4);
-    await session.send({ text: 'Fransa ile ittifak neydi?', mode: 'qa' }, anatolia());
+    await session.send({ text: AXIS_QUESTION, mode: 'qa' }, berlin());
     const second = answer(session).id;
     expect(director.active).toEqual({ itemId: second, n: 1 });
     expect(director.drawing?.links.map((l) => l.relation)).toEqual(['alliance']);
     director.activate(first, 1);
-    expect(director.drawing?.highlights).toEqual(['ottoman-empire']);
-    expect(director.drawing?.events).toEqual(['safevi-1501']);
+    expect(director.drawing?.highlights).toEqual(['nazi-germany']);
+    expect(director.drawing?.events).toEqual(['polonya-isgali-1939']);
   });
 
   it('a cleared chat clears the map', async () => {
     const { session, director } = setup();
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, anatolia());
+    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     session.newChat();
     expect(director.drawing).toBeNull();
     expect(director.active).toBeNull();
@@ -282,10 +287,10 @@ describe('the director', () => {
       drawing: () => director.drawing,
     });
     const director: Director = new Director(session, { frame: () => undefined });
-    await session.send({ text: 'Fransa ile ittifak neydi?', mode: 'qa' }, anatolia());
-    await session.send({ text: 'Peki Venedik?', mode: 'qa' }, anatolia());
+    await session.send({ text: AXIS_QUESTION, mode: 'qa' }, berlin());
+    await session.send({ text: 'Peki Japonya?', mode: 'qa' }, berlin());
     expect(provider.requests[1]!.turns.at(-1)!.content).toContain(
-      'Haritada şu an senin çizdiklerin var (öne çıkan: Osmanlı İmparatorluğu, Fransa Krallığı',
+      'Haritada şu an senin çizdiklerin var (öne çıkan: Nazi Almanyası, İtalya Krallığı',
     );
     expect(provider.requests[0]!.turns.at(-1)!.content).not.toContain('çizdiklerin');
   });

@@ -289,7 +289,7 @@
   font-weight: 600;
   line-height: 14px;
   font-variant-numeric: tabular-nums;
-  color: var(--ink-2);
+  color: var(--ink); /* the year labels lie on the strip of the polity's own tint: the darkest ink reads on all nine */
   white-space: nowrap;
   pointer-events: none;
 }

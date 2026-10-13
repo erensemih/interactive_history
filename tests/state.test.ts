@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_STATE, Store } from '../src/state/store';
 import { hashToPartialState, parseCamera, parsePlace, stateToHash } from '../src/state/url';
 
+// the store's mechanics, on a made-up extent (the real data's extent and default range are checked in period-1800-2000.test.ts)
 const extent = { from: 1400, to: 1600 };
-const make = (patch = {}) => new Store({ ...DEFAULT_STATE, ...patch }, extent);
+const base = { ...DEFAULT_STATE, range: { from: 1490, to: 1520 } };
+const make = (patch = {}) => new Store({ ...base, ...patch }, extent);
 
 describe('store', () => {
   it('keeps the range inside the dataset and ordered', () => {

@@ -1,4 +1,4 @@
-import maplibregl, { type ExpressionSpecification, type Map as MLMap } from 'maplibre-gl';
+import maplibregl, { type ExpressionSpecification, type GeoJSONSource, type Map as MLMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { AppData } from '../data/load';
 import { EMPTY_RESOLVED, type FrameTarget, type ResolvedDrawing } from '../ai/types';
@@ -21,6 +21,8 @@ export interface MapCallbacks {
   onWaterClick(): void;
   /** Polity under the pointer (for the hover tooltip), or null; `noData` is true on land the border data does not cover. */
   onHoverPolity(id: string | null, clientX: number, clientY: number, noData: boolean): void;
+  /** The borders of the shown year are not on the map yet (true) / are (false). Fired on change only. */
+  onBordersLoading?(loading: boolean): void;
   onEventClick(id: string): void;
   onEventHover(id: string | null, el: HTMLElement | null): void;
   /** Map controls (zoom buttons, legend, counter) in map pixels: a revealed event must not hide behind them. */
@@ -34,6 +36,18 @@ const REVEAL_MARGIN = { top: 44, right: 60, bottom: 36, left: 36 };
 const FRAME_MAX_ZOOM = 5.2;
 /** How much of the map fades while the AI lights some polities: paper laid over everything that is not lit. */
 const SPOT_VEIL = 0.62;
+
+/**
+ * The borders are 2 700 rows over 200 years, 2.6 million points: far too much for the map's tile index to take
+ * in one go (it would take half a minute). The map is handed only the rows that exist within this many years
+ * either side of the shown year, and a new window when the year gets near its edge. Moving the year inside the
+ * window only changes a filter, as it always did.
+ */
+const BORDER_WINDOW_HALF = 10;
+/** A new window is asked for once the year is this close to the edge of the one the map has (unless that edge is the end of the data). */
+const BORDER_WINDOW_MARGIN = 3;
+/** Years change in a rush while the reader drags; a window is only asked for once they pause. */
+const BORDER_WINDOW_DEBOUNCE_MS = 140;
 
 const INITIAL_BOUNDS: [[number, number], [number, number]] = [
   [-108, -34],
@@ -75,6 +89,13 @@ export class MapView {
   private readonly ai: AiDrawingLayer;
   private readonly pins: PlacePins;
   private year = 0;
+  /** The years of rows in the map's border source: asked for ... */
+  private borderWindow: [number, number] | null = null;
+  /** ... and known to have arrived (until then the filters stay inside the window the map really has). */
+  private borderLoaded: [number, number] | null = null;
+  private windowTimer = 0;
+  private windowBusy = false;
+  private bordersLoading = false;
   /** Border rows valid in the shown year: hit-testing a pointer position only looks at these. */
   private rowsNow: AppData['rows'] = [];
   private selectedIds: string[] = [];
@@ -205,9 +226,11 @@ export class MapView {
     map.addImage('stipple', stippleImage(t.ink3), { pixelRatio: 2 });
 
     map.addSource('land', { type: 'geojson', data: this.data.land, tolerance: 0.2, buffer: 16, maxzoom: 9 });
+    const first = this.windowFor(this.year);
+    this.borderWindow = this.borderLoaded = first;
     map.addSource('borders', {
       type: 'geojson',
-      data: this.data.borders,
+      data: this.data.borders.window(first[0], first[1]),
       tolerance: 0.25,
       buffer: 16,
       maxzoom: 9,
@@ -256,14 +279,14 @@ export class MapView {
       id: 'polity-fill',
       type: 'fill',
       source: 'borders',
-      filter: yearFilter(this.year),
+      filter: yearFilter(this.filterYear()),
       paint: { 'fill-color': tintExpr },
     });
     map.addLayer({
       id: 'polity-line',
       type: 'line',
       source: 'borders',
-      filter: yearFilter(this.year),
+      filter: yearFilter(this.filterYear()),
       layout: { 'line-join': 'round' },
       paint: { 'line-color': t.borderInk, 'line-width': zoomWidth(0.35, 0.9, 1.6), 'line-opacity': 0.55 },
     });
@@ -271,28 +294,28 @@ export class MapView {
       id: 'polity-hover',
       type: 'fill',
       source: 'borders',
-      filter: idsFilter(this.year, this.hoverIds()),
+      filter: idsFilter(this.filterYear(), this.hoverIds()),
       paint: { 'fill-color': t.accent, 'fill-opacity': 0.13 },
     });
     map.addLayer({
       id: 'polity-selected-fill',
       type: 'fill',
       source: 'borders',
-      filter: idsFilter(this.year, this.selectedIds),
+      filter: idsFilter(this.filterYear(), this.selectedIds),
       paint: { 'fill-color': t.accent, 'fill-opacity': 0.2 },
     });
     map.addLayer({
       id: 'polity-selected-hatch',
       type: 'fill',
       source: 'borders',
-      filter: idsFilter(this.year, this.selectedIds),
+      filter: idsFilter(this.filterYear(), this.selectedIds),
       paint: { 'fill-pattern': 'hatch' },
     });
     map.addLayer({
       id: 'polity-selected-glow',
       type: 'line',
       source: 'borders',
-      filter: idsFilter(this.year, this.selectedIds),
+      filter: idsFilter(this.filterYear(), this.selectedIds),
       layout: { 'line-join': 'round' },
       paint: {
         'line-color': t.accent,
@@ -305,7 +328,7 @@ export class MapView {
       id: 'polity-selected-line',
       type: 'line',
       source: 'borders',
-      filter: idsFilter(this.year, this.selectedIds),
+      filter: idsFilter(this.filterYear(), this.selectedIds),
       layout: { 'line-join': 'round' },
       paint: { 'line-color': t.accent, 'line-width': zoomWidth(1.4, 2.4, 3), 'line-opacity': 0.95 },
     });
@@ -322,20 +345,24 @@ export class MapView {
     map.addLayer({
       id: 'ai-veil',
       type: 'background',
-      paint: { 'background-color': t.paper, 'background-opacity': 0, 'background-opacity-transition': { duration: 380 } },
+      paint: {
+        'background-color': t.paper,
+        'background-opacity': 0,
+        'background-opacity-transition': { duration: 380 },
+      },
     });
     map.addLayer({
       id: 'ai-fill',
       type: 'fill',
       source: 'borders',
-      filter: idsFilter(this.year, this.spotIds),
+      filter: idsFilter(this.filterYear(), this.spotIds),
       paint: { 'fill-color': vividExpr, 'fill-opacity': 1 },
     });
     map.addLayer({
       id: 'ai-casing',
       type: 'line',
       source: 'borders',
-      filter: idsFilter(this.year, this.spotIds),
+      filter: idsFilter(this.filterYear(), this.spotIds),
       layout: { 'line-join': 'round' },
       paint: { 'line-color': t.paper, 'line-width': zoomWidth(3.8, 5.6, 7.6), 'line-opacity': 0.92 },
     });
@@ -343,21 +370,95 @@ export class MapView {
       id: 'ai-line',
       type: 'line',
       source: 'borders',
-      filter: idsFilter(this.year, this.spotIds),
+      filter: idsFilter(this.filterYear(), this.spotIds),
       layout: { 'line-join': 'round' },
       paint: { 'line-color': t.ink, 'line-width': zoomWidth(1.4, 2.1, 2.9), 'line-opacity': 0.95 },
     });
 
     this.ready = true;
     this.applyYear();
+    // The year was set before the map was ready: the first window is for that year, so the "loading" the header was told
+    // about then is over, and a year that has moved on since gets its own window.
+    this.reportLoading();
+    this.ensureWindow();
     this.layoutOverlays(true);
+  }
+
+  /** The window of years to hand the map for `year`: centred on it, pushed back inside the data's extent. */
+  private windowFor(year: number): [number, number] {
+    const { from, to } = this.data.extent;
+    let a = year - BORDER_WINDOW_HALF;
+    let b = year + BORDER_WINDOW_HALF;
+    if (a < from) [a, b] = [from, Math.min(to, b + (from - a))];
+    if (b > to) [a, b] = [Math.max(from, a - (b - to)), to];
+    return [a, b];
+  }
+
+  /** Is `year` safely inside `w`: away from its edges, except where the edge is the end of the data? */
+  private windowCovers(w: [number, number] | null, year: number): boolean {
+    if (!w) return false;
+    const { from, to } = this.data.extent;
+    const lo = w[0] <= from ? from : w[0] + BORDER_WINDOW_MARGIN;
+    const hi = w[1] >= to ? to : w[1] - BORDER_WINDOW_MARGIN;
+    return year >= lo && year <= hi;
+  }
+
+  /** The year the filters use: the shown year, or, while the rows for it are still on their way, the nearest year the map has. */
+  private filterYear(): number {
+    const w = this.borderLoaded;
+    return w ? Math.min(Math.max(this.year, w[0]), w[1]) : this.year;
+  }
+
+  /** The rows of the shown year are in the map (a new window is not pending). */
+  bordersReady(): boolean {
+    const w = this.borderLoaded;
+    return !!w && this.year >= w[0] && this.year <= w[1];
+  }
+
+  private reportLoading() {
+    const loading = !this.bordersReady();
+    if (loading === this.bordersLoading) return;
+    this.bordersLoading = loading;
+    this.cb.onBordersLoading?.(loading);
+  }
+
+  private ensureWindow() {
+    if (!this.ready || this.windowTimer || this.windowBusy) return;
+    if (this.windowCovers(this.borderWindow, this.year)) return;
+    this.windowTimer = window.setTimeout(() => {
+      this.windowTimer = 0;
+      this.loadWindow();
+    }, BORDER_WINDOW_DEBOUNCE_MS);
+  }
+
+  private loadWindow() {
+    const src = this.map.getSource('borders') as GeoJSONSource | undefined;
+    if (!src) return;
+    const win = this.windowFor(this.year);
+    if (this.borderWindow && win[0] === this.borderWindow[0] && win[1] === this.borderWindow[1]) return;
+    this.borderWindow = win;
+    this.windowBusy = true;
+    const arrived = () => {
+      if (!this.map.isSourceLoaded('borders')) return;
+      this.map.off('sourcedata', onData);
+      this.windowBusy = false;
+      this.borderLoaded = win;
+      this.applyYear();
+      this.reportLoading();
+      this.ensureWindow(); // the year may have moved on while this one loaded
+    };
+    const onData = (e: { sourceId?: string }) => {
+      if (e.sourceId === 'borders') arrived();
+    };
+    this.map.on('sourcedata', onData);
+    src.setData(this.data.borders.window(win[0], win[1]));
   }
 
   private applyYear() {
     if (!this.ready) return;
     const m = this.map;
-    m.setFilter('polity-fill', yearFilter(this.year));
-    m.setFilter('polity-line', yearFilter(this.year));
+    m.setFilter('polity-fill', yearFilter(this.filterYear()));
+    m.setFilter('polity-line', yearFilter(this.filterYear()));
     this.applySelection();
     this.applyHover();
     this.applyAi();
@@ -366,7 +467,7 @@ export class MapView {
   private applyAi() {
     if (!this.ready) return;
     for (const id of ['ai-fill', 'ai-casing', 'ai-line']) {
-      this.map.setFilter(id, idsFilter(this.year, this.spotIds));
+      this.map.setFilter(id, idsFilter(this.filterYear(), this.spotIds));
     }
     // the rest of the map fades only while something is lit
     this.map.setPaintProperty('ai-veil', 'background-opacity', this.spotIds.length ? SPOT_VEIL : 0);
@@ -380,13 +481,13 @@ export class MapView {
       'polity-selected-glow',
       'polity-selected-line',
     ]) {
-      this.map.setFilter(id, idsFilter(this.year, this.selectedIds));
+      this.map.setFilter(id, idsFilter(this.filterYear(), this.selectedIds));
     }
   }
 
   private applyHover() {
     if (!this.ready) return;
-    this.map.setFilter('polity-hover', idsFilter(this.year, this.hoverIds()));
+    this.map.setFilter('polity-hover', idsFilter(this.filterYear(), this.hoverIds()));
   }
 
   /** The hovered polity, unless it is already selected (no hover tint on top of the selection). */
@@ -455,6 +556,8 @@ export class MapView {
     this.labels.setYear(year);
     this.markers.setFocusYear(year);
     this.applyYear();
+    this.reportLoading();
+    this.ensureWindow();
   }
 
   /** The polities to highlight (those holding the selected places). */

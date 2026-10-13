@@ -2,7 +2,7 @@ import type { AppData } from '../data/load';
 import type { HistoricalEvent } from '../domain/types';
 import { subjectKey, subjectLabel, type AiContext, type ContextEvent, type Mode } from './context';
 import { describeDrawing, TurnPlan } from './drawing';
-import { isStepped, shortOf, stepsOf, captionFromText } from './narration';
+import { captionFromText, stepsOf } from './narration';
 import { narrationOutline } from './outline';
 import { buildTurns, type HistoryTurn } from './prompt';
 import {
@@ -255,9 +255,9 @@ export class AiSession {
       const answer = this.items[i + 1];
       if (ask?.kind !== 'user' || answer?.kind !== 'assistant') continue;
       if ((answer.status !== 'done' && answer.status !== 'stopped') || !answer.text.trim()) continue;
-      const stepped = isStepped(answer);
-      const steps = stepped ? stepsOf(answer) : [];
-      const scenes = (stepped ? steps.map((s) => s.n) : [1])
+      const steps = stepsOf(answer);
+      const stepped = steps.length > 1;
+      const scenes = (steps.length ? steps.map((s) => s.n) : [1])
         .map((n) => {
           const said = describeDrawing(answer.plan.drawingAt(n), nameOf, titleOf);
           return said ? (stepped ? `${n}. adım: ${said}` : said) : '';
@@ -266,7 +266,7 @@ export class AiSession {
         .join(' · ');
       const digest = stepped
         ? steps.map((s) => `${s.n}. ${s.title}${s.caption ? ` — ${s.caption}` : ''}`).join('\n')
-        : captionFromText(shortOf(answer).body, 420);
+        : captionFromText(steps[0]?.body ?? '', 420, 4);
       out.push(
         { role: 'user', text: ask.text, subject: ask.subject, event: ask.event?.title },
         { role: 'assistant', text: answer.text, ...(scenes ? { scenes } : {}), ...(digest ? { digest } : {}) },

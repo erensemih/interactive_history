@@ -1,3 +1,7 @@
 {
-  "files": ["global.json", "ottoman.json", "ming.json"]
+  "open": {
+    "from": 1939,
+    "to": 1945
+  },
+  "files": ["global.json", "ww2.json"]
 }

@@ -1,15 +1,10 @@
-import type { Feature, FeatureCollection, Geometry } from 'geojson';
+import type { FeatureCollection, Geometry } from 'geojson';
 import { boundsOf, type LandPart } from '../domain/geo';
 import { normalizeEvent, type RawEvent } from '../domain/events';
-import type {
-  BorderProps,
-  BorderRow,
-  CategoryDef,
-  Entity,
-  HistoricalEvent,
-  PolygonCoords,
-  YearRange,
-} from '../domain/types';
+import type { EncodedMeta } from './borderCodec';
+import { BorderStore, polysOf } from './borderStore';
+import { gunzipBase64 } from './gzip';
+import type { BorderProps, BorderRow, CategoryDef, Entity, HistoricalEvent, YearRange } from '../domain/types';
 
 export interface SourceInfo {
   name: string;
@@ -21,9 +16,11 @@ export interface SourceInfo {
 
 export interface AppData {
   extent: YearRange;
+  /** The range the app opens on (the period names it in `events/index.json`; else a few years in the middle of the data). */
+  open: YearRange;
   rows: BorderRow[];
-  /** Border features for the map (properties include the entity tint). */
-  borders: FeatureCollection<Geometry, BorderProps>;
+  /** The border features (properties include the entity tint); the map asks for the years it is about to draw. */
+  borders: BorderStore;
   land: FeatureCollection<Geometry>;
   landParts: LandPart[];
   entities: Map<string, Entity>;
@@ -48,6 +45,8 @@ export interface PolitiesIndex {
       to: number;
       umbrella: boolean;
       tint: number | null;
+      /** Dataset ids that were joined into this one by the border pipeline (a continuing state the dataset labels twice). */
+      joined?: string[];
     }
   >;
 }
@@ -74,18 +73,16 @@ export interface EntitiesDoc {
 const dataUrl = (path: string) => `${import.meta.env.BASE_URL}data/${path}`;
 
 async function getJson<T>(path: string): Promise<T> {
-  // The single-file build (scripts/build-standalone.mjs) carries its data inside the page.
+  // The single-file build (scripts/build-standalone.mjs) carries its data inside the page; big files gzipped.
   const inline = document.getElementById(`data:${path}`);
-  if (inline) return JSON.parse(inline.textContent ?? 'null') as T;
+  if (inline) {
+    const text =
+      inline.dataset.encoding === 'gzip-base64' ? await gunzipBase64(inline.textContent ?? '') : inline.textContent;
+    return JSON.parse(text ?? 'null') as T;
+  }
   const res = await fetch(dataUrl(path));
   if (!res.ok) throw new Error(`${path} yüklenemedi (HTTP ${res.status})`);
   return (await res.json()) as T;
-}
-
-function polysOf(geometry: Geometry): PolygonCoords[] {
-  if (geometry.type === 'Polygon') return [geometry.coordinates as PolygonCoords];
-  if (geometry.type === 'MultiPolygon') return geometry.coordinates as PolygonCoords[];
-  return [];
 }
 
 /** The data files, parsed. `assembleData` turns them into `AppData` (pure, so tests can run it in Node). */
@@ -94,8 +91,12 @@ export interface RawFiles {
   entitiesDoc: EntitiesDoc;
   categoriesDoc: { categories: { id: string; label: { tr: string } }[] };
   eventSets: { file: string; doc: { set?: string; events: RawEvent[] } }[];
+  /** The range the period opens on, as `events/index.json` gives it (absent: the middle of the data). */
+  open?: { from: number; to: number };
   land: FeatureCollection<Geometry> & { meta?: { source?: SourceInfo } };
-  bordersRaw: FeatureCollection<Geometry, BorderProps> & { meta?: { coast?: SourceInfo; source?: SourceInfo } };
+  bordersRaw: FeatureCollection<Geometry, BorderProps> & {
+    meta?: EncodedMeta & { coast?: SourceInfo; source?: SourceInfo };
+  };
 }
 
 export async function loadData(onProgress?: (label: string) => void): Promise<AppData> {
@@ -104,7 +105,7 @@ export async function loadData(onProgress?: (label: string) => void): Promise<Ap
     getJson<PolitiesIndex>('borders/polities.json'),
     getJson<EntitiesDoc>('entities.json'),
     getJson<RawFiles['categoriesDoc']>('categories.json'),
-    getJson<{ files: string[] }>('events/index.json'),
+    getJson<{ files: string[]; open?: YearRange }>('events/index.json'),
     getJson<RawFiles['land']>('geo/land.json'),
   ]);
   const [from, to] = index.meta.range;
@@ -115,10 +116,32 @@ export async function loadData(onProgress?: (label: string) => void): Promise<Ap
   for (const file of eventsIndex.files) {
     eventSets.push({ file, doc: await getJson<{ set?: string; events: RawEvent[] }>(`events/${file}`) });
   }
-  return assembleData({ index, entitiesDoc, categoriesDoc, eventSets, land, bordersRaw });
+  return assembleData({ index, entitiesDoc, categoriesDoc, eventSets, open: eventsIndex.open, land, bordersRaw });
 }
 
-export function assembleData({ index, entitiesDoc, categoriesDoc, eventSets, land, bordersRaw }: RawFiles): AppData {
+/** The range the app opens on: the one the period names when it lies inside the data, else seven years in the middle of it. */
+export function openingRange(open: RawFiles['open'], extent: YearRange): YearRange {
+  const ok =
+    !!open &&
+    Number.isInteger(open.from) &&
+    Number.isInteger(open.to) &&
+    open.from <= open.to &&
+    open.from >= extent.from &&
+    open.to <= extent.to;
+  if (ok) return { from: open.from, to: open.to };
+  const mid = Math.round((extent.from + extent.to) / 2);
+  return { from: Math.max(extent.from, mid - 3), to: Math.min(extent.to, mid + 3) };
+}
+
+export function assembleData({
+  index,
+  entitiesDoc,
+  categoriesDoc,
+  eventSets,
+  open,
+  land,
+  bordersRaw,
+}: RawFiles): AppData {
   const [from, to] = index.meta.range;
 
   /* entities: authored Turkish content + facts derived from the border dataset */
@@ -156,16 +179,19 @@ export function assembleData({ index, entitiesDoc, categoriesDoc, eventSets, lan
     });
   }
 
-  /* border rows (the file order is kept: big first, so small polities paint on top) */
+  /* border rows (the file order is kept: big first, so small polities paint on top). Their shapes stay in the
+     file's compact form until needed: a row's `polys` decodes it on first read. */
+  const borders = new BorderStore(bordersRaw);
   const rows: BorderRow[] = [];
-  for (const f of bordersRaw.features as Feature<Geometry, BorderProps>[]) {
-    const polys = polysOf(f.geometry);
+  borders.features.forEach((f, i) => {
     f.properties.id = canonical(f.properties.id);
     f.properties.up = [...new Set((f.properties.up ?? []).map(canonical))];
     const tint = entities.get(f.properties.id)?.tint ?? null;
     f.properties.tint = tint;
-    rows.push({ ...f.properties, tint, up: f.properties.up, polys, box: boundsOf(polys) });
-  }
+    const row = { ...f.properties, tint, up: f.properties.up, box: borders.box(i) } as BorderRow;
+    Object.defineProperty(row, 'polys', { enumerable: true, get: () => borders.polys(i) });
+    rows.push(row);
+  });
 
   const landParts: LandPart[] = [];
   for (const f of land.features) {
@@ -194,8 +220,9 @@ export function assembleData({ index, entitiesDoc, categoriesDoc, eventSets, lan
 
   return {
     extent: { from, to },
+    open: openingRange(open, { from, to }),
     rows,
-    borders: bordersRaw,
+    borders,
     land,
     landParts,
     entities,

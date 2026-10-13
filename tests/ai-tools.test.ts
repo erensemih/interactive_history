@@ -3,9 +3,9 @@ import { TurnPlan } from '../src/ai/drawing';
 import type { ToolSpec } from '../src/ai/provider';
 import { Resolver } from '../src/ai/resolve';
 import { createTools } from '../src/ai/tools';
-import { shippedData } from './helpers/shipped';
+import { archivedData } from './helpers/shipped';
 
-const resolver = new Resolver(shippedData());
+const resolver = new Resolver(archivedData('1400-1600'));
 const range = { from: 1500, to: 1550 };
 
 function setup() {

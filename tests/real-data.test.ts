@@ -4,8 +4,11 @@ import { describe, expect, it } from 'vitest';
 import { boundsOf, isLand, primaryAt, resolvePlace, rowsContaining, type LandPart } from '../src/domain/geo';
 import type { BorderRow, Entity, PolygonCoords } from '../src/domain/types';
 
-/** The same questions the app asks, answered against the shipped border data. */
-const dataDir = join(__dirname, '..', 'public', 'data');
+/**
+ * The same questions the app asks, answered against the 1400–1600 archive (data/1400-1600): the earlier period, kept
+ * outside the published build, still loads and still answers. The published data has its own file: period-1800-2000.
+ */
+const dataDir = join(__dirname, '..', 'data', '1400-1600');
 const read = (p: string) => JSON.parse(readFileSync(join(dataDir, p), 'utf8'));
 
 const polysOf = (g: { type: string; coordinates: unknown }): PolygonCoords[] =>
@@ -32,7 +35,7 @@ const entities: Entity[] = Object.entries(entitiesDoc).map(([id, e]) => ({
 
 const holder = (lon: number, lat: number, year: number) => primaryAt(rowsContaining(rows, lon, lat), year)?.id ?? null;
 
-describe('who held a place (shipped Cliopatria data)', () => {
+describe('who held a place (the 1400–1600 archive of the Cliopatria data)', () => {
   it('Anatolia is Ottoman in 1500 and China is Ming', () => {
     expect(holder(33.2, 39.2, 1500)).toBe('ottoman-empire');
     expect(holder(35.5, 38.9, 1475)).toBe('ottoman-empire');

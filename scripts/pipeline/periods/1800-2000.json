@@ -1,0 +1,12 @@
+{
+  "about": "Per-period rules for scripts/pipeline/build_borders.py. `merge` joins rows that the border dataset labels with different ids although they are one continuing state in one era (a wrong or outdated label), so that the polity keeps one id, one colour and one timeline lineage. Regimes with their own names (Weimar Republic, Nazi Germany, Vichy France, ...) are NOT merged.",
+  "merge": {
+    "denmark": ["denmark-norway"],
+    "hungary": ["hungarian-republic"],
+    "bulgaria": ["principality-of-bulgaria", "kingdom-of-bulgaria"],
+    "greece": ["first-hellenic-republic", "kingdom-of-greece", "third-hellenic-republic"],
+    "serbia": ["serbs", "kingdom-of-serbia"],
+    "romania": ["united-principalities-of-moldavia-and-wallachia", "kingdom-of-romania"],
+    "monaco": ["principality-of-monaco", "kingdom-of-monaco"]
+  }
+}

@@ -1,216 +1,180 @@
 {
   "entities": {
-    "adal-sultanate": {
+    "afghanistan": {
       "kind": "polity",
       "name": {
-        "tr": "Adal Sultanlığı"
+        "tr": "Afganistan"
+      }
+    },
+    "albania": {
+      "kind": "polity",
+      "name": {
+        "tr": "Arnavutluk"
       },
       "summary": {
-        "tr": "Doğu Afrika'da Harar çevresinde, Müslüman halkların oluşturduğu sultanlık. Ahmed İbn İbrahim el-Gazi (Ahmed Gran) komutasında Habeşistan'ı işgal etti (1529–1543)."
+        "tr": "1912'de Osmanlı'dan bağımsızlığını ilan eden Arnavutluk; 1928'de Zogu kral oldu, Nisan 1939'da İtalya tarafından işgal edildi."
       }
     },
-    "ahmadnagar-sultanate": {
+    "anti-kuomintang-coalition": {
       "kind": "polity",
       "name": {
-        "tr": "Ahmednagar Sultanlığı"
+        "tr": "Guomindang karşıtı koalisyon (1930)"
+      }
+    },
+    "antigua-and-barbuda": {
+      "kind": "polity",
+      "name": {
+        "tr": "Antigua ve Barbuda"
+      }
+    },
+    "arab-federation": {
+      "kind": "polity",
+      "name": {
+        "tr": "Arap Federasyonu (Irak–Ürdün)"
+      }
+    },
+    "arab-republic-of-egypt": {
+      "kind": "polity",
+      "name": {
+        "tr": "Mısır Arap Cumhuriyeti"
+      }
+    },
+    "arab-socialist-ba-ath-party": {
+      "kind": "polity",
+      "name": {
+        "tr": "Arap Sosyalist Baas Partisi (Suriye)"
+      }
+    },
+    "argentine-confederation": {
+      "kind": "polity",
+      "name": {
+        "tr": "Arjantin Konfederasyonu"
+      }
+    },
+    "argentine-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Arjantin"
       },
       "summary": {
-        "tr": "Bahmani Sultanlığı'nın dağılmasıyla 1490'da kurulan, Nizamşahlar'ın yönettiği Dekkan sultanlığı. 1565'te Vicayanagara'ya karşı ittifakta yer aldı."
+        "tr": "20. yüzyılda ekonomik refahı ve askerî darbeleriyle bilinen Arjantin; 1946'da Perón iktidara geldi."
       }
     },
-    "albanian-principalities": {
+    "armenia": {
       "kind": "polity",
       "name": {
-        "tr": "Arnavut Prenslikleri"
+        "tr": "Ermenistan (1918–1919)"
       }
     },
-    "alodia": {
+    "ashanti-empire": {
       "kind": "polity",
       "name": {
-        "tr": "Alodia Krallığı"
-      }
-    },
-    "ambrosian-republic": {
-      "kind": "polity",
-      "name": {
-        "tr": "Ambrosiana Cumhuriyeti"
-      }
-    },
-    "aq-qoyunlu": {
-      "kind": "polity",
-      "name": {
-        "tr": "Akkoyunlular"
+        "tr": "Aşanti İmparatorluğu"
       },
       "summary": {
-        "tr": "Diyarbakır çevresinde başlayıp Doğu Anadolu, Irak ve İran'a yayılan Türkmen devleti. Uzun Hasan döneminde (1453–1478) güçlendi; 1473'te Otlukbeli'de Osmanlı'ya yenildi. Safevîler tarafından yıkıldı (1501–1503)."
+        "tr": "Altın Sahili'nin iç kesimlerinde Aşanti Konfederasyonu; 19. yüzyıl boyunca Britanya ile savaştı, 1896–1902'de ilhak edildi."
       }
     },
-    "ashikaga-shogunate": {
+    "asir": {
       "kind": "polity",
       "name": {
-        "tr": "Aşikaga Şogunluğu"
+        "tr": "Asir"
+      }
+    },
+    "austria-hungary": {
+      "kind": "polity",
+      "name": {
+        "tr": "Avusturya-Macaristan"
       },
       "summary": {
-        "tr": "Kyoto'daki Muromachi şogunluğu. Ōnin Savaşı (1467–1477) ile otoritesi çöktü, ülke Sengoku (Savaşan Devletler) dönemine girdi."
+        "tr": "1867 Uzlaşması ile Habsburg topraklarının, tek hükümdar altında iki eşit krallık (Avusturya ve Macaristan) olarak yeniden örgütlenmesi. Birinci Dünya Savaşı'nı Almanya yanında kaybederek 1918'de dağıldı."
       }
     },
-    "astrakhan-khanate": {
+    "austrian-empire": {
       "kind": "polity",
       "name": {
-        "tr": "Astrahan Hanlığı"
+        "tr": "Avusturya İmparatorluğu"
       },
       "summary": {
-        "tr": "Volga'nın denize döküldüğü yerde, Astrahan merkezli han devleti. 1556'da Moskova Çarlığı tarafından ele geçirildi."
+        "tr": "1804'te Habsburg topraklarının tek imparatorluk olarak ilan edilmesiyle doğdu; Napolyon savaşlarında, 1848 devrimlerinde ve İtalyan birliği sürecinde sarsıldı. 1866'da Prusya'ya yenildi ve 1867'de Avusturya-Macaristan'a dönüştü."
       }
     },
-    "ava-kingdom": {
+    "azerbaijan-democratic-republic": {
       "kind": "polity",
       "name": {
-        "tr": "Ava Krallığı"
+        "tr": "Azerbaycan Demokratik Cumhuriyeti"
       }
     },
-    "ayutthaya-kingdom": {
+    "ba-athist-syria": {
       "kind": "polity",
       "name": {
-        "tr": "Ayutthaya Krallığı"
+        "tr": "Baasçı Suriye (1963–1966)"
+      }
+    },
+    "bahrain": {
+      "kind": "polity",
+      "name": {
+        "tr": "Bahreyn (Al Halife)"
+      }
+    },
+    "bali": {
+      "kind": "polity",
+      "name": {
+        "tr": "Bali"
+      }
+    },
+    "bamana-empire": {
+      "kind": "polity",
+      "name": {
+        "tr": "Bamana İmparatorluğu (Segu)"
+      }
+    },
+    "barbados": {
+      "kind": "polity",
+      "name": {
+        "tr": "Barbados"
+      }
+    },
+    "batavian-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Batav Cumhuriyeti"
       },
       "summary": {
-        "tr": "Chao Phraya Nehri havzasında Siyam krallığı; Güneydoğu Asya'nın büyük ticaret merkezlerinden biri. 1569'da Taungu Burması'na yenildi, 1584'te bağımsızlığını yeniden kazandı."
+        "tr": "Fransız Devrimi ordularının 1795'te Hollanda'da kurdurduğu kukla cumhuriyet; 1806'da Napolyon'un kardeşi Louis'nin krallığına dönüştü."
       }
     },
-    "aztec-triple-alliance": {
+    "belgian-congo": {
       "kind": "polity",
       "name": {
-        "tr": "Aztek İmparatorluğu"
+        "tr": "Belçika Kongosu"
       },
       "summary": {
-        "tr": "Tenochtitlan, Texcoco ve Tlacopan şehir devletlerinin 1428 dolaylarında kurduğu ittifak; Meksika Vadisi'nden Körfez kıyısına ve Pasifik'e uzanan, haraca dayalı bir imparatorluğa dönüştü. 1519'da Hernán Cortés'in yerli müttefikleriyle birlikte yürüttüğü sefer sonucunda 1521'de Tenochtitlan düştü."
+        "tr": "Belçika'nın 1908'den 1960'a dek yönettiği Kongo; önceleri Kral II. Leopold'un kişisel mülküydü."
       }
     },
-    "bahmani-sultanate": {
+    "belize": {
       "kind": "polity",
       "name": {
-        "tr": "Bahmani Sultanlığı"
-      },
-      "summary": {
-        "tr": "Dekkan'da 1347'de kurulan Müslüman sultanlık. 15. yüzyılın sonunda Ahmednagar, Bicapur, Golkonda, Berar ve Bidar sultanlıklarına bölündü."
+        "tr": "Belize"
       }
     },
-    "bahrani-dynasty": {
+    "bessarabia": {
       "kind": "polity",
       "name": {
-        "tr": "Ahsa ve Bahreyn (Cebrîler)"
-      },
-      "summary": {
-        "tr": "Doğu Arabistan'da Ahsa Vahası, Katif ve Bahreyn adalarına hâkim olan Bedevî hanedanlar; 15. yüzyılda bölgede Cebrîler egemendi. Portekizliler 1521'de Bahreyn'i ele geçirdi."
-      },
-      "wikipedia": "Jabrids",
-      "wikidata": null,
-      "note": "Kaynak veri setinde 'Bahrani Dynasty' etiketiyle geçer."
-    },
-    "balinese-kingdom": {
-      "kind": "polity",
-      "name": {
-        "tr": "Bali Krallığı"
+        "tr": "Besarabya"
       }
     },
-    "berar-sultanate": {
+    "beylik-of-tunis": {
       "kind": "polity",
       "name": {
-        "tr": "Berar Sultanlığı"
+        "tr": "Tunus Beyliği"
       }
     },
-    "beylik-of-aydin": {
+    "bolivia": {
       "kind": "polity",
       "name": {
-        "tr": "Aydınoğulları Beyliği"
-      },
-      "summary": {
-        "tr": "Birgi, Ayasuluk (Selçuk) ve Tire çevresinde, Ege kıyısında hüküm süren beylik (Aydınoğulları). Denizcilik ve ticaretle tanınırdı; 1420'li yıllarda Osmanlı'ya katıldı."
-      }
-    },
-    "beylik-of-dulkadir": {
-      "kind": "polity",
-      "name": {
-        "tr": "Dulkadiroğulları Beyliği"
-      },
-      "summary": {
-        "tr": "Elbistan ve Maraş çevresinde hüküm süren Türkmen beyliği (Dulkadiroğulları). Osmanlı ile Memlük Sultanlığı arasında tampon bir devlet olarak varlığını sürdürdü; 1515'te Osmanlı topraklarına katıldı."
-      }
-    },
-    "beylik-of-isfendiyar": {
-      "kind": "polity",
-      "name": {
-        "tr": "İsfendiyaroğulları Beyliği"
-      },
-      "summary": {
-        "tr": "Kastamonu ve Sinop çevresinde, Karadeniz kıyısında hüküm süren beylik (İsfendiyaroğulları ya da Candaroğulları). 1461'de Fatih Sultan Mehmed tarafından Osmanlı topraklarına katıldı."
-      }
-    },
-    "beylik-of-karaman": {
-      "kind": "polity",
-      "name": {
-        "tr": "Karamanoğulları Beyliği"
-      },
-      "summary": {
-        "tr": "Konya merkezli Türkmen beyliği. 1402 Ankara Savaşı'ndan sonra güç kazandı ve Osmanlı ile sık sık çatıştı; 1468'de Osmanlı topraklarına katıldı."
-      }
-    },
-    "beylik-of-menteshe": {
-      "kind": "polity",
-      "name": {
-        "tr": "Menteşeoğulları Beyliği"
-      },
-      "summary": {
-        "tr": "Muğla çevresinde, Ege'nin güneybatı kıyısında hüküm süren beylik (Menteşeoğulları). Denizcilik ve ticaretle uğraştı; 15. yüzyılın başlarında Osmanlı'ya katıldı."
-      }
-    },
-    "beylik-of-saruhan": {
-      "kind": "polity",
-      "name": {
-        "tr": "Saruhanoğulları Beyliği"
-      },
-      "summary": {
-        "tr": "Manisa merkezli Ege beyliği (Saruhanoğulları). 15. yüzyılın başında Osmanlı topraklarına katıldı."
-      }
-    },
-    "beylik-of-teke": {
-      "kind": "polity",
-      "name": {
-        "tr": "Teke Beyliği"
-      },
-      "summary": {
-        "tr": "Antalya çevresinde, Akdeniz kıyısında hüküm süren beylik (Tekeoğulları). 15. yüzyılın ilk yarısında Osmanlı topraklarına katıldı."
-      }
-    },
-    "bidar-sultanate": {
-      "kind": "polity",
-      "name": {
-        "tr": "Bidar Sultanlığı"
-      },
-      "summary": {
-        "tr": "Bahmani'nin son başkenti Bidar çevresinde, Bereşahlar'ın yönettiği küçük Dekkan sultanlığı."
-      }
-    },
-    "bijapur-sultanate": {
-      "kind": "polity",
-      "name": {
-        "tr": "Bicapur Sultanlığı"
-      },
-      "summary": {
-        "tr": "Bahmani Sultanlığı'nın dağılması sırasında 1490'larda Yusuf Adil Şah'ın kurduğu Dekkan sultanlığı (Adilşahlar). 1565'te Vicayanagara'ya karşı ittifakın başlıca üyelerindendi."
-      }
-    },
-    "blambangan-kingdom": {
-      "kind": "polity",
-      "name": {
-        "tr": "Blambangan Krallığı"
-      }
-    },
-    "blue-horde": {
-      "kind": "polity",
-      "name": {
-        "tr": "Gök Orda"
+        "tr": "Bolivya"
       }
     },
     "bornu-empire": {
@@ -219,247 +183,370 @@
         "tr": "Bornu İmparatorluğu"
       }
     },
-    "byzantine-empire": {
+    "bosnia-and-herzegovina": {
       "kind": "polity",
       "name": {
-        "tr": "Bizans İmparatorluğu"
+        "tr": "Bosna-Hersek"
+      }
+    },
+    "bourbon-kingdom-of-france": {
+      "kind": "polity",
+      "name": {
+        "tr": "Bourbon Fransa Krallığı"
       },
       "summary": {
-        "tr": "Roma İmparatorluğu'nun Doğu'daki devamı. 1400'lere gelindiğinde İstanbul çevresi ve Mora Despotluğu ile sınırlı küçük bir devlete inmişti. 1453'te Osmanlılar tarafından İstanbul'un fethiyle sona erdi; Mora 1460'ta düştü."
+        "tr": "Napolyon'un düşüşünden sonra 1814–15'te Bourbon hanedanının tahta dönmesiyle kurulan monarşi; 1830 Temmuz Devrimi'ne dek sürdü, ardından Orléans hanedanından Louis-Philippe'in Temmuz Monarşisi geldi."
       }
     },
-    "ceylon": {
+    "brazilian-republic": {
       "kind": "polity",
       "name": {
-        "tr": "Seylan"
-      }
-    },
-    "chagatai-khanate": {
-      "kind": "polity",
-      "name": {
-        "tr": "Çağatay Hanlığı"
+        "tr": "Brezilya (Eski Cumhuriyet)"
       },
       "summary": {
-        "tr": "Cengiz Han'ın ikinci oğlu Çağatay'ın soyundan gelen hanların Orta Asya'daki devleti. 14. yüzyılın ortasında Timur'un yükseldiği Mâverâünnehir ile doğudaki Moğulistan olarak ikiye ayrıldı; doğu kolu 15.–16. yüzyıllarda Tanrı Dağları çevresinde sürdü."
+        "tr": "1889'da imparatorluğun devrilmesiyle kurulan “Eski Cumhuriyet”; 1930'a dek eyalet oligarşilerinin yönetiminde kaldı."
       }
     },
-    "champa": {
+    "british-africa": {
       "kind": "polity",
       "name": {
-        "tr": "Çampa Krallığı"
-      }
-    },
-    "chimu-empire": {
-      "kind": "polity",
-      "name": {
-        "tr": "Çimu İmparatorluğu"
-      }
-    },
-    "chuzan": {
-      "kind": "polity",
-      "name": {
-        "tr": "Çüzan Krallığı"
-      }
-    },
-    "comtat-venaissin": {
-      "kind": "polity",
-      "name": {
-        "tr": "Venaissin Kontluğu"
-      }
-    },
-    "county-of-ampuria": {
-      "kind": "polity",
-      "name": {
-        "tr": "Ampurias Kontluğu"
-      }
-    },
-    "county-of-armagnac": {
-      "kind": "polity",
-      "name": {
-        "tr": "Armagnac Kontluğu"
-      }
-    },
-    "county-of-auvergne": {
-      "kind": "polity",
-      "name": {
-        "tr": "Auvergne Kontluğu"
-      }
-    },
-    "county-of-bearn": {
-      "kind": "polity",
-      "name": {
-        "tr": "Béarn Vikontluğu"
+        "tr": "İngiliz Afrikası"
       },
       "summary": {
-        "tr": "Pireneler'in kuzeyinde, Fransa'nın güneybatısında, Fransa'dan fiilen bağımsız bir toprak. 1479'da Navarra Krallığı ile kişisel birliğe girdi; 1620'de Fransa'ya katıldı."
-      },
-      "wikipedia": "Viscounty of Béarn",
-      "wikidata": null,
-      "note": "Kaynak veri setinde 'County of Béarn' adıyla geçer; Béarn bir vikontluktur."
-    },
-    "county-of-blois": {
-      "kind": "polity",
-      "name": {
-        "tr": "Blois Kontluğu"
+        "tr": "Britanya'nın Afrika'daki sömürge ve himaye toprakları (Mısır'dan Güney Afrika'ya uzanan şerit ve Batı Afrika kolonileri); 1950–60'larda bağımsız devletlere dönüştü."
       }
     },
-    "county-of-brabant": {
+    "british-cape-colony": {
       "kind": "polity",
       "name": {
-        "tr": "Brabant Dükalığı"
-      },
-      "summary": {
-        "tr": "Bugünkü Belçika'nın orta kesiminde ve Hollanda'nın güneyinde, Brüksel ve Leuven çevresindeki dükalık. 1430'da Burgonya Dükü İyi Philippe'in eline geçti."
-      },
-      "wikipedia": "Duchy of Brabant",
-      "wikidata": null,
-      "note": "Kaynak veri setinde 'County of Brabant' adıyla geçer; Brabant 1183'ten beri dükalıktır."
-    },
-    "county-of-foix": {
-      "kind": "polity",
-      "name": {
-        "tr": "Foix Kontluğu"
+        "tr": "İngiliz Keyp Kolonisi"
       }
     },
-    "county-of-maine": {
+    "british-ceylon": {
       "kind": "polity",
       "name": {
-        "tr": "Maine Kontluğu"
+        "tr": "İngiliz Seylanı"
       }
     },
-    "county-of-nevers": {
+    "british-colonial-empire": {
       "kind": "polity",
       "name": {
-        "tr": "Nevers Kontluğu"
-      }
-    },
-    "county-of-perigord": {
-      "kind": "polity",
-      "name": {
-        "tr": "Périgord Kontluğu"
-      }
-    },
-    "county-of-savoy": {
-      "kind": "polity",
-      "name": {
-        "tr": "Savoy Dükalığı"
+        "tr": "İngiliz Sömürge İmparatorluğu"
       },
       "summary": {
-        "tr": "Alpler'de, bugünkü Fransa, İtalya ve İsviçre sınırlarının kesiştiği bölgedeki devlet. 1416'da Kutsal Roma İmparatoru Sigismund, Savoy Kontu VIII. Amadeus'u dük yaptı; kontluk dükalığa yükseldi."
-      },
-      "wikipedia": "Duchy of Savoy",
-      "wikidata": null,
-      "note": "Kaynak veri setinde 'County of Savoy' adıyla geçer; 1416'dan sonra dükalıktır."
+        "tr": "Britanya'nın dünya çapındaki sömürgeleri, mandaları ve himaye bölgeleri; 1920'lerde yeryüzü karasının yaklaşık beşte birini kapsayarak zirveye çıktı, İkinci Dünya Savaşı'ndan sonra hızla dağıldı."
+      }
     },
-    "county-of-touraine": {
+    "british-east-africa": {
       "kind": "polity",
       "name": {
-        "tr": "Touraine Kontluğu"
+        "tr": "İngiliz Doğu Afrikası"
+      }
+    },
+    "british-empire": {
+      "kind": "polity",
+      "name": {
+        "tr": "İngiliz İmparatorluğu"
+      },
+      "summary": {
+        "tr": "Sanayi Devrimi ve deniz gücüyle 19. yüzyılın ilk yarısında büyüyen İngiliz imparatorluğu; Hindistan'da Doğu Hindistan Şirketi'nin yönetimi 1858'e dek sürdü."
+      }
+    },
+    "british-gold-coast": {
+      "kind": "polity",
+      "name": {
+        "tr": "İngiliz Altın Sahili"
+      }
+    },
+    "british-overseas-territories": {
+      "kind": "polity",
+      "name": {
+        "tr": "İngiliz Denizaşırı Toprakları"
+      }
+    },
+    "british-raj": {
+      "kind": "polity",
+      "name": {
+        "tr": "İngiliz Hindistanı (Raj)"
+      },
+      "summary": {
+        "tr": "1857 Büyük Sepoy İsyanı'ndan sonra 1858'de Doğu Hindistan Şirketi'nin yerine Britanya Kraliyeti'nin doğrudan yönetimine geçen Hindistan; 1947'de Hindistan ve Pakistan olarak bölünerek sona erdi."
+      }
+    },
+    "bulgaria": {
+      "kind": "polity",
+      "name": {
+        "tr": "Bulgaristan"
+      },
+      "summary": {
+        "tr": "1878'de Osmanlı'dan özerklik kazanan prenslik; 1908'de bağımsız krallık oldu. Mart 1941'de Mihver'e katıldı, Eylül 1944'te Sovyetler girince taraf değiştirdi."
+      },
+      "wikipedia": "Bulgaria",
+      "wikidata": "Q219",
+      "note": "Kaynak veri seti aynı devletin bu dönemini 'kingdom-of-bulgaria', 'principality-of-bulgaria' kimlikleriyle de adlandırır; boru hattı bunları tek kimlikte birleştirir (scripts/pipeline/periods)."
+    },
+    "burkina-faso": {
+      "kind": "polity",
+      "name": {
+        "tr": "Burkina Faso"
+      }
+    },
+    "burma": {
+      "kind": "polity",
+      "name": {
+        "tr": "Burma (Birmanya)"
+      },
+      "summary": {
+        "tr": "1886'da Britanya Hindistanı'na katılan, 1937'de ayrı sömürge olan Birmanya; 1942'de Japonya'nın işgaline uğradı, 1948'de bağımsız oldu."
+      }
+    },
+    "california-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kaliforniya Cumhuriyeti"
+      }
+    },
+    "cambodia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kamboçya (Siyam vesayeti)"
+      }
+    },
+    "canada": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kanada"
+      },
+      "summary": {
+        "tr": "1867'de konfederasyonla kurulan, Britanya'ya bağlı hâkimiyet; 1931 Westminster Statüsü'yle fiilen tam bağımsız. İkinci Dünya Savaşı'nda Müttefikler safında savaştı."
+      }
+    },
+    "carnatic-sultanate": {
+      "kind": "polity",
+      "name": {
+        "tr": "Karnatik Sultanlığı"
+      }
+    },
+    "caucasian-imamate": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kafkas İmamlığı"
+      }
+    },
+    "central-african-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Orta Afrika Cumhuriyeti"
+      }
+    },
+    "centralist-mexico": {
+      "kind": "polity",
+      "name": {
+        "tr": "Merkeziyetçi Meksika"
+      }
+    },
+    "chechen-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Çeçenistan"
+      }
+    },
+    "chiangmai": {
+      "kind": "polity",
+      "name": {
+        "tr": "Chiang Mai Krallığı"
+      }
+    },
+    "chinese-communists": {
+      "kind": "polity",
+      "name": {
+        "tr": "Çin Komünistleri (Jiangxi Sovyeti)"
+      },
+      "wikipedia": "Chinese Soviet Republic"
+    },
+    "cispadane-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sispadan Cumhuriyeti"
+      }
+    },
+    "commonwealth-of-australia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Avustralya"
+      },
+      "summary": {
+        "tr": "1901'de İngiliz sömürgelerinin birleşmesiyle kurulan federasyon. İkinci Dünya Savaşı'nda Japon ilerleyişi karşısında 1942'den sonra Birleşik Devletler'e yöneldi."
+      }
+    },
+    "commonwealth-of-dominica": {
+      "kind": "polity",
+      "name": {
+        "tr": "Dominika"
+      }
+    },
+    "commonwealth-of-nations": {
+      "kind": "polity",
+      "name": {
+        "tr": "Milletler Topluluğu (Commonwealth)"
+      },
+      "summary": {
+        "tr": "Eski İngiliz İmparatorluğu'nun üye devletlerinin gönüllü topluluğu."
+      }
+    },
+    "commonwealth-of-the-bahamas": {
+      "kind": "polity",
+      "name": {
+        "tr": "Bahamalar"
+      }
+    },
+    "communist-cuba": {
+      "kind": "polity",
+      "name": {
+        "tr": "Küba (devrimden sonra)"
+      }
+    },
+    "communist-laos": {
+      "kind": "polity",
+      "name": {
+        "tr": "Laos"
+      }
+    },
+    "communist-party-of-china": {
+      "kind": "polity",
+      "name": {
+        "tr": "Çin Komünist Partisi bölgeleri"
+      },
+      "summary": {
+        "tr": "Çin Komünist Partisi'nin denetlediği bölgeler: 1930'larda Jiangxi Sovyeti, Uzun Yürüyüş'ten (1934–35) sonra Yan'an merkezli üsler; 1949'da Çin Halk Cumhuriyeti'ne dönüştü."
+      }
+    },
+    "confederate-states-of-america": {
+      "kind": "polity",
+      "name": {
+        "tr": "Amerika Konfedere Devletleri"
+      },
+      "summary": {
+        "tr": "1861'de kölelik yanlısı Güney eyaletlerinin Birleşik Devletler'den ayrılıp kurduğu devlet; İç Savaş'ı kaybedip 1865'te çöktü."
+      }
+    },
+    "confederation-of-the-rhine": {
+      "kind": "polity",
+      "name": {
+        "tr": "Ren Konfederasyonu"
+      },
+      "summary": {
+        "tr": "Napolyon'un 1806'da Batı ve Güney Alman devletleriyle kurduğu koruma altındaki birlik; Kutsal Roma İmparatorluğu'nun sonunu getirdi, 1813'te Leipzig yenilgisiyle dağıldı."
       }
     },
     "county-of-urgell": {
       "kind": "polity",
       "name": {
-        "tr": "Urgell Kontluğu"
-      }
+        "tr": "Urgell Kontluğu (Andorra)"
+      },
+      "note": "Kaynak veri setinde 'County of Urgell' adıyla geçer; poligon Andorra çevresidir."
     },
-    "crimean-khanate": {
+    "cretan-state": {
       "kind": "polity",
       "name": {
-        "tr": "Kırım Hanlığı"
+        "tr": "Girit Devleti"
+      }
+    },
+    "cuban-communists": {
+      "kind": "polity",
+      "name": {
+        "tr": "Küba komünistleri (1958–1959)"
+      }
+    },
+    "cuban-nationalists": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kübalı ulusalcılar (1895–1899)"
+      },
+      "wikipedia": null
+    },
+    "cundinamarca": {
+      "kind": "polity",
+      "name": {
+        "tr": "Cundinamarca Devleti"
+      }
+    },
+    "czech-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Çekya"
+      }
+    },
+    "czechoslovakia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Çekoslovakya"
       },
       "summary": {
-        "tr": "Altın Orda'nın dağılması sırasında 1440'lı yıllarda Hacı Giray'ın kurduğu han devleti. 1475'ten itibaren Osmanlı'nın vasalı oldu; Rus ve Polonya-Litvanya topraklarına akınlar düzenledi."
-      }
-    },
-    "crown-of-aragon": {
-      "kind": "polity",
-      "name": {
-        "tr": "Aragon Tacı"
-      },
-      "summary": {
-        "tr": "Aragon, Katalonya ve Valensiya ile Akdeniz'deki Sicilya, Sardinya ve Napoli gibi topraklardan oluşan federatif taç. II. Ferdinand'ın 1479'da tahta çıkmasıyla Kastilya ile kişisel birlik kurdu."
-      }
-    },
-    "crown-of-castile": {
-      "kind": "polity",
-      "name": {
-        "tr": "Kastilya Tacı"
-      },
-      "summary": {
-        "tr": "İber Yarımadası'nın merkezini ve güneyini kapsayan krallık. Isabel'in 1469'daki evliliği, 1474'te tahta çıkışı ve Ferdinand'ın 1479'da Aragon tahtına geçmesiyle Aragon Tacı ile kişisel birliğe girdi. 1492'de Gırnata'yı aldı ve Kolomb'un seferini destekledi."
-      }
-    },
-    "cuzco": {
-      "kind": "polity",
-      "name": {
-        "tr": "Cuzco"
+        "tr": "1918'de Çek ve Slovak topraklarında kurulan demokratik cumhuriyet; Ekim 1938 Münih Antlaşması'yla Sudet bölgesini Almanya'ya bıraktı, Mart 1939'da Alman işgaliyle ortadan kalktı. 1945'te yeniden kuruldu, 1948'den sonra komünist yönetimde kaldı, 1993'te Çekya ve Slovakya'ya ayrıldı."
       }
     },
     "dai-viet": {
       "kind": "polity",
       "name": {
         "tr": "Đại Việt"
+      }
+    },
+    "danish-gold-coast": {
+      "kind": "polity",
+      "name": {
+        "tr": "Danimarka Altın Sahili"
+      }
+    },
+    "danish-india": {
+      "kind": "polity",
+      "name": {
+        "tr": "Danimarka Hindistanı"
+      }
+    },
+    "democratic-people-s-republic-of-korea": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kuzey Kore"
       },
       "summary": {
-        "tr": "Çin'den bağımsızlığını 10. yüzyılda kazanan Vietnam devletinin adı. Bu veri kaydı, 16. yüzyılda Mạc Hanedanı idaresindeki kuzey Vietnam'ı gösterir."
+        "tr": "9 Eylül 1948'de Sovyet işgal bölgesinde Kim Il-sung yönetiminde kurulan devlet."
       }
     },
-    "delhi-sultanate": {
+    "democratic-republic-of-the-congo": {
       "kind": "polity",
       "name": {
-        "tr": "Delhi Sultanlığı"
+        "tr": "Kongo Demokratik Cumhuriyeti"
+      }
+    },
+    "democratic-republic-of-vietnam": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kuzey Vietnam"
+      }
+    },
+    "denmark": {
+      "kind": "polity",
+      "name": {
+        "tr": "Danimarka"
       },
       "summary": {
-        "tr": "1206'dan itibaren Kuzey Hindistan'ı yöneten Türk-Afgan sultanlıkları. Timur'un 1398 Delhi seferinden sonra zayıfladı; Seyyidler ve Lodiler dönemlerinin ardından 1526'da Babür'e yenildi."
-      }
-    },
-    "demak-sultanate": {
-      "kind": "polity",
-      "name": {
-        "tr": "Demak Sultanlığı"
+        "tr": "Norveç'i 1814'te kaybeden Danimarka; 9 Nisan 1940'ta Almanya tarafından birkaç saat içinde işgal edildi."
       },
-      "summary": {
-        "tr": "Java'nın kuzey kıyısında, Majapahit'in yerini alarak 16. yüzyılın başında yükselen, Java'nın ilk büyük İslam sultanlığı."
-      }
+      "wikipedia": "Denmark",
+      "wikidata": "Q35",
+      "note": "Kaynak veri seti aynı devletin bu dönemini 'denmark-norway' kimlikleriyle de adlandırır; boru hattı bunları tek kimlikte birleştirir (scripts/pipeline/periods)."
     },
-    "denmark-norway": {
+    "dominican-republic": {
       "kind": "polity",
       "name": {
-        "tr": "Danimarka-Norveç"
-      },
-      "summary": {
-        "tr": "Danimarka ve Norveç'in tek kralın altında birleştiği devlet. Kalmar Birliği'nin dağılmasından sonra kuzeyin başlıca gücü olarak kaldı; Reform'u 1536'da benimsedi."
+        "tr": "Dominik Cumhuriyeti"
       }
     },
-    "despotate-of-arta": {
+    "duchy-of-anhalt": {
       "kind": "polity",
       "name": {
-        "tr": "Arta Despotluğu"
-      }
-    },
-    "despotate-of-epirus": {
-      "kind": "polity",
-      "name": {
-        "tr": "Epir Despotluğu"
-      }
-    },
-    "despotate-of-vidin": {
-      "kind": "polity",
-      "name": {
-        "tr": "Vidin Despotluğu"
-      }
-    },
-    "don-cossacks": {
-      "kind": "polity",
-      "name": {
-        "tr": "Don Kazakları"
-      }
-    },
-    "duchy-of-aquitaine": {
-      "kind": "polity",
-      "name": {
-        "tr": "Akitanya Dükalığı"
+        "tr": "Anhalt Dükalığı"
       }
     },
     "duchy-of-bavaria": {
@@ -468,596 +555,1060 @@
         "tr": "Bavyera Dükalığı"
       }
     },
-    "duchy-of-brittany": {
+    "duchy-of-brunswick": {
       "kind": "polity",
       "name": {
-        "tr": "Bretanya Dükalığı"
+        "tr": "Braunschweig Dükalığı"
       }
     },
-    "duchy-of-burgundy": {
+    "duchy-of-holstein": {
       "kind": "polity",
       "name": {
-        "tr": "Burgonya Dükalığı"
+        "tr": "Holstein Dükalığı"
+      }
+    },
+    "duchy-of-mecklenburg": {
+      "kind": "polity",
+      "name": {
+        "tr": "Mecklenburg Dükalığı"
+      }
+    },
+    "duchy-of-modena-and-reggio": {
+      "kind": "polity",
+      "name": {
+        "tr": "Modena ve Reggio Dükalığı"
+      }
+    },
+    "duchy-of-nassau": {
+      "kind": "polity",
+      "name": {
+        "tr": "Nassau Dükalığı"
+      }
+    },
+    "duchy-of-oldenburg": {
+      "kind": "polity",
+      "name": {
+        "tr": "Oldenburg Dükalığı"
+      }
+    },
+    "duchy-of-parma-and-piacenza": {
+      "kind": "polity",
+      "name": {
+        "tr": "Parma ve Piacenza Dükalığı"
+      }
+    },
+    "duchy-of-warsaw": {
+      "kind": "polity",
+      "name": {
+        "tr": "Varşova Dükalığı"
       },
       "summary": {
-        "tr": "Fransa Kralı'na bağlı görünse de fiilen bağımsız hareket eden, Flandre ve Hollanda'yı da kapsayan zengin dükalık. Cesur Charles'ın 1477'de Nancy'de ölmesiyle çöktü; mirasının büyük bölümü Habsburglara geçti."
+        "tr": "Napolyon'un 1807'de Prusya'dan alınan Polonya toprakları üzerinde kurduğu vasal devlet; 1813–15'te dağıldı."
       }
     },
-    "duchy-of-lorraine": {
+    "durrani-dynasty": {
       "kind": "polity",
       "name": {
-        "tr": "Lorraine Dükalığı"
+        "tr": "Dürrani Hanedanı (Afganistan)"
       }
     },
-    "duchy-of-luxembourg": {
+    "durrani-empire": {
       "kind": "polity",
       "name": {
-        "tr": "Lüksemburg Dükalığı"
+        "tr": "Dürrani İmparatorluğu"
       }
     },
-    "duchy-of-milan": {
+    "dutch-east-indies": {
       "kind": "polity",
       "name": {
-        "tr": "Milano Dükalığı"
+        "tr": "Hollanda Doğu Hint Adaları"
       },
       "summary": {
-        "tr": "Kuzey İtalya'nın zengin dükalığı; Sforza ailesi döneminde Rönesans kültürünün merkezlerinden oldu. 1535'ten sonra İspanya yönetimine geçti."
+        "tr": "Hollanda'nın bugünkü Endonezya'daki sömürgesi; 1942'de Japonya'nın işgaline uğradı. Endonezya 17 Ağustos 1945'te bağımsızlığını ilan etti, Hollanda 1949'da tanıdı."
       }
     },
-    "duchy-of-prussia": {
+    "dutch-gold-coast": {
       "kind": "polity",
       "name": {
-        "tr": "Prusya Dükalığı"
+        "tr": "Hollanda Altın Sahili"
+      }
+    },
+    "east-turkestan-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Doğu Türkistan Cumhuriyeti"
+      }
+    },
+    "eire": {
+      "kind": "polity",
+      "name": {
+        "tr": "İrlanda"
       },
       "summary": {
-        "tr": "Töton Tarikatı'nın 1525'te sekülerleşmesiyle doğan, Polonya Kralı'na bağlı Protestan dükalık."
+        "tr": "1937 anayasasıyla Irlanda'nın resmî adı oldu; İkinci Dünya Savaşı'nda tarafsız kaldı, 1949'da cumhuriyet ve Britanya Topluluğu'ndan ayrılış ilan edildi."
       }
     },
-    "duchy-of-saint-sava": {
+    "electorate-of-baden": {
       "kind": "polity",
       "name": {
-        "tr": "Aziz Sava Dükalığı"
+        "tr": "Baden Seçmenliği"
       }
     },
-    "duchy-of-styria": {
+    "electorate-of-hanover": {
       "kind": "polity",
       "name": {
-        "tr": "Steiermark Dükalığı"
+        "tr": "Hannover Seçmenliği"
       }
     },
-    "dutch-republic": {
+    "electorate-of-hesse": {
       "kind": "polity",
       "name": {
-        "tr": "Hollanda Cumhuriyeti"
-      },
-      "summary": {
-        "tr": "İspanya'ya karşı Seksen Yıl Savaşları'nda (1568–1648) Birleşik Eyaletler'in kurduğu cumhuriyet. 1581'de bağımsızlık bildirgesiyle Habsburg egemenliğini reddetti."
+        "tr": "Hessen Seçmenliği (Hessen-Kassel)"
       }
     },
-    "earldom-of-desmond": {
+    "electorate-of-salzburg": {
       "kind": "polity",
       "name": {
-        "tr": "Desmond Kontluğu"
-      }
-    },
-    "east-turkestan": {
-      "kind": "polity",
-      "name": {
-        "tr": "Doğu Türkistan"
-      }
-    },
-    "eastern-chagatai-khanate": {
-      "kind": "polity",
-      "name": {
-        "tr": "Doğu Çağatay Hanlığı"
-      }
-    },
-    "eastern-hungarian-kingdom": {
-      "kind": "polity",
-      "name": {
-        "tr": "Doğu Macar Krallığı"
-      }
-    },
-    "eastern-moghulistan": {
-      "kind": "polity",
-      "name": {
-        "tr": "Doğu Moğulistan"
-      }
-    },
-    "electorate-of-brandenburg": {
-      "kind": "polity",
-      "name": {
-        "tr": "Brandenburg Seçmenliği"
+        "tr": "Salzburg Seçmenliği"
       }
     },
     "electorate-of-saxony": {
       "kind": "polity",
       "name": {
         "tr": "Saksonya Seçmenliği"
-      },
-      "summary": {
-        "tr": "Kutsal Roma İmparatoru'nu seçen yedi seçmenden biri. Wittenberg bu topraklardaydı; Seçmen III. Friedrich, Luther'i korudu ve Reform'un yayılmasında belirleyici rol oynadı."
       }
     },
-    "electorate-of-trier": {
+    "electorate-of-wurttemberg": {
       "kind": "polity",
       "name": {
-        "tr": "Trier Seçmenliği"
+        "tr": "Württemberg Seçmenliği"
       }
     },
-    "emirate-of-granada": {
+    "emirate-of-afghanistan": {
       "kind": "polity",
       "name": {
-        "tr": "Gırnata Emirliği"
+        "tr": "Afganistan Emirliği"
       },
       "summary": {
-        "tr": "İber Yarımadası'ndaki son Müslüman devlet; Nasrîler hanedanı idaresinde Elhamra Sarayı gibi eserlerle tanınır. 2 Ocak 1492'de Kastilya ve Aragon güçlerine teslim oldu."
+        "tr": "Britanya ve Rusya arasında “tampon” devlet olarak yaşayan Afganistan; iki Afgan–İngiliz savaşı yaşadı."
       }
     },
-    "empire-of-trebizond": {
+    "emirate-of-bukhara": {
       "kind": "polity",
       "name": {
-        "tr": "Trabzon İmparatorluğu"
+        "tr": "Buhara Emirliği"
+      }
+    },
+    "emirate-of-diriyah": {
+      "kind": "polity",
+      "name": {
+        "tr": "Dir'iyye Emirliği (Birinci Suudi Devleti)"
       },
       "summary": {
-        "tr": "Karadeniz kıyısında Trabzon merkezli, Komnenos hanedanının Rum devleti. 1461'de Fatih Sultan Mehmed tarafından fethedildi."
+        "tr": "Suud hanedanı ile Muhammed bin Abdülvehhab'ın hareketinin kurduğu birinci Suudi devleti; 1818'de Mısır ordusunca yıkıldı."
+      }
+    },
+    "emirate-of-jabal-shammar": {
+      "kind": "polity",
+      "name": {
+        "tr": "Cebel Şammar Emirliği (Haşil)"
+      }
+    },
+    "emirate-of-nejd": {
+      "kind": "polity",
+      "name": {
+        "tr": "Necid Emirliği"
+      },
+      "summary": {
+        "tr": "Orta Arabistan'da Suud hanedanının 1824'te yeniden kurduğu emirlik; 1925'te Hicaz'ı da ele geçirdi."
+      }
+    },
+    "empire-of-brazil": {
+      "kind": "polity",
+      "name": {
+        "tr": "Brezilya İmparatorluğu"
+      },
+      "summary": {
+        "tr": "Portekiz kraliyet ailesinin Brezilya'da kurduğu imparatorluk (1822–89); 1888'de köleliği kaldırdı, 1889'da cumhuriyete geçti."
+      }
+    },
+    "empire-of-china": {
+      "kind": "polity",
+      "name": {
+        "tr": "Çin İmparatorluğu (1915–1916)"
+      }
+    },
+    "empire-of-haiti": {
+      "kind": "polity",
+      "name": {
+        "tr": "Haiti (1805–1915)"
+      },
+      "summary": {
+        "tr": "Fransa'dan 1 Ocak 1804'te bağımsızlığını kazanan Haiti. Dessalines kısa süre imparator oldu (1804–06); devlet sonra cumhuriyet olarak sürdü ve 1915–34'te ABD işgalinde kaldı."
+      },
+      "wikipedia": "Haiti"
+    },
+    "empire-of-japan": {
+      "kind": "polity",
+      "name": {
+        "tr": "Japon İmparatorluğu"
+      },
+      "summary": {
+        "tr": "1868 Meiji Restorasyonu'ndan 1945'e kadar Japonya. Hızla sanayileşip Tayvan'ı (1895), Kore'yi (1910) ve Mançurya'yı (1931) ele geçirdi, 1937'de Çin'e girdi; 7 Aralık 1941'de Pearl Harbor ile ABD'ye ve Britanya'ya saldırdı. Ağustos 1945'te atom bombalarının ve Sovyet saldırısının ardından teslim oldu."
+      }
+    },
+    "equatorial-guinea": {
+      "kind": "polity",
+      "name": {
+        "tr": "Ekvator Ginesi"
+      }
+    },
+    "estado-novo": {
+      "kind": "polity",
+      "name": {
+        "tr": "Portekiz (Estado Novo)"
+      },
+      "summary": {
+        "tr": "António de Oliveira Salazar'ın kurduğu otoriter “Yeni Devlet” (1933–74); İkinci Dünya Savaşı'nda tarafsız kaldı, sömürge savaşlarını 1974 Karanfil Devrimi'ne kadar sürdürdü."
+      }
+    },
+    "estonia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Estonya"
+      },
+      "summary": {
+        "tr": "Birinci Dünya Savaşı sonrası bağımsızlığını kazanan Baltık cumhuriyeti; 1940'ta Sovyetler Birliği'ne katıldı (ilhak)."
+      }
+    },
+    "eswatini": {
+      "kind": "polity",
+      "name": {
+        "tr": "Esvatini"
+      }
+    },
+    "ethiopia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Etiyopya"
       }
     },
     "ethiopian-empire": {
       "kind": "polity",
       "name": {
-        "tr": "Habeş İmparatorluğu"
+        "tr": "Etiyopya İmparatorluğu"
       },
       "summary": {
-        "tr": "Hristiyan Habeş devleti. 1529'dan sonra Adal Sultanlığı'nın saldırılarına uğradı; 1543'te Portekiz yardımıyla Ahmed Gran'ı yenerek ayakta kaldı."
+        "tr": "Afrika'da Avrupa sömürgeciliğine direnen birkaç devletten biri; 1896'da Adwa'da İtalya'yı yendi. 1935–36'da İtalya'nın işgaline uğradı, 1941'de İngiliz yardımıyla yeniden bağımsız oldu."
       }
     },
-    "first-toungoo-empire": {
+    "federal-league": {
       "kind": "polity",
       "name": {
-        "tr": "Birinci Taungu İmparatorluğu"
+        "tr": "Özgür Halklar Birliği (Federal Lig)"
+      }
+    },
+    "federal-republic-of-germany": {
+      "kind": "polity",
+      "name": {
+        "tr": "Batı Almanya"
       },
       "summary": {
-        "tr": "Birmanya'da Taungu hanedanının 16. yüzyılın ortasında Pegu, Ava ve Şan devletlerini birleştirerek kurduğu geniş imparatorluk."
+        "tr": "1949'da Amerikan, İngiliz ve Fransız işgal bölgelerinde kurulan federal demokrasi; NATO ve Avrupa Topluluğu'nun kurucu üyesi, savaş sonrası ekonomik toparlanmanın simgesi. 1990'da Doğu Almanya'yı bünyesine kattı."
       }
     },
-    "four-oirats": {
+    "federal-republic-of-nigeria": {
       "kind": "polity",
       "name": {
-        "tr": "Dört Oyrat"
+        "tr": "Nijerya"
+      }
+    },
+    "federal-republic-of-somalia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Somali"
+      }
+    },
+    "federated-republic-of-brazil": {
+      "kind": "polity",
+      "name": {
+        "tr": "Brezilya (askerî rejim, 1967–1986)"
+      }
+    },
+    "federated-republic-of-germany": {
+      "kind": "polity",
+      "name": {
+        "tr": "Almanya"
       },
       "summary": {
-        "tr": "Batı Moğol kabilelerinin (Dört Oyrat) konfederasyonu. Esen Taişi önderliğinde 1449'da Tumu'da Ming imparatorunu esir aldı."
+        "tr": "1990'daki yeniden birleşmeden sonraki Almanya."
       }
     },
-    "france-antarctique": {
+    "federated-republic-of-mexico": {
       "kind": "polity",
       "name": {
-        "tr": "Antarktik Fransa"
+        "tr": "Meksika Federal Cumhuriyeti"
+      }
+    },
+    "federation-of-malaya": {
+      "kind": "polity",
+      "name": {
+        "tr": "Malaya Federasyonu"
+      }
+    },
+    "first-french-colonial-empire": {
+      "kind": "polity",
+      "name": {
+        "tr": "Fransız sömürgeleri (Napolyon dönemi)"
+      },
+      "wikipedia": "French colonial empire",
+      "note": "Kaynak veri setinde 'First French colonial empire' adıyla geçer; poligon yalnızca küçük bir kalıntıdır (Saint-Pierre ve Miquelon dolayı)."
+    },
+    "first-french-empire": {
+      "kind": "polity",
+      "name": {
+        "tr": "Birinci Fransız İmparatorluğu"
+      },
+      "summary": {
+        "tr": "Napolyon Bonaparte'ın 1804'te ilan ettiği imparatorluk; 1812'de Avrupa'nın büyük bölümüne hükmetti. Rusya seferinin ve Leipzig'in (1813) ardından 1814–15'te çöktü."
+      }
+    },
+    "first-mexican-empire": {
+      "kind": "polity",
+      "name": {
+        "tr": "Birinci Meksika İmparatorluğu"
+      },
+      "summary": {
+        "tr": "Agustín de Iturbide'nin 1822'de ilan ettiği kısa ömürlü Meksika imparatorluğu."
+      }
+    },
+    "first-spanish-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "İspanya Birinci Cumhuriyeti"
+      }
+    },
+    "former-yugoslav-republic-of-macedonia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Makedonya (Kuzey Makedonya)"
+      }
+    },
+    "francoist-spain": {
+      "kind": "polity",
+      "name": {
+        "tr": "Franco İspanyası"
+      },
+      "summary": {
+        "tr": "İç Savaş'ı kazanan General Francisco Franco'nun 1939–1975 arasındaki otoriter rejimi. İkinci Dünya Savaşı'nda resmen tarafsız kaldı (Mihver'e sempati duydu)."
+      }
+    },
+    "free-city-of-bremen": {
+      "kind": "polity",
+      "name": {
+        "tr": "Bremen Serbest Şehri"
+      }
+    },
+    "free-city-of-danzig": {
+      "kind": "polity",
+      "name": {
+        "tr": "Danzig Serbest Şehri"
+      },
+      "summary": {
+        "tr": "Versay Antlaşması'yla Almanya'dan ayrılıp Milletler Cemiyeti himayesine alınan, çoğunluğu Alman olan liman kenti (1920–39). Hitler'in Danzig talebi Eylül 1939'daki Polonya işgalinin gerekçelerinden biri oldu."
+      }
+    },
+    "free-city-of-frankfurt": {
+      "kind": "polity",
+      "name": {
+        "tr": "Frankfurt Serbest Şehri"
+      }
+    },
+    "free-city-of-hamburg": {
+      "kind": "polity",
+      "name": {
+        "tr": "Hamburg Serbest Şehri"
+      }
+    },
+    "free-city-of-krakow": {
+      "kind": "polity",
+      "name": {
+        "tr": "Krakov Serbest Şehri"
+      }
+    },
+    "free-city-of-lubeck": {
+      "kind": "polity",
+      "name": {
+        "tr": "Lübeck Serbest Şehri"
+      }
+    },
+    "free-french": {
+      "kind": "polity",
+      "name": {
+        "tr": "Özgür Fransa"
+      },
+      "summary": {
+        "tr": "General de Gaulle'ün 18 Haziran 1940'ta Londra'dan başlattığı direniş hareketi; Ekvator Afrikası'nın bir bölümünü ve diğer sömürgeleri yanına aldı, 1944'te Fransa Cumhuriyeti Geçici Hükümeti'ne dönüştü."
+      }
+    },
+    "free-orange-state": {
+      "kind": "polity",
+      "name": {
+        "tr": "Orange Serbest Devleti"
+      }
+    },
+    "french-africa": {
+      "kind": "polity",
+      "name": {
+        "tr": "Fransız Afrikası"
+      },
+      "summary": {
+        "tr": "Fransa'nın Cezayir'den Batı ve Ekvator Afrikası'na uzanan sömürge toprakları; 1946–60 arasında bağımsızlık hareketleriyle dağıldı."
+      }
+    },
+    "french-algeria": {
+      "kind": "polity",
+      "name": {
+        "tr": "Fransız Cezayiri"
+      },
+      "summary": {
+        "tr": "Fransa'nın 1830'da işgal edip 1962'ye kadar elinde tuttuğu, “Fransa'nın parçası” sayılan Cezayir."
+      }
+    },
+    "french-consulate": {
+      "kind": "polity",
+      "name": {
+        "tr": "Fransa Konsolosluğu"
+      },
+      "summary": {
+        "tr": "Napolyon'un 1799'daki 18 Brumaire darbesiyle kurduğu yönetim; 1804'te imparatorluğa dönüştü."
+      }
+    },
+    "french-fifth-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Fransa Beşinci Cumhuriyeti"
+      },
+      "summary": {
+        "tr": "1958'de de Gaulle'ün önderliğinde, güçlü bir cumhurbaşkanlığıyla kurulan, bugünkü Fransa Cumhuriyeti."
+      }
+    },
+    "french-fourth-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Fransa Dördüncü Cumhuriyeti"
+      },
+      "summary": {
+        "tr": "Savaştan sonra 1946'da kurulan, kararsız koalisyonlarla yönetilen parlamenter cumhuriyet. Çinhindi ve Cezayir savaşları ile sömürgelerin dağılması sürerken 1958'de çöktü."
+      }
+    },
+    "french-india": {
+      "kind": "polity",
+      "name": {
+        "tr": "Fransız Hindistanı"
+      }
+    },
+    "french-indochina": {
+      "kind": "polity",
+      "name": {
+        "tr": "Fransız Çinhindi'si"
+      },
+      "summary": {
+        "tr": "Fransa'nın bugünkü Vietnam, Kamboçya ve Laos'taki sömürge birliği (1887–1954). 1940'tan sonra Vichy yönetimi altında Japon ordusuyla birlikte yönetildi; Dien Bien Phu yenilgisiyle (1954) sona erdi."
+      }
+    },
+    "french-louisiana": {
+      "kind": "polity",
+      "name": {
+        "tr": "Fransız Louisiana'sı"
+      }
+    },
+    "french-mandate-for-syria-and-lebanon": {
+      "kind": "polity",
+      "name": {
+        "tr": "Suriye ve Lübnan Fransız Mandası"
+      },
+      "summary": {
+        "tr": "Milletler Cemiyeti'nin Osmanlı'dan ayrılan Suriye ve Lübnan'ı Fransa'ya bıraktığı manda (1920–46). 1941'de Vichy ile Müttefikler arasında Suriye–Lübnan Seferi yaşandı; iki ülke 1946'ya kadar tam bağımsızlığa kavuştu."
+      }
+    },
+    "french-second-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Fransa İkinci Cumhuriyeti"
+      },
+      "summary": {
+        "tr": "1848 Şubat devriminden doğan, erkeklere genel oy hakkı tanıyan cumhuriyet; Louis-Napoléon Bonaparte'ın Aralık 1851 darbesiyle sona erdi."
+      }
+    },
+    "french-third-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Fransa Üçüncü Cumhuriyeti"
+      },
+      "summary": {
+        "tr": "1870'te Sedan yenilgisiyle İkinci İmparatorluk'un çökmesinin ardından kurulan, 1940'a dek süren cumhuriyet. Sömürge imparatorluğunu genişletti, Birinci Dünya Savaşı'nı kazandı; Haziran 1940'ta Almanya karşısında hızla çöktü."
       }
     },
     "funj-sultanate": {
       "kind": "polity",
       "name": {
         "tr": "Funj Sultanlığı"
+      }
+    },
+    "gabon": {
+      "kind": "polity",
+      "name": {
+        "tr": "Gabon"
+      }
+    },
+    "georgia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Gürcistan"
+      }
+    },
+    "german-africa": {
+      "kind": "polity",
+      "name": {
+        "tr": "Alman Afrikası"
+      }
+    },
+    "german-confederation": {
+      "kind": "polity",
+      "name": {
+        "tr": "Alman Konfederasyonu"
       },
       "summary": {
-        "tr": "Nil'in orta kesiminde, Sennar merkezli sultanlık. 1504 dolaylarında Alodia Krallığı'nın yerine kuruldu ve 16. yüzyıl boyunca Sudan'ın büyük bölümüne egemen oldu."
+        "tr": "Viyana Kongresi'nin (1815) Kutsal Roma İmparatorluğu'nun yerine kurduğu, 39 Alman devletinin gevşek birliği; Avusturya ile Prusya'nın rekabeti sonunda 1866'da dağıldı."
       }
     },
-    "galuh-kingdom": {
+    "german-democratic-republic": {
       "kind": "polity",
       "name": {
-        "tr": "Galuh Krallığı"
-      }
-    },
-    "germiyanids": {
-      "kind": "polity",
-      "name": {
-        "tr": "Germiyanoğulları Beyliği"
+        "tr": "Doğu Almanya"
       },
       "summary": {
-        "tr": "Kütahya merkezli Türkmen beyliği (Germiyanoğulları). 14. yüzyılda Batı Anadolu'nun en büyük beyliklerinden biriydi; II. Yakub'un ölümüyle (1429) toprakları vasiyet yoluyla Osmanlılara geçti."
+        "tr": "1949'da Sovyet işgal bölgesinde kurulan, Varşova Paktı üyesi, tek partili Doğu Alman devleti. 1961'de Berlin Duvarı'nı inşa etti; 1989'da duvarın yıkılmasından sonra 1990'da Batı Almanya'ya katılarak sona erdi."
       }
     },
-    "giudicato-of-arborea": {
+    "german-empire": {
       "kind": "polity",
       "name": {
-        "tr": "Arborea Yargıçlığı"
-      }
-    },
-    "golconda-sultanate": {
-      "kind": "polity",
-      "name": {
-        "tr": "Golkonda Sultanlığı"
+        "tr": "Alman İmparatorluğu"
       },
       "summary": {
-        "tr": "Bahmani mirasından doğan, Kutubşahlar'ın yönettiği Dekkan sultanlığı. Golkonda Kalesi ve elmas ticaretiyle tanınır."
+        "tr": "1871'de Prusya önderliğinde, Fransa'ya karşı kazanılan savaşın ardından Versay'da ilan edilen federal Alman devleti. Bismarck ve II. Wilhelm döneminde Avrupa'nın büyük sanayi gücü oldu; Birinci Dünya Savaşı'nı kaybedince 1918'de çöktü."
       }
     },
-    "golden-horde": {
+    "ghana": {
       "kind": "polity",
       "name": {
-        "tr": "Altın Orda"
+        "tr": "Gana"
+      }
+    },
+    "gran-colombia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Büyük Kolombiya"
       },
       "summary": {
-        "tr": "Cengiz Han'ın torunu Batu'nun kurduğu, Rus prensliklerinden haraç alan Moğol-Türk devleti. 15. yüzyılda Kırım, Kazan ve Astrahan gibi hanlıklara parçalandı; 1480'de Moskova üzerindeki hâkimiyetini yitirdi."
+        "tr": "Simón Bolívar'ın 1819'da kurduğu, bugünkü Kolombiya, Venezuela, Ekvador ve Panama'yı kapsayan cumhuriyet; 1830–31'de dağıldı."
       }
     },
-    "gorkha-kingdom": {
+    "granadine-confederation": {
       "kind": "polity",
       "name": {
-        "tr": "Gorkha Krallığı"
+        "tr": "Granada Konfederasyonu"
       }
     },
-    "grand-duchy-of-lithuania": {
+    "grand-duchy-of-baden": {
       "kind": "polity",
       "name": {
-        "tr": "Litvanya Büyük Dükalığı"
+        "tr": "Baden Büyük Dükalığı"
+      }
+    },
+    "grand-duchy-of-berg": {
+      "kind": "polity",
+      "name": {
+        "tr": "Berg Büyük Dükalığı"
+      }
+    },
+    "grand-duchy-of-hesse": {
+      "kind": "polity",
+      "name": {
+        "tr": "Hessen Büyük Dükalığı"
+      }
+    },
+    "grand-duchy-of-saxe-weimar-eisenach": {
+      "kind": "polity",
+      "name": {
+        "tr": "Saksonya-Weimar-Eisenach Büyük Dükalığı"
+      }
+    },
+    "grand-duchy-of-tuscany": {
+      "kind": "polity",
+      "name": {
+        "tr": "Toskana Büyük Dükalığı"
+      }
+    },
+    "grand-duchy-of-wurzburg": {
+      "kind": "polity",
+      "name": {
+        "tr": "Würzburg Büyük Dükalığı"
+      }
+    },
+    "great-mongol-state": {
+      "kind": "polity",
+      "name": {
+        "tr": "Moğolistan (Bogd Han Devleti)"
       },
       "summary": {
-        "tr": "Doğu Avrupa'da Baltık'tan Karadeniz'e uzanan, Slav nüfusun çoğunlukta olduğu geniş devlet. Polonya ile Jagiellon hanedanı aracılığıyla birleşikti; 1569'daki Lublin Birliği ile Polonya-Litvanya Ortak Devleti'ne dönüştü."
-      }
+        "tr": "1911'de Qing'den ayrılan, Bogd Han başkanlığındaki Moğol devleti; Çin ve Rusya arasında el değiştirdi."
+      },
+      "wikipedia": "Bogd Khanate of Mongolia",
+      "note": "Kaynak veri setinde 'Great Mongol State' adıyla geçer; 1912–1925 Bogd Han Moğolistanı'dır."
     },
-    "grand-principality-of-moscow": {
+    "greece": {
       "kind": "polity",
       "name": {
-        "tr": "Moskova Büyük Prensliği"
+        "tr": "Yunanistan"
       },
       "summary": {
-        "tr": "Altın Orda'ya haraç ödeyen küçük bir prenslikten, III. İvan (1462–1505) döneminde Rus topraklarını toplayan bir devlete dönüştü. 1478'de Novgorod'u kattı, 1480'de Ugra'da Altın Orda'nın hâkimiyetine son verdi."
+        "tr": "1830'larda Osmanlı'dan bağımsızlığını kazanan Yunanistan, sonraki yüzyılda toprak genişletti. Ekim 1940'ta İtalya'nın saldırısını durdurdu, Nisan 1941'de Almanya'ya yenilip Alman, İtalyan ve Bulgar işgalinde kaldı; 1944'te kurtuldu, ardından iç savaş yaşadı."
+      },
+      "wikipedia": "Greece",
+      "wikidata": "Q41",
+      "note": "Kaynak veri seti aynı devletin bu dönemini 'first-hellenic-republic', 'kingdom-of-greece', 'third-hellenic-republic' kimlikleriyle de adlandırır; boru hattı bunları tek kimlikte birleştirir (scripts/pipeline/periods)."
+    },
+    "greek-junta": {
+      "kind": "polity",
+      "name": {
+        "tr": "Yunan Cuntası"
+      },
+      "summary": {
+        "tr": "21 Nisan 1967'de albayların darbesiyle kurulan askerî rejim; 1974'te Kıbrıs krizinin ardından çöktü."
+      }
+    },
+    "greenland": {
+      "kind": "polity",
+      "name": {
+        "tr": "Grönland"
+      },
+      "summary": {
+        "tr": "Danimarka'ya bağlı Arktik ada; İkinci Dünya Savaşı'nda ABD ona koruma sağladı."
+      }
+    },
+    "grenada": {
+      "kind": "polity",
+      "name": {
+        "tr": "Grenada"
+      }
+    },
+    "guatemala": {
+      "kind": "polity",
+      "name": {
+        "tr": "Guatemala"
+      }
+    },
+    "guayaquil-junta": {
+      "kind": "polity",
+      "name": {
+        "tr": "Guayaquil Cuntası"
+      }
+    },
+    "guinea": {
+      "kind": "polity",
+      "name": {
+        "tr": "Gine"
+      }
+    },
+    "guyana": {
+      "kind": "polity",
+      "name": {
+        "tr": "Guyana"
       }
     },
     "habsburg-monarchy": {
       "kind": "polity",
       "name": {
         "tr": "Habsburg Monarşisi"
-      },
-      "summary": {
-        "tr": "Avusturya Arşidükalığı'ndan başlayarak Bohemya ve Macaristan tahtlarını da edinen Habsburg hanedanının toprakları. 1526'dan itibaren Bohemya ve Macaristan'ın bir bölümü Habsburglara geçti; Osmanlılarla sürekli sınır savaşları yaptılar."
       }
     },
-    "hafsid-dynasty": {
+    "haiti": {
       "kind": "polity",
       "name": {
-        "tr": "Hafsîler"
+        "tr": "Haiti (Saint-Domingue, 1800–1802)"
       },
       "summary": {
-        "tr": "Tunus merkezli, Kuzey Afrika'nın doğusunu yöneten hanedan. 16. yüzyılda İspanya ile Osmanlı arasındaki rekabette kaldı; 1574'te Osmanlı'ya geçti."
+        "tr": "Fransız Saint-Domingue sömürgesinde 1791'de başlayan köle ayaklanmasının liderlerinden Toussaint Louverture'ün yönettiği bölge (1800–02); Napolyon'un gönderdiği sefer ordusuyla savaşıldı."
       }
     },
-    "hanthawaddy-kingdom": {
+    "helvetic-republic": {
       "kind": "polity",
       "name": {
-        "tr": "Hanthawaddy Krallığı"
-      }
-    },
-    "hashemite-arab-federation": {
-      "kind": "polity",
-      "name": {
-        "tr": "Arap Irak'ı"
-      },
-      "summary": {
-        "tr": "Dicle ve Fırat boyunda, bugünkü Irak'ın büyük bölümünü kapsayan bölge; dönemin kaynaklarında “Irak-ı Arab” olarak anılır."
-      },
-      "note": "Kaynak veri setinde 'Hashemite Arab Federation' (1958 Irak–Ürdün birliği) etiketiyle geçer; Wikipedia bağlantısı 'Arab Iraq'tır."
-    },
-    "haudenosaunee": {
-      "kind": "polity",
-      "name": {
-        "tr": "Irokua Konfederasyonu"
-      },
-      "summary": {
-        "tr": "Beş (sonra altı) Irokua ulusunun kurduğu konfederasyon; ittifak, Büyük Barış Yasası ile yönetilirdi."
-      }
-    },
-    "hokuzan": {
-      "kind": "polity",
-      "name": {
-        "tr": "Hokuzan Krallığı"
+        "tr": "Helvetya Cumhuriyeti"
       }
     },
     "holy-roman-empire": {
       "kind": "polity",
       "name": {
         "tr": "Kutsal Roma İmparatorluğu"
-      },
-      "summary": {
-        "tr": "Orta Avrupa'da yüzlerce dükalık, seçmenlik, piskoposluk ve şehir devletinden oluşan gevşek bir yapı. İmparator seçimle belirlenirdi; 15. yüzyıldan itibaren neredeyse sürekli Habsburg hanedanından seçildi. Matbaanın icadı ve Reform'un başlangıcı bu topraklarda gerçekleşti."
       }
     },
     "holy-roman-empire-minor-states": {
       "kind": "polity",
       "name": {
         "tr": "Kutsal Roma İmparatorluğu'nun küçük devletleri"
+      }
+    },
+    "honduras": {
+      "kind": "polity",
+      "name": {
+        "tr": "Honduras"
+      }
+    },
+    "house-of-khalifa": {
+      "kind": "polity",
+      "name": {
+        "tr": "Al Halife Hanedanı (Bahreyn)"
+      }
+    },
+    "hungarian-nationalists": {
+      "kind": "polity",
+      "name": {
+        "tr": "Macar milliyetçileri (1849 ve 1956)"
+      },
+      "wikipedia": null
+    },
+    "hungarian-people-s-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Macar Halk Cumhuriyeti"
       },
       "summary": {
-        "tr": "Kutsal Roma İmparatorluğu içinde ayrıca adlandırılmamış çok sayıda küçük prenslik, piskoposluk, serbest şehir ve kont toprağı. Haritada tek bir bölge olarak gösterilir."
-      }
+        "tr": "1949'da kurulan, Sovyet blokunda komünist yönetim. 1956 Macar Devrimi Sovyet müdahalesiyle ezildi; 1989'da çok partili düzene geçildi."
+      },
+      "note": "Kaynak veri setinde 'Hungarian People's Republic' adıyla geçer."
     },
-    "house-of-ascania": {
+    "hungary": {
       "kind": "polity",
       "name": {
-        "tr": "Askanya Hanedanı toprakları"
-      }
-    },
-    "house-of-bourbon": {
-      "kind": "polity",
-      "name": {
-        "tr": "Bourbon Hanedanı toprakları"
-      }
-    },
-    "house-of-habsburg": {
-      "kind": "polity",
-      "name": {
-        "tr": "Habsburg Hanedanı toprakları"
-      }
-    },
-    "house-of-jagiellon": {
-      "kind": "polity",
-      "name": {
-        "tr": "Jagiellon Hanedanı toprakları"
+        "tr": "Macaristan"
       },
       "summary": {
-        "tr": "Polonya, Litvanya, Bohemya ve Macaristan tahtlarında hüküm süren Jagiellon hanedanının hâkim olduğu geniş Orta ve Doğu Avrupa kuşağı. Haritada bu ad, hanedanın doğrudan idaresindeki toprakları gösterir."
-      }
+        "tr": "Birinci Dünya Savaşı'ndan sonra 1920 Trianon Antlaşması'yla topraklarının üçte ikisini kaybeden Macaristan. Amiral Horthy yönetiminde Mihver devletleriyle ittifak kurdu; Mart 1944'te Almanya tarafından işgal edildi, Kızıl Ordu 1945 baharında ülkeyi aldı."
+      },
+      "wikipedia": "Hungary",
+      "wikidata": "Q28",
+      "note": "Kaynak veri seti aynı devletin bu dönemini 'hungarian-republic' kimlikleriyle de adlandırır; boru hattı bunları tek kimlikte birleştirir (scripts/pipeline/periods)."
     },
-    "house-of-luxembourg": {
+    "hyderabad-state": {
       "kind": "polity",
       "name": {
-        "tr": "Lüksemburg Hanedanı toprakları"
+        "tr": "Haydarabad Devleti"
       }
     },
-    "house-of-oldenburg": {
+    "imamate-of-oman": {
       "kind": "polity",
       "name": {
-        "tr": "Oldenburg Hanedanı toprakları"
+        "tr": "Umman İmamlığı"
       }
     },
-    "house-of-savoy": {
+    "imamate-of-yemen": {
       "kind": "polity",
       "name": {
-        "tr": "Savoy Hanedanı toprakları"
+        "tr": "Yemen İmamlığı"
       }
     },
-    "house-of-tocco": {
+    "independent-state-of-croatia": {
       "kind": "polity",
       "name": {
-        "tr": "Tocco Hanedanı toprakları"
-      }
-    },
-    "house-of-valois-anjou": {
-      "kind": "polity",
-      "name": {
-        "tr": "Valois-Anjou Hanedanı toprakları"
-      }
-    },
-    "hussain-shahi-dynasty": {
-      "kind": "polity",
-      "name": {
-        "tr": "Hüseyin Şahî Hanedanı"
-      }
-    },
-    "iberian-union": {
-      "kind": "polity",
-      "name": {
-        "tr": "İber Birliği"
-      }
-    },
-    "ifat-sultanate": {
-      "kind": "polity",
-      "name": {
-        "tr": "İfat Sultanlığı"
-      }
-    },
-    "inca-empire": {
-      "kind": "polity",
-      "name": {
-        "tr": "İnka İmparatorluğu"
+        "tr": "Hırvatistan Bağımsız Devleti"
       },
       "summary": {
-        "tr": "Cuzco merkezli olarak 15. yüzyılda hızla genişleyen, And Dağları boyunca günümüz Ekvador'undan Şili'ye uzanan imparatorluk. Yazı yerine kipu adı verilen düğümlü iplerle kayıt tutuyordu. İç savaş (Huáscar–Atahualpa) ve 1532'de Francisco Pizarro'nun Cajamarca'da Atahualpa'yı yakalamasıyla çöktü."
+        "tr": "Nisan 1941'de Mihver'in Yugoslavya'yı parçalamasıyla kurulan, Ustaşa rejiminin yönettiği kukla devlet. Sırplara, Yahudilere ve Romanlara yönelik kitlesel katliamlarla anılır; 1945'te çöktü."
       }
     },
-    "isle-of-man": {
+    "iraqi-republic": {
       "kind": "polity",
       "name": {
-        "tr": "Man Adası"
+        "tr": "Irak"
       }
     },
-    "itza-mayans": {
+    "irish-free-state": {
       "kind": "polity",
       "name": {
-        "tr": "İtza Mayaları"
-      }
-    },
-    "jaffna-kingdom": {
-      "kind": "polity",
-      "name": {
-        "tr": "Yafna Krallığı"
-      }
-    },
-    "jalayirid-sultanate": {
-      "kind": "polity",
-      "name": {
-        "tr": "Celayirliler Sultanlığı"
-      }
-    },
-    "jaunpur-sultanate": {
-      "kind": "polity",
-      "name": {
-        "tr": "Jaunpur Sultanlığı"
+        "tr": "İrlanda Serbest Devleti"
       },
       "summary": {
-        "tr": "Ganj Ovası'nda, Delhi Sultanlığı'ndan ayrılan Şarkîler'in sultanlığı. 1479'da Delhi'deki Lodi sultanı Behlül tarafından ele geçirildi."
+        "tr": "1921 Anglo-İrlanda Antlaşması'yla kurulan, Britanya Kraliyeti'ne bağlı özerk İrlanda devleti (1922–37)."
       }
     },
-    "jesuit-reducciones": {
+    "islamic-republic-of-iran": {
       "kind": "polity",
       "name": {
-        "tr": "Cizvit Misyon Köyleri (Reducciones)"
+        "tr": "İran İslam Cumhuriyeti"
+      },
+      "summary": {
+        "tr": "1979 devriminin ardından Ayetullah Humeyni önderliğinde kurulan İslam cumhuriyeti."
+      }
+    },
+    "islamic-republic-of-pakistan": {
+      "kind": "polity",
+      "name": {
+        "tr": "Pakistan"
+      },
+      "summary": {
+        "tr": "1947'de Britanya Hindistanı'nın bölünmesiyle Müslüman çoğunluklu bölgelerde kurulan devlet."
+      }
+    },
+    "italian-africa": {
+      "kind": "polity",
+      "name": {
+        "tr": "İtalyan Afrikası"
+      },
+      "summary": {
+        "tr": "İtalya'nın Libya, Eritre, Somali ve 1936'dan sonra Etiyopya'yı kapsayan sömürge imparatorluğu; 1941–43'te Müttefikler tarafından yıkıldı."
+      }
+    },
+    "italian-nationalists": {
+      "kind": "polity",
+      "name": {
+        "tr": "İtalyan milliyetçileri (1848)"
+      },
+      "wikipedia": "First Italian War of Independence"
+    },
+    "italian-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "İtalya Cumhuriyeti (Napolyon dönemi)"
+      }
+    },
+    "jamaica": {
+      "kind": "polity",
+      "name": {
+        "tr": "Jamaika"
+      }
+    },
+    "japan": {
+      "kind": "polity",
+      "name": {
+        "tr": "Japonya"
+      },
+      "summary": {
+        "tr": "Savaş sonrası, 1947 anayasasıyla demokratik ve savaşı reddeden Japonya; 1952'de egemenliğini geri aldı."
       }
     },
     "joseon": {
       "kind": "polity",
       "name": {
-        "tr": "Joseon Krallığı"
+        "tr": "Joseon Kralığı (Kore)"
       },
       "summary": {
-        "tr": "1392'den 1897'ye kadar Kore'yi yöneten hanedan. Kral Sejong (1418–1450) döneminde Hangul alfabesi geliştirildi; 1592–1598 Imjin Savaşı'nda Japon işgaline Ming yardımıyla direndi."
+        "tr": "Kore'yi 1392'den beri yöneten hanedan; 1897'de Kore İmparatorluğu'na dönüştü."
       }
     },
-    "kalmar-union": {
+    "kamerun": {
       "kind": "polity",
       "name": {
-        "tr": "Kalmar Birliği"
-      },
-      "summary": {
-        "tr": "1397'de Danimarka, Norveç ve İsveç krallıklarının tek hükümdar altında birleştiği birlik. İsveç'in sık sık ayrılma girişimleriyle gerilimli geçti; 1523'te İsveç'in ayrılmasıyla fiilen sona erdi."
+        "tr": "Alman Kamerunu"
       }
     },
-    "kapisa": {
+    "karamanli-dynasty": {
       "kind": "polity",
       "name": {
-        "tr": "Kapisa"
+        "tr": "Karamanlı Hanedanı (Trablusgarp)"
       }
     },
-    "kashmiri-sultanate": {
+    "kashmir-and-jammu": {
       "kind": "polity",
       "name": {
-        "tr": "Keşmir Sultanlığı"
-      }
-    },
-    "kathmandu": {
-      "kind": "polity",
-      "name": {
-        "tr": "Katmandu"
+        "tr": "Cammu ve Keşmir"
       }
     },
     "kazakh-khanate": {
       "kind": "polity",
       "name": {
         "tr": "Kazak Hanlığı"
-      },
-      "summary": {
-        "tr": "1465 dolaylarında Cani Bey ve Giray Han'ın Şeybânî Özbeklerinden ayrılmasıyla oluşan bozkır hanlığı. Göçebe Kazak hayvancılık toplumunun siyasi çatısı oldu."
       }
     },
-    "khanate-of-bukhara": {
+    "kazakhstan": {
       "kind": "polity",
       "name": {
-        "tr": "Buhara Hanlığı"
-      },
-      "summary": {
-        "tr": "Şeybânîlerin Timurlu topraklarını ele geçirmesiyle Maveraünnehir'de kurulan han devleti. Buhara başkent oldu."
+        "tr": "Kazakistan"
       }
     },
-    "khanate-of-kazan": {
+    "kedah-perlis-district": {
       "kind": "polity",
       "name": {
-        "tr": "Kazan Hanlığı"
-      },
-      "summary": {
-        "tr": "Altın Orda'nın parçalanmasıyla 1430'lu yıllarda Volga boyunda kurulan Türk-Tatar hanlığı. 1552'de IV. İvan'ın ordusu tarafından fethedildi."
+        "tr": "Kedah-Perlis Bölgesi"
+      }
+    },
+    "kelantan": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kelantan Sultanlığı"
       }
     },
     "khanate-of-khiva": {
       "kind": "polity",
       "name": {
         "tr": "Hive Hanlığı"
-      },
-      "summary": {
-        "tr": "Amu Derya'nın aşağı kesiminde, Harezm'de 1511'de kurulan Özbek hanlığı. Başkent önce Ürgenç'ti; 16. yüzyılın sonlarında Hive'ye taşındı."
       }
     },
-    "khanate-of-sibir": {
+    "khanate-of-kokand": {
       "kind": "polity",
       "name": {
-        "tr": "Sibir Hanlığı"
+        "tr": "Kokand Hanlığı"
+      }
+    },
+    "khedivate-of-egypt": {
+      "kind": "polity",
+      "name": {
+        "tr": "Mısır Hidivliği"
+      },
+      "summary": {
+        "tr": "1867'de Osmanlı'nın Mısır valisine “hidiv” unvanını vermesiyle doğan, 1882'den sonra fiilen İngiliz denetimine giren yönetim."
       }
     },
     "khmer-empire": {
       "kind": "polity",
       "name": {
-        "tr": "Khmer İmparatorluğu"
+        "tr": "Kmer Krallığı (Kamboçya)"
+      }
+    },
+    "khmer-rouge": {
+      "kind": "polity",
+      "name": {
+        "tr": "Demokratik Kampuçya (Kızıl Kmerler)"
+      }
+    },
+    "kingdom-of-afghanistan": {
+      "kind": "polity",
+      "name": {
+        "tr": "Afganistan Krallığı"
       },
       "summary": {
-        "tr": "Angkor merkezli büyük Güneydoğu Asya imparatorluğu. Ayutthaya'nın 1431'de Angkor'u ele geçirmesinin ardından, 15. yüzyılın ortalarında başkentini güneye (Phnom Penh çevresine) taşıdı."
+        "tr": "1926'da Emanullah Han'ın emirliği krallığa çevirmesiyle kurulan; 1973'e kadar süren monarşi."
       }
     },
-    "khoshut-khanate": {
+    "kingdom-of-bahrain": {
       "kind": "polity",
       "name": {
-        "tr": "Hoşut Hanlığı"
+        "tr": "Bahreyn Krallığı"
       }
     },
-    "kingdom-of-bohemia": {
+    "kingdom-of-bavaria": {
       "kind": "polity",
       "name": {
-        "tr": "Bohemya Krallığı"
+        "tr": "Bavyera Krallığı"
+      }
+    },
+    "kingdom-of-belgium": {
+      "kind": "polity",
+      "name": {
+        "tr": "Belçika"
       },
       "summary": {
-        "tr": "Orta Avrupa'da Bohemya (Çek) krallığı. 1415'te Jan Hus'un yakılmasının ardından Hus Savaşları (1419–1434) yaşandı; 1526'da Habsburg hanedanına geçti."
+        "tr": "1830–31'de Hollanda'dan ayrılarak kurulan, tarafsız anayasal monarşi. Her iki dünya savaşında da Almanya tarafından işgal edildi; 1944'te Müttefiklerce kurtarıldı."
       }
     },
-    "kingdom-of-bosnia": {
+    "kingdom-of-bhutan": {
       "kind": "polity",
       "name": {
-        "tr": "Bosna Krallığı"
+        "tr": "Bhutan Krallığı"
+      }
+    },
+    "kingdom-of-cambodia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kamboçya Krallığı"
+      }
+    },
+    "kingdom-of-champasak": {
+      "kind": "polity",
+      "name": {
+        "tr": "Champasak Krallığı"
+      }
+    },
+    "kingdom-of-egypt": {
+      "kind": "polity",
+      "name": {
+        "tr": "Mısır Krallığı"
       },
       "summary": {
-        "tr": "Balkanlar'da, bugünkü Bosna-Hersek çevresindeki krallık; 1463'te Osmanlılar tarafından fethedildi."
+        "tr": "1922'de Britanya'nın koruyuculuğunu sona erdirmesiyle kurulan krallık; İkinci Dünya Savaşı'nda Britanya Kuzey Afrika harekâtının üssüydü, 1952'de subayların darbesiyle devrildi."
       }
     },
-    "kingdom-of-cyprus": {
+    "kingdom-of-etruria": {
       "kind": "polity",
       "name": {
-        "tr": "Kıbrıs Krallığı"
-      },
-      "summary": {
-        "tr": "Lüzinyan hanedanının Kıbrıs krallığı; 1489'da Venedik'e geçti."
+        "tr": "Etrurya Krallığı"
       }
     },
-    "kingdom-of-denmark": {
+    "kingdom-of-fiji": {
       "kind": "polity",
       "name": {
-        "tr": "Danimarka Krallığı"
-      }
-    },
-    "kingdom-of-england": {
-      "kind": "polity",
-      "name": {
-        "tr": "İngiltere Krallığı"
-      },
-      "summary": {
-        "tr": "Yüzyıl Savaşları'nı kaybedip kıta topraklarını yitirdikten sonra Güller Savaşı (1455–1487) ile uğraştı; 1485'te Tudor Hanedanı iktidara geldi. VIII. Henry döneminde Roma'dan koptu (1534); I. Elizabeth döneminde (1558–1603) denizde güçlenip 1588'de İspanyol Armadası'nı püskürttü."
+        "tr": "Fiji Krallığı"
       }
     },
     "kingdom-of-france": {
       "kind": "polity",
       "name": {
         "tr": "Fransa Krallığı"
-      },
-      "summary": {
-        "tr": "Yüzyıl Savaşları'nın (1337–1453) sonunda İngiliz topraklarını geri alarak merkezî bir krallığa dönüştü. 15. yüzyıl sonunda İtalya Savaşları'na girişti; 16. yüzyılın ikinci yarısında Katolikler ile Huguenotlar arasındaki din savaşlarıyla sarsıldı."
       }
     },
     "kingdom-of-georgia": {
       "kind": "polity",
       "name": {
-        "tr": "Gürcistan Krallığı"
+        "tr": "Gürcistan Krallığı (Kartli-Kakheti)"
       },
-      "summary": {
-        "tr": "Güney Kafkasya'nın Hristiyan krallığı. 15. yüzyılda Timur akınları, Akkoyunlu baskısı, İstanbul'un düşüşüyle Avrupa'dan kopuş ve iç çekişmeler yüzünden Kartli, Kaheti ve İmereti krallıklarına bölündü."
-      }
+      "wikipedia": "Kingdom of Kartli-Kakheti"
     },
-    "kingdom-of-hungary": {
+    "kingdom-of-great-britain": {
       "kind": "polity",
       "name": {
-        "tr": "Macaristan Krallığı"
+        "tr": "Birleşik Krallık"
       },
       "summary": {
-        "tr": "Orta Avrupa'nın büyük krallığı. Hunyadi János ve oğlu Mátyás Corvinus (1458–1490) döneminde güç zirvesine ulaştı; 1526'da Mohaç'ta Osmanlı'ya yenilince üçe bölündü."
+        "tr": "Büyük Britanya ve İrlanda Birleşik Krallığı, 1922'den sonra Büyük Britanya ve Kuzey İrlanda; Sanayi Devrimi'nin ve yeryüzünün en geniş sömürge imparatorluğunun merkezi. İkinci Dünya Savaşı'nda 1940 haziranından 1941'e kadar Almanya'ya karşı neredeyse yalnız direndi."
+      }
+    },
+    "kingdom-of-hanover": {
+      "kind": "polity",
+      "name": {
+        "tr": "Hannover Krallığı"
+      }
+    },
+    "kingdom-of-hawai-i": {
+      "kind": "polity",
+      "name": {
+        "tr": "Hawai Krallığı"
+      }
+    },
+    "kingdom-of-hejaz": {
+      "kind": "polity",
+      "name": {
+        "tr": "Hicaz Krallığı"
+      },
+      "summary": {
+        "tr": "Osmanlı'ya karşı 1916 Arap İsyanı'nı başlatan Şerif Hüseyin'in krallığı; 1925'te Suudlar tarafından fethedildi."
+      }
+    },
+    "kingdom-of-hejaz-and-nejd": {
+      "kind": "polity",
+      "name": {
+        "tr": "Hicaz ve Necid Krallığı"
+      }
+    },
+    "kingdom-of-iceland": {
+      "kind": "polity",
+      "name": {
+        "tr": "İzlanda Krallığı"
+      },
+      "summary": {
+        "tr": "1918'de Danimarka ile kişisel birlik içinde egemen olan İzlanda krallığı; 1944'te cumhuriyet ilan etti."
       }
     },
     "kingdom-of-imereti": {
@@ -1066,100 +1617,126 @@
         "tr": "İmereti Krallığı"
       }
     },
-    "kingdom-of-kakheti": {
+    "kingdom-of-iraq": {
       "kind": "polity",
       "name": {
-        "tr": "Kaheti Krallığı"
-      }
-    },
-    "kingdom-of-kartli": {
-      "kind": "polity",
-      "name": {
-        "tr": "Kartli Krallığı"
-      }
-    },
-    "kingdom-of-kongo": {
-      "kind": "polity",
-      "name": {
-        "tr": "Kongo Krallığı"
+        "tr": "Irak Krallığı"
       },
       "summary": {
-        "tr": "Orta Afrika'da Kongo Nehri'nin güneyinde, Mbanza Kongo merkezli krallık. 1491'de Kral Nzinga a Nkuwu'nun Hristiyanlığı kabul etmesiyle Portekiz ile yakın ilişki kurdu; köle ticareti zamanla krallığı sarstı."
+        "tr": "1932'de Britanya mandasının sona ermesiyle bağımsız olan Hâşimî krallığı; Mayıs 1941'de Raşid Ali el-Geylani'nin Mihver yanlısı darbesi Britanya müdahalesiyle bastırıldı. 1958'de cumhuriyet oldu."
       }
     },
-    "kingdom-of-mrauk-u": {
+    "kingdom-of-italy": {
       "kind": "polity",
       "name": {
-        "tr": "Mrauk-U Krallığı"
+        "tr": "İtalya Krallığı"
       },
       "summary": {
-        "tr": "Arakan'da (bugünkü Myanmar'ın batısı) Mrauk-U merkezli krallık. Bengal Körfezi ticaretinde ve Bengal ile ilişkilerde etkindi."
+        "tr": "1861'de Piyemonte-Sardinya Krallığı'nın çevresinde kurulan birleşik İtalya. 1922'den sonra Mussolini'nin faşist rejimi altında yönetildi, Haziran 1940'ta Almanya yanında savaşa girdi; Temmuz–Eylül 1943'te Mussolini düşürüldü ve ateşkes imzalandı, 1946 referandumuyla cumhuriyet oldu."
       }
     },
-    "kingdom-of-mysore": {
+    "kingdom-of-jordan": {
       "kind": "polity",
       "name": {
-        "tr": "Maysor Krallığı"
+        "tr": "Ürdün"
       }
     },
-    "kingdom-of-naples": {
+    "kingdom-of-laos": {
       "kind": "polity",
       "name": {
-        "tr": "Napoli Krallığı"
+        "tr": "Laos Krallığı"
+      }
+    },
+    "kingdom-of-libya": {
+      "kind": "polity",
+      "name": {
+        "tr": "Libya Krallığı"
       },
       "summary": {
-        "tr": "Güney İtalya krallığı. 1442'de Aragonlu V. Alfonso'nun eline geçti; 1458'den sonra Napoli'deki Trastámara kolu tarafından ayrı bir krallık olarak yönetildi ve 1504'te İspanya'ya katıldı."
+        "tr": "1951'de Birleşmiş Milletler kararıyla bağımsız olan Libya krallığı; 1969'da Kaddafi darbesiyle devrildi."
       }
     },
-    "kingdom-of-navarre": {
+    "kingdom-of-lithuania": {
       "kind": "polity",
       "name": {
-        "tr": "Navarra Krallığı"
+        "tr": "Litvanya"
+      },
+      "summary": {
+        "tr": "1918'de bağımsızlığını ilan eden Litvanya Cumhuriyeti'nin iki savaş arası dönemi; 1940'ta Sovyetler Birliği'ne katıldı."
+      },
+      "wikipedia": "Lithuania",
+      "note": "Kaynak veri setinde 'Kingdom of Lithuania' adıyla geçer; 1919–1939 poligonu iki savaş arası Litvanya Cumhuriyeti'dir."
+    },
+    "kingdom-of-luang-phrabang": {
+      "kind": "polity",
+      "name": {
+        "tr": "Luang Prabang Krallığı"
       }
     },
-    "kingdom-of-pajana": {
+    "kingdom-of-lunda": {
       "kind": "polity",
       "name": {
-        "tr": "Pajang Sultanlığı"
-      },
-      "summary": {
-        "tr": "Orta Java'da, Surakarta yakınlarında 1568'de Hadiwijaya (Jaka Tingkir) tarafından kurulan, Demak'ın mirasçısı sultanlık. 1580'lerde Mataram'a boyun eğdi."
-      },
-      "wikipedia": "Pajang",
-      "wikidata": null,
-      "note": "Kaynak veri setinde 'Kingdom of Pajana' etiketiyle geçer (bağlantısı 'Lontara script' makalesine gidiyordu); poligon Orta Java'dadır."
+        "tr": "Lunda Krallığı"
+      }
     },
-    "kingdom-of-poland": {
+    "kingdom-of-naples-napoleonic": {
       "kind": "polity",
       "name": {
-        "tr": "Polonya Krallığı"
+        "tr": "Napoli Krallığı (Napolyon dönemi)"
+      }
+    },
+    "kingdom-of-norway": {
+      "kind": "polity",
+      "name": {
+        "tr": "Norveç"
       },
       "summary": {
-        "tr": "Piast ve Jagiellon hanedanlarının yönettiği krallık. 1386'dan itibaren Litvanya ile kişisel birlik içindeydi; 1410'da Grunwald'da Töton Şövalyeleri'ni yendi."
+        "tr": "1814'te Danimarka'dan ayrılıp İsveç'le birliğe giren, 1905'te tamamen bağımsız olan Norveç. 9 Nisan 1940'ta Almanya tarafından işgal edildi, 1945'te kurtuldu."
       }
     },
     "kingdom-of-portugal": {
       "kind": "polity",
       "name": {
         "tr": "Portekiz Krallığı"
-      },
-      "summary": {
-        "tr": "Atlantik'te keşif seferlerinin öncüsü. 1415'te Ceuta'yı alarak Afrika kıyıları boyunca ilerledi; Bartolomeu Dias (1488) ve Vasco da Gama (1498) ile Hint Okyanusu yolunu açtı. Kral Sebastião'nun 1578'de Alcácer Quibir'de ölmesinin ardından çıkan veraset krizinde 1580'de İspanya Kralı II. Felipe'nin yönetimine girdi."
       }
     },
-    "kingdom-of-scotland": {
+    "kingdom-of-prussia": {
       "kind": "polity",
       "name": {
-        "tr": "İskoçya Krallığı"
+        "tr": "Prusya Krallığı"
       },
       "summary": {
-        "tr": "Britanya'nın kuzeyindeki krallık. 1513'te Flodden'da İngiltere'ye yenildi, 1560'ta Reform'u benimsedi; 1603'te Kral VI. James'in İngiltere tahtına geçmesiyle taç birliği kuruldu."
+        "tr": "Brandenburg merkezli krallık; Napolyon'a yenilip küçüldü, 1815'ten sonra güçlendi ve 1866–71'de Alman birliğini kendi önderliğinde sağladı. Alman İmparatorluğu'nun en büyük üyesi olarak 1918'e kadar sürdü."
       }
     },
-    "kingdom-of-singapura": {
+    "kingdom-of-sarawak": {
       "kind": "polity",
       "name": {
-        "tr": "Singapura Krallığı"
+        "tr": "Sarawak Krallığı (Brooke)"
+      }
+    },
+    "kingdom-of-sardinia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sardinya Krallığı (Piyemonte-Sardinya)"
+      },
+      "summary": {
+        "tr": "Piyemonte, Savoy ve Sardinya'yı kapsayan Savoy hanedanının krallığı; İtalyan birliği hareketinin öncüsü oldu, 1861'de İtalya Krallığı'na dönüştü."
+      }
+    },
+    "kingdom-of-saudi-arabia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Suudi Arabistan"
+      },
+      "summary": {
+        "tr": "1932'de Abdülaziz bin Suud'un Hicaz ve Necid krallığını Suudi Arabistan adıyla birleştirmesiyle kuruldu; 1938'de petrol bulundu."
+      }
+    },
+    "kingdom-of-saxony": {
+      "kind": "polity",
+      "name": {
+        "tr": "Saksonya Krallığı"
       }
     },
     "kingdom-of-spain": {
@@ -1168,278 +1745,448 @@
         "tr": "İspanya Krallığı"
       },
       "summary": {
-        "tr": "1516'da I. Carlos'un (Kutsal Roma İmparatoru olarak V. Karl) Kastilya ve Aragon tahtlarını bir araya getirmesiyle oluşan monarşi. Habsburg hanedanı idaresinde Amerika'daki fetihler ve Avrupa savaşlarıyla büyüdü."
+        "tr": "Napolyon işgalinden sonra Latin Amerika sömürgelerinin büyük bölümünü kaybeden İspanya; 19. yüzyıl boyunca iç savaşlar ve darbelerle sarsıldı."
       }
     },
     "kingdom-of-sweden": {
       "kind": "polity",
       "name": {
-        "tr": "İsveç Krallığı"
+        "tr": "İsveç"
       },
       "summary": {
-        "tr": "Kalmar Birliği'ndeki Danimarka egemenliğinden 1523'te Gustav Vasa önderliğinde ayrıldı. Reform'u benimsedi ve 16. yüzyılın sonuna doğru Baltık'ta etkin bir güç hâline geldi."
+        "tr": "1814'ten beri savaşa girmeyen, iki dünya savaşında da tarafsız kalan krallık."
       }
     },
-    "lan-na": {
+    "kingdom-of-thailand": {
       "kind": "polity",
       "name": {
-        "tr": "Lan Na Krallığı"
-      },
-      "sameAs": "lan-na-kingdom",
-      "note": "Veri setinde aynı devletin 1600 yılı kaydı ayrı adla geçer (aynı Vikiveri kimliği)."
-    },
-    "lan-na-kingdom": {
-      "kind": "polity",
-      "name": {
-        "tr": "Lan Na Krallığı"
-      }
-    },
-    "lan-xang": {
-      "kind": "polity",
-      "name": {
-        "tr": "Lan Xang Krallığı"
+        "tr": "Tayland"
       },
       "summary": {
-        "tr": "Mekong boyunda, bugünkü Laos'un öncülü sayılan krallık; adı 'Bir Milyon Fil' anlamına gelir."
+        "tr": "Siyam adıyla yaşayıp 1939'da adını Tayland yapan krallık; 1932'de mutlak monarşi sona erdi. Aralık 1941'de Japonya ile ittifak kurdu."
       }
     },
-    "later-mayan-city-states": {
+    "kingdom-of-the-two-sicilies": {
       "kind": "polity",
       "name": {
-        "tr": "Geç Dönem Maya Şehir Devletleri"
+        "tr": "İki Sicilya Krallığı"
       },
       "summary": {
-        "tr": "Klasik dönemin çöküşünden sonra Yucatán Yarımadası ve Guatemala'da bağımsız şehir devletleri hâlinde sürdü. İspanyollar 1520'lerden itibaren bölgeye girdi; son bağımsız Maya devleti 1697'de düştü."
+        "tr": "Napoli ve Sicilya'yı kapsayan Bourbon krallığı; 1860'ta Garibaldi'nin Bin Kişilik Seferi'yle çöktü."
       }
     },
-    "le-dynasty": {
+    "kingdom-of-westphalia": {
       "kind": "polity",
       "name": {
-        "tr": "Lê Hanedanı"
+        "tr": "Vestfalya Krallığı"
+      }
+    },
+    "kingdom-of-wurttemberg": {
+      "kind": "polity",
+      "name": {
+        "tr": "Württemberg Krallığı"
+      }
+    },
+    "konbaung-dynasty": {
+      "kind": "polity",
+      "name": {
+        "tr": "Konbaung Hanedanı (Birmanya)"
+      }
+    },
+    "korean-empire": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kore İmparatorluğu"
       },
       "summary": {
-        "tr": "1428'de Lê Lợi'nin Ming işgaline karşı verdiği bağımsızlık savaşının ardından kurulan Vietnam hanedanı."
+        "tr": "1897'de Joseon'un imparatorluk ilan etmesiyle doğan devlet; 1905'te Japon himayesine girdi, 1910'da ilhak edildi."
       }
     },
-    "livonian-conference": {
+    "kosovo": {
       "kind": "polity",
       "name": {
-        "tr": "Livonya Konfederasyonu"
+        "tr": "Kosova"
       }
     },
-    "lodi-dynasty": {
+    "kuomintang": {
       "kind": "polity",
       "name": {
-        "tr": "Lodi Hanedanı"
+        "tr": "Guomindang Hükümeti (Kanton)"
       },
       "summary": {
-        "tr": "Delhi Sultanlığı'nın son hanedanı (1451–1526). İbrahim Lodi, 1526'da Panipat'ta Babür'e yenilerek öldü."
+        "tr": "Sun Yat-sen'in partisinin 1917–29 arasında Kanton merkezli kurduğu hükûmet; Kuzey Seferi ile Çin'i yeniden birleştirmeye çalıştı."
       }
     },
-    "mahdids": {
+    "kuwait": {
       "kind": "polity",
       "name": {
-        "tr": "Umman (Nebhânîler)"
+        "tr": "Kuveyt"
+      }
+    },
+    "kyrgyzstan": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kırgızistan"
+      }
+    },
+    "lebanon": {
+      "kind": "polity",
+      "name": {
+        "tr": "Lübnan"
+      }
+    },
+    "lesotho": {
+      "kind": "polity",
+      "name": {
+        "tr": "Lesoto"
+      }
+    },
+    "libyan-arab-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Libya"
       },
       "summary": {
-        "tr": "Umman'ın iç bölgelerinde, Nizva ve Bahla çevresinde hüküm süren Nebhânî hanedanı (12.–17. yüzyıl). İmamlarla yerel hanedanlar arasındaki çekişme dönemin özelliğiydi; 1507'de Portekizliler kıyıdaki Maskat'ı ele geçirdi."
-      },
-      "wikipedia": "Nabhani dynasty",
-      "wikidata": null,
-      "note": "Kaynak veri setinde 'Mahdids' (Yemen'deki 12. yüzyıl hanedanı) etiketiyle geçer; poligon Umman'ın iç kesimindedir (Nizva)."
-    },
-    "majapahit": {
-      "kind": "polity",
-      "name": {
-        "tr": "Majapahit İmparatorluğu"
-      },
-      "summary": {
-        "tr": "Java merkezli, 14. yüzyılda bugünkü Endonezya'nın büyük bölümünü etki alanına alan Hindu-Budist deniz imparatorluğu. 15. yüzyılda zayıfladı ve 16. yüzyılın başında Demak Sultanlığı'nın yükselişiyle çöktü."
+        "tr": "Muammer Kaddafi'nin 1969 darbesiyle kurduğu rejim."
       }
     },
-    "makuria": {
+    "ligurian-republic": {
       "kind": "polity",
       "name": {
-        "tr": "Makuria Krallığı"
-      },
-      "sameAs": "makuria-kingdom",
-      "note": "Veri setinde aynı devletin 1400–1414 kaydı ayrı adla geçer (aynı Vikiveri kimliği)."
-    },
-    "makuria-kingdom": {
-      "kind": "polity",
-      "name": {
-        "tr": "Makuria Krallığı"
+        "tr": "Liguria Cumhuriyeti"
       }
     },
-    "mali-empire": {
+    "los-altos": {
       "kind": "polity",
       "name": {
-        "tr": "Mali İmparatorluğu"
+        "tr": "Los Altos Devleti"
+      }
+    },
+    "luxembourg": {
+      "kind": "polity",
+      "name": {
+        "tr": "Lüksemburg"
       },
       "summary": {
-        "tr": "Altın ve tuz ticaretiyle zenginleşen Batı Afrika imparatorluğu; Mansa Musa'nın hac yolculuğuyla (1324) tanınır. 15. yüzyılda Songhay'ın yükselişiyle zayıfladı."
+        "tr": "Almanya ile Fransa arasındaki küçük büyük dükalık; her iki dünya savaşında Alman işgalinde kaldı, 1944'te Müttefikler tarafından kurtarıldı."
       }
     },
-    "mamluk-sultanate": {
+    "madagascar": {
       "kind": "polity",
       "name": {
-        "tr": "Memlük Sultanlığı"
+        "tr": "Madagaskar"
+      }
+    },
+    "maderistas": {
+      "kind": "polity",
+      "name": {
+        "tr": "Maderistalar (1911)"
+      }
+    },
+    "mahdist-state": {
+      "kind": "polity",
+      "name": {
+        "tr": "Mehdi Devleti (Sudan)"
       },
       "summary": {
-        "tr": "1250'den beri Mısır'ı, sonra Suriye ve Hicaz'ı yöneten, köle-asker kökenli sultanların devleti. Kızıldeniz–Akdeniz ticaretini ve Mekke ile Medine'nin korunmasını elinde tutuyordu. 1516–1517'de Yavuz Sultan Selim'e yenilerek Osmanlı topraklarına katıldı."
+        "tr": "1881'de Muhammed Ahmed el-Mehdi'nin Sudan'da kurduğu devlet; 1898'de Britanya–Mısır ordusuna yenildi."
       }
     },
-    "margraviate-of-brandenburg": {
+    "majeerteen-sultanate": {
       "kind": "polity",
       "name": {
-        "tr": "Brandenburg Markgrafluğu"
+        "tr": "Mecertin Sultanlığı"
       }
     },
-    "margraviate-of-moravia": {
+    "malawi": {
       "kind": "polity",
       "name": {
-        "tr": "Moravya Markgrafluğu"
+        "tr": "Malavi"
       }
     },
-    "marinid-sultanate": {
+    "malaysia": {
       "kind": "polity",
       "name": {
-        "tr": "Merînî Sultanlığı"
+        "tr": "Malezya"
+      }
+    },
+    "mali-federation": {
+      "kind": "polity",
+      "name": {
+        "tr": "Mali"
+      }
+    },
+    "malta": {
+      "kind": "polity",
+      "name": {
+        "tr": "Malta"
+      }
+    },
+    "maratha-empire": {
+      "kind": "polity",
+      "name": {
+        "tr": "Marata İmparatorluğu"
+      }
+    },
+    "massina-empire": {
+      "kind": "polity",
+      "name": {
+        "tr": "Massina İmparatorluğu"
+      }
+    },
+    "mauritania": {
+      "kind": "polity",
+      "name": {
+        "tr": "Moritanya"
+      }
+    },
+    "mauritius": {
+      "kind": "polity",
+      "name": {
+        "tr": "Mauritius"
+      }
+    },
+    "merina-kingdom": {
+      "kind": "polity",
+      "name": {
+        "tr": "Merina Krallığı (Madagaskar)"
+      }
+    },
+    "mexican-monarchists": {
+      "kind": "polity",
+      "name": {
+        "tr": "Meksika monarşistleri (1864)"
+      }
+    },
+    "mexicans": {
+      "kind": "polity",
+      "name": {
+        "tr": "Meksika bağımsızlık isyancıları (1811–1819)"
+      },
+      "wikipedia": "Mexican War of Independence"
+    },
+    "mexico": {
+      "kind": "polity",
+      "name": {
+        "tr": "Meksika"
       },
       "summary": {
-        "tr": "Fas'ı yöneten Merînî hanedanı; 15. yüzyılda zayıflayıp yerini Vattasîlere bıraktı."
+        "tr": "1821'de İspanya'dan bağımsız olan Meksika; 1846–48'de Birleşik Devletler'e topraklarının yaklaşık yarısını kaybetti, 1910 Devrimi'ni yaşadı."
       }
     },
-    "mataram-sultanate": {
+    "micronesia": {
       "kind": "polity",
       "name": {
-        "tr": "Mataram Sultanlığı"
+        "tr": "Mikronezya"
       }
     },
-    "maynila": {
+    "monaco": {
       "kind": "polity",
       "name": {
-        "tr": "Maynila"
+        "tr": "Monako"
+      },
+      "wikipedia": "Monaco",
+      "wikidata": "Q235",
+      "note": "Kaynak veri seti aynı devletin bu dönemini 'kingdom-of-monaco', 'principality-of-monaco' kimlikleriyle de adlandırır; boru hattı bunları tek kimlikte birleştirir (scripts/pipeline/periods)."
+    },
+    "mongolia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Moğolistan"
       }
     },
-    "michoacan": {
+    "mongolian-people-s-republic": {
       "kind": "polity",
       "name": {
-        "tr": "Michoacán Devleti"
+        "tr": "Moğolistan Halk Cumhuriyeti"
       },
       "summary": {
-        "tr": "Aztek İmparatorluğu'na boyun eğmeyen, Orta Meksika'nın batısındaki Purépecha (Tarasko) devleti."
+        "tr": "Sovyetler Birliği'nin uydusu olarak 1924'te kurulan Moğolistan; 1990'daki barışçıl devrime kadar komünist yönetimde kaldı."
       }
     },
-    "ming-dynasty": {
+    "montenegro": {
       "kind": "polity",
       "name": {
-        "tr": "Ming Hanedanı"
+        "tr": "Karadağ"
       },
       "summary": {
-        "tr": "1368'de Moğol Yuan hanedanını devirerek kurulan Han Çinlilerinin hanedanı. 1400–1600 arasında başkent Nanjing'den Pekin'e taşındı (1421), Zheng He'nin denizaşırı seferleri yapıldı, Çin Seddi güçlendirildi ve Amerika ile Japonya'dan gelen gümüş ekonomiyi paraya dayalı hâle getirdi. Kuzeyde Moğol akınları, kıyılarda korsanlar ve Kore'deki Japon işgali (1592–1598) devleti uzun süre zorladı."
+        "tr": "Balkanlar'da Osmanlı'ya hiçbir zaman tam boyun eğmeyen dağlık prenslik; 1878'de bağımsız, 1910'da krallık oldu, 1918'de Sırbistan'la birleşti."
       }
     },
-    "moghulistan": {
+    "morocco": {
       "kind": "polity",
       "name": {
-        "tr": "Moğulistan"
+        "tr": "Fas"
       }
     },
-    "mongol-khanate": {
+    "mosquito-kingdom": {
       "kind": "polity",
       "name": {
-        "tr": "Moğol Hanlığı"
+        "tr": "Mosquito Krallığı"
+      }
+    },
+    "mozambique": {
+      "kind": "polity",
+      "name": {
+        "tr": "Mozambik"
       }
     },
     "mughal-empire": {
       "kind": "polity",
       "name": {
         "tr": "Babür İmparatorluğu"
+      }
+    },
+    "muhammad-ali-dynasty": {
+      "kind": "polity",
+      "name": {
+        "tr": "Mehmed Ali Hanedanı (Mısır)"
       },
       "summary": {
-        "tr": "Babür'ün Birinci Panipat Savaşı'nda (1526) Delhi Sultanlığı'nı yenmesiyle kurulan Hint devleti. Humayun'un 1540'ta Sûr Hanedanı'na yenilmesiyle kesintiye uğradı, 1555–1556'da geri alındı; Ekber (1556–1605) döneminde Kuzey Hindistan'ın büyük bölümünde merkezî bir yönetim kurdu."
+        "tr": "Osmanlı valisi Mehmed Ali Paşa'nın 1805'te Mısır'da kurduğu, Osmanlı'ya bağlı fakat fiilen özerk hanedan."
       }
     },
-    "nalyvaiko-uprising": {
+    "mujahideen": {
       "kind": "polity",
       "name": {
-        "tr": "Nalivayko İsyanı"
+        "tr": "Afgan Mücahitleri"
       }
     },
-    "namayan": {
+    "namibia": {
       "kind": "polity",
       "name": {
-        "tr": "Namayan"
+        "tr": "Namibya"
       }
     },
-    "nanzan": {
+    "napoleonic-batavia-republic": {
       "kind": "polity",
       "name": {
-        "tr": "Nanzan Krallığı"
+        "tr": "Batav Keyp Kolonisi (1803–1805)"
+      },
+      "note": "Kaynak veri setinde 'Napoleonic Batavia Republic' adıyla geçer; poligon Keyp Kolonisi'dir (Vikipedi bağlantısı 'Dutch Cape Colony')."
+    },
+    "natalia-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Natalya Cumhuriyeti"
       }
     },
-    "nayaks-of-madurai": {
+    "nawab-of-awadh": {
       "kind": "polity",
       "name": {
-        "tr": "Madurai Nayakları"
+        "tr": "Avadh Nevvaplığı"
       }
     },
-    "nayaks-of-thanjavur": {
+    "nazi-germany": {
       "kind": "polity",
       "name": {
-        "tr": "Tancavur Nayakları"
-      }
-    },
-    "ngo-dynasty": {
-      "kind": "polity",
-      "name": {
-        "tr": "Hồ Hanedanı (Đại Ngu)"
+        "tr": "Nazi Almanyası"
       },
       "summary": {
-        "tr": "Vietnam'da 1400'de Hồ Quý Ly'nin Trần hanedanının yerine geçerek kurduğu, adını Đại Ngu olarak değiştirdiği devlet. 1407'de Ming ordularının işgaliyle yıkıldı."
-      },
-      "wikipedia": "Hồ Quý Ly",
-      "wikidata": null,
-      "note": "Kaynak veri setinde 'Ngô Dynasty' (10. yüzyıl) etiketiyle geçer; 1400–1406 için Hồ hanedanı doğrudur."
-    },
-    "nguyen-lords": {
-      "kind": "polity",
-      "name": {
-        "tr": "Nguyễn Lordları"
+        "tr": "Adolf Hitler'in 1933'te iktidara gelmesiyle kurulan tek partili, ırkçı ve yayılmacı rejim. 1938'de Avusturya'yı ve Sudetleri, 1939'da Çek topraklarını kendine kattı; 1 Eylül 1939'da Polonya'yı işgal ederek İkinci Dünya Savaşı'nı başlattı. 1945'te koşulsuz teslim oldu ve işgal bölgelerine ayrıldı."
       }
     },
-    "nogai-horde": {
+    "negeri-sembilan": {
       "kind": "polity",
       "name": {
-        "tr": "Nogay Ordası"
-      },
-      "summary": {
-        "tr": "Altın Orda'nın dağılmasından sonra Yayık (Ural) ile Volga arasındaki bozkırda yaşayan Türk-Moğol göçebe konfederasyonu. 16. yüzyılda Moskova ve Kırım Hanlığı ile kâh ittifak kâh çatışma içinde oldu."
+        "tr": "Negeri Sembilan"
       }
     },
-    "northern-yuan": {
+    "nepal": {
       "kind": "polity",
       "name": {
-        "tr": "Kuzey Yuan"
+        "tr": "Nepal"
+      }
+    },
+    "netherlands": {
+      "kind": "polity",
+      "name": {
+        "tr": "Hollanda"
       },
       "summary": {
-        "tr": "Ming tarafından 1368'de devrilen Yuan hanedanının Moğolistan'da sürdürdüğü devlet. 15. yüzyılda Oyratlar ve Doğu Moğollar arasında bölünerek Ming sınırında akınlar düzenledi."
+        "tr": "Napolyon savaşlarından sonra 1815'te krallık olarak kuruldu, Belçika 1830'da ayrıldı. 10 Mayıs 1940'ta Almanya'nın işgaline uğradı, 1945'te kurtuldu."
       }
     },
-    "novgorod-republic": {
+    "netherlands-antilles": {
       "kind": "polity",
       "name": {
-        "tr": "Novgorod Cumhuriyeti"
+        "tr": "Hollanda Surinam'ı ve Antilleri"
+      },
+      "wikipedia": "Suriname",
+      "note": "Kaynak veri setinde 'Netherlands Antilles' adıyla geçer; poligon Surinam'ı ve Antiller'i kapsar."
+    },
+    "new-caledonia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Yeni Kaledonya"
+      }
+    },
+    "new-granada": {
+      "kind": "polity",
+      "name": {
+        "tr": "Yeni Granada (1811–1821)"
+      }
+    },
+    "new-hebrides": {
+      "kind": "polity",
+      "name": {
+        "tr": "Yeni Hebridler"
+      }
+    },
+    "new-netherland": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sint Maarten (Hollanda)"
+      },
+      "wikipedia": "Sint Maarten",
+      "note": "Kaynak veri setinde 'New Netherland' adıyla geçer; poligon (334 km²) Sint Maarten adasıdır."
+    },
+    "new-zealand": {
+      "kind": "polity",
+      "name": {
+        "tr": "Yeni Zelanda"
       },
       "summary": {
-        "tr": "Kuzey Rusya'da veçe (halk meclisi) ile yönetilen zengin ticaret cumhuriyeti. Hansa Birliği ile ticaret yapıyordu; 1478'de Moskova'ya katıldı."
+        "tr": "Britanya'ya bağlı bir hâkimiyet olarak 1907'de kurulan devlet; iki dünya savaşında Müttefik ordularına büyük katkı yaptı."
       }
     },
-    "old-kingdom-of-norway": {
+    "nguyen-dynasty": {
       "kind": "polity",
       "name": {
-        "tr": "Eski Norveç Krallığı"
+        "tr": "Nguyễn Hanedanı (Vietnam)"
+      }
+    },
+    "nieuwe-republiek": {
+      "kind": "polity",
+      "name": {
+        "tr": "Yeni Cumhuriyet (Boer)"
+      }
+    },
+    "north-german-confederation": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kuzey Alman Konfederasyonu"
+      },
+      "summary": {
+        "tr": "1866'da Prusya'nın Avusturya'yı yenmesinden sonra Ren–Main hattının kuzeyindeki devletlerle kurulan birlik; 1871'de Alman İmparatorluğu'na dönüştü."
+      }
+    },
+    "north-yemen": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kuzey Yemen"
+      }
+    },
+    "omani-slave-coast": {
+      "kind": "polity",
+      "name": {
+        "tr": "Umman'ın Doğu Afrika Kıyısı"
+      }
+    },
+    "oriental-republic-of-uruguay": {
+      "kind": "polity",
+      "name": {
+        "tr": "Uruguay"
       }
     },
     "ottoman-empire": {
@@ -1448,70 +2195,193 @@
         "tr": "Osmanlı İmparatorluğu"
       },
       "summary": {
-        "tr": "Osman Bey'in 13. yüzyılın sonunda Kuzeybatı Anadolu'da kurduğu beylikten doğan devlet, 1400–1600 arasında Anadolu ve Balkanlar'ın yanında 1517'den sonra Mısır, Suriye ve Hicaz'ı da kapsayan çok uluslu bir imparatorluğa dönüştü. 1402'de Ankara'da Timur'a yenilip on bir yıl süren bir taht mücadelesine (Fetret Devri) girdi; 1453'te İstanbul'u alarak başkentini Bizans'ın eski merkezine taşıdı. Kanuni Sultan Süleyman döneminde (1520–1566) Akdeniz'den Orta Avrupa'ya, Kızıldeniz ve Basra Körfezi'ne uzanan geniş bir güç alanına ulaştı."
+        "tr": "Üç kıtaya yayılan imparatorluk 19. yüzyılda Balkanlar'da ve Kuzey Afrika'da toprak kaybetti, Tanzimat'la ve Meşrutiyet'le modernleşmeye çalıştı. Birinci Dünya Savaşı'nda Merkezî Devletler safında yenildi; 1918–23 arasında dağıldı."
+      }
+    },
+    "ottoman-tripolitania": {
+      "kind": "polity",
+      "name": {
+        "tr": "Osmanlı Trablusgarbı"
+      },
+      "summary": {
+        "tr": "Osmanlı'nın Trablusgarp vilayeti; 1911–12 Osmanlı-İtalyan Savaşı'nda İtalya'ya kaybedildi."
+      }
+    },
+    "oyo-empire": {
+      "kind": "polity",
+      "name": {
+        "tr": "Oyo İmparatorluğu"
+      }
+    },
+    "pahang-sultanate": {
+      "kind": "polity",
+      "name": {
+        "tr": "Pahang Sultanlığı"
+      }
+    },
+    "pahlavi-dynasty": {
+      "kind": "polity",
+      "name": {
+        "tr": "Pehlevi İranı"
+      },
+      "summary": {
+        "tr": "1925'te Rıza Şah'ın kurduğu hanedan; Ağustos 1941'de Britanya ve Sovyetler İran'ı işgal edip Rıza Şah'ı tahttan indirdi, yerine oğlu Muhammed Rıza geçti. 1979 devrimiyle yıkıldı."
+      }
+    },
+    "palau": {
+      "kind": "polity",
+      "name": {
+        "tr": "Palau"
+      }
+    },
+    "palestinians": {
+      "kind": "polity",
+      "name": {
+        "tr": "Filistin (1948)"
+      }
+    },
+    "panthay-rebellion": {
+      "kind": "polity",
+      "name": {
+        "tr": "Panthay Sultanlığı (Yunnan)"
       }
     },
     "papal-states": {
       "kind": "polity",
       "name": {
-        "tr": "Papalık Devletleri"
+        "tr": "Papalık Devleti"
       },
       "summary": {
-        "tr": "Roma ve İtalya'nın orta bölümünü yöneten Papalık devleti. Papa hem manevi lider hem de dünyevi hükümdardı; Rönesans'ın büyük sanat eserlerine sponsor oldu, Roma 1527'de yağmalandı."
+        "tr": "Papa'nın doğrudan yönettiği orta İtalya toprakları; 1870'te İtalya'nın Roma'yı almasıyla sona erdi, 1929 Lateran Antlaşması'yla Vatikan devleti kuruldu."
       }
     },
-    "patani-kingdom": {
+    "papua-new-guinea": {
       "kind": "polity",
       "name": {
-        "tr": "Patani Krallığı"
+        "tr": "Papua Yeni Gine"
       }
     },
-    "patriarchate-of-aquileia": {
+    "paraguay": {
       "kind": "polity",
       "name": {
-        "tr": "Aquileia Patrikliği"
+        "tr": "Paraguay"
       }
     },
-    "polish-lithuania-kingdom": {
+    "people-s-democratic-republic-of-algeria": {
       "kind": "polity",
       "name": {
-        "tr": "Polonya-Litvanya Krallığı"
+        "tr": "Cezayir"
       }
     },
-    "polish-lithuanian-commonwealth": {
+    "people-s-democratic-republic-of-yemen": {
       "kind": "polity",
       "name": {
-        "tr": "Polonya-Litvanya Ortak Devleti"
+        "tr": "Güney Yemen"
+      }
+    },
+    "people-s-republic-of-angola": {
+      "kind": "polity",
+      "name": {
+        "tr": "Angola"
+      }
+    },
+    "people-s-republic-of-bangladesh": {
+      "kind": "polity",
+      "name": {
+        "tr": "Bangladeş"
+      }
+    },
+    "people-s-republic-of-bulgaria": {
+      "kind": "polity",
+      "name": {
+        "tr": "Bulgaristan Halk Cumhuriyeti"
       },
       "summary": {
-        "tr": "1569 Lublin Birliği ile Polonya Krallığı ve Litvanya Büyük Dükalığı'nın kurduğu ortak devlet. Kral, soylu sınıf (szlachta) tarafından seçilirdi."
+        "tr": "1946–47'de monarşinin kaldırılmasıyla kurulan komünist yönetim; 1989'a dek sürdü."
       }
     },
-    "portuguese-africa": {
+    "people-s-republic-of-china": {
       "kind": "polity",
       "name": {
-        "tr": "Portekiz Afrikası"
+        "tr": "Çin Halk Cumhuriyeti"
+      },
+      "summary": {
+        "tr": "1 Ekim 1949'da Mao Zedong'un Pekin'de ilan ettiği, Komünist Parti yönetimindeki devlet."
       }
     },
-    "portuguese-ceylon": {
+    "people-s-republic-of-kampuchea": {
       "kind": "polity",
       "name": {
-        "tr": "Portekiz Seylanı"
+        "tr": "Kampuçya Halk Cumhuriyeti"
+      }
+    },
+    "people-s-republic-of-zanzibar": {
+      "kind": "polity",
+      "name": {
+        "tr": "Zanzibar Sultanlığı (1856–1889)"
+      },
+      "wikipedia": "Sultanate of Zanzibar",
+      "note": "Kaynak veri setinde 'People's Republic of Zanzibar' (1964) adıyla geçer; 1856–1889 poligonu Zanzibar Sultanlığı'dır."
+    },
+    "people-s-socialist-republic-of-albania": {
+      "kind": "polity",
+      "name": {
+        "tr": "Arnavutluk Halk Sosyalist Cumhuriyeti"
+      },
+      "summary": {
+        "tr": "Enver Hoca'nın 1946–1985 arasında yönettiği, dünyadan en çok soyutlanmış komünist rejimlerden biri; 1990–91'de çöktü."
+      }
+    },
+    "peru-bolivian-confederation": {
+      "kind": "polity",
+      "name": {
+        "tr": "Peru-Bolivya Konfederasyonu"
+      }
+    },
+    "poles": {
+      "kind": "polity",
+      "name": {
+        "tr": "Polonya (Kasım Ayaklanması, 1830–1831)"
+      },
+      "wikipedia": "November Uprising"
+    },
+    "polish-armed-forces": {
+      "kind": "polity",
+      "name": {
+        "tr": "Polonya Silahlı Kuvvetleri (1918)"
+      }
+    },
+    "pontianak-kadriyah-sultanate": {
+      "kind": "polity",
+      "name": {
+        "tr": "Pontianak Sultanlığı"
+      }
+    },
+    "portugal": {
+      "kind": "polity",
+      "name": {
+        "tr": "Portekiz"
+      },
+      "summary": {
+        "tr": "Atlantik kıyısındaki Portekiz; 1976'da demokratik düzene geçti."
       }
     },
     "portuguese-colonies": {
       "kind": "polity",
       "name": {
-        "tr": "Portekiz Kolonileri"
+        "tr": "Portekiz Sömürgeleri"
       }
     },
     "portuguese-empire": {
       "kind": "polity",
       "name": {
         "tr": "Portekiz İmparatorluğu"
-      },
-      "summary": {
-        "tr": "Portekiz'in Afrika, Hindistan, Güneydoğu Asya ve Brezilya'daki ticaret kaleleri ve sömürgelerinden oluşan deniz imparatorluğu. Goa (1510) ve Malaka (1511) gibi limanlar, baharat ticaretinin kontrolünde temel dayanak noktalarıydı."
+      }
+    },
+    "portuguese-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Portekiz Cumhuriyeti"
       }
     },
     "principality-of-abkhazia": {
@@ -1520,16 +2390,40 @@
         "tr": "Abhazya Prensliği"
       }
     },
-    "principality-of-achaea": {
+    "principality-of-andorra": {
       "kind": "polity",
       "name": {
-        "tr": "Akhaia Prensliği"
+        "tr": "Andorra Prensliği"
       }
     },
     "principality-of-guria": {
       "kind": "polity",
       "name": {
         "tr": "Guria Prensliği"
+      }
+    },
+    "principality-of-hohenzollern-sigmaringen": {
+      "kind": "polity",
+      "name": {
+        "tr": "Hohenzollern-Sigmaringen Prensliği"
+      }
+    },
+    "principality-of-lichtenberg": {
+      "kind": "polity",
+      "name": {
+        "tr": "Lichtenberg Prensliği"
+      }
+    },
+    "principality-of-liechtenstein": {
+      "kind": "polity",
+      "name": {
+        "tr": "Lihtenştayn Prensliği"
+      }
+    },
+    "principality-of-lippe": {
+      "kind": "polity",
+      "name": {
+        "tr": "Lippe Prensliği"
       }
     },
     "principality-of-mingrelia": {
@@ -1542,291 +2436,956 @@
       "kind": "polity",
       "name": {
         "tr": "Boğdan Prensliği"
-      },
-      "summary": {
-        "tr": "Karpatlar'ın doğusundaki Boğdan prensliği. Büyük Stefan (1457–1504) döneminde güçlendi; 1456'dan beri Osmanlı'ya haraç ödedi; 1538'den sonra Osmanlı denetimi sıkılaştı."
       }
     },
-    "principality-of-orange": {
+    "principality-of-regensberg": {
       "kind": "polity",
       "name": {
-        "tr": "Orange Prensliği"
+        "tr": "Regensburg Prensliği"
       }
     },
-    "principality-of-smolensk": {
+    "principality-of-reuss-gera": {
       "kind": "polity",
       "name": {
-        "tr": "Smolensk Prensliği"
+        "tr": "Reuss-Gera Prensliği"
       }
     },
-    "principality-of-theodoro": {
+    "principality-of-schwarzburg-sonderhausen": {
       "kind": "polity",
       "name": {
-        "tr": "Theodoro Prensliği"
+        "tr": "Schwarzburg-Sondershausen Prensliği"
       }
     },
-    "principality-of-transylvania": {
+    "principality-of-svaneti": {
       "kind": "polity",
       "name": {
-        "tr": "Erdel Prensliği"
-      },
-      "summary": {
-        "tr": "Doğu Macar Krallığı'nın devamı olarak 1570'lerde oluşan, Osmanlı'ya bağlı Erdel Prensliği."
+        "tr": "Svaneti Prensliği"
       }
     },
-    "principality-of-valona-and-kanina": {
+    "principality-of-waldeck-and-pyrmont": {
       "kind": "polity",
       "name": {
-        "tr": "Avlonya ve Kanina Prensliği"
-      }
-    },
-    "principality-of-vladimir-suzdal": {
-      "kind": "polity",
-      "name": {
-        "tr": "Vladimir-Suzdal Prensliği"
+        "tr": "Waldeck-Pyrmont Prensliği"
       }
     },
     "principality-of-wallachia": {
       "kind": "polity",
       "name": {
         "tr": "Eflak Prensliği"
+      }
+    },
+    "provisional-priamurye-government": {
+      "kind": "polity",
+      "name": {
+        "tr": "Amur Bölgesi Geçici Hükümeti"
+      }
+    },
+    "qajar-dynasty": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kaçar İranı"
       },
       "summary": {
-        "tr": "Tuna'nın kuzeyinde, Osmanlı ile Macar Krallığı arasında kalan prenslik. III. Vlad (Kazıklı Voyvoda) 1456–1462 arasında hüküm sürdü; prenslik 1417 dolaylarından itibaren Osmanlı'ya haraç ödedi."
+        "tr": "1796–1925 arasında İran'ı yöneten hanedan; Rusya ve Britanya baskısı altında topraklarını kaybetti, 1906 Meşrutiyet Devrimi'ni yaşadı."
       }
     },
-    "prome-kingdom": {
+    "qasimids": {
       "kind": "polity",
       "name": {
-        "tr": "Prome Krallığı"
+        "tr": "Kasımî İmamlığı (Yemen)"
       }
     },
-    "pskov-republic": {
+    "qatar": {
       "kind": "polity",
       "name": {
-        "tr": "Pskov Cumhuriyeti"
+        "tr": "Katar (1913–1915)"
+      }
+    },
+    "qatar-dynasty": {
+      "kind": "polity",
+      "name": {
+        "tr": "Katar (Al Sani)"
+      }
+    },
+    "qatar-protectorate": {
+      "kind": "polity",
+      "name": {
+        "tr": "Katar (İngiliz himayesi, 1947–1955)"
+      }
+    },
+    "qing-dynasty": {
+      "kind": "polity",
+      "name": {
+        "tr": "Çing İmparatorluğu"
       },
       "summary": {
-        "tr": "Novgorod gibi halk meclisiyle (veçe) yönetilen Rus şehir cumhuriyeti. 1510'da Moskova'ya katıldı."
+        "tr": "Mançu kökenli son Çin hanedanı (1644–1911). Afyon Savaşları, Taiping İsyanı ve emperyal baskılarla zayıfladı; 1911 Xinhai Devrimi ile yıkıldı."
       }
     },
-    "qara-qoyunlu": {
+    "rattanakosin-kingdom": {
       "kind": "polity",
       "name": {
-        "tr": "Karakoyunlular"
+        "tr": "Siyam Krallığı (Rattanakosin)"
       },
       "summary": {
-        "tr": "Van Gölü çevresindeki Türkmen devleti. Cihanşah döneminde (1438–1467) Irak ve Batı İran'a yayıldı; 1467'de Akkoyunlulara yenildi."
+        "tr": "Bangkok merkezli Siyam krallığı; sömürgeci güçler arasında bağımsızlığını koruyabilen tek Güneydoğu Asya devleti."
       }
     },
-    "qasim-khanate": {
+    "regency-of-algiers": {
       "kind": "polity",
       "name": {
-        "tr": "Kasım Hanlığı"
+        "tr": "Cezayir Eyaleti"
       }
     },
-    "rajahnate-of-cebu": {
+    "republic-of-afghanistan": {
       "kind": "polity",
       "name": {
-        "tr": "Sebu Rajalığı"
+        "tr": "Afganistan Cumhuriyeti (1973–1978)"
       }
     },
-    "ramadanid-emirate": {
+    "republic-of-albania": {
       "kind": "polity",
       "name": {
-        "tr": "Ramazanoğulları Beyliği"
+        "tr": "Arnavutluk Cumhuriyeti"
+      }
+    },
+    "republic-of-armenia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Ermenistan"
+      }
+    },
+    "republic-of-austria": {
+      "kind": "polity",
+      "name": {
+        "tr": "Avusturya Cumhuriyeti (Birinci Cumhuriyet)"
       },
       "summary": {
-        "tr": "Çukurova'da (Adana ve Tarsus çevresi) hüküm süren Türkmen beyliği (Ramazanoğulları). Memlük Sultanlığı'na bağlıydı; Osmanlı'nın 1516–1517'deki Mısır seferinden sonra Osmanlı egemenliğini tanıdı."
-      }
+        "tr": "Avusturya-Macaristan'ın dağılmasından sonra 1919'da kurulan küçük cumhuriyet. 1934'ten itibaren otoriter bir rejime kaydı; Mart 1938'de Nazi Almanyası'na katıldı (Anschluss)."
+      },
+      "wikipedia": "First Austrian Republic"
     },
-    "rasulid-dynasty": {
+    "republic-of-azerbaijan": {
       "kind": "polity",
       "name": {
-        "tr": "Resûlîler"
+        "tr": "Azerbaycan"
       }
     },
-    "republic-of-florence": {
+    "republic-of-baden": {
       "kind": "polity",
       "name": {
-        "tr": "Floransa Cumhuriyeti"
+        "tr": "Baden Cumhuriyeti (1849)"
+      }
+    },
+    "republic-of-baja-california": {
+      "kind": "polity",
+      "name": {
+        "tr": "Aşağı Kaliforniya Cumhuriyeti"
+      }
+    },
+    "republic-of-belarus": {
+      "kind": "polity",
+      "name": {
+        "tr": "Belarus"
+      }
+    },
+    "republic-of-benin": {
+      "kind": "polity",
+      "name": {
+        "tr": "Benin"
+      }
+    },
+    "republic-of-botswana": {
+      "kind": "polity",
+      "name": {
+        "tr": "Botsvana"
+      }
+    },
+    "republic-of-brazil": {
+      "kind": "polity",
+      "name": {
+        "tr": "Brezilya"
+      }
+    },
+    "republic-of-bulgaria": {
+      "kind": "polity",
+      "name": {
+        "tr": "Bulgaristan Cumhuriyeti"
+      }
+    },
+    "republic-of-burundi": {
+      "kind": "polity",
+      "name": {
+        "tr": "Burundi"
+      }
+    },
+    "republic-of-cabo-verde": {
+      "kind": "polity",
+      "name": {
+        "tr": "Yeşil Burun"
+      }
+    },
+    "republic-of-cameroon": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kamerun"
+      }
+    },
+    "republic-of-chad": {
+      "kind": "polity",
+      "name": {
+        "tr": "Çad"
+      }
+    },
+    "republic-of-chile": {
+      "kind": "polity",
+      "name": {
+        "tr": "Şili"
+      }
+    },
+    "republic-of-china": {
+      "kind": "polity",
+      "name": {
+        "tr": "Çin Cumhuriyeti"
       },
       "summary": {
-        "tr": "Medici ailesinin fiilen yönettiği, Rönesans'ın sanat ve bankacılık merkezi şehir cumhuriyeti."
+        "tr": "1912'de Qing hanedanını deviren cumhuriyet. Guomindang yönetiminde 1937'den itibaren Japonya'ya karşı savaştı; 1949'da Komünistlere yenilince hükûmeti Tayvan'a çekildi."
       }
     },
-    "republic-of-genoa": {
+    "republic-of-colombia": {
       "kind": "polity",
       "name": {
-        "tr": "Ceneviz Cumhuriyeti"
+        "tr": "Kolombiya"
+      }
+    },
+    "republic-of-costa-rica": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kosta Rika"
+      }
+    },
+    "republic-of-cote-d-ivoire": {
+      "kind": "polity",
+      "name": {
+        "tr": "Fildişi Sahili"
+      }
+    },
+    "republic-of-croatia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Hırvatistan"
+      }
+    },
+    "republic-of-cuba": {
+      "kind": "polity",
+      "name": {
+        "tr": "Küba Cumhuriyeti"
       },
       "summary": {
-        "tr": "Ligurya'da kurulu ticaret cumhuriyeti. Karadeniz'deki Kefe gibi kolonilerini Osmanlı'ya kaptırdı (1475); 16. yüzyılda İspanya ile ittifak yaparak Avrupa bankacılığında öne çıktı."
+        "tr": "1902'de ABD işgalinden sonra bağımsız olan Küba; 1959 Devrimi'ne dek ABD etkisinde kaldı."
       }
     },
-    "republic-of-pisa": {
+    "republic-of-cyprus": {
       "kind": "polity",
       "name": {
-        "tr": "Pisa Cumhuriyeti"
+        "tr": "Kıbrıs Cumhuriyeti"
+      }
+    },
+    "republic-of-djibouti": {
+      "kind": "polity",
+      "name": {
+        "tr": "Cibuti"
+      }
+    },
+    "republic-of-ecuador": {
+      "kind": "polity",
+      "name": {
+        "tr": "Ekvador"
+      }
+    },
+    "republic-of-egypt": {
+      "kind": "polity",
+      "name": {
+        "tr": "Mısır Cumhuriyeti"
+      }
+    },
+    "republic-of-el-salvador": {
+      "kind": "polity",
+      "name": {
+        "tr": "El Salvador"
+      }
+    },
+    "republic-of-estonia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Estonya Cumhuriyeti"
+      }
+    },
+    "republic-of-fiji": {
+      "kind": "polity",
+      "name": {
+        "tr": "Fiji"
+      }
+    },
+    "republic-of-finland": {
+      "kind": "polity",
+      "name": {
+        "tr": "Finlandiya"
+      },
+      "summary": {
+        "tr": "1917'de Rusya'dan bağımsızlığını kazanan Finlandiya. 1939–40 Kış Savaşı'nda Sovyet saldırısına direndi, 1941–44 Devam Savaşı'nda Almanya ile birlikte savaştı; 1944'te Sovyetler'le ateşkes imzaladı."
+      }
+    },
+    "republic-of-guinea-bissau": {
+      "kind": "polity",
+      "name": {
+        "tr": "Gine-Bissau"
+      }
+    },
+    "republic-of-haiti": {
+      "kind": "polity",
+      "name": {
+        "tr": "Haiti Cumhuriyeti"
+      }
+    },
+    "republic-of-hawai-i": {
+      "kind": "polity",
+      "name": {
+        "tr": "Hawai Cumhuriyeti"
+      }
+    },
+    "republic-of-iceland": {
+      "kind": "polity",
+      "name": {
+        "tr": "İzlanda"
+      },
+      "summary": {
+        "tr": "17 Haziran 1944'te Danimarka ile bağını koparıp cumhuriyet olan İzlanda."
+      }
+    },
+    "republic-of-india": {
+      "kind": "polity",
+      "name": {
+        "tr": "Hindistan"
+      },
+      "summary": {
+        "tr": "15 Ağustos 1947'de bağımsızlığına kavuşan, 1950'de cumhuriyet ilan eden Hindistan."
+      }
+    },
+    "republic-of-indonesia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Endonezya"
+      },
+      "summary": {
+        "tr": "17 Ağustos 1945'te bağımsızlığını ilan eden, Hollanda ile savaşın ardından 1949'da tanınan Endonezya."
+      }
+    },
+    "republic-of-italy": {
+      "kind": "polity",
+      "name": {
+        "tr": "İtalya Cumhuriyeti"
+      },
+      "summary": {
+        "tr": "2 Haziran 1946 referandumuyla monarşinin kaldırılmasından sonra kurulan cumhuriyet."
+      }
+    },
+    "republic-of-kenya": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kenya"
+      }
+    },
+    "republic-of-korea": {
+      "kind": "polity",
+      "name": {
+        "tr": "Güney Kore"
+      },
+      "summary": {
+        "tr": "15 Ağustos 1948'de Amerikan işgal bölgesinde kurulan Güney Kore."
+      }
+    },
+    "republic-of-latvia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Letonya"
+      },
+      "summary": {
+        "tr": "1918'de bağımsızlığını ilan eden Baltık cumhuriyeti; 1940'ta Sovyetler Birliği'ne katıldı, 1991'de bağımsızlığını geri aldı."
+      }
+    },
+    "republic-of-liberia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Liberya"
+      },
+      "summary": {
+        "tr": "Amerikalı eski kölelerin 1847'de kurduğu, Afrika'nın en eski cumhuriyeti."
+      }
+    },
+    "republic-of-lithuania": {
+      "kind": "polity",
+      "name": {
+        "tr": "Litvanya Cumhuriyeti"
+      },
+      "summary": {
+        "tr": "1990'da Sovyetler Birliği'nden ilk ayrılan cumhuriyet olarak bağımsızlığını yeniden ilan eden Litvanya."
+      }
+    },
+    "republic-of-moldova": {
+      "kind": "polity",
+      "name": {
+        "tr": "Moldova"
+      }
+    },
+    "republic-of-new-granada": {
+      "kind": "polity",
+      "name": {
+        "tr": "Yeni Granada Cumhuriyeti"
+      }
+    },
+    "republic-of-nicaragua": {
+      "kind": "polity",
+      "name": {
+        "tr": "Nikaragua"
+      }
+    },
+    "republic-of-panama": {
+      "kind": "polity",
+      "name": {
+        "tr": "Panama"
+      }
+    },
+    "republic-of-peru": {
+      "kind": "polity",
+      "name": {
+        "tr": "Peru"
+      }
+    },
+    "republic-of-poland": {
+      "kind": "polity",
+      "name": {
+        "tr": "Polonya"
+      },
+      "summary": {
+        "tr": "Savaştan sonra sınırları batıya kaydırılarak yeniden kurulan Polonya; 1989'a dek Sovyet nüfuz alanında kaldı, 1989'da yarı özgür seçimlerle komünist yönetim sona erdi."
       }
     },
     "republic-of-ragusa": {
       "kind": "polity",
       "name": {
         "tr": "Ragusa Cumhuriyeti"
+      }
+    },
+    "republic-of-rwanda": {
+      "kind": "polity",
+      "name": {
+        "tr": "Ruanda"
       },
       "summary": {
-        "tr": "Adriyatik kıyısında Ragusa (Dubrovnik) şehir cumhuriyeti. Osmanlı'ya haraç ödeyerek bağımsızlığını ve geniş ticaret ayrıcalıklarını korudu."
+        "tr": "1962'de Belçika yönetiminden bağımsız olan Ruanda; 1994'te yaklaşık yüz günde yüz binlerce insanın öldürüldüğü soykırıma sahne oldu."
       }
     },
-    "republic-of-venice": {
+    "republic-of-senegal": {
       "kind": "polity",
       "name": {
-        "tr": "Venedik Cumhuriyeti"
+        "tr": "Senegal"
+      }
+    },
+    "republic-of-singapore": {
+      "kind": "polity",
+      "name": {
+        "tr": "Singapur"
+      }
+    },
+    "republic-of-slovenia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Slovenya"
+      }
+    },
+    "republic-of-sudan": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sudan"
+      }
+    },
+    "republic-of-suriname": {
+      "kind": "polity",
+      "name": {
+        "tr": "Surinam"
+      }
+    },
+    "republic-of-syria": {
+      "kind": "polity",
+      "name": {
+        "tr": "Suriye Cumhuriyeti (1961–1962)"
+      }
+    },
+    "republic-of-tajikistan": {
+      "kind": "polity",
+      "name": {
+        "tr": "Tacikistan"
+      }
+    },
+    "republic-of-texas": {
+      "kind": "polity",
+      "name": {
+        "tr": "Teksas Cumhuriyeti"
       },
       "summary": {
-        "tr": "Adriyatik'in ve Doğu Akdeniz'in başlıca ticaret gücü; Girit, Kıbrıs ve Dalmaçya kıyılarındaki limanlara sahipti. Osmanlılarla süren savaşlarda Mora limanlarını (1499–1503) ve Kıbrıs'ı (1570–1571) yitirdi."
+        "tr": "1836'da Meksika'dan ayrılan, 1845'te Birleşik Devletler'e katılan bağımsız Teksas."
       }
     },
-    "ryazan": {
+    "republic-of-the-congo": {
       "kind": "polity",
       "name": {
-        "tr": "Ryazan Prensliği"
+        "tr": "Kongo Cumhuriyeti"
+      }
+    },
+    "republic-of-the-gambia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Gambiya"
+      }
+    },
+    "republic-of-the-niger": {
+      "kind": "polity",
+      "name": {
+        "tr": "Nijer"
+      }
+    },
+    "republic-of-the-philippines": {
+      "kind": "polity",
+      "name": {
+        "tr": "Filipinler"
       },
       "summary": {
-        "tr": "Moskova'nın güneydoğusunda Rus prensliği. 1521'de Moskova'ya katıldı."
+        "tr": "1946'da ABD'den bağımsızlığını alan Filipinler (Cliopatria'da 1947'den itibaren gösterilir)."
       }
     },
-    "ryukyu-kingdom": {
+    "republic-of-the-rif": {
       "kind": "polity",
       "name": {
-        "tr": "Ryukyu Krallığı"
+        "tr": "Rif Cumhuriyeti"
+      }
+    },
+    "republic-of-the-rio-grande": {
+      "kind": "polity",
+      "name": {
+        "tr": "Rio Grande Cumhuriyeti (Meksika, 1840)"
+      }
+    },
+    "republic-of-trinidad-and-tobago": {
+      "kind": "polity",
+      "name": {
+        "tr": "Trinidad ve Tobago"
+      }
+    },
+    "republic-of-tunisia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Tunus"
+      }
+    },
+    "republic-of-turkey": {
+      "kind": "polity",
+      "name": {
+        "tr": "Türkiye Cumhuriyeti"
       },
       "summary": {
-        "tr": "1429'da Okinawa'daki üç krallığın birleşmesiyle kurulan, Çin ve Japonya arasında aracı ticaret yapan krallık."
+        "tr": "29 Ekim 1923'te Mustafa Kemal Atatürk önderliğinde ilan edilen cumhuriyet. İkinci Dünya Savaşı'nın büyük bölümünde tarafsız kaldı; Şubat 1945'te Almanya ve Japonya'ya savaş ilan etti."
       }
     },
-    "saadi-sultanate": {
+    "republic-of-uganda": {
       "kind": "polity",
       "name": {
-        "tr": "Sa'dîler"
+        "tr": "Uganda"
+      }
+    },
+    "republic-of-uryankhay": {
+      "kind": "polity",
+      "name": {
+        "tr": "Uryankhay Cumhuriyeti (Tuva)"
+      }
+    },
+    "republic-of-uzbekistan": {
+      "kind": "polity",
+      "name": {
+        "tr": "Özbekistan"
+      }
+    },
+    "republic-of-venezuela": {
+      "kind": "polity",
+      "name": {
+        "tr": "Venezuela Cumhuriyeti (1811–1814)"
+      }
+    },
+    "republic-of-vietnam": {
+      "kind": "polity",
+      "name": {
+        "tr": "Güney Vietnam"
+      }
+    },
+    "republic-of-yemen": {
+      "kind": "polity",
+      "name": {
+        "tr": "Yemen"
+      }
+    },
+    "republic-of-zimbabwe": {
+      "kind": "polity",
+      "name": {
+        "tr": "Zimbabve"
+      }
+    },
+    "republics-of-the-soviet-union": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sovyet Cumhuriyetleri (1920–1921)"
+      }
+    },
+    "rhodesia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Rodezya"
+      }
+    },
+    "riau-lingga-sultanate": {
+      "kind": "polity",
+      "name": {
+        "tr": "Riau-Lingga Sultanlığı"
+      }
+    },
+    "rio-de-la-plata": {
+      "kind": "polity",
+      "name": {
+        "tr": "Río de la Plata Birleşik Eyaletleri"
+      }
+    },
+    "riograndense-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Rio Grande Cumhuriyeti (Brezilya, 1836–1845)"
+      }
+    },
+    "romania": {
+      "kind": "polity",
+      "name": {
+        "tr": "Romanya"
       },
       "summary": {
-        "tr": "Fas'ta 16. yüzyılda Portekiz ve Osmanlı karşısında yükselen hanedan. 1578'de Alcácer Quibir'de Portekiz'i yendi; 1591'de Songhay İmparatorluğu'nu yıkarak Batı Afrika'ya uzandı."
-      }
+        "tr": "1859'da Eflak ve Boğdan'ın birleşmesiyle doğan, 1881'de krallığa dönüşen devlet. Birinci Dünya Savaşı'ndan sonra Transilvanya'yı da katarak büyüdü; 1940'ta toprak kaybetti, Mihver safında savaşa girdi, Ağustos 1944'te taraf değiştirdi."
+      },
+      "wikipedia": "Romania",
+      "wikidata": "Q218",
+      "note": "Kaynak veri seti aynı devletin bu dönemini 'kingdom-of-romania', 'united-principalities-of-moldavia-and-wallachia' kimlikleriyle de adlandırır; boru hattı bunları tek kimlikte birleştirir (scripts/pipeline/periods)."
     },
-    "safavid-dynasty": {
+    "russian-empire": {
       "kind": "polity",
       "name": {
-        "tr": "Safevî Devleti"
+        "tr": "Rus İmparatorluğu"
       },
       "summary": {
-        "tr": "1501'de Şah İsmail'in Tebriz'de kurduğu, On İki İmam Şiîliğini devlet mezhebi yapan İran hanedanı. Osmanlılarla Çaldıran'da (1514) ve sonraki savaşlarda çatıştı; Şah Abbas (1588–1629) döneminde güçlenip başkenti İsfahan'a taşıdı."
+        "tr": "Romanov hanedanının yönettiği, Baltık'tan Pasifik'e uzanan imparatorluk. 1861'de serfliği kaldırdı; Kırım Savaşı, 1905 Rus-Japon Savaşı ve 1905 devrimiyle sarsıldı, Birinci Dünya Savaşı'nda 1917'de çöktü."
       }
     },
-    "samtskhe-saatabago": {
+    "russian-federation": {
       "kind": "polity",
       "name": {
-        "tr": "Samtshe Atabegliği"
+        "tr": "Rusya Federasyonu"
       },
       "summary": {
-        "tr": "Güneybatı Gürcistan'da, Meşhet (Samtshe) bölgesinde Cakeli ailesinden atabeglerin yönettiği beylik. Osmanlı–Safevî rekabetinin ortasında kaldı; 1578'de Osmanlılarca ele geçirilip Çıldır Eyaleti'ne dönüştürüldü."
+        "tr": "Sovyetler Birliği'nin dağılmasından sonra (1991–92) Rusya'nın devamı olan federal devlet."
       }
     },
-    "samudera-pasai-sultanate": {
+    "russian-occupied-territories": {
       "kind": "polity",
       "name": {
-        "tr": "Samudera Pasai Sultanlığı"
+        "tr": "Rusya denetimindeki bölgeler"
       }
     },
-    "sayyid-dynasty": {
+    "russian-republic": {
       "kind": "polity",
       "name": {
-        "tr": "Seyyidler Hanedanı"
-      }
-    },
-    "serbian-despots": {
-      "kind": "polity",
-      "name": {
-        "tr": "Sırp Despotluğu"
+        "tr": "Rusya Cumhuriyeti (1917–1919)"
       },
       "summary": {
-        "tr": "Kosova Savaşı'ndan (1389) sonra Osmanlı'ya haraç ödeyen bir devlet olarak başlayan, 1402'den itibaren despotluk unvanıyla anılan Sırp devleti. Macaristan ile Osmanlı arasında denge siyaseti izledi; Semendire'nin 1459'da Osmanlı'ya geçmesiyle sona erdi."
+        "tr": "Şubat 1917'de çarlığın yıkılmasından Ekim Devrimi'ne kadar süren Geçici Hükümet dönemi."
       }
     },
-    "serbian-empire": {
+    "saint-kitts": {
       "kind": "polity",
       "name": {
-        "tr": "Sırp İmparatorluğu"
+        "tr": "Saint Kitts"
       }
     },
-    "shan-states": {
+    "saint-lucia": {
       "kind": "polity",
       "name": {
-        "tr": "Şan Devletleri"
+        "tr": "Saint Lucia"
       }
     },
-    "shaybanids": {
+    "saint-vincent": {
       "kind": "polity",
       "name": {
-        "tr": "Şeybânîler"
+        "tr": "Saint Vincent"
+      }
+    },
+    "sao-tome-and-principe": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sao Tome ve Principe"
+      }
+    },
+    "saxe-altenburg": {
+      "kind": "polity",
+      "name": {
+        "tr": "Saksonya-Altenburg Dükalığı"
+      }
+    },
+    "saxe-coburg-and-gotha": {
+      "kind": "polity",
+      "name": {
+        "tr": "Saksonya-Coburg-Gotha Dükalığı"
+      }
+    },
+    "saxe-meiningen": {
+      "kind": "polity",
+      "name": {
+        "tr": "Saksonya-Meiningen Dükalığı"
+      }
+    },
+    "second-french-empire": {
+      "kind": "polity",
+      "name": {
+        "tr": "İkinci Fransız İmparatorluğu"
       },
       "summary": {
-        "tr": "Şeybânî Muhammed Han, 1500'de Semerkant'ı Timurlulardan aldı; Özbek hanlıkları bu soyun etrafında oluştu."
+        "tr": "III. Napolyon'un 1852'de kurduğu imparatorluk; Paris'in yeniden inşası ve hızlı sanayileşmeyle bilinir. 1870'te Prusya karşısında Sedan'da yenilince sona erdi."
       }
     },
-    "shirvan": {
+    "second-mexican-empire": {
       "kind": "polity",
       "name": {
-        "tr": "Şirvan"
+        "tr": "İkinci Meksika İmparatorluğu"
       },
       "summary": {
-        "tr": "Hazar Denizi'nin batısında, Şirvanşahlar'ın yönettiği devlet. Şah İsmail'in 1500–1501'deki seferiyle Safevî egemenliğine girdi; hanedan 1538'de I. Tahmasp tarafından ortadan kaldırıldı."
+        "tr": "Fransa'nın III. Napolyon döneminde Habsburglu Maximilian'ı imparator yaptığı Meksika (1864–67)."
       }
     },
-    "sind-samma-dynasty": {
+    "second-polish-republic": {
       "kind": "polity",
       "name": {
-        "tr": "Sind Sammaları"
-      }
-    },
-    "small-horde": {
-      "kind": "polity",
-      "name": {
-        "tr": "Küçük Nogay Ordası"
-      }
-    },
-    "songhai-empire": {
-      "kind": "polity",
-      "name": {
-        "tr": "Songhay İmparatorluğu"
+        "tr": "Polonya İkinci Cumhuriyeti"
       },
       "summary": {
-        "tr": "Gao merkezli, Nijer Nehri boyunca Batı Afrika'nın büyük bölümüne hâkim olan imparatorluk. Askia Muhammed (1493–1528) döneminde en geniş sınırlarına ulaştı; 1591'de Tondibi'de Fas'ın Sa'dî ordusuna yenildi."
+        "tr": "1795'ten beri bölünmüş olan Polonya'nın Birinci Dünya Savaşı'nın sonunda 1918'de yeniden kurulan devleti. 1 Eylül 1939'da Almanya, 17 Eylül'de Sovyetler Birliği tarafından işgal edilip paylaşıldı."
+      }
+    },
+    "second-republic-of-austria": {
+      "kind": "polity",
+      "name": {
+        "tr": "Avusturya (İkinci Cumhuriyet)"
+      },
+      "summary": {
+        "tr": "1945'te yeniden kurulan Avusturya; 1955'e kadar dört müttefik gücün işgalinde kaldı, 1955 Devlet Antlaşması ile egemenliğini ve sürekli tarafsızlığını kazandı."
+      },
+      "wikipedia": "Second Austrian Republic"
+    },
+    "second-spanish-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "İspanya İkinci Cumhuriyeti"
+      },
+      "summary": {
+        "tr": "1931'de kralın ülkeden ayrılmasıyla kurulan cumhuriyet; Temmuz 1936'da generallerin ayaklanmasıyla İç Savaş'a sürüklendi, 1939'da yenildi."
+      }
+    },
+    "second-syrian-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Suriye (İkinci Cumhuriyet, 1946–1957)"
+      }
+    },
+    "septinsular-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Yedi Ada Cumhuriyeti"
+      }
+    },
+    "serbia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sırbistan"
+      },
+      "summary": {
+        "tr": "19. yüzyılda Osmanlı'dan önce özerklik, 1878'de bağımsızlık kazanan Sırbistan; 1882'de krallık oldu. Birinci Dünya Savaşı sonunda Yugoslavya'nın çekirdeğini oluşturdu."
+      },
+      "wikipedia": "Serbia",
+      "wikidata": "Q403",
+      "note": "Kaynak veri seti aynı devletin bu dönemini 'kingdom-of-serbia', 'serbs' kimlikleriyle de adlandırır; boru hattı bunları tek kimlikte birleştirir (scripts/pipeline/periods)."
+    },
+    "serbia-montenegro": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sırbistan-Karadağ (Yugoslavya Federal Cumhuriyeti)"
+      }
+    },
+    "seychelles": {
+      "kind": "polity",
+      "name": {
+        "tr": "Seyşeller"
+      }
+    },
+    "sierra-leone": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sierra Leone"
+      }
+    },
+    "sikh-confederacy": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sih Konfederasyonu"
+      }
+    },
+    "sikh-empire": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sih İmparatorluğu"
+      }
+    },
+    "slovakia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Slovakya"
+      }
+    },
+    "socialist-federal-republic-of-yugoslavia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Yugoslavya Sosyalist Federal Cumhuriyeti"
+      },
+      "summary": {
+        "tr": "Tito önderliğinde 1945–46'da kurulan altı cumhuriyetli federasyon; 1948'de Stalin'le yollarını ayırdı, Bağlantısızlar Hareketi'nin kurucularındandı. 1991–92'de savaşlarla dağıldı."
+      }
+    },
+    "socialist-republic-of-romania": {
+      "kind": "polity",
+      "name": {
+        "tr": "Romanya Sosyalist Cumhuriyeti"
+      },
+      "summary": {
+        "tr": "Komünist yönetimin Romanya'sı; Ceaușescu'nun 1965'ten itibaren kurduğu kişisel diktatörlükle bilinir, 1989 devrimiyle sona erdi."
+      }
+    },
+    "socialist-republic-of-vietnam": {
+      "kind": "polity",
+      "name": {
+        "tr": "Vietnam"
+      }
+    },
+    "sokoto-caliphate": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sokoto Halifeliği"
+      },
+      "summary": {
+        "tr": "1804'te Usman dan Fodio'nun kurduğu, Batı Afrika'nın en geniş İslam devleti; 1903'te Britanya'ya yenildi."
+      }
+    },
+    "solomon-islands": {
+      "kind": "polity",
+      "name": {
+        "tr": "Solomon Adaları"
+      }
+    },
+    "south-africa": {
+      "kind": "polity",
+      "name": {
+        "tr": "Güney Afrika"
+      },
+      "summary": {
+        "tr": "1910'da Britanya'nın hâkimiyeti olarak kurulan Güney Afrika Birliği; 1948'den sonra resmî ırk ayrımı (apartheid) rejimi uyguladı."
+      }
+    },
+    "south-african-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Güney Afrika Cumhuriyeti (Transvaal)"
+      }
+    },
+    "sovereign-principality-of-the-united-netherlands": {
+      "kind": "polity",
+      "name": {
+        "tr": "Birleşik Hollanda Egemen Prensliği"
       }
     },
     "spanish-empire": {
       "kind": "polity",
       "name": {
         "tr": "İspanyol İmparatorluğu"
-      },
-      "summary": {
-        "tr": "İspanya Krallığı'nın Amerika, Filipinler ve Avrupa'daki topraklarını kapsayan imparatorluk. 1580'den sonra Portekiz ile kişisel birlik kurdu (İber Birliği); Amerika'dan gelen gümüş, imparatorluğun siyasi ve askerî girişimlerini finanse etti."
       }
     },
-    "sukhothai-kingdom": {
+    "spanish-nationalists": {
       "kind": "polity",
       "name": {
-        "tr": "Sukhothai Krallığı"
+        "tr": "İspanyol Milliyetçileri (1936–1938)"
+      },
+      "summary": {
+        "tr": "Temmuz 1936'da cumhuriyete karşı ayaklanan generallerin (Franco, Mola) denetimindeki bölge."
+      }
+    },
+    "sri-lanka": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sri Lanka"
+      }
+    },
+    "state-of-buenos-aires": {
+      "kind": "polity",
+      "name": {
+        "tr": "Buenos Aires Devleti"
+      }
+    },
+    "state-of-eritrea": {
+      "kind": "polity",
+      "name": {
+        "tr": "Eritre"
+      }
+    },
+    "state-of-israel": {
+      "kind": "polity",
+      "name": {
+        "tr": "İsrail"
+      },
+      "summary": {
+        "tr": "14 Mayıs 1948'de Britanya mandasının sona ermesiyle ilan edilen devlet; hemen ardından komşu Arap devletleriyle savaşa girdi."
+      }
+    },
+    "state-of-kuwait": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kuveyt Devleti (1961–1989)"
+      }
+    },
+    "state-of-qatar": {
+      "kind": "polity",
+      "name": {
+        "tr": "Katar"
+      }
+    },
+    "sultan-of-yogyakarta": {
+      "kind": "polity",
+      "name": {
+        "tr": "Yogyakarta Sultanlığı"
       }
     },
     "sultanate-of-aceh": {
       "kind": "polity",
       "name": {
-        "tr": "Açe Sultanlığı"
-      },
-      "summary": {
-        "tr": "Sumatra'nın kuzey ucundaki sultanlık. Malaka'nın 1511'de Portekiz'e düşmesinden sonra Müslüman tüccarların uğrak yeri ve biber ticaretinin önemli bir merkezi olarak yükseldi."
+        "tr": "Aceh Sultanlığı"
       }
     },
     "sultanate-of-banjar": {
@@ -1841,20 +3400,18 @@
         "tr": "Banten Sultanlığı"
       }
     },
-    "sultanate-of-bengal": {
+    "sultanate-of-bima": {
       "kind": "polity",
       "name": {
-        "tr": "Bengal Sultanlığı"
-      },
-      "summary": {
-        "tr": "Ganj Deltası'nda bağımsız Müslüman sultanlık; ticareti ve Bengalce edebiyatın gelişmesiyle tanınır. 1538'de Şir Şah'ın Sûr İmparatorluğu'na, sonra Babürlere geçti."
+        "tr": "Bima Sultanlığı"
       }
     },
     "sultanate-of-bone": {
       "kind": "polity",
       "name": {
         "tr": "Bone Sultanlığı"
-      }
+      },
+      "wikipedia": null
     },
     "sultanate-of-brunei": {
       "kind": "polity",
@@ -1862,22 +3419,22 @@
         "tr": "Brunei Sultanlığı"
       }
     },
-    "sultanate-of-cirebon": {
+    "sultanate-of-darfur": {
       "kind": "polity",
       "name": {
-        "tr": "Cirebon Sultanlığı"
+        "tr": "Darfur Sultanlığı"
       }
     },
-    "sultanate-of-gowa": {
+    "sultanate-of-hobyo": {
       "kind": "polity",
       "name": {
-        "tr": "Gowa Sultanlığı"
+        "tr": "Hobyo Sultanlığı"
       }
     },
-    "sultanate-of-harar": {
+    "sultanate-of-jambi": {
       "kind": "polity",
       "name": {
-        "tr": "Harar Sultanlığı"
+        "tr": "Jambi Sultanlığı"
       }
     },
     "sultanate-of-johor": {
@@ -1892,6 +3449,12 @@
         "tr": "Kedah Sultanlığı"
       }
     },
+    "sultanate-of-kutai-kartanegara": {
+      "kind": "polity",
+      "name": {
+        "tr": "Kutai Kartanegara Sultanlığı"
+      }
+    },
     "sultanate-of-maguindanao": {
       "kind": "polity",
       "name": {
@@ -1901,10 +3464,27 @@
     "sultanate-of-malacca": {
       "kind": "polity",
       "name": {
-        "tr": "Malaka Sultanlığı"
+        "tr": "Malakka (Hollanda ve İngiliz yönetimi)"
       },
-      "summary": {
-        "tr": "Malay Yarımadası'nın güneybatısında Malaka Boğazı'nı denetleyen, Hint Okyanusu ticaretinin en önemli limanlarından biri. 1511'de Portekizliler tarafından ele geçirildi; son sultan Mahmud Şah önce Pahang'a, sonra Bintan'a çekildi; oğlu 1528'de Johor Sultanlığı'nı kurdu."
+      "wikipedia": null,
+      "note": "Kaynak veri setinde 'Sultanate of Malacca' adıyla geçer (1511'de yıkılmış bir devlet); 1800–1861 poligonu Malakka'daki Hollanda/İngiliz yönetimidir. Vikipedi bağlantısı yanlış makaleye gidiyordu."
+    },
+    "sultanate-of-mempawah": {
+      "kind": "polity",
+      "name": {
+        "tr": "Mempawah Sultanlığı"
+      }
+    },
+    "sultanate-of-muscat-and-oman": {
+      "kind": "polity",
+      "name": {
+        "tr": "Maskat ve Umman Sultanlığı"
+      }
+    },
+    "sultanate-of-oman": {
+      "kind": "polity",
+      "name": {
+        "tr": "Umman Sultanlığı"
       }
     },
     "sultanate-of-palembang": {
@@ -1919,61 +3499,119 @@
         "tr": "Perak Sultanlığı"
       }
     },
+    "sultanate-of-sambaliung": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sambaliung Sultanlığı"
+      },
+      "wikipedia": null
+    },
+    "sultanate-of-sambas": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sambas Sultanlığı"
+      }
+    },
+    "sultanate-of-selangor": {
+      "kind": "polity",
+      "name": {
+        "tr": "Selangor Sultanlığı"
+      }
+    },
+    "sultanate-of-sukadana": {
+      "kind": "polity",
+      "name": {
+        "tr": "Sukadana Sultanlığı"
+      }
+    },
     "sultanate-of-sulu": {
       "kind": "polity",
       "name": {
         "tr": "Sulu Sultanlığı"
       }
     },
-    "sunda-kingdom": {
+    "sultanate-of-terengganu": {
       "kind": "polity",
       "name": {
-        "tr": "Sunda Krallığı"
+        "tr": "Terengganu Sultanlığı"
       }
     },
-    "sur-empire": {
+    "sultanate-of-zanzibar": {
       "kind": "polity",
       "name": {
-        "tr": "Sûr İmparatorluğu"
+        "tr": "Zanzibar Sultanlığı (1963–1966)"
+      }
+    },
+    "surakarta-sunanate": {
+      "kind": "polity",
+      "name": {
+        "tr": "Surakarta Sunanlığı"
+      }
+    },
+    "swaziland": {
+      "kind": "polity",
+      "name": {
+        "tr": "Svaziland"
+      }
+    },
+    "swedish-empire": {
+      "kind": "polity",
+      "name": {
+        "tr": "İsveç İmparatorluğu"
       },
       "summary": {
-        "tr": "Şir Şah'ın 1540'ta Humayun'u yenerek kurduğu Kuzey Hindistan devleti; yol ağı, vergi ve para düzenlemeleriyle tanınır. 1555'te Humayun Delhi'yi geri aldı."
+        "tr": "Baltık'ta egemen olan İsveç imparatorluğunun son kalıntıları; 1809'da Finlandiya'yı Rusya'ya kaybetti."
       }
     },
     "swiss-confederation": {
       "kind": "polity",
       "name": {
-        "tr": "İsviçre Konfederasyonu"
+        "tr": "İsviçre"
       },
       "summary": {
-        "tr": "Alp vadilerinin kantonlarından oluşan, paralı askerleriyle ünlü konfederasyon. 1499'da Kutsal Roma İmparatorluğu ile savaşın ardından fiilen bağımsızlığını kabul ettirdi; Reform'un önemli merkezlerinden biri oldu."
+        "tr": "Sürekli tarafsızlığıyla bilinen konfederasyon; 1815'te Viyana Kongresi'yle tarafsızlığı güvence altına alındı, 1848'de federal devlete dönüştü. İki dünya savaşında da tarafsız kaldı."
       }
     },
-    "tahirid-sultanate": {
+    "syria": {
       "kind": "polity",
       "name": {
-        "tr": "Tâhirîler Sultanlığı"
+        "tr": "Suriye"
       }
     },
-    "tenochtitlan": {
+    "taiping-heavenly-kingdom": {
       "kind": "polity",
       "name": {
-        "tr": "Tenochtitlan"
+        "tr": "Taiping Cennet Krallığı"
       }
     },
-    "teutonic-order": {
+    "taliban": {
       "kind": "polity",
       "name": {
-        "tr": "Töton Şövalyeleri"
-      },
-      "summary": {
-        "tr": "Prusya ve Baltık'ta devlet kurmuş Haçlı şövalye tarikatı. 1410'daki Grunwald yenilgisiyle güç kaybetti; 1525'te Büyük Üstat Albrecht Reform'u kabul edip tarikat topraklarını Prusya Dükalığı'na çevirdi."
+        "tr": "Taliban"
       }
     },
-    "texcoco": {
+    "talpur-dynasty": {
       "kind": "polity",
       "name": {
-        "tr": "Texcoco"
+        "tr": "Talpur Hanedanı (Sind)"
+      }
+    },
+    "tangier-international-zone": {
+      "kind": "polity",
+      "name": {
+        "tr": "Tanca Uluslararası Bölgesi"
+      }
+    },
+    "tanzania": {
+      "kind": "polity",
+      "name": {
+        "tr": "Tanzanya"
+      }
+    },
+    "tay-son-dynasty": {
+      "kind": "polity",
+      "name": {
+        "tr": "Tây Sơn Hanedanı"
       }
     },
     "tibet": {
@@ -1982,16 +3620,13 @@
         "tr": "Tibet"
       },
       "summary": {
-        "tr": "Yüksek Tibet platosunun ruhani ve siyasi merkezleri. 15. yüzyılda Gelug mezhebi kuruldu ve yükseldi; 1578'de Altan Han, Üçüncü Dalay Lama'ya bu unvanı verdi."
+        "tr": "1912'de Qing çöküşünden sonra fiilen bağımsız olan Tibet; 1950–51'de Çin Halk Kurtuluş Ordusu'nca denetim altına alındı."
       }
     },
-    "timurid-empire": {
+    "togo": {
       "kind": "polity",
       "name": {
-        "tr": "Timur İmparatorluğu"
-      },
-      "summary": {
-        "tr": "Timur'un 14. yüzyılın sonunda Semerkant merkezli kurduğu devlet. 1405'te Timur'un ölümünden sonra Herat'ta Şahruh ve Semerkant'ta Uluğ Bey döneminde bilim, sanat ve mimarinin parladığı bir kültür merkezine dönüştü. 15. yüzyılın sonunda parçalandı; Babür İmparatorluğu'nu kuran Babür de bu hanedandan geliyordu."
+        "tr": "Togo"
       }
     },
     "tokugawa-shogunate": {
@@ -2000,131 +3635,191 @@
         "tr": "Tokugawa Şogunluğu"
       },
       "summary": {
-        "tr": "1600'deki Sekigahara Muharebesi'nin ardından Tokugawa Ieyasu'nun kurduğu şogunluk (1603'te resmen). Haritada yalnızca 1600 yılında görünür."
+        "tr": "Edo'dan yönetilen, ülkeyi dış dünyaya büyük ölçüde kapatan şogunluk; 1853'te Amiral Perry'nin gelişinden sonra zorlandı, 1868 Meiji Restorasyonu'yla devrildi."
       }
     },
-    "tondo": {
+    "trucial-states": {
       "kind": "polity",
       "name": {
-        "tr": "Tondo"
+        "tr": "Mütareke Emirlikleri (Trucial States)"
       }
     },
-    "trinh-lords": {
+    "turkish-republic-of-northern-cyprus": {
       "kind": "polity",
       "name": {
-        "tr": "Trịnh Lordları"
+        "tr": "Kuzey Kıbrıs Türk Cumhuriyeti"
       }
     },
-    "tsardom-of-russia": {
+    "turkmenistan": {
       "kind": "polity",
       "name": {
-        "tr": "Rus Çarlığı"
+        "tr": "Türkmenistan"
+      }
+    },
+    "ukraine": {
+      "kind": "polity",
+      "name": {
+        "tr": "Ukrayna"
+      }
+    },
+    "ukrainian-people-s-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Ukrayna Halk Cumhuriyeti"
       },
       "summary": {
-        "tr": "IV. İvan'ın 1547'de çar unvanını almasıyla kurulan Rus devleti. Kazan (1552) ve Astrahan (1556) hanlıklarının fethiyle Volga'yı ele geçirdi, Sibirya'ya doğru yayılmaya başladı."
+        "tr": "1917–18'de Rus Devrimi sırasında kurulan Ukrayna devleti; 1920'de Bolşeviklerin eline geçti."
       }
     },
-    "tughlaq-dynasty": {
+    "union-of-myanmar": {
       "kind": "polity",
       "name": {
-        "tr": "Tuğluklar Hanedanı"
+        "tr": "Myanmar Birliği"
       }
     },
-    "tumed": {
+    "union-of-soviet-socialist-republics": {
       "kind": "polity",
       "name": {
-        "tr": "Tümetler"
+        "tr": "Sovyetler Birliği"
       },
       "summary": {
-        "tr": "Altan Han yönetiminde 16. yüzyılda Ming sınırında etkin olan Moğol topluluğu. 1550'de Pekin'i kuşattı; 1571'de Ming ile ticaret ve barış anlaşması yaptı."
+        "tr": "1922'de Bolşeviklerin kurduğu, tek partili federal devlet. Stalin döneminde zorla sanayileştirme, kolektivizasyon ve büyük tasfiyeler yaşandı; 22 Haziran 1941'de Almanya'nın saldırısına uğradı ve savaşı en ağır kayıplarla, 27 milyona yakın ölüyle kazandı. Soğuk Savaş'ın iki kutbundan biri olarak 1991'de dağıldı."
       }
     },
-    "tver": {
+    "unitary-state-of-brazil": {
       "kind": "polity",
       "name": {
-        "tr": "Tver Prensliği"
+        "tr": "Brezilya (Vargas dönemi, 1932–1945)"
       },
       "summary": {
-        "tr": "Volga'nın üst kesiminde, Moskova'ya rakip Rus prensliği. 1485'te Moskova'ya katıldı."
+        "tr": "1930 devriminden sonra Getúlio Vargas'ın (1930–45) merkezileştirici yönetimi; İkinci Dünya Savaşı'nda 1942'den sonra Müttefikler safında savaştı."
       }
     },
-    "union-of-utrecht": {
+    "united-arab-emirates": {
       "kind": "polity",
       "name": {
-        "tr": "Utrecht Birliği"
-      },
-      "summary": {
-        "tr": "1579'da Hollanda eyaletlerinin İspanya'ya karşı birleştiği antlaşma; Hollanda Cumhuriyeti'nin temeli sayılır."
+        "tr": "Birleşik Arap Emirlikleri"
       }
     },
-    "vijayanagara-empire": {
+    "united-arab-republic": {
       "kind": "polity",
       "name": {
-        "tr": "Vicayanagara İmparatorluğu"
-      },
-      "summary": {
-        "tr": "Güney Hindistan'da Tungabhadra Nehri kıyısında, Hampi merkezli Hindu imparatorluk. Dekkan sultanlıkları 1565'teki Talikota Savaşı'nda imparatorluğu yenince başkenti yağmalandı ve imparatorluk güç kaybetti."
+        "tr": "Birleşik Arap Cumhuriyeti"
       }
     },
-    "warring-states-japan": {
+    "united-kingdoms-of-sweden-and-norway": {
       "kind": "polity",
       "name": {
-        "tr": "Sengoku Japonyası"
+        "tr": "İsveç–Norveç Birliği"
       },
       "summary": {
-        "tr": "Şogunluğun otoritesini yitirmesiyle yerel savaş ağalarının (daimyō) birbirleriyle çatıştığı Sengoku dönemi Japonyası. Oda Nobunaga ve Toyotomi Hideyoshi ülkeyi yeniden birleştirdi."
+        "tr": "1814–1905 arasında bir kralı paylaşan, ayrı yasalara sahip İsveç ve Norveç birliği."
       }
     },
-    "wattasid-dynasty": {
+    "united-provinces-of-central-america": {
       "kind": "polity",
       "name": {
-        "tr": "Vattasîler"
-      },
-      "summary": {
-        "tr": "Fas'ta Merînîlerin ardından hüküm süren hanedan; Portekiz'in kıyı ilerleyişine karşı koyamayarak Sa'dîlere yenildi."
+        "tr": "Orta Amerika Birleşik Eyaletleri"
       }
     },
-    "western-moghulistan": {
+    "united-states-of-america": {
       "kind": "polity",
       "name": {
-        "tr": "Batı Moğulistan"
+        "tr": "Amerika Birleşik Devletleri"
+      },
+      "summary": {
+        "tr": "1776'da kurulan federal cumhuriyet; 19. yüzyılda kıtasal ölçekte genişledi, İç Savaş'ı (1861–65) yaşadı. 7 Aralık 1941'de Pearl Harbor saldırısıyla İkinci Dünya Savaşı'na girdi ve savaştan dünyanın en güçlü ekonomik ve askerî devleti olarak çıktı."
       }
     },
-    "zayyanid-dynasty": {
+    "united-states-of-colombia": {
       "kind": "polity",
       "name": {
-        "tr": "Zeyyânîler"
+        "tr": "Kolombiya Birleşik Devletleri"
       }
     },
-    "caribbean": {
-      "kind": "region",
+    "vanuatu": {
+      "kind": "polity",
       "name": {
-        "tr": "Karayipler"
-      },
-      "summary": {
-        "tr": "Büyük ve Küçük Antiller ile Bahamalar'ı kapsayan takımadalar. 1492'den sonra İspanyol sömürgeciliğinin ilk durağı oldu; yerli Taíno ve Karayip halkları sonraki yarım yüzyılda hastalıklar ve zorla çalıştırma yüzünden büyük kayıplar verdi."
-      },
-      "bounds": [-86, 9, -58, 28]
+        "tr": "Vanuatu"
+      }
     },
-    "malabar": {
-      "kind": "region",
+    "venezuela": {
+      "kind": "polity",
       "name": {
-        "tr": "Malabar Kıyısı"
-      },
-      "summary": {
-        "tr": "Hindistan'ın güneybatı kıyısı; Kalikut (Kozhikode) ve Cochin gibi baharat ticareti limanlarına sahipti. 1498'de Vasco da Gama'nın gelişi, Avrupa'nın Hint Okyanusu ticaretine doğrudan girişini başlattı."
-      },
-      "bounds": [74.5, 8, 77.5, 13.5]
+        "tr": "Venezuela"
+      }
     },
-    "brazil-coast": {
-      "kind": "region",
+    "vichy-france": {
+      "kind": "polity",
       "name": {
-        "tr": "Brezilya Kıyıları"
+        "tr": "Vichy Fransası"
       },
       "summary": {
-        "tr": "Güney Amerika'nın Atlantik kıyısı; 1500'de Cabral'ın gelişinden sonra Portekiz'in egemenlik iddia ettiği, Tupi halklarının yaşadığı bölge."
+        "tr": "Haziran 1940 mütarekesinden sonra Mareşal Pétain'in Vichy'de kurduğu, Almanya ile işbirliği yapan rejim. Başlangıçta güney Fransa'yı ve sömürgeleri yönetti; Kasım 1942'de Almanlar güneyi de işgal etti, rejim 1944'te çöktü."
+      }
+    },
+    "vientiane": {
+      "kind": "polity",
+      "name": {
+        "tr": "Vientiane Krallığı"
+      }
+    },
+    "wadai-empire": {
+      "kind": "polity",
+      "name": {
+        "tr": "Vadai İmparatorluğu"
+      }
+    },
+    "weimar-republic": {
+      "kind": "polity",
+      "name": {
+        "tr": "Weimar Cumhuriyeti"
       },
-      "bounds": [-55, -30, -34, 5]
+      "summary": {
+        "tr": "Birinci Dünya Savaşı'ndan sonra 1919'da kurulan Alman cumhuriyeti. Savaş tazminatları, 1923 hiperenflasyonu ve 1929 buhranıyla sarsıldı; 1933'te Hitler'in başbakan atanmasıyla fiilen sona erdi."
+      }
+    },
+    "yugoslav-partisans": {
+      "kind": "polity",
+      "name": {
+        "tr": "Yugoslav Partizanları"
+      },
+      "summary": {
+        "tr": "Josip Broz Tito önderliğindeki komünist direniş hareketi; 1944'te geniş bölgeleri denetleyen bir güç hâline geldi."
+      }
+    },
+    "yugoslavia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Yugoslavya Krallığı"
+      },
+      "summary": {
+        "tr": "1918'de Sırplar, Hırvatlar ve Slovenler Krallığı olarak kuruldu, 1929'dan itibaren Yugoslavya adını aldı. Nisan 1941'de Mihver tarafından işgal edilip parçalandı."
+      }
+    },
+    "zaire": {
+      "kind": "polity",
+      "name": {
+        "tr": "Zaire"
+      }
+    },
+    "zambia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Zambiya"
+      }
+    },
+    "zimbabwe-rhodesia": {
+      "kind": "polity",
+      "name": {
+        "tr": "Zimbabve Rodezyası"
+      }
+    },
+    "zululand": {
+      "kind": "polity",
+      "name": {
+        "tr": "Zulu Krallığı"
+      }
     }
   }
 }

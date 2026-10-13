@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { cleanLabel, normalizeName, Resolver } from '../src/ai/resolve';
-import { shippedData } from './helpers/shipped';
+import { archivedData } from './helpers/shipped';
 
-const data = shippedData();
+const data = archivedData('1400-1600');
 const resolver = new Resolver(data);
 const range = { from: 1500, to: 1550 };
 

@@ -9,9 +9,20 @@ import { dot } from './dot';
  * can never resize the map (a resized map would look as if it had moved).
  */
 export class MapHead {
+  private last: ViewModel | null = null;
+  private loading = false;
+
   constructor(private readonly host: HTMLElement) {}
 
+  /** The borders of the shown year are still on their way to the map (the ones on it are of a nearby year). */
+  setLoading(on: boolean) {
+    if (on === this.loading) return;
+    this.loading = on;
+    if (this.last) this.render(this.last);
+  }
+
   render(vm: ViewModel) {
+    this.last = vm;
     const place = vm.places[0] ?? null;
     render(
       html`
@@ -20,7 +31,14 @@ export class MapHead {
             >${place ? place.title : 'Dünya'}</span
           >
         </h1>
-        <p class="title-meta"><b data-testid="title-year">${vm.year}</b> yılının sınırları</p>
+        <p class="title-meta" data-loading=${this.loading ? 'true' : 'false'}>
+          <b data-testid="title-year">${vm.year}</b> yılının
+          sınırları${
+            this.loading
+              ? html`<span class="title-loading" data-testid="borders-loading"> · yükleniyor…</span>`
+              : nothing
+          }
+        </p>
       `,
       this.host,
     );

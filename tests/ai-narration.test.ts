@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TurnPlan } from '../src/ai/drawing';
-import { captionFromText, isStepped, sentencesOf, shortOf, stepsOf } from '../src/ai/narration';
+import { captionFromText, hasMore, isStepped, sentencesOf, stepsOf } from '../src/ai/narration';
 import type { AssistantItem } from '../src/ai/session';
 
 const item = (text: string, plan = new TurnPlan(), status: AssistantItem['status'] = 'done'): AssistantItem => ({
@@ -27,6 +27,10 @@ describe('sentencesOf', () => {
       "I. Süleyman Mohaç'ta kazandı.",
       'Kral II. Lajos öldü.',
       'Sonra ne oldu?',
+    ]);
+    expect(sentencesOf('Alman 6. Ordusu kuşatıldı. 2. Dünya Savaşı sürdü.')).toEqual([
+      'Alman 6. Ordusu kuşatıldı.',
+      '2. Dünya Savaşı sürdü.',
     ]);
     expect(sentencesOf('Tek cümle')).toEqual(['Tek cümle']);
     expect(sentencesOf('')).toEqual([]);
@@ -101,30 +105,67 @@ describe('stepsOf and isStepped', () => {
     ]);
   });
 
-  it('one scene, or one section, is not a narration', () => {
+  it('one scene, or one section, is not a narration: it is a single step', () => {
     const plan = new TurnPlan();
-    plan.add({ kind: 'highlight', step: 1, polities: ['ottoman-empire'] });
+    plan.add({ kind: 'highlight', step: 1, polities: ['nazi-germany'] });
     const a = item('Kısa bir yanıt.', plan);
     expect(isStepped(a)).toBe(false);
-    expect(stepsOf(a)).toEqual([]);
+    expect(stepsOf(a)).toMatchObject([{ n: 1, title: '', caption: 'Kısa bir yanıt.', hasText: true, hasScene: true }]);
     expect(isStepped(item('## 1. Tek başlık\nMetin.'))).toBe(false);
-    expect(isStepped(item('', new TurnPlan(), 'waiting'))).toBe(false);
+    expect(stepsOf(item('## 1. Tek başlık\nMetin.'))).toMatchObject([{ n: 1, title: 'Tek başlık', body: 'Metin.' }]);
+    // before there is anything of it, there is no step
+    expect(stepsOf(item('', new TurnPlan(), 'waiting'))).toEqual([]);
+    // a plan alone (the tool round comes before the text) is a step with its scene
+    expect(stepsOf(item('', plan, 'streaming'))).toMatchObject([{ n: 1, hasText: false, hasScene: true }]);
   });
 });
 
-describe('shortOf', () => {
-  it('is the text of a single-part answer, with whether it has a scene of its own', () => {
-    const plan = new TurnPlan();
-    plan.add({ kind: 'highlight', step: 1, polities: ['ottoman-empire'] });
-    expect(shortOf(item('İlk paragraf.\n\nİkinci paragraf.', plan))).toEqual({
-      title: '',
-      body: 'İlk paragraf.\n\nİkinci paragraf.',
-      hasScene: true,
-    });
-    expect(shortOf(item('Yalnız metin.'))).toMatchObject({ body: 'Yalnız metin.', hasScene: false });
+describe('a single-step answer and its caption', () => {
+  const long =
+    'Stalingrad 1942-43 kışında savaşın dönüm noktası oldu. Alman 6. Ordusu kentte kuşatıldı ve Şubat 1943’te teslim oldu. ' +
+    'Sovyet karşı taarruzu Kasım ayında başladı ve iki Alman ordusunu çevirdi. Bu yenilgiden sonra Almanya doğuda bir daha taarruz inisiyatifini ele geçiremedi.\n\n' +
+    'İkinci paragraf, sonuçları anlatır.';
+
+  it('uses the model’s own caption, with the text kept whole for reading', () => {
+    const [step] = stepsOf(
+      item(`## 1. Stalingrad\n${long}`, planOf([1, 'Stalingrad', 'Alman 6. Ordusu Stalingrad’da kuşatıldı.'])),
+    );
+    expect(step!.caption).toBe('Alman 6. Ordusu Stalingrad’da kuşatıldı.');
+    expect(step!.body).toBe(long);
+    expect(hasMore(step!)).toBe(true);
   });
 
-  it('keeps a lone heading as the title', () => {
-    expect(shortOf(item('## 1. Mohaç\nMetin.'))).toMatchObject({ title: 'Mohaç', body: 'Metin.' });
+  it('for a plain text with no caption is its first sentence or two, never the whole text', () => {
+    const [step] = stepsOf(item(long));
+    expect(step!.caption).toBe(
+      'Stalingrad 1942-43 kışında savaşın dönüm noktası oldu. Alman 6. Ordusu kentte kuşatıldı ve Şubat 1943’te teslim oldu.',
+    );
+    expect(step!.caption.length).toBeLessThan(long.length / 2);
+    expect(step!.body).toBe(long);
+    expect(hasMore(step!)).toBe(true); // "Devamını oku"
+  });
+
+  it('is cut at a word when even the first sentence is long, and says so with an ellipsis', () => {
+    const [step] = stepsOf(item(`${'kelime '.repeat(80)}bitti. Sonra bir cümle daha.`));
+    expect(step!.caption.length).toBeLessThanOrEqual(220);
+    expect(step!.caption.endsWith('…')).toBe(true);
+    expect(hasMore(step!)).toBe(true);
+  });
+
+  it('is the whole answer when the answer is that short, and then there is nothing more to open', () => {
+    const [step] = stepsOf(item('Bu kadar. Ve bu.'));
+    expect(step!.caption).toBe('Bu kadar. Ve bu.');
+    expect(hasMore(step!)).toBe(false);
+    expect(hasMore({ caption: 'x', body: '', hasText: false })).toBe(false);
+  });
+
+  it('while it is being written the caption follows the first sentences, and the rest waits behind “Devamını oku”', () => {
+    const half = stepsOf(
+      item('Stalingrad 1942-43 kışında savaşın dönüm noktası oldu. Alman 6. Ord', new TurnPlan(), 'streaming'),
+    )[0]!;
+    expect(half.caption).toBe('Stalingrad 1942-43 kışında savaşın dönüm noktası oldu. Alman 6. Ord');
+    expect(hasMore(half)).toBe(false); // nothing beyond the caption yet
+    const more = stepsOf(item(long, new TurnPlan(), 'streaming'))[0]!;
+    expect(hasMore(more)).toBe(true);
   });
 });

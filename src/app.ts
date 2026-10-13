@@ -41,6 +41,8 @@ declare global {
       data: AppData;
       view: () => ViewModel;
       visibleMarkerIds: () => string[];
+      /** The borders of the shown year are on the map (they are fetched in windows of years: see MapView). */
+      bordersReady: () => boolean;
       /** The reading companion (tests read what it has drawn and said; nothing writes through this). */
       ai: { session: AiSession; director: Director; presentation: Presentation };
     };
@@ -129,7 +131,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
   function stateFromHash(): AppState {
     const partial = hashToPartialState(location.hash, data.extent);
     if (partial.selectedEventId && !data.eventsById.has(partial.selectedEventId)) delete partial.selectedEventId;
-    return { ...DEFAULT_STATE, ...partial };
+    return { ...DEFAULT_STATE, range: data.open, ...partial };
   }
 
   const store = new Store(stateFromHash(), data.extent);
@@ -413,17 +415,13 @@ export async function startApp(root: HTMLElement): Promise<void> {
     '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5l-4.5 4.5M2.5 13.5L7 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   $('mini-expand').addEventListener('click', () => presentation.closeRead());
   /**
-   * The foot of the stage (the caption or short answer, and the question box) is what the camera keeps the drawing
-   * clear of, and what the cards keep clear of. A single-part answer grows as its text is written, so room is kept
-   * for the longest it can be: the camera frames the scene once, before the text is all there.
+   * The foot of the stage (the caption and the question box) is what the camera keeps the drawing clear of, and what
+   * the cards keep clear of. A caption is short and has a fixed height whatever the answer, so this is just its size.
    */
   function syncFoot() {
     const foot = $('bottom').offsetHeight + 12;
-    const single = presentation.shown && presentation.view === 'watch' && !!presentation.item && !presentation.stepped;
-    const textMax = Math.min(window.innerHeight * 0.3, 300); // the same as the short text's own limit (watch.css)
-    const room = single ? Math.min(askBox.element.offsetHeight + 12 + textMax + 70, stage.clientHeight * 0.6) : 0;
     stage.style.setProperty('--foot-h', `${foot}px`);
-    stage.style.setProperty('--guard-h', `${Math.max(foot, room)}px`);
+    stage.style.setProperty('--guard-h', `${foot}px`);
   }
   const overlaysObserver = new ResizeObserver(() => {
     syncFoot();
@@ -807,6 +805,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
           }
           mapView?.controlsChanged(); // the note's size is what labels keep clear of
         },
+        onBordersLoading: (loading) => head.setLoading(loading),
         onWaterClick: () => toast('Burası deniz. Bir kara parçasına tıklayın; harita yerinden oynamaz.'),
         onHoverPolity: (id, x, y, noData) => {
           if (id) {
@@ -886,6 +885,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
     data,
     view: () => vm,
     visibleMarkerIds: () => mapView.visibleMarkerIds(),
+    bordersReady: () => mapView.bordersReady(),
     ai: { session, director, presentation },
   };
 }

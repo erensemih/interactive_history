@@ -105,8 +105,9 @@ export class Store {
   }
 }
 
+/** An empty selection. (The range is a placeholder: the app opens on the range its data names, `AppData.open`.) */
 export const DEFAULT_STATE: AppState = {
-  range: { from: 1490, to: 1520 },
+  range: { from: 1939, to: 1945 },
   cursor: 0.5,
   places: [],
   selectedEventId: null,

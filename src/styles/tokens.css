@@ -35,16 +35,16 @@
 
   /* nine polity tints, graph-coloured at build time so neighbours differ. The order is the data's: index 0 is the
      most used and so on, and the colours were dealt to the indices by how often each pair of them touches on
-     the map, so the pairs that meet most are the ones furthest apart (a plain pastel set, every pair at least
-     ΔE 8.5 apart, none grey or sand-like, none near the dotted no-data ground). No blue, teal, indigo or violet:
+     the map (counted on the 1800–2000 data; the pipeline writes the counts to .cache/tint-adjacency-*.json), so
+     the pairs that meet most are the ones furthest apart (a plain pastel set, every pair at least ΔE 8.5 apart, none grey or sand-like, none near the dotted no-data ground). No blue, teal, indigo or violet:
      on a map those read as water, and blue belongs to the sea and the lakes alone. Index 8 is a spare the data
      does not use. (tests/palette.test.ts keeps all of this so.) */
-  --tint-0: #b1e8a1; /* light green */
-  --tint-1: #feb5e1; /* pink */
-  --tint-2: #88c383; /* green */
+  --tint-0: #feb5e1; /* pink */
+  --tint-1: #88c383; /* green */
+  --tint-2: #b1e8a1; /* light green */
   --tint-3: #eb9b77; /* apricot */
-  --tint-4: #e9d07a; /* straw */
-  --tint-5: #ea96b9; /* rose */
+  --tint-4: #ea96b9; /* rose */
+  --tint-5: #e9d07a; /* straw */
   --tint-6: #c9b15d; /* ochre */
   --tint-7: #ffba9c; /* peach */
   --tint-8: #b7ce77; /* lime: the spare */
@@ -52,12 +52,12 @@
   /* the spotlight: the same nine hues, darker and as saturated as a screen allows, laid solid over the focus
      polities while the rest of the map fades back (the orange ones are turned towards amber, away from vermilion,
      which is reserved for the user's own choices) */
-  --vivid-0: #74c859;
-  --vivid-1: #ef79c5;
-  --vivid-2: #43a53e;
+  --vivid-0: #ef79c5;
+  --vivid-1: #43a53e;
+  --vivid-2: #74c859;
   --vivid-3: #c37902;
-  --vivid-4: #cba80c;
-  --vivid-5: #d95b97;
+  --vivid-4: #d95b97;
+  --vivid-5: #cba80c;
   --vivid-6: #8d8307;
   --vivid-7: #eb8d07;
   --vivid-8: #8eab08;

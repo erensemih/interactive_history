@@ -12,11 +12,13 @@ import { shippedData } from './helpers/shipped';
 
 const data = shippedData();
 const FAST = { thinkMs: 0, roundMs: 0, chunkChars: 500, chunkMs: 0 };
-const anatolia = (): AiContext =>
+/** A place in Germany (Berlin), over the war years: the scripted narration of Germany at war is for it. */
+const berlin = (): AiContext =>
   contextFromView(
-    deriveView({ ...DEFAULT_STATE, range: { from: 1500, to: 1550 }, places: [{ lon: 35.5, lat: 38.9 }] }, data),
+    deriveView({ ...DEFAULT_STATE, range: { from: 1939, to: 1945 }, places: [{ lon: 13.4, lat: 52.52 }] }, data),
     data,
   );
+const AXIS_QUESTION = 'Almanya ile İtalya arasındaki ittifak neydi?';
 
 function setup() {
   const session = new AiSession({
@@ -32,7 +34,7 @@ function setup() {
 const answer = (s: AiSession) => s.items.at(-1) as AssistantItem;
 const ask = async (s: ReturnType<typeof setup>, text = NARRATION_REQUEST, mode: 'narration' | 'qa' = 'narration') => {
   s.presentation.show();
-  await s.session.send({ text, mode }, anatolia());
+  await s.session.send({ text, mode }, berlin());
 };
 
 afterEach(() => vi.useRealTimers());
@@ -61,7 +63,7 @@ describe('the presentation of a narration', () => {
     expect(p.shown).toBe(true);
     expect(p.narrating).toBe(true);
     expect(p.stepped).toBe(true);
-    expect(p.steps).toHaveLength(6);
+    expect(p.steps).toHaveLength(8);
     expect(p.index).toBe(0);
     expect(p.step!.caption).toBe(answer(s.session).plan.captionOf(1));
     expect(p.view).toBe('watch');
@@ -79,16 +81,16 @@ describe('the presentation of a narration', () => {
     p.next();
     expect(p.index).toBe(2);
     expect(s.director.active).toEqual({ itemId: answer(s.session).id, n: 3 });
-    expect(s.director.year).toBe(1517);
+    expect(s.director.year).toBe(1940); // the Battle of Britain: the year of the event the step shows
     p.last();
-    expect(p.index).toBe(5);
+    expect(p.index).toBe(7);
     expect(p.hasNext).toBe(false);
     p.next();
-    expect(p.index).toBe(5);
+    expect(p.index).toBe(7);
     p.first();
     expect(p.index).toBe(0);
     p.go(4);
-    expect(s.director.drawing?.events).toEqual(['mohac-1526', 'viyana-1529']);
+    expect(s.director.drawing?.events).toEqual(['barbarossa-1941', 'leningrad-kusatmasi-1941']);
     p.go(99); // there is no such step
     expect(p.index).toBe(3);
   });
@@ -117,7 +119,7 @@ describe('the presentation of a narration', () => {
     p.go(4);
     p.openRead('full');
     const first = answer(s.session).id;
-    await ask(s, 'Osmanlı ile Fransa arasındaki 1536 ittifakı neydi?', 'qa');
+    await ask(s, AXIS_QUESTION, 'qa');
     expect(p.view).toBe('read');
     expect(p.readMode).toBe('full');
     expect(p.item!.id).not.toBe(first);
@@ -125,18 +127,22 @@ describe('the presentation of a narration', () => {
     expect(p.stepped).toBe(false);
   });
 
-  it('a single-part answer has no steps: one scene, nothing to step through', async () => {
+  it('an answer to a plain question is one step: a caption and a text, one scene, nothing to step through', async () => {
     const s = setup();
-    await ask(s, 'Osmanlı ile Fransa arasındaki 1536 ittifakı neydi?', 'qa');
+    await ask(s, AXIS_QUESTION, 'qa');
     const p = s.presentation;
     expect(p.narrating).toBe(true);
-    expect(p.stepped).toBe(false);
-    expect(p.steps).toEqual([]);
-    expect(p.step).toBeNull();
+    expect(p.stepped).toBe(false); // several steps is what makes the stepping controls
+    expect(p.steps).toHaveLength(1);
+    expect(p.step).toMatchObject({ n: 1, title: 'Almanya ve İtalya', hasText: true, hasScene: true });
+    expect(p.step!.caption).toBe(answer(s.session).plan.captionOf(1)); // the model's own caption, not made from the text
+    expect(p.step!.caption.length).toBeLessThan(p.step!.body.length);
+    expect(p.hasPrev || p.hasNext).toBe(false);
     p.next();
     p.play();
     expect(p.playing).toBe(false);
-    expect(s.director.drawing?.highlights).toEqual(['ottoman-empire', 'kingdom-of-france']);
+    expect(p.index).toBe(0);
+    expect(s.director.drawing?.highlights).toEqual(['nazi-germany', 'kingdom-of-italy']);
   });
 
   it('closing the answer gives the map back; the conversation stays, and opening it shows it again', async () => {
@@ -172,11 +178,11 @@ describe('autoplay', () => {
     await vi.advanceTimersByTimeAsync(100);
     expect(p.index).toBe(1);
     expect(s.director.active?.n).toBe(2);
-    await vi.advanceTimersByTimeAsync(5 * 17_000);
-    expect(p.index).toBe(5);
+    await vi.advanceTimersByTimeAsync(7 * 17_000);
+    expect(p.index).toBe(7);
     expect(p.playing).toBe(false); // the end: it stays on the last step
     await vi.advanceTimersByTimeAsync(60_000);
-    expect(p.index).toBe(5);
+    expect(p.index).toBe(7);
   });
 
   it('the reader stepping, switching to Read or closing stops it; pressing play again goes on', async () => {

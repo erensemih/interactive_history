@@ -13,13 +13,15 @@ Atıf     : Bennett, J. S. ve ark. (2025). Cliopatria: a geospatial database of 
            entities from 3400BCE to 2024CE. Scientific Data. doi:10.1038/s41597-025-04516-9
 
 DEĞİŞİKLİKLER (CC BY 4.0 gereği belirtilmiştir):
-  - Yalnızca 1400–1600 yıllarıyla örtüşen kayıtlar alındı.
+  - Yalnızca 1800–2000 yıllarıyla örtüşen kayıtlar alındı.
   - Parantezli "şemsiye" kayıtlar (ör. "(Holy Roman Empire)") çizilmez; bunlar, bileşenlerinin birleşimidir.
     Bileşenlerin üst yapısı ("MemberOf") korunmuş ve eksik olduğu satırlarda, sonradan belirtilen bir üyelik
     yoksa sonraki dönemlere taşınmıştır.
-  - Poligonlar Natural Earth 1:50m kıyı çizgisine kırpıldı; iki kaynağın kıyı çizgileri arasındaki dar
-    boşluklar (en çok ~6 km) dolduruldu.
-  - Koordinatlar 0,01 dereceye yuvarlandı ve geometri hafifçe sadeleştirildi.
+  - Poligonlar Natural Earth 1:50m kıyı çizgisine (yaklaşık 2 km'ye sadeleştirilmiş) kırpıldı; iki kaynağın
+    kıyı çizgileri arasındaki dar boşluklar (en çok ~6 km) dolduruldu.
+  - Koordinatlar 0,01 dereceye yuvarlandı ve sıkıştırılmış tamsayı farkları olarak saklandı (kayıpsız).
+  - Aynı devleti iki adla anan kayıtlar (ör. "Denmark-Norway" ve "Denmark") tek devlette birleştirildi;
+    art arda gelen, şekli birebir aynı satırlar tek satıra indirildi.
   - Her devlet için, komşuların farklı renkte görünmesi için bir "ton" numarası hesaplandı.
   Veri setinin kendi uyarısı geçerlidir: sınırlar, bir tarihsel yorumun yalnızca bir sürümüdür.
 

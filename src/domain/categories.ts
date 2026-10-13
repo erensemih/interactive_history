@@ -18,17 +18,21 @@ export interface CategoryStyle {
 export const CATEGORY_STYLES: Record<string, CategoryStyle> = {
   military: { color: '#8a3a13' }, // rust
   politics: { color: '#aa4ea2' }, // plum
-  exploration: { color: '#008622' }, // green
-  religion: { color: '#a3940f' }, // olive gold
+  economy: { color: '#008622' }, // green
+  society: { color: '#a3940f' }, // olive gold
   culture: { color: '#fe66a8' }, // pink
   disaster: { color: '#f29b5e' }, // orange
 };
 
+/** Category ids of the earlier (1400–1600) data keep the colour of the category that took their place. */
+const RENAMED: Record<string, string> = { exploration: 'economy', religion: 'society' };
+
 export const FALLBACK_STYLE: CategoryStyle = { color: '#6b6254' };
 
 export function styleFor(category: string): CategoryStyle {
+  const id = Object.hasOwn(RENAMED, category) ? RENAMED[category]! : category;
   // own keys only: a category named "constructor" or "__proto__" must not reach Object.prototype
-  return Object.hasOwn(CATEGORY_STYLES, category) ? CATEGORY_STYLES[category]! : FALLBACK_STYLE;
+  return Object.hasOwn(CATEGORY_STYLES, id) ? CATEGORY_STYLES[id]! : FALLBACK_STYLE;
 }
 
 /** Diameter in px of every event dot, on the map and on the timeline alike. */

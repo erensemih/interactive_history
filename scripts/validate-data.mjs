@@ -57,7 +57,7 @@ export function validateAll(root = DEFAULT_ROOT) {
   const eventsIndex = readJson(join(root, 'events', 'index.json'), errors);
   if (!entitiesDoc || !polities || !categoriesDoc || !eventsIndex) return { errors, warnings, stats };
 
-  const range = polities.meta?.range ?? [1400, 1600];
+  const range = polities.meta?.range ?? [1800, 2000];
   const entities = entitiesDoc.entities ?? {};
   const derived = polities.entities ?? {};
 
@@ -69,7 +69,9 @@ export function validateAll(root = DEFAULT_ROOT) {
     if (e.summary && !String(e.summary.tr ?? '').trim()) errors.push(`entities.${id}: summary.tr boş`);
     if (e.sameAs !== undefined) {
       if (!entities[e.sameAs] || e.sameAs === id || entities[e.sameAs].sameAs)
-        errors.push(`entities.${id}: sameAs "${e.sameAs}" geçerli, kendisi olmayan ve takma ad olmayan bir kayıt olmalı`);
+        errors.push(
+          `entities.${id}: sameAs "${e.sameAs}" geçerli, kendisi olmayan ve takma ad olmayan bir kayıt olmalı`,
+        );
     }
     for (const key of ['wikipedia', 'wikidata']) {
       if (e[key] !== undefined && e[key] !== null && typeof e[key] !== 'string')
@@ -120,6 +122,18 @@ export function validateAll(root = DEFAULT_ROOT) {
     if (categoryIds.has(c.id)) errors.push(`categories: yinelenen kimlik "${c.id}"`);
     categoryIds.add(c.id);
     if (!c.label?.tr) errors.push(`categories.${c.id}: label.tr eksik`);
+  }
+
+  /* ---- the range the app opens on (named by the period, in events/index.json) */
+  if (eventsIndex.open !== undefined) {
+    const { from, to } = eventsIndex.open ?? {};
+    const ok = Number.isInteger(from) && Number.isInteger(to) && from <= to && from >= range[0] && to <= range[1];
+    if (!ok)
+      errors.push(
+        `events/index.json: "open" ${JSON.stringify(eventsIndex.open)}, verinin ${range[0]}–${range[1]} aralığında bir {from, to} olmalı`,
+      );
+  } else {
+    warnings.push('events/index.json: "open" yok; uygulama verinin ortasındaki yedi yılla açılır');
   }
 
   /* ---- events */

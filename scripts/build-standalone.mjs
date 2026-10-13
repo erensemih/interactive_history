@@ -9,16 +9,22 @@
  *
  * The data JSON files become <script type="application/json" id="data:<path>"> blocks; the loader
  * (src/data/load.ts) reads those instead of fetching. Nothing is requested over the network.
+ * Files over GZIP_OVER bytes are stored gzipped + base64 (data-encoding="gzip-base64") and opened with the
+ * browser's DecompressionStream (src/data/gzip.ts): the 1800–2000 borders go from ~16 MB to ~4 MB that way,
+ * losing nothing. Small files stay readable text.
  */
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gzipSync } from 'node:zlib';
 import { build } from 'vite';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'dist-standalone');
 const PARTS = join(OUT, 'parts');
 const DATA = join(ROOT, 'public', 'data');
+const GZIP_OVER = 64 * 1024;
+const LIMIT_MB = 16; // the artifact host's page limit
 const NOTICE_URL =
   process.env.NOTICE_URL ??
   'https://github.com/erensemih/interactive_history/blob/claude/historical-map-prototype-h0jw9x/public/NOTICE.txt';
@@ -64,7 +70,9 @@ if (!scriptTag || !styleTag) throw new Error('built index.html has no script/sty
 const read = (href) => readFileSync(join(PARTS, href.replace(/^\.\//, '')), 'utf8');
 
 // Inline code must never be able to close its own tag or open an HTML comment.
-const js = read(scriptTag[1]).replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
+const js = read(scriptTag[1])
+  .replace(/<\/script/gi, '<\\/script')
+  .replace(/<!--/g, '<\\!--');
 const css = read(styleTag[1]).replace(/<\/style/gi, '<\\/style');
 
 function dataFiles(dir) {
@@ -79,7 +87,13 @@ const dataBlocks = dataFiles(DATA)
   .map((file) => {
     const id = relative(DATA, file).split('\\').join('/');
     // Valid JSON stays valid when every "<" becomes \u003c, and nothing can then end the <script> early.
-    const json = JSON.stringify(JSON.parse(readFileSync(file, 'utf8'))).replace(/</g, '\\u003c');
+    const text = JSON.stringify(JSON.parse(readFileSync(file, 'utf8')));
+    if (text.length > GZIP_OVER) {
+      // base64 has no "<" or "&", so nothing can end the <script> early
+      const packed = gzipSync(Buffer.from(text), { level: 9 }).toString('base64');
+      return `<script type="application/json" data-encoding="gzip-base64" id="data:${id}">${packed}</script>`;
+    }
+    const json = text.replace(/</g, '\\u003c');
     return `<script type="application/json" id="data:${id}">${json}</script>`;
   })
   .join('\n');
@@ -113,7 +127,13 @@ writeFileSync(join(OUT, 'ayni-zamanda.html'), document_);
 writeFileSync(join(OUT, 'ayni-zamanda.fragment.html'), fragment);
 rmSync(PARTS, { recursive: true, force: true });
 
-const mb = (n) => `${(n / 1024 / 1024).toFixed(1)} MB`;
+const mb = (n) => `${(n / 1024 / 1024).toFixed(2)} MB`;
 console.log(`ayni-zamanda.html           ${mb(Buffer.byteLength(document_))}`);
 console.log(`ayni-zamanda.fragment.html  ${mb(Buffer.byteLength(fragment))}`);
-console.log(`(${dataBlocks.split('\n').length} veri dosyası, ${mb(Buffer.byteLength(js))} betik, ${mb(Buffer.byteLength(css))} stil)`);
+console.log(
+  `(${dataBlocks.split('\n').length} veri dosyası ${mb(Buffer.byteLength(dataBlocks))}, ${mb(Buffer.byteLength(js))} betik, ${mb(Buffer.byteLength(css))} stil)`,
+);
+if (Buffer.byteLength(fragment) > LIMIT_MB * 1024 * 1024) {
+  console.error(`HATA: sayfa ${LIMIT_MB} MB sınırını aşıyor`);
+  process.exit(1);
+}

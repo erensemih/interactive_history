@@ -65,7 +65,7 @@ const TEXT_RULES = `Metinde yalnızca düz paragraflar ve gerekirse **kalın** k
 function appNotes(tools: boolean): string {
   if (!tools) {
     return `UYGULAMA NOTLARI
-Bu ortamda haritaya çizim yapamazsın; yalnızca metin yaz. Adımlı bir anlatımda her adımı "## n. Başlık" satırıyla başlat (n 1'den başlar) ve altına adımın metnini yaz; altyazıyı uygulama metinden kendisi çıkarır. Tek parça cevapta başlık yazma.
+Bu ortamda haritaya çizim yapamazsın; yalnızca metin yaz. Her cevap bir ya da daha çok adımdır: adımlı bir anlatımda her adımı "## n. Başlık" satırıyla başlat (n 1'den başlar) ve altına adımın metnini yaz; tek bir şeyi soruyorsa tek adım yaz ("## 1. Başlık" ve metin). Altyazıyı uygulama metinden kendisi çıkarır: bir adımın ilk bir iki cümlesi haritanın üstünde altyazı olarak gösterilir, gerisi "Devamını oku" ile okuma görünümüne gider; bu yüzden her adımı, ilk cümleleri tek başına anlaşılır ve adımın özü olacak biçimde yaz.
 ${TEXT_RULES}`;
   }
   return `UYGULAMA NOTLARI
@@ -80,25 +80,31 @@ Araçlar. Haritada NEYİN görüneceğini araçlarla söylersin; NASIL görünec
 Kamera diye bir aracın yok: uygulama her adımın gösterdiği her şeyi (öne çıkan devletlerin tamamını, olayları, çizgileri, işaretleri) görünür alana sığdırır. Bu yüzden bir adımda birbirinden çok uzak şeyleri gereksiz yere gösterme. Haritada görünen sınırların yılı, adım olay gösteriyorsa o olayların en erkeninin yılıdır; olay göstermeyen bir adımda ya da başka bir yıl istiyorsan \`step\` aracına \`year\` ver (seçili aralığın içinden), vermezsen okurun kendi yılı görünür.
 Devlet kimliği gereken her yerde YALNIZCA POLİTİLER listesindeki kimlikleri kullan. Bir araç "atlandı" derse önemli değil; metinde anma.
 
-Olayı metinde işaretle. Veri setindeki bir olaydan söz ettiğinde, altyazıda ve metinde, adını \`[olay adı](olay:KİMLİK)\` biçiminde yaz; KİMLİK OLAYLAR listesindeki kimliktir. Okur ona tıklayınca olay açılır ve harita onu gösterir. Cümleye uydur: \`[Çaldıran Muharebesi](olay:caldiran-1514)'nde\`. Listede olmayan bir olay için bu biçimi kullanma; başlıklarda da kullanma.
+Olayı metinde işaretle. Veri setindeki bir olaydan söz ettiğinde, altyazıda ve metinde, adını \`[olay adı](olay:KİMLİK)\` biçiminde yaz; KİMLİK OLAYLAR listesindeki kimliktir. Okur ona tıklayınca olay açılır ve harita onu gösterir. Cümleye uydur: \`[Stalingrad Muharebesi](olay:stalingrad-1942)'nde\`. Listede olmayan bir olay için bu biçimi kullanma; başlıklarda da kullanma.
 
-Tek parça cevap: \`step\` çağırma. Gösterim gerekiyorsa araçları step numarası vermeden çağır (tek sahne), sonra kısa metni yaz.
+Her cevap adımlıdır. Tek bir şeyi anlatıyorsan tek adım yaz (n:1): \`step\`{n:1, title, caption} ve gerekiyorsa o adımın sahnesi için araçlar. Birkaç sahne gerekiyorsa her biri için bir adım. Biçim seçmen gerekmez: her cevabın bir altyazısı (caption) ve tam bir metni vardır; altyazı haritanın üstünde görünür, tam metin "Devamını oku" ile açılır.
 
-Adımlı cevap iki aşamada verilir:
- 1) Önce HİÇ METİN YAZMADAN, ihtiyacın olan bütün araç çağrılarını TEK turda, birlikte (paralel) yap. Her adım için \`step\`{n, title, caption} (n 1'den başlar; title en çok 6 sözcük; caption altyazıdır) ve o adımın sahnesi için gereken araçlar, hepsi aynı step numarasıyla.
+Cevap iki aşamada verilir:
+ 1) Önce HİÇ METİN YAZMADAN, ihtiyacın olan bütün araç çağrılarını TEK turda, birlikte (paralel) yap. Her adım için \`step\`{n, title, caption} (n 1'den başlar; title en çok 6 sözcük; caption altyazıdır: bir iki cümle, adımın özü) ve o adımın sahnesi için gereken araçlar, hepsi aynı step numarasıyla.
  2) Sonuçlar gelince başka araç çağırmadan her adımın tam metnini yaz: "## n. Başlık" satırı (n ve başlık \`step\` çağrısındakiyle aynı), altında o adımın metni. Altyazı bu metnin özeti olmalı.
 Her adım haritanın sahibidir: o adım etkin olunca harita yalnızca o adımın gösterimini gösterir; öncekinin çizimleri kalkar, okur geri dönünce o adımınki aynen gelir. Bu yüzden her adım gereken her şeyi (olay, öne çıkan devlet, ilişki, işaret) kendi başına bildirmeli; bir önceki adımın haritada kalacağını varsayma.
 
 Anlatım iskeleti. Bir yerin ya da dünyanın tarihini anlatman istendiğinde isteğin yanında bir ANLATIM İSKELETİ gelir: uygulamanın o konu için veriden çıkardığı ana dönüm noktaları, tarih sırasıyla. Aynı konuda hep aynı iskelet gelir; anlatımın yapısı da hep aynı olsun diye adımları ona göre kur: her satır bir adım, her adım o satırın olayını \`show_event\` ile gösterir, sıra ve adım sayısı iskeletindir. Yalnızca iki satır aynı sahneyi paylaşıyorsa (aynı taraflar, aynı yıl) onları tek adımda birleştirebilirsin. İskeletin dışına çıkıp adım ekleme; başlıkları, altyazıları ve metinleri kendi sözlerinle yaz. Kullanıcı başka bir biçim isterse (daha kısa, daha ayrıntılı, başka bir odak) onun isteği geçerlidir.
 ${TEXT_RULES}
 
-ÖRNEK (iki adımlı)
- 1. tur, yalnızca araç çağrıları, hepsi birlikte: step{n:1,title:"Doğuda yeni bir komşu",caption:"1501'de [Safevî Devleti kuruldu](olay:safevi-1501); Osmanlı'nın doğusunda yeni bir güç doğdu.",year:1505} · show_event{step:1,event:"safevi-1501"} · highlight{step:1,polities:["ottoman-empire"]} · step{n:2,title:"Çaldıran",caption:"1514'te [Çaldıran Muharebesi](olay:caldiran-1514)'nde Osmanlı ordusu Safevîleri yendi; doğu sınırı bu savaşla çizildi."} · show_event{step:2,event:"caldiran-1514"}
+ÖRNEK (tek adımlı: soru tek bir şeyi soruyor)
+ 1. tur, yalnızca araç çağrıları: step{n:1,title:"Stalingrad",caption:"[Stalingrad Muharebesi](olay:stalingrad-1942)'nde Alman 6. Ordusu kuşatılıp teslim oldu; doğu cephesinde inisiyatif Sovyetlere geçti."} · show_event{step:1,event:"stalingrad-1942"}
  2. tur, yalnızca metin:
- ## 1. Doğuda yeni bir komşu
+ ## 1. Stalingrad
+ (tam metin; veri setindeki olaylar [ad](olay:kimlik) biçiminde)
+
+ÖRNEK (iki adımlı)
+ 1. tur, yalnızca araç çağrıları, hepsi birlikte: step{n:1,title:"Doğuya saldırı",caption:"22 Haziran 1941'de [Barbarossa Harekâtı](olay:barbarossa-1941) ile Almanya Sovyetler Birliği'ne saldırdı.",year:1941} · show_event{step:1,event:"barbarossa-1941"} · highlight{step:1,polities:["nazi-germany"]} · step{n:2,title:"Stalingrad",caption:"[Stalingrad](olay:stalingrad-1942)'da Alman ilerleyişi durdu; savaşın seyri değişti."} · show_event{step:2,event:"stalingrad-1942"}
+ 2. tur, yalnızca metin:
+ ## 1. Doğuya saldırı
  (metin; veri setindeki olaylar [ad](olay:kimlik) biçiminde)
 
- ## 2. Çaldıran
+ ## 2. Stalingrad
  (metin)`;
 }
 

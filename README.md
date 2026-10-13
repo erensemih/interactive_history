@@ -13,19 +13,22 @@ seçer: bir **zaman aralığı** (tek yıl, 5 yıl, 100 yıl; kararı kullanıc�
 - **Zaman çizelgesi yere bağlıdır:** seçilen yerle doğrudan ilgili olayları, dünya tarihinde önemsiz olsalar bile, gösterir;
   yalnızca **seçili aralığı** gösterir (aralığın öncesi ve sonrası yoktur).
 
-Bu ilk prototip, görsel dili ve etkileşimi oturtmak içindir; veri bilerek küçüktür (1400–1600, 72 olay).
+Bu ilk prototip, görsel dili ve etkileşimi oturtmak içindir; yayındaki dönem **1800–2000**'dir ve açılış ekranı **İkinci Dünya
+Savaşı** yıllarındadır (1939–1945). Olay verisi bilerek küçüktür (74 olay: iki yüzyıla yayılmış birkaç dönüm noktası ve savaş için
+yoğun bir küme). Önceki dönem (1400–1600) verisiyle ve hattıyla birlikte depoda durur, ama yayın dışıdır
+([`data/README.md`](data/README.md)).
 
-![Anadolu, 1500](docs/verification/02-anadolu-1500.png)
+![Almanya, 1942](docs/verification/02-almanya-1942.png)
 
-| Çin seçili, aynı harita | Aralık 1450–1500 | Olay ayrıntısı |
+| Sovyetler Birliği seçili, aynı harita | Aralık 1938–1942 | Olay ayrıntısı |
 |---|---|---|
-| ![](docs/verification/03-cin-1500.png) | ![](docs/verification/04-aralik-1450-1500.png) | ![](docs/verification/05-olay-detayi.png) |
+| ![](docs/verification/03-sovyetler-1942.png) | ![](docs/verification/04-aralik-1938-1942.png) | ![](docs/verification/05-olay-detayi.png) |
 
-Çizelgeden görünüm dışındaki bir olay (Mohaç, 1526) seçilince harita yumuşakça, yalnızca gerektiği kadar uzaklaşır:
+Çizelgeden görünüm dışındaki bir olay (Stalingrad, 1942) seçilince harita yumuşakça, yalnızca gerektiği kadar uzaklaşır:
 
-| Önce: Çin'e yakınlaşılmış | Sonra: Macaristan görünür, işaretçi vurgulu | Olay kapatılınca |
+| Önce: Çin'e yakınlaşılmış | Sonra: Volga görünür, işaretçi vurgulu | Olay kapatılınca |
 |---|---|---|
-| ![](docs/verification/11-mohac-once-cin.png) | ![](docs/verification/12-mohac-sonra.png) | ![](docs/verification/13-olay-kapaninca.png) |
+| ![](docs/verification/11-stalingrad-once-cin.png) | ![](docs/verification/12-stalingrad-sonra.png) | ![](docs/verification/13-olay-kapaninca.png) |
 
 ## Çalıştırma
 
@@ -33,7 +36,7 @@ En kolay yol **tek dosya sürümüdür**: sunucu da, kurulum da gerekmez.
 
 ```bash
 npm install
-npm run build:standalone   # → dist-standalone/ayni-zamanda.html (~11 MB)
+npm run build:standalone   # → dist-standalone/ayni-zamanda.html (~7,4 MB)
 ```
 
 `ayni-zamanda.html` dosyasını tarayıcıda açmak (çift tıklamak) yeterlidir. Betik, stil, yazı tipleri ve tüm veri dosyanın
@@ -51,6 +54,7 @@ npm test             # birim testleri + veri doğrulaması
 npm run e2e          # gerçek tarayıcıda kabul senaryosu (aşağıya bakın)
 npm run e2e:ai       # okuma arkadaşı (sohbet) için aynısı, komut dosyalı modelle
 npm run data:validate
+npm run data:period -- --list        # yayındaki ve arşivdeki dönemler (bir dönemi yayına almak: data/README.md)
 ```
 
 Gerekenler: Node 20.19+ (22 önerilir). Veri hattını yeniden çalıştırmak için ayrıca Python 3 ve `shapely` gerekir;
@@ -77,9 +81,9 @@ adı yanında). Yeri o anki görünümün dışındaysa harita, yeri görünene 
 uzaklaşmak tercih edilir; önceki görünüm yeni görünümün içinde kalır) ve bunu sıçramadan, yumuşakça yapar. Zaten görünen
 bir olayı açmak (örneğin kendi işaretçisine tıklamak) haritayı hiç oynatmaz.
 
-Adres çubuğu durumu taşır (`#t=1450-1500&p=32.85,39.93&e=...`), bu yüzden bir görünümü bağlantıyla paylaşabilirsiniz.
+Adres çubuğu durumu taşır (`#t=1940-1944&p=9.2,48.8&e=stalingrad-1942`), bu yüzden bir görünümü bağlantıyla paylaşabilirsiniz.
 Harita kamerası (`v=yakınlaştırma/enlem/boylam`) adrese yalnızca siz haritayı kendiniz oynattıktan sonra yazılır; açılıştaki
-otomatik çerçeve herkes için aynıdır ve bağlantıya girmez. Bozuk ya da yarım bir bağlantı (ör. `p=32.85,`) yok sayılır;
+otomatik çerçeve herkes için aynıdır ve bağlantıya girmez. Bozuk ya da yarım bir bağlantı (ör. `p=9.2,`) yok sayılır;
 uygulamayı çökertmez. Fare olan cihazlarda tekerlek haritayı yakınlaştırır (dar pencerede de); dokunmatik ekranlarda sayfa
 kaydırması ile harita hareketi karışmasın diye harita iki parmakla gezilir.
 
@@ -133,13 +137,19 @@ yalnızca seçili aralığa bağlıdır.
   fırçanın kendi aralık yazısı onlar varken gizlenir (aralık, cetvelin yanındaki büyük yazıda durur). Adım noktaları ve zaman cetveli
   dışında adım gezinmesi İzle'nin düğmelerindedir.
 
-**Yanıtın iki biçimi: modelin kararı.** Yönerge dosyası (aşağıda) iki biçim tanımlar ve hangisini seçeceğini modele bırakır:
+**Her yanıtın bir altyazısı ve bir tam metni vardır.** Model biçim seçmez: her yanıt bir **anlatımdır** ve her adımın bir **başlığı**,
+bir **kısa altyazısı** (bir iki cümle) ve bir **tam metni** vardır. Adımlar **sahnedir**: her adım kendi harita durumunu bildirir.
+Yanıtlar yalnızca adım sayısıyla ayrışır:
 
-- **Adımlı** (anlatım, çok parçalı konular): her adımın bir **başlığı**, bir **kısa altyazısı** ve bir **tam metni** vardır. Adımlar **sahnedir**:
-  her adım kendi harita durumunu bildirir.
-- **Tek parça** (kısa sorular): adım yok; kısa bir metin ve **en çok bir** harita sahnesi. Metin İzle'de haritanın üstünde, soru
-  kutusunun hemen üzerinde durur (uzunsa kendi içinde kayar); zaman çizelgesinde adım noktası ve altyazı denetimleri yoktur.
-  *Metni oku* aynı metni numarasız, tek parça olarak açar.
+- **Çok adımlı** (bir süreç, bir dönem, birbirine bağlı olaylar): İzle'de adım gezintisi (oklar, düğmeler, oynat/hız) ve zaman cetvelinde
+  adım noktaları vardır.
+- **Tek adımlı** (bir olay, bir kişi, bir kavram, bir neden; yani kısa sorular): **tek sahnelik bir anlatım**dır. İzle'de yalnızca
+  altyazı ve altında **Devamını oku** durur (adım sayacı, oklar, oynat/hız ve cetvelde adım noktası yoktur); *Devamını oku* (ya da
+  *Metni oku*) aynı yanıtın tam metnini Oku'da açar, kapatınca altyazıya dönülür. Metin altyazıdan fazlasını taşımıyorsa
+  (tek kısa cümle) *Devamını oku* da çıkmaz.
+- **Güvenlik ağı: düz metin.** Model biçimi hiç izlemez ve yalnızca düz metin yazarsa sayfa metnin **tamamını altyazıya koymaz**: ilk bir
+  iki cümleyi (en çok ~220 karakter; tek uzun cümle bir sözcükten, olay adının ortasından değil, kesilir) altyazı yapar, geri kalanı
+  Oku'ya bırakır ve altyazının altına *Devamını oku* koyar (`captionFromText`, `hasMore`: `src/ai/narration.ts`).
 
 **İzle, uzun metinler bitmeden başlar.** Model önce, hiç metin yazmadan, adımları ve sahnelerini bildirir; metin sonra akar. Sayfa plan
 gelir gelmez İzle'yi başlatır: ilk adımın altyazısı ve haritası hazırdır, "Metin yazılıyor…" yazar; okur o sırada adımlarda gezebilir
@@ -167,11 +177,12 @@ gelir gelmez İzle'yi başlatır: ilk adımın altyazısı ve haritası hazırd�
     **olayın türüne göre, her seferinde aynı biçimde** çizer (`src/ai/eventKinds.ts`, `src/ai/drawing.ts`): olayın **tarafları** öne çıkar
     ve olayın **kendi işareti** konur. **Savaşta** (`military`) iki taraf arasındaki çizgi, olayın işaretinin üzerinden geçer ve işaret
     kâğıt renkli bir halkanın içinde durur: işaret ile çizgi tek şey okunur, aynı savaş her seferinde aynı görünür. Taraflar `parties`'ten
-    gelir: ilk taraf ile ikincisi arasında; ilk ikisi aynı safsa (Grunwald: Polonya ve Litvanya, Töton Şövalyeleri'ne karşı; Granada'nın
-    düşüşü; Imjin Savaşı) olay kaydındaki isteğe bağlı **`versus`** alanı karşı safı söyler (`public/data/schema/events.schema.json`).
-    Çizgi, her devletten olaya en yakın ana parçasından çıkar. Olay bir tarafın sonu olduysa (Granada 1492, Konstantinopolis 1453,
-    Trabzon, Memlükler) adım, o devletin sınırlarının hâlâ olduğu en son yılı (en çok üç yıl önce) gösterir; savaş yine çizilir.
-    Savaş olmayan türler (siyaset, keşif, kültür, din, afet) tarafları öne çıkarır ve işaretini koyar. Modelin kendi `connect`'i
+    gelir: ilk taraf ile ikincisi arasında; ilk ikisi aynı safsa (Dunkirk: Britanya ve Fransa, Almanya'ya karşı; Normandiya
+    Çıkarması; Dresden'in bombalanması) olay kaydındaki isteğe bağlı **`versus`** alanı karşı safı söyler (`public/data/schema/events.schema.json`).
+    Çizgi, her devletten olaya en yakın ana parçasından çıkar. Olay bir tarafın sonu olduysa (1945 olayları: Nazi Almanyası'nın
+    satırları 1944'te biter) adım, o devletin sınırlarının hâlâ olduğu en son yılı (en çok üç yıl önce) gösterir (Berlin Muharebesi ve
+    Almanya'nın teslimi 1944 sınırlarıyla görünür); savaş yine çizilir. Savaş olmayan türler (siyaset, ekonomi, toplum, kültür, afet)
+    tarafları öne çıkarır ve işaretini koyar. Modelin kendi `connect`'i
     olayın zaten çizilen savaş çizgisiyle aynı iki devleti bağlıyorsa ikinci kez çizilmez.
   - **Spot ışığı.** Bir adımda öne çıkan devletler (modelin `highlight`'ı + gösterilen olayların tarafları + kendi çizgilerinin uçları)
     **dolgun ve canlı** çizilir: kendi renklerinin canlı ikizi (`--vivid-N`; aynı ton, daha koyu ve doygun), kâğıt rengi bir kenar ve mürekkep
@@ -261,16 +272,20 @@ verilir, hangi biçim neye benzer, örnek, anlatım iskeleti); üslup ve içerik
 
 **Tur sayısı az olsun diye iki turlu bir protokol.** Her araç turu ayrı bir (ücretli) istektir ve araç girdileri akmaz. Bu yüzden adımlı
 bir yanıtta model **birinci turda, metin yazmadan, tek seferde** adımları (`step{n, title, caption}`) ve her adımın çizimlerini (`step`
-numarasıyla) bildirir; **ikinci turda** yalnızca metni yazar (`## n. Başlık` + paragraf). Tek parça yanıtta `step` çağrılmaz, araçlar
-numarasız çağrılır (tek sahne) ve doğrudan kısa metin yazılır. Sayfa metni adımlara ayırır (başlık işaretini, numarayı ve boşluğu
-bağışlayıcı biçimde okur; başlıksız ama paragraf sayısı adım sayısına eşit metni de adımlara dağıtır); altyazı yoksa metnin ilk
-cümlelerinden çıkarılır. En az iki adım (planda ya da metinde) varsa yanıt adımlıdır. Araç yoksa (`limits()` raporlamazsa ya da
-`tools_unavailable` gelirse) aynı soru yalnızca metin olarak sorulur ve altyazının altında bunu söyleyen bir not görünür.
+numarasıyla) bildirir; **ikinci turda** yalnızca metni yazar (`## n. Başlık` + paragraf). Tek bir şeyi soran bir soruda da böyledir:
+model tek adım (`n: 1`) bildirir, o adımın sahnesini çizer ve metni yazar; "kısa yanıt için ayrı bir biçim" yoktur. Sayfa metni
+adımlara ayırır (başlık işaretini, numarayı ve boşluğu bağışlayıcı biçimde okur; başlıksız ama paragraf sayısı adım sayısına eşit
+metni de adımlara dağıtır; hiç başlık yoksa bütün metin tek adımdır); altyazı yoksa metnin ilk bir iki cümlesinden çıkarılır (yukarıdaki
+güvenlik ağı). En az iki adım (planda ya da metinde) varsa yanıt çok adımlıdır, yoksa tek adımlıdır. Araç yoksa (`limits()` raporlamazsa
+ya da `tools_unavailable` gelirse) aynı soru yalnızca metin olarak sorulur (her yanıt yine bir ya da daha çok adımdır, altyazıyı sayfa
+çıkarır) ve altyazının altında bunu söyleyen bir not görünür.
 
 **Claude olmayan yerde: deneme kipi.** `claude.use("sample")` boş dönerse (yerel geliştirme, kaydedilmiş dosya, başka bir ev sahibi)
 sohbet **komut dosyalı bir sağlayıcıya** düşer ve bunu açıkça yazar (soru kutusunun üstünde "Deneme kipi"). Komut dosyalı sağlayıcı gerçek
-bir çağrının yaptığını yapar: düşünür, birinci turdaki araç çağrılarını gerçekten çalıştırır, metni parça parça akıtır. Osmanlı
-anlatımı, Fransa ittifakı sorusu ve açık olay sorusu için hazır yanıtları vardır; geri kalan her yer ve aralık için yanıtı uygulamanın kendi
+bir çağrının yaptığını yapar: düşünür, birinci turdaki araç çağrılarını gerçekten çalıştırır, metni parça parça akıtır. Almanya'nın savaşı
+(Nazi Almanyası'ndan bir yer, aralık 1941–1944'ü kapsıyorsa: 8 adım), Stalingrad sorusu (tek adım), Almanya–İtalya ittifakı sorusu (tek
+adım, veride olmayan bir ilişki: `connect`), **düz metin** yanıtı (biçimi izlemeyen bir model: güvenlik ağını sınamak için; soruda "düz
+metin" geçerse) ve açık olay sorusu için hazır yanıtları vardır; geri kalan her yer ve aralık için yanıtı uygulamanın kendi
 verisinden (yerin egemenleri, olay kayıtları) üretir. Soru metnine `[hata:rate_limited]` gibi bir işaret eklemek hata ekranlarını görmek
 için o hatayı üretir.
 
@@ -288,8 +303,8 @@ anınca). Bağlamın şekli (yer listesi, yer başına aralık) ve `SourceProvid
 |---|---|
 | **MapLibre GL JS** (vektör, GPU) | Sürükleme/yakınlaştırma akıcı olmalı; sınırlar, vurgu ve katmanlar tek bir yerde çizilebilsin. Dış karo sunucusuna ihtiyaç yok: harita tamamen kendi verimizden çizilir. |
 | **Vite + TypeScript + lit-html** (React yok) | Arayüz küçük ve durum odaklı; bir bileşen çerçevesi gereksiz. Mantık (`src/domain`) arayüzden ayrıdır ve birim testlidir. |
-| **Sınır verisi: Seshat Cliopatria** (CC BY 4.0) | 1400–1600 arasında devletler için 5–20 yıllık kayıt dönemleriyle, çoğunlukla aralıksız sınır verir (yıl yıl seçilebilir); zaman sürükleyince sınırlar gerçekten kayar. Alternatif `historical-basemaps` bu aralıkta yalnızca 5 anlık görüntü (1400, 1492, 1500, 1530, 1600) sunuyor ve GPL-3.0. Cliopatria ayrıca her devlet için Wikipedia/Wikidata kimliği ve üst-alt (ör. Brandenburg → Kutsal Roma) ilişkisi taşır. Bedeli: yalnızca devletleri haritalar; devlet kaydı olmayan karalar noktalı "veri yok" zemini olarak gösterilir. |
-| **Yer = bir nokta, devlet = o noktanın o yıldaki sahibi** | Konya 1450'de Karamanoğulları, 1475'te Osmanlı'dır. Zaman çizelgesi, aralık boyunca o noktayı elinde tutan *tüm* devletlerin (ve üst yapılarının, bulunduğu bölgenin) olaylarını toplar; böylece "yerin tarihi" okunur. |
+| **Sınır verisi: Seshat Cliopatria** (CC BY 4.0) | Devletler için, çoğunlukla aralıksız sınır verir (yıl yıl seçilebilir); zaman sürükleyince sınırlar gerçekten kayar. Alternatif `historical-basemaps` yalnızca birkaç anlık görüntü sunuyor ve GPL-3.0. 1800–2000'de savaş yıllarını da kapsar (yıllık anlık görüntüler; neyi gösterip neyi göstermediği için "Bilinen veri sınırlamaları"). Cliopatria ayrıca her devlet için Wikipedia/Wikidata kimliği ve üst-alt ilişkisi taşır. Bedeli: yalnızca devletleri haritalar; devlet kaydı olmayan karalar noktalı "veri yok" zemini olarak gösterilir. |
+| **Yer = bir nokta, devlet = o noktanın o yıldaki sahibi** | Stuttgart 1806'da Württemberg Krallığı, 1942'de Nazi Almanyası, 1946'da Fransız işgal bölgesi, 1950'de Batı Almanya'dır. Zaman çizelgesi, aralık boyunca o noktayı elinde tutan *tüm* devletlerin (ve üst yapılarının, bulunduğu bölgenin) olaylarını toplar; böylece "yerin tarihi" okunur. |
 | **Haritadaki olay sayısı: yakınlaştırma bütçesi; önem yalnızca eleme için** | Her olayın içsel bir önem puanı (1–5) vardır, ama arayüz bunu **göstermez** (boyut, rozet, etiket yok): neyin önemli olduğuna kullanıcı karar verir. Puan yalnızca kalabalığı ayıklar: haritada yalnızca puanı ≥3 olanlar yer alır (daha yerel olanlar yalnızca çizelgededir); bütçe *görünümdeki* olaylara harcanır (dünya görünümünde az, yakınlaştıkça o bölgenin daha fazlası) ve ekranda çakışanlardan puanı düşük olan elenir. Sağ alttaki not kaç olayın çizildiğini ve geri kalanının neden görünmediğini söyler. |
 | **Açık olay bu elemenin dışındadır, görünüm en az değişir** | Açık olay, bütçeye, önem süzgecine ve çakışmaya bakılmadan çizilir. Görünüm dışındaysa harita merkezi etrafında *yalnızca uzaklaşır* (Web Mercator'da merkezden uzaklık her yakınlaştırma düzeyinde yarıya iner; bu yüzden gereken en az düzey doğrudan hesaplanır, `domain/reveal.ts`) ve kontrollerin (`+/−`, lejant, sayaç) arkasında kalmamasına dikkat edilir. |
 | **Aralık seçici: yalnızca cetvel** | Tek yıl da 100 yıl da aynı denetimle seçilir; sayı kutusu ya da hazır süre düğmesi yoktur. Fırçanın içindeki işaret, o aralık içinde hangi yılın sınırlarının çizileceğini seçtirir; seçilen yıl harita başlığının yanındaki notta görünür. Alt bölüm bu yüzden iki ince satırdır (≈ 80 px). |
@@ -326,29 +341,53 @@ değildir, haritanın sol üst köşesinde durur ve yalnızca bu altı rengi aç
 ## Veri
 
 ```
-public/data/
-  borders/cliopatria-1400-1600.json   sınırlar (üretilmiş; elle düzenlenmez)
+public/data/                          yayındaki dönem (şu anda 1800–2000)
+  borders/cliopatria-1800-2000.json   sınırlar (üretilmiş; elle düzenlenmez; sıkıştırılmış tamsayı biçimi, aşağıya bakın)
   borders/polities.json               devlet başına türetilmiş bilgiler (Wikipedia/Wikidata, ton, dönem)
   geo/land.json                       kıyı çizgisi / kara (Natural Earth, üretilmiş)
   entities.json                       DEVLET VE BÖLGE ADLARI + ÖZETLER (Türkçe, elle yazılır)
-  categories.json                     olay kategorileri
-  events/index.json                   hangi olay dosyalarının yükleneceği
-  events/*.json                       OLAYLAR (Türkçe, elle yazılır)
+  categories.json                     olay kategorileri (savaş, siyaset, ekonomi ve teknoloji, toplum ve insan hakları, bilim-sanat-kültür, afet)
+  events/index.json                   hangi olay dosyalarının yükleneceği ve uygulamanın hangi aralıkla açılacağı (`open`: 1939–1945)
+  events/*.json                       OLAYLAR (Türkçe, elle yazılır): global.json (iki yüzyılın dönüm noktaları), ww2.json (savaş kümesi)
   schema/events.schema.json           olay dosyası için JSON şeması (editörde otomatik tamamlama; isteğe bağlı `versus`: savaşta karşı saf)
+data/<başlangıç>-<bitiş>/             YAYIN DIŞI dönemler: aynı dosyalar, aynı düzen (şu anda 1400-1600); bkz. data/README.md
+scripts/pipeline/periods/*.json       bir dönemin kendi kuralları (aynı devleti iki adla anan kayıtların birleştirilmesi)
 ```
+
+**Dönemler.** Yayındaki dönem her zaman `public/data`'dadır; ötekiler `data/` altında **tam** durur (sınırlar, devlet kayıtları, olaylar,
+kategoriler, kıyı) ve uygulamaya da tek dosya sürümüne de girmez. `npm run data:period -- 1400-1600` o dönemi yayına alır (yayındaki
+dönem `data/` altına geçer; dosyalar kopyalanmaz, taşınır). Arşiv testlerde kullanılır (`tests/data.test.ts` arşivi de doğrular,
+`tests/helpers/shipped.ts` → `archivedData`), yani bozulursa test kırılır; hat da arşivi **birebir** yeniden üretir (1610 satırın
+geometrisi ve özellikleri aynı çıkar).
 
 ### Sınırları yeniden üretmek
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r scripts/pipeline/requirements.txt
 .venv/bin/python -I scripts/pipeline/fetch_sources.py        # Cliopatria (46 MB) + Natural Earth → .cache/
-.venv/bin/python -I scripts/pipeline/build_borders.py --from 1400 --to 1600
+.venv/bin/python -I scripts/pipeline/build_borders.py        # varsayılan: 1800–2000 → public/data
+.venv/bin/python -I scripts/pipeline/build_borders.py --from 1400 --to 1600 --format geojson --keep-identical --out data/1400-1600
 ```
 
 Betik: parantezli "şemsiye" kayıtları çizmez (bileşenlerinin birleşimidir); poligonları kıyıya kırpar (kıyı
-net olur, denize tıklamak hiçbir şey seçmez); komşuluk grafiğiyle devlet tonlarını boyar; etiket noktalarını
-hesaplar. **Zaman aralığını genişletmek** için `--from/--to` değiştirilip betik yeniden çalıştırılır; arayüz
-aralığı dosyadan okur.
+net olur, denize tıklamak hiçbir şey seçmez; kırpma çok çekirdekle yapılır ve sonucu `.cache/`'e yazar, ikinci çalıştırma saniyeler
+sürer); art arda gelen **aynı** satırları birleştirir (1800–2000'de 197 satır); komşuluk grafiğiyle devlet tonlarını boyar; etiket noktalarını
+ve her satırın sınır kutusunu (`box`) hesaplar. **Zaman aralığını değiştirmek** için `--from/--to` verilip betik yeniden çalıştırılır;
+arayüz aralığı dosyadan okur. Bir dönemin kendine özgü kuralları `scripts/pipeline/periods/<başlangıç>-<bitiş>.json` dosyasındadır
+(1800–2000'de: veri setinin aynı devleti iki adla andığı yedi durum, ör. *Denmark-Norway* ve *Denmark* → `denmark`, *Kingdom of
+Greece* ve *First Hellenic Republic* → `greece`); dosya yoksa kayıtlar olduğu gibi kalır.
+
+**Boyut ve yükleme (1800–2000).** İki yüzyılın sınırı düz GeoJSON olarak yaklaşık 40 MB tutar (gzip + base64 ile bile ~12,2 MB: 16 MB'lık
+sınırın dibi, ve tarayıcı 40 MB metni ayrıştırmak zorunda kalırdı). Bunu **veriyi bozmadan** çözdüm (sadeleştirme yok: sınır şekilleri
+1400–1600 ile aynı 0,01° hassasiyetinde kalır): (1) her halka
+0,01° adımlarıyla **tamsayı farkları** olarak yazılır (`meta.encoding = "delta-int"`; ~15,6 MB), (2) tek dosya sürümü veri bloklarını
+gzip'ler (`DecompressionStream` ile açılır; gzip + base64 ile sınırlar ~5,3 MB, dosyanın tamamı ~7,4 MB), (3) yükleyici (`src/data/borderStore.ts`,
+`borderCodec.ts`) satırları **tembel** çözer: kutular dosyadan gelir, bir satırın şekli ancak tıklama ya da çizim ona dokununca açılır,
+ve (4) harita yalnızca gösterilen yılın **±10 yıllık penceresindeki** satırları tutar (`MapView`, `BORDER_WINDOW_HALF`); yıl pencerenin
+kenarına yaklaşınca pencere kayar ve o sırada başlıkta "· yükleniyor…" yazar (süzgeç, yeni pencere gelene kadar haritanın
+elindeki en yakın yılı kullanır). Böylece açılış yaklaşık 7 sn'de biter (yazılım GL'li başsız Chromium'da; bütün satırları haritaya
+tek seferde veren ilk denemede 25 sn) ve sayfanın JS belleği ~450 MB yerine açılışta ~55 MB'tır; bütün yıllar gezilince çözülen
+satırlar bellekte kaldığı için en çok ~140 MB'a çıkar (ölçüm: 4 yıllık adımlarla 1800–2000).
 
 ### Olay eklemek (kod değişikliği gerekmez)
 
@@ -356,25 +395,24 @@ aralığı dosyadan okur.
 
 ```json
 {
-  "id": "istanbul-fethi-1453",
-  "title": { "tr": "İstanbul'un Fethi" },
-  "summary": { "tr": "II. Mehmed komutasındaki Osmanlı ordusu, 53 günlük kuşatmanın ardından …" },
-  "date": { "start": "1453-04-06", "end": "1453-05-29" },
-  "location": { "name": { "tr": "İstanbul" }, "coordinates": [28.94, 41.01] },
+  "id": "stalingrad-1942",
+  "title": { "tr": "Stalingrad Muharebesi" },
+  "summary": { "tr": "Ağustos 1942'de Volga kıyısındaki Stalingrad'a ulaşan Alman 6. Ordusu, kent içinde ağır çatışmalara girdi; …" },
+  "date": { "start": "1942-08-23", "end": "1943-02-02" },
+  "location": { "name": { "tr": "Stalingrad" }, "coordinates": [44.52, 48.71] },
   "importance": 5,
   "category": "military",
-  "parties": ["ottoman-empire", "byzantine-empire"],
-  "sources": [{ "wikipedia": "Fall of Constantinople" }]
+  "parties": ["union-of-soviet-socialist-republics", "nazi-germany"],
+  "sources": [{ "wikipedia": "Battle of Stalingrad" }]
 }
 ```
 
 - `date`: `"1453"`, `"1453-05"`, `"1453-05-29"` ya da `{ "start", "end", "approximate" }`.
 - `importance`: 5 dönüm noktası · 4 çok önemli · **3 önemli (haritada görünür)** · 2 yerel önem · 1 yerel ayrıntı (yalnızca çizelge).
 - `parties`: `entities.json` içindeki devlet/bölge kimlikleri. Olay, bu tarafların çizelgesinde **mesafeden
-  bağımsız** görünür. Bir "üst yapı" taraf olarak yazılırsa (ör. `holy-roman-empire`), üyelerinin (Saksonya,
-  Bavyera…) çizelgesinde de görünür.
+  bağımsız** görünür. Bir "üst yapı" taraf olarak yazılırsa (ör. `holy-roman-empire`), üyelerinin çizelgesinde de görünür.
 - `versus` (isteğe bağlı, yalnızca `military`): savaşta **karşı safın** kimlikleri (`parties` içinden). Sayfa bir savaş olayının çizgisini
-  ilk taraf ile ikincisi arasında çizer; ilk ikisi aynı safsa (Grunwald'da Polonya ve Litvanya, Töton Şövalyeleri'ne karşı)
+  ilk taraf ile ikincisi arasında çizer; ilk ikisi aynı safsa (Dunkirk'te Britanya ve Fransa, Almanya'ya karşı)
   karşı saf burada söylenir. `npm run data:validate` kimliklerin `parties` içinde olduğunu ve ilk tarafı içermediğini denetler.
 - `sources`: en az bir Vikipedi makalesi (`wikipedia`, varsayılan dil `en`), Vikiveri kimliği (`wikidata`, `Q123` biçimi)
   ya da `url` (yalnızca `http(s)`). Bunlara uymayan kaynaklar doğrulayıcıda hata olur, çalışma anında ise bağlanmadan atılır.
@@ -389,23 +427,37 @@ kaynak yokluğu, Türkçe ad eksikliği…).
 
 ### Bilinen veri sınırlamaları
 
-- Cliopatria **yalnızca devletleri** haritalar: Amerika, Afrika ve Sibirya'nın büyük bölümü noktalı "veri yok"
-  zemindir. Bu yerlere tıklanırsa devlet yerine (varsa) bölge adı gösterilir.
-- Veri setinde bazı devletlerin kayıt aralıklarında boşluk vardır (ör. Bizans 1402–1406, Macaristan 1450–1458);
-  bu yıllarda devlet haritada görünmez. **Uydurma sınır çizilmez.**
+- Cliopatria **yalnızca devletleri** haritalar: devlet kaydı olmayan kara noktalı "veri yok" zemindir. Bu pay zamanla küçülür (2° ızgarada
+  karanın payı: 1803'te ~%43, 1850'de ~%38, 1900'de ~%14, 1942'de %1'den az; Afrika'nın, Amerika'nın güneyinin ve Avustralya'nın büyük
+  bölümü erken yıllarda, Orta Afrika 1900'de boştur). Bu yerlere tıklanırsa devlet yerine (varsa) bölge adı gösterilir.
+- Veri setinde bazı devletlerin kayıt aralıklarında boşluk vardır; bu yıllarda devlet haritada görünmez. **Uydurma sınır çizilmez.**
 - Sınırlar yaklaşıktır (veri setinin kendi uyarısı: bir yorumun yalnızca bir sürümü). Panelde, çizilen sınırın hangi
-  kayıt dönemine ait olduğu (ör. "1492–1501") gösterilir.
-- Olayların kaynakları İngilizce Vikipedi makale başlıklarıdır. Geliştirme ortamında Vikipedi'ye doğrudan erişim
-  olmadığından başlıklar, arama sonuçlarındaki `en.wikipedia.org` adresleriyle karşılaştırılarak düzeltildi (72 başlığın
-  15'i değişti); yine de bağlantılar tarayıcıda tek tek **açılarak sınanmadı**. Olaylar için Vikiveri kimliği yoktur.
-  Devletlerin Vikiveri kimlikleri doğrudan Cliopatria'dan gelir.
-- Cliopatria'nın bazı etiketleri dönemle uyuşmuyor (ör. "Mahdids" kaydı Umman'ın iç kesimini, "Ngô Dynasty" 1400–1406'da
-  Vietnam'ı, "Hashemite Arab Federation" Mezopotamya'yı, "Kingdom of Pajana" Orta Java'yı gösteriyor; "County of
-  Brabant/Béarn/Savoy" aslında dükalık/vikontluk). Sınır verisine dokunulmadı; Türkçe adlar `entities.json`'da coğrafyaya
-  göre düzeltildi, yanlış Vikipedi/Vikiveri bağlantıları ise `wikipedia`/`wikidata` alanlarıyla değiştirildi ya da
-  `null` ile kaldırıldı. Her düzeltmenin nedeni aynı kayıttaki `note` alanındadır (arayüzde gösterilmez).
-- Aynı devletin iki ayrı adla bölünmüş kayıtları (ör. Lan Na, Makuria) `entities.json`'da `"sameAs": "<kimlik>"`
-  ile tek devlet sayılır.
+  kayıt dönemine ait olduğu (ör. "1939–1944") gösterilir.
+- **İkinci Dünya Savaşı'nı ne kadar gösterir** (1939–1945'in sınırlarını Cliopatria'ya karşı denetledim; `tests/period-1800-2000.test.ts`
+  bunları sayıyla korur). *Gösterdikleri:* yıllık anlık görüntüler: ilhaklar ve işgaller yıl yıl gelir (Çekoslovakya 1939'da, Polonya'nın
+  batısı ve Varşova 1940'ta, Baltık devletleri 1940'ta Sovyetler'e ve 1942'de Almanya'ya geçer), Fransa 1940'ta kuzeyde Alman, güneyde
+  Vichy olur (1942 anlık görüntüsünde de; 1944'te tamamı Alman çizilir), Yunanistan 1940'ta Yunan, 1942'de İtalyan, 1944'te Alman görünür, Pasifik'te Filipinler ve
+  Hollanda Doğu Hint Adaları Japonya'ya geçer, 1945–46'da işgal bölgeleri görünür. *Göstermedikleri:* **işgal ile ilhak ayrımı yoktur**
+  (işgal altındaki bir ülke, işgalcinin poligonuyla çizilir: Varşova "Nazi Almanyası"dır, ayrı bir Genel Hükümet ya da kukla devlet
+  yoktur); bazı işgaller hiç yoktur (Singapur 1942–45'te İngiliz çizilir); 1945–46'da işgal bölgeleri işgalcinin kendi topraklarıymış
+  gibi çizilir (1945'te Münih "Amerika Birleşik Devletleri", Viyana "Sovyetler Birliği"); Nazi Almanyası'nın satırları 1944'te biter
+  (1945 olayları 1944 sınırlarıyla gösterilir); Berlin'in bir bölümü 1946–1990'da Fransa'ya ait küçük bir parça olarak (Fransız
+  sektörü) çizilir. Bunların hiçbiri uygulamayı engellemez, ama okurun yorumunda bilinmelidir: işgali ve kukla
+  rejimleri harita değil metin anlatır (komut dosyalı yanıtlar bunu yapar; gerçek bir modelde ilk kullanımda gözle bakılmalıdır).
+- **Olaylar oyuncak bir kümedir** (74 olay): iki yüzyılın birkaç dönüm noktası (Haiti bağımsızlığı, Waterloo, 1848, Amerikan İç Savaşı,
+  Saraybosna, Ekim Devrimi, 1929 çöküşü, Hindistan'ın bölünmesi, Sputnik, Berlin Duvarı, Çernobil, Sovyetlerin dağılması, Ruanda …)
+  ve savaş için yoğun bir küme (Spanyol İç Savaşı'ndan Japonya'nın teslimine, 54 olay; her yıl için birkaç tane, ayrıca Holokost,
+  Pasifik ve Kuzey Afrika). Doğruluk sonraya bırakıldı (özetler yaygın kabul gören bilgileri verir); **kaynaklar tutuldu**: her olayın en
+  az bir Vikipedi başlığı vardır.
+- Olayların kaynakları İngilizce Vikipedi makale başlıklarıdır. Geliştirme ortamında Vikipedi'ye doğrudan erişim olmadığından
+  başlıklar belleğe dayanır ve bağlantılar tarayıcıda tek tek **açılarak sınanmadı**. Olaylar için Vikiveri kimliği yoktur. Devletlerin
+  Vikiveri kimlikleri doğrudan Cliopatria'dan gelir.
+- Cliopatria'nın bazı etiketleri ve adlandırmaları tutarsızdır: aynı devlet iki adla anılır (*Denmark-Norway* ve *Denmark*, *Kingdom of
+  Greece* ve *First Hellenic Republic*, Macaristan, Bulgaristan, Sırbistan, Romanya ve Monako için de benzeri); hat bunları
+  `scripts/pipeline/periods/1800-2000.json` ile **tek devlette** birleştirir (tek kimlik, tek renk, tek ad). Türkçe adlar
+  `entities.json`'da yazılır; her polity için tek, benzersiz ve sıra ya da rütbe sözcüğü İngilizce kalmamış bir ad vardır
+  (`tests/period-1800-2000.test.ts` bunu sayar: modelin devletlere ada göre başvurması için).
+- Aynı devletin iki ayrı adla bölünmüş kayıtları `entities.json`'da `"sameAs": "<kimlik>"` ile tek devlet sayılabilir.
 - Tarihler kaynakta yazıldığı gibi tutulur ve (1582 öncesi için Jülyen takvimi kullanan kaynaklarda bir haftayı aşabilen
   farkla) Gregoryen yıl üzerine yerleştirilir; bu, olayı yalnızca kendi yılı içinde kaydırır.
 
@@ -414,7 +466,8 @@ kaynak yokluğu, Türkçe ad eksikliği…).
 ```
 src/
   domain/   saf mantık (arayüzsüz, testli): time, geo, events, lanes, categories, placement, reveal, camera
-  data/     veri yükleyici (`loadData`) ve saf birleştirme (`assembleData`)
+  data/     veri yükleyici (`loadData`) ve saf birleştirme (`assembleData`); sınırlar için `borderCodec` (tamsayı fark biçimi),
+            `borderStore` (satırları tembel çözen, yıl penceresini veren depo) ve `gzip` (tek dosya sürümündeki sıkıştırılmış bloklar)
   state/    store (durum + eylemler), derive (görünüm modeli), url (adres çubuğu), panelLayout
   map/      MapLibre görünümü, DOM etiketleri, işaretçiler, yer noktası, yapay zekâ çizim katmanı (aiLayer, flags)
   ui/       cetvel (adım noktalarıyla), zaman çizelgesi, bilgi kartı (infoCard), harita üstü öğeler, ipucu kutusu,
@@ -460,6 +513,11 @@ veriden çıkan deterministik iskeleti), `steps`
   vurgu/yer noktaları (liste). *Eksik olanlar:* `MAX_PLACES` şimdilik 1, ikinci yeri ekleyen bir eylem yok, çizelge yalnızca
   ilk yeri çiziyor (yer başına bir şerit çizilmeli), iki yer için iki vurgu rengi gerekecek ve "yer–olay" karşılaştırmasında
   panelin hangi kartı odak sayacağı (`panelLayout`) yeniden tanımlanmalı. Karşılaştırma bu turda yapılmadı.
+- **Sınırlar bir yıl penceresiyle gelir** (`MapView.windowFor`, `loadWindow`, `bordersReady`): haritanın GeoJSON kaynağına yalnızca gösterilen
+  yılın ±10 yıllık penceresindeki satırlar verilir; yıl pencerenin kenarına (3 yıl) yaklaşınca pencere kayar (140 ms geciktirmeli) ve
+  başlık o sırada "· yükleniyor…" der. Süzgeçler yeni pencere gelene kadar yılı pencerenin içine sıkıştırır (`filterYear`), yani
+  harita hiçbir an boş kalmaz. Tıklama ve etiketler pencereye bakmaz: bellekteki satırlarla (`BorderStore`) çalışır. Testler ve e2e
+  `window.__ayni.bordersReady()` ile haritanın gösterilen yılın satırlarına sahip olduğunu bekler.
 - **Ek katmanlar (din, dil):** `MapView.onLoad` katman listesine yeni kaynak/katman eklemek yeter; zaman filtresi
   (`from/to`) aynı biçimde uygulanır.
 
@@ -470,21 +528,27 @@ veriden çıkan deterministik iskeleti), `steps`
 `npm run e2e`, üretim derlemesini gerçek (başsız) Chromium'da şu senaryoyla sınar ve `docs/verification/` altına
 ekran görüntüleri ve `RAPOR.md` yazar:
 
-1. 1480–1520 aralığında (sınır yılı 1500) Anadolu'da bir nokta → **Osmanlı** vurgulanır, çizelgede yalnızca bu aralıktaki Osmanlı
-   olayları görünür (aralığın dışından olay yok); yer seçilince dünya olayları haritadan çekilir (anlatıcı seçili yerdir).
-2. Çin'de bir nokta → **Ming** görünür; **harita kamerası (merkez, yakınlaştırma, açı) birebir aynı kalır.**
-3. Aralık 1450–1500 → haritanın olay kümesi (veri), aralıktan bağımsız hesaplanan kümeyle birebir aynıdır; yer bırakılınca haritadaki
+0. Açılış: uygulama savaş yıllarında açılır (aralık 1939–1945, sınır yılı 1942) ve açılıştan sonra başlıkta "yükleniyor…" kalmaz.
+1. 1940–1944 aralığında (sınır yılı 1942) Almanya'da bir nokta → **Nazi Almanyası** vurgulanır, çizelgede yalnızca bu aralıktaki Alman
+   olayları görünür (aralığın hemen dışındakiler, Polonya'nın işgali 1939 ve Berlin Muharebesi 1945 yok); yer seçilince dünya olayları
+   haritadan çekilir (anlatıcı seçili yerdir).
+2. Sovyetler Birliği'nde bir nokta → **Sovyetler Birliği** görünür; **harita kamerası (merkez, yakınlaştırma, açı) birebir aynı kalır.**
+3. Aralık 1938–1942 → haritanın olay kümesi (veri), aralıktan bağımsız hesaplanan kümeyle birebir aynıdır; yer bırakılınca haritadaki
    işaretçiler bu kümenin görünen kısmıdır.
 4. Başlık haritanın üstündeki şeritte, küçük ve "SEÇİLİ YER" etiketsizdir; hiçbir devlet mavi değildir (CSS belirteçleri, harita
    boya ifadesi ve ekranda çizilmiş devlet pikselleri ölçülür); alt bölüm ≈ 80 px'dir (ilk sürümde 286 px) ve çizelgede kalıcı olay
    adı yoktur (üzerine gelince ve dokununca görünür); seçili yer halkasız dolu bir noktadır ve çevresinde sönen ışıma vardır;
    tüm olay noktaları aynı şekil ve boyuttadır, renkleri lejanttaki türüyle birebir aynıdır; lejant başlıksızdır ve yalnızca
    renkleri anlatır.
-5. Çin'e yakınlaşıp çizelgeden Mohaç'ı (1526) seçmek → harita, kareler boyunca yumuşakça (atlamadan, tek yönde) ve yalnızca
+5. Çin'e yakınlaşıp çizelgeden Stalingrad'ı (1942) seçmek → harita, kareler boyunca yumuşakça (atlamadan, tek yönde) ve yalnızca
    gerektiği kadar uzaklaşır; önceki görünüm yenisinin içinde kalır; işaretçi vurgulanır; panelde olay odakta, yer tek
    satırlık başlıktadır; başlığa tıklamak, ✕ ya da `Esc` yer görünümüne döndürür ve haritayı oynatmaz. Yakınlaştırma bütçesi
    yüzünden çizilmeyen olaylar seçilince çizilir. Harita-öncelikli düzende bu senaryo, açılış kartı ve yer kartı haritanın bir köşesini
    örttüğü için kartları ✕ ile kapatarak ilerler.
+
+6. **1800–2000.** Sınırlar yıl penceresiyle gelir: 1800–1806'da (ilk yıllar) Paris "Fransa Konsolosluğu"dur ve vurgusu pencereli kaynaktan
+   çizilir; 1803'ten 1942'ye uzun bir sıçramadan sonra pencere gelir ve başlıkta "yükleniyor…" kalmaz (aynı nokta artık Nazi
+   Almanyası'dır); son yıllar (1994–2000), verinin son (2000) ve ilk (1800) yılı gösterilir; 200 yıllık aralıkta sınır yılı uçtan uca gezdirilir.
 
 Ek olarak: işaretçi/çizelge/deniz tıklamalarının haritayı oynatmadığı (görünür bir olayı açmak dahil), haritanın olay kümesinin
 yerden bağımsız olduğu (çizilip çizilmemesi anlatıcıya bağlıdır), düzenin kaymadığı, cetvelin fare ve klavyeyle çalıştığı ve (duyarlılık sınaması olarak) gerçek bir sürüklemenin kamerayı
@@ -597,5 +661,7 @@ karşı bağışlayıcı okunur (yukarıya bakın) ama ilk gerçek kullanımda g
   noktanın renginden okuyan renk-körü bir kullanıcı zeytin sarısı ile turuncuyu karıştırabilir.
 - Haritada devlet seçimi yalnızca fare/dokunma ile yapılır; klavye ile devlet seçimi için bir arama kutusu eklenebilir.
 - Karanlık tema yok (renkler `tokens.css`'te belirteç olarak duruyor).
-- İlk yükleme ~9 MB sınır verisi indirir (sıkıştırılmış ~1,7 MB); büyük aralıklar için sınırlar yıl dilimlerine bölünebilir.
+- İlk yükleme ~15,6 MB sınır verisi indirir (ağda gzip ile ~4 MB; tek dosya sürümünde zaten dosyanın içindedir). Haritanın (iş parçacığındaki
+  döşeme dizini) belleği yıl penceresiyle sınırlıdır; sayfanın JS belleği açılışta ~55 MB, bütün yıllar gezilince ~140 MB'tır (çözülen
+  satırlar atılmaz). Daha uzun bir dönem (örneğin 1500–2000) için sınırlar yıl dilimlerine bölünüp ağdan istek üzerine alınmalıdır.
 - Kod için lisans henüz seçilmedi; veri ve kütüphane atıfları için [`public/NOTICE.txt`](public/NOTICE.txt) dosyasına bakın.

@@ -46,13 +46,16 @@ export interface BorderProps {
   /** [lon, lat, inscribed radius in degrees] for the biggest part. */
   label: [number, number, number] | null;
   bbox: Bounds | null;
+  /** Bounds of the whole row (all its parts), when the file carries them: hit-testing then needs no shape to reject. */
+  box?: Bounds;
   /** Parent entity ids ("member of") at that time. */
   up?: string[];
   tint?: number | null;
 }
 
 export interface BorderRow extends BorderProps {
-  polys: PolygonCoords[];
+  /** The row's shape. In the app this is decoded on first use (see BorderStore), so reading it can be slow once. */
+  readonly polys: PolygonCoords[];
   /** bbox of the whole geometry, for fast rejection. */
   box: Bounds;
 }

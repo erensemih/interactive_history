@@ -103,17 +103,35 @@ describe('polity tints', () => {
 
   it('are clearly different from each other, so two neighbours never blur into one (every pair of the eight in use ΔE ≥ 8.5)', () => {
     for (const [i, a] of inUse.entries())
-      for (const b of inUse.slice(i + 1)) expect(deltaE(a.hex, b.hex), `${a.name} / ${b.name}`).toBeGreaterThanOrEqual(8.5);
+      for (const b of inUse.slice(i + 1))
+        expect(deltaE(a.hex, b.hex), `${a.name} / ${b.name}`).toBeGreaterThanOrEqual(8.5);
     for (const t of inUse) expect(deltaE(t.hex, tints[8]!.hex), `${t.name} / the spare`).toBeGreaterThanOrEqual(6.5);
   });
 
   it('keep clear of the vermilion that means "your selection"', () => {
     for (const t of tints) expect(deltaE(t.hex, token('accent')), t.name).toBeGreaterThanOrEqual(15);
   });
+
+  it('carry the year labels of the place timeline legibly: ink on every tint, WCAG contrast ≥ 4.5:1', () => {
+    const luminance = (hex: string) => {
+      const [r, g, b] = toLinear(hex);
+      return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+    };
+    const contrast = (a: string, b: string) => {
+      const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+      return (hi! + 0.05) / (lo! + 0.05);
+    };
+    for (const t of tints) expect(contrast(token('ink'), t.hex), `${t.name} ${t.hex}`).toBeGreaterThanOrEqual(4.5);
+    // (the softer ink-2 falls just short on the apricot tint, 4.4:1: that is why the labels use the darkest ink)
+  });
 });
 
 describe('spotlight colours (the vivid twin of each tint)', () => {
-  const vivid = Array.from({ length: 9 }, (_, i) => ({ name: `vivid-${i}`, hex: token(`vivid-${i}`), tint: token(`tint-${i}`) }));
+  const vivid = Array.from({ length: 9 }, (_, i) => ({
+    name: `vivid-${i}`,
+    hex: token(`vivid-${i}`),
+    tint: token(`tint-${i}`),
+  }));
 
   it('are never blue, teal or violet', () => {
     for (const v of vivid) expect(isBlueish(v.hex), `${v.name} ${v.hex}`).toBe(false);
@@ -123,7 +141,9 @@ describe('spotlight colours (the vivid twin of each tint)', () => {
     for (const v of vivid) {
       const { chroma } = hueChroma(v.hex);
       expect(chroma, `${v.name} chroma`).toBeGreaterThanOrEqual(0.12);
-      expect(oklabOf(toLinear(v.hex))[0], `${v.name} is darker than its tint`).toBeLessThan(oklabOf(toLinear(v.tint))[0]);
+      expect(oklabOf(toLinear(v.hex))[0], `${v.name} is darker than its tint`).toBeLessThan(
+        oklabOf(toLinear(v.tint))[0],
+      );
       expect(deltaE(v.hex, v.tint), `${v.name} against its own tint`).toBeGreaterThanOrEqual(12);
     }
   });
@@ -145,7 +165,8 @@ describe('spotlight colours (the vivid twin of each tint)', () => {
 
   it('are told apart from each other (ΔE ≥ 6; two lit neighbours also have the link and their names)', () => {
     for (const [i, a] of vivid.entries())
-      for (const b of vivid.slice(i + 1)) expect(deltaE(a.hex, b.hex), `${a.name} / ${b.name}`).toBeGreaterThanOrEqual(6);
+      for (const b of vivid.slice(i + 1))
+        expect(deltaE(a.hex, b.hex), `${a.name} / ${b.name}`).toBeGreaterThanOrEqual(6);
   });
 });
 
@@ -159,10 +180,10 @@ describe('event marker colours', () => {
     expect(entries.map(([id]) => id).sort()).toEqual([
       'culture',
       'disaster',
-      'exploration',
+      'economy',
       'military',
       'politics',
-      'religion',
+      'society',
     ]);
     expect(new Set(entries.map(([, s]) => s.color)).size).toBe(entries.length);
   });
@@ -185,6 +206,11 @@ describe('event marker colours', () => {
   it('never look like the vermilion that marks the user’s own selection', () => {
     const accent = token('accent');
     for (const [id, s] of entries) expect(deltaE(s.color, accent), id).toBeGreaterThanOrEqual(10);
+  });
+
+  it('keep the colour of the category that replaced an id of the earlier data', () => {
+    expect(styleFor('exploration')).toBe(CATEGORY_STYLES.economy);
+    expect(styleFor('religion')).toBe(CATEGORY_STYLES.society);
   });
 
   it('fall back to a neutral colour for a category the UI does not know, without touching Object.prototype', () => {

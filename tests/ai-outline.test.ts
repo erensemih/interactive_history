@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { AiContext } from '../src/ai/context';
 import { narrationOutline, OUTLINE_MAX, OUTLINE_MIN } from '../src/ai/outline';
-import { shippedData } from './helpers/shipped';
+import { archivedData } from './helpers/shipped';
 
-const data = shippedData();
+const data = archivedData('1400-1600');
 const range = { from: 1500, to: 1550 };
 
 const ottoman = (r = range): AiContext => ({

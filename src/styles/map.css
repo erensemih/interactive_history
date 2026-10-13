@@ -42,6 +42,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.title-loading {
+  color: var(--ink-3);
+  font-style: italic;
+}
+
 /* ------------------------------------------------------------- map chrome */
 .map-chrome {
   position: absolute;

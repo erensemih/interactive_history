@@ -6,9 +6,9 @@ import { AiSession, NO_TOOLS_NOTE, type AssistantItem } from '../src/ai/session'
 import { appEventsSource } from '../src/ai/sources';
 import { deriveView } from '../src/state/derive';
 import { DEFAULT_STATE } from '../src/state/store';
-import { shippedData } from './helpers/shipped';
+import { archivedData } from './helpers/shipped';
 
-const data = shippedData();
+const data = archivedData('1400-1600');
 const ctx = contextFromView(
   deriveView({ ...DEFAULT_STATE, range: { from: 1500, to: 1550 }, places: [{ lon: 35.5, lat: 38.9 }] }, data),
   data,

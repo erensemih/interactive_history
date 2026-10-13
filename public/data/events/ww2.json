@@ -1,0 +1,1408 @@
+{
+  "$schema": "../schema/events.schema.json",
+  "set": "ww2",
+  "title": {
+    "tr": "İkinci Dünya Savaşı ve öncesi"
+  },
+  "events": [
+    {
+      "id": "ispanya-ic-savasi-1936",
+      "title": {
+        "tr": "İspanya İç Savaşı"
+      },
+      "summary": {
+        "tr": "Temmuz 1936'da generallerin cumhuriyete karşı ayaklanması üç yıl süren bir iç savaşa dönüştü. Franco'nun Milliyetçileri Almanya ve İtalya'dan, Cumhuriyetçiler Sovyetler Birliği ve uluslararası gönüllülerden destek aldı; savaş Franco'nun zaferiyle bitti."
+      },
+      "date": {
+        "start": "1936-07-17",
+        "end": "1939-04-01"
+      },
+      "location": {
+        "name": {
+          "tr": "Madrid"
+        },
+        "coordinates": [-3.7, 40.42]
+      },
+      "importance": 4,
+      "category": "military",
+      "parties": [
+        "spanish-nationalists",
+        "second-spanish-republic",
+        "nazi-germany",
+        "kingdom-of-italy",
+        "union-of-soviet-socialist-republics"
+      ],
+      "versus": ["second-spanish-republic", "union-of-soviet-socialist-republics"],
+      "sources": [
+        {
+          "wikipedia": "Spanish Civil War"
+        }
+      ]
+    },
+    {
+      "id": "berlin-olimpiyatlari-1936",
+      "title": {
+        "tr": "Berlin Olimpiyatları"
+      },
+      "summary": {
+        "tr": "1–16 Ağustos 1936'da Berlin'de yapılan Yaz Olimpiyatları, Nazi rejiminin kendini dünyaya gösterdiği büyük bir propaganda sahnesi oldu; Amerikalı atlet Jesse Owens dört altın madalya kazandı."
+      },
+      "date": {
+        "start": "1936-08-01",
+        "end": "1936-08-16"
+      },
+      "location": {
+        "name": {
+          "tr": "Berlin"
+        },
+        "coordinates": [13.24, 52.51]
+      },
+      "importance": 2,
+      "category": "culture",
+      "parties": ["nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "1936 Summer Olympics"
+        }
+      ]
+    },
+    {
+      "id": "guernica-bombardimani-1937",
+      "title": {
+        "tr": "Guernica'nın bombalanması"
+      },
+      "summary": {
+        "tr": "26 Nisan 1937'de Alman Condor Lejyonu ve İtalyan uçakları, Franco'nun Milliyetçileri adına Bask kenti Guernica'yı bombaladı. Olay Picasso'nun ünlü tablosuna konu oldu ve sivillere yönelik hava saldırılarının simgesi sayıldı."
+      },
+      "date": "1937-04-26",
+      "location": {
+        "name": {
+          "tr": "Guernica"
+        },
+        "coordinates": [-2.68, 43.31]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["nazi-germany", "spanish-nationalists", "second-spanish-republic"],
+      "versus": ["second-spanish-republic"],
+      "sources": [
+        {
+          "wikipedia": "Bombing of Guernica"
+        }
+      ]
+    },
+    {
+      "id": "marco-polo-koprusu-1937",
+      "title": {
+        "tr": "Marco Polo Köprüsü olayı"
+      },
+      "summary": {
+        "tr": "7 Temmuz 1937'de Pekin yakınlarında Japon ve Çin birlikleri arasında çıkan çatışma, Çin ile Japonya arasında tam ölçekli savaşa dönüştü. Pek çok tarihçi İkinci Dünya Savaşı'nın Asya'daki başlangıcını bu tarihe bağlar."
+      },
+      "date": "1937-07-07",
+      "location": {
+        "name": {
+          "tr": "Marco Polo Köprüsü"
+        },
+        "coordinates": [116.21, 39.85]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["empire-of-japan", "republic-of-china"],
+      "sources": [
+        {
+          "wikipedia": "Marco Polo Bridge incident"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-katliami-1937",
+      "title": {
+        "tr": "Nanjing katliamı"
+      },
+      "summary": {
+        "tr": "Japon ordusu Aralık 1937'de Çin Cumhuriyeti'nin başkenti Nanjing'i aldı ve izleyen haftalarda on binlerce sivili ve esir askeri öldürdü, çok sayıda kadına tecavüz etti. Ölü sayısı tahminlere göre 40 bin ile 300 bin arasında değişir."
+      },
+      "date": {
+        "start": "1937-12-13",
+        "end": "1938-01-31"
+      },
+      "location": {
+        "name": {
+          "tr": "Nanjing"
+        },
+        "coordinates": [118.8, 32.06]
+      },
+      "importance": 3,
+      "category": "society",
+      "parties": ["empire-of-japan", "republic-of-china"],
+      "sources": [
+        {
+          "wikipedia": "Nanjing Massacre"
+        }
+      ]
+    },
+    {
+      "id": "anschluss-1938",
+      "title": {
+        "tr": "Avusturya'nın Almanya'ya katılması (Anschluss)"
+      },
+      "summary": {
+        "tr": "Mart 1938'de Alman birlikleri Avusturya'ya girdi; Hitler Avusturya'nın Almanya ile birleştiğini ilan etti. Avrupa devletleri tepki göstermedi; Avusturya'da Yahudilere karşı zulüm hemen başladı."
+      },
+      "date": "1938-03-12",
+      "location": {
+        "name": {
+          "tr": "Viyana"
+        },
+        "coordinates": [16.37, 48.21]
+      },
+      "importance": 4,
+      "category": "politics",
+      "parties": ["nazi-germany", "republic-of-austria"],
+      "sources": [
+        {
+          "wikipedia": "Anschluss"
+        }
+      ]
+    },
+    {
+      "id": "munih-antlasmasi-1938",
+      "title": {
+        "tr": "Münih Antlaşması"
+      },
+      "summary": {
+        "tr": "Almanya, Britanya, Fransa ve İtalya, Çekoslovakya'nın katılmadığı bir görüşmede Sudet bölgesinin Almanya'ya bırakılmasını kabul etti. Britanya Başbakanı Chamberlain bunun “bir nesil için barış” getirdiğini söyledi; Hitler altı ay sonra kalan Çek topraklarını da işgal etti."
+      },
+      "date": "1938-09-30",
+      "location": {
+        "name": {
+          "tr": "Münih"
+        },
+        "coordinates": [11.58, 48.14]
+      },
+      "importance": 4,
+      "category": "politics",
+      "parties": ["nazi-germany", "czechoslovakia", "kingdom-of-great-britain", "french-third-republic", "kingdom-of-italy"],
+      "sources": [
+        {
+          "wikipedia": "Munich Agreement"
+        }
+      ]
+    },
+    {
+      "id": "kristallnacht-1938",
+      "title": {
+        "tr": "Kristal Gece"
+      },
+      "summary": {
+        "tr": "9–10 Kasım 1938 gecesi Nazi Almanyası'nda sinagoglar yakıldı, Yahudi dükkânları yağmalandı, yaklaşık doksan kişi öldürüldü ve otuz bin kadar Yahudi erkek toplama kamplarına gönderildi. Olay, Yahudi karşıtı politikanın şiddet aşamasına geçişini gösterdi."
+      },
+      "date": "1938-11-09",
+      "location": {
+        "name": {
+          "tr": "Berlin"
+        },
+        "coordinates": [13.4, 52.52]
+      },
+      "importance": 3,
+      "category": "society",
+      "parties": ["nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Kristallnacht"
+        }
+      ]
+    },
+    {
+      "id": "cekoslovakya-isgali-1939",
+      "title": {
+        "tr": "Çek topraklarının işgali"
+      },
+      "summary": {
+        "tr": "15 Mart 1939'da Alman birlikleri Münih Antlaşması'nın ardından geriye kalan Çek topraklarını işgal etti; Prag'da Bohemya-Moravya Himaye Bölgesi kuruldu. Olay, Hitler'in sınırlı taleplerle yetinmeyeceğini gösterdi."
+      },
+      "date": "1939-03-15",
+      "location": {
+        "name": {
+          "tr": "Prag"
+        },
+        "coordinates": [14.42, 50.08]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["nazi-germany", "czechoslovakia"],
+      "sources": [
+        {
+          "wikipedia": "German occupation of Czechoslovakia"
+        }
+      ]
+    },
+    {
+      "id": "molotov-ribbentrop-1939",
+      "title": {
+        "tr": "Molotov–Ribbentrop Paktı"
+      },
+      "summary": {
+        "tr": "23 Ağustos 1939'da Almanya ve Sovyetler Birliği saldırmazlık paktı imzaladı; gizli ek protokolle Doğu Avrupa'yı nüfuz bölgelerine ayırdılar. Pakt, Almanya'nın bir hafta sonra Polonya'ya saldırmasının yolunu açtı."
+      },
+      "date": "1939-08-23",
+      "location": {
+        "name": {
+          "tr": "Moskova"
+        },
+        "coordinates": [37.62, 55.75]
+      },
+      "importance": 4,
+      "category": "politics",
+      "parties": ["union-of-soviet-socialist-republics", "nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Molotov–Ribbentrop Pact"
+        }
+      ]
+    },
+    {
+      "id": "polonya-isgali-1939",
+      "title": {
+        "tr": "Almanya'nın Polonya'yı işgali"
+      },
+      "summary": {
+        "tr": "1 Eylül 1939 sabahı Alman ordusu Polonya'ya saldırdı; Westerplatte'deki ilk çatışmalarla İkinci Dünya Savaşı başladı. Modern savaş araçları ve hava gücü, Polonya ordusunu birkaç haftada çökertti."
+      },
+      "date": {
+        "start": "1939-09-01",
+        "end": "1939-10-06"
+      },
+      "location": {
+        "name": {
+          "tr": "Westerplatte (Danzig)"
+        },
+        "coordinates": [18.67, 54.41]
+      },
+      "importance": 5,
+      "category": "military",
+      "parties": ["nazi-germany", "second-polish-republic"],
+      "sources": [
+        {
+          "wikipedia": "Invasion of Poland"
+        }
+      ]
+    },
+    {
+      "id": "savas-ilani-1939",
+      "title": {
+        "tr": "Britanya ve Fransa'nın Almanya'ya savaş ilanı"
+      },
+      "summary": {
+        "tr": "Polonya'nın işgali üzerine Britanya 3 Eylül 1939'da, Fransa birkaç saat sonra Almanya'ya savaş ilan etti. Müttefikler Batı Cephesi'nde aylarca “tuhaf savaş” denen bir hareketsizlik yaşadı."
+      },
+      "date": "1939-09-03",
+      "location": {
+        "name": {
+          "tr": "Londra"
+        },
+        "coordinates": [-0.13, 51.5]
+      },
+      "importance": 3,
+      "category": "politics",
+      "parties": ["kingdom-of-great-britain", "french-third-republic", "nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Declarations of war on Germany in 1939"
+        }
+      ]
+    },
+    {
+      "id": "sovyet-polonya-isgali-1939",
+      "title": {
+        "tr": "Sovyetler Birliği'nin Polonya'ya girişi"
+      },
+      "summary": {
+        "tr": "17 Eylül 1939'da Kızıl Ordu, Molotov–Ribbentrop Paktı uyarınca Polonya'nın doğusuna girdi. Polonya iki devlet arasında paylaşıldı; Sovyet bölgesinde yüz binlerce kişi sürüldü, 1940'ta Katyn'de yaklaşık yirmi iki bin Polonyalı subay ve aydın öldürüldü."
+      },
+      "date": "1939-09-17",
+      "location": {
+        "name": {
+          "tr": "Lviv"
+        },
+        "coordinates": [24.03, 49.84]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["union-of-soviet-socialist-republics", "second-polish-republic"],
+      "sources": [
+        {
+          "wikipedia": "Soviet invasion of Poland"
+        }
+      ]
+    },
+    {
+      "id": "kis-savasi-1939",
+      "title": {
+        "tr": "Kış Savaşı"
+      },
+      "summary": {
+        "tr": "30 Kasım 1939'da Sovyetler Birliği Finlandiya'ya saldırdı. Küçük Fin ordusu aylarca direndi; Mart 1940 barışında Finlandiya Karelya'nın bir bölümünü verdi ama bağımsızlığını korudu."
+      },
+      "date": {
+        "start": "1939-11-30",
+        "end": "1940-03-13"
+      },
+      "location": {
+        "name": {
+          "tr": "Viipuri (Vyborg)"
+        },
+        "coordinates": [28.75, 60.71]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["union-of-soviet-socialist-republics", "republic-of-finland"],
+      "sources": [
+        {
+          "wikipedia": "Winter War"
+        }
+      ]
+    },
+    {
+      "id": "danimarka-norvec-1940",
+      "title": {
+        "tr": "Danimarka ve Norveç'in işgali"
+      },
+      "summary": {
+        "tr": "9 Nisan 1940'ta Almanya Danimarka'yı birkaç saatte, Norveç'i iki ay içinde işgal etti. Norveç'te kıyıya çıkan Britanya ve Fransa kuvvetleri Haziran'da çekildi."
+      },
+      "date": {
+        "start": "1940-04-09",
+        "end": "1940-06-10"
+      },
+      "location": {
+        "name": {
+          "tr": "Oslo"
+        },
+        "coordinates": [10.75, 59.91]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["nazi-germany", "denmark", "kingdom-of-norway"],
+      "sources": [
+        {
+          "wikipedia": "Operation Weserübung"
+        }
+      ]
+    },
+    {
+      "id": "fransa-muharebesi-1940",
+      "title": {
+        "tr": "Fransa Muharebesi"
+      },
+      "summary": {
+        "tr": "10 Mayıs 1940'ta Almanya Hollanda, Belçika ve Lüksemburg'a girdi; Ardenler üzerinden yapılan zırhlı atılım Sedan'da Fransız cephesini yardı. Altı haftada Fransa teslim oldu."
+      },
+      "date": {
+        "start": "1940-05-10",
+        "end": "1940-06-25"
+      },
+      "location": {
+        "name": {
+          "tr": "Sedan"
+        },
+        "coordinates": [4.94, 49.7]
+      },
+      "importance": 5,
+      "category": "military",
+      "parties": ["nazi-germany", "french-third-republic", "netherlands", "kingdom-of-belgium", "kingdom-of-great-britain"],
+      "sources": [
+        {
+          "wikipedia": "Battle of France"
+        }
+      ]
+    },
+    {
+      "id": "dunkirk-1940",
+      "title": {
+        "tr": "Dunkirk tahliyesi"
+      },
+      "summary": {
+        "tr": "Almanların Kanal kıyısına sıkıştırdığı Britanya Seferi Kuvvetleri ve Fransız birlikleri, savaş gemileri ve yüzlerce sivil teknenin yardımıyla 26 Mayıs–4 Haziran 1940'ta tahliye edildi; yaklaşık 340 bin asker kurtarıldı."
+      },
+      "date": {
+        "start": "1940-05-26",
+        "end": "1940-06-04"
+      },
+      "location": {
+        "name": {
+          "tr": "Dunkirk"
+        },
+        "coordinates": [2.37, 51.03]
+      },
+      "importance": 4,
+      "category": "military",
+      "parties": ["kingdom-of-great-britain", "french-third-republic", "nazi-germany"],
+      "versus": ["nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Dunkirk evacuation"
+        }
+      ]
+    },
+    {
+      "id": "paris-isgali-1940",
+      "title": {
+        "tr": "Paris'in işgali"
+      },
+      "summary": {
+        "tr": "14 Haziran 1940'ta Alman birlikleri savunmasız ilan edilen Paris'e girdi. Hükûmet önce Bordeaux'ya, sonra Vichy'ye çekildi."
+      },
+      "date": "1940-06-14",
+      "location": {
+        "name": {
+          "tr": "Paris"
+        },
+        "coordinates": [2.35, 48.86]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["nazi-germany", "french-third-republic"],
+      "sources": [
+        {
+          "wikipedia": "Fall of Paris"
+        }
+      ]
+    },
+    {
+      "id": "compiegne-ateskesi-1940",
+      "title": {
+        "tr": "Compiègne Ateşkesi"
+      },
+      "summary": {
+        "tr": "22 Haziran 1940'ta Fransa, 1918'de Almanya'nın teslim olduğu Compiègne ormanındaki aynı vagonda ateşkes imzaladı. Ülke işgal edilen kuzey ve batı ile Vichy'den yönetilen güney olarak bölündü."
+      },
+      "date": "1940-06-22",
+      "location": {
+        "name": {
+          "tr": "Compiègne"
+        },
+        "coordinates": [2.91, 49.42]
+      },
+      "importance": 4,
+      "category": "politics",
+      "parties": ["french-third-republic", "nazi-germany", "vichy-france"],
+      "sources": [
+        {
+          "wikipedia": "Armistice of 22 June 1940"
+        }
+      ]
+    },
+    {
+      "id": "britanya-muharebesi-1940",
+      "title": {
+        "tr": "Britanya Muharebesi"
+      },
+      "summary": {
+        "tr": "Temmuz–Ekim 1940'ta Alman Luftwaffe'si Britanya'nın hava savunmasını yok edip işgale zemin hazırlamaya çalıştı. Kraliyet Hava Kuvvetleri direndi; Hitler işgal planını (Deniz Aslanı Harekâtı) erteledi."
+      },
+      "date": {
+        "start": "1940-07-10",
+        "end": "1940-10-31"
+      },
+      "location": {
+        "name": {
+          "tr": "Manş Denizi, Dover"
+        },
+        "coordinates": [1.31, 51.13]
+      },
+      "importance": 4,
+      "category": "military",
+      "parties": ["kingdom-of-great-britain", "nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Battle of Britain"
+        }
+      ]
+    },
+    {
+      "id": "uclu-pakt-1940",
+      "title": {
+        "tr": "Üçlü Pakt"
+      },
+      "summary": {
+        "tr": "27 Eylül 1940'ta Almanya, İtalya ve Japonya Berlin'de askerî ittifak imzaladı; Mihver devletleri bunun etrafında şekillendi. Macaristan, Romanya, Slovakya ve Bulgaristan sonradan katıldı."
+      },
+      "date": "1940-09-27",
+      "location": {
+        "name": {
+          "tr": "Berlin"
+        },
+        "coordinates": [13.4, 52.52]
+      },
+      "importance": 3,
+      "category": "politics",
+      "parties": ["nazi-germany", "kingdom-of-italy", "empire-of-japan"],
+      "sources": [
+        {
+          "wikipedia": "Tripartite Pact"
+        }
+      ]
+    },
+    {
+      "id": "lend-lease-1941",
+      "title": {
+        "tr": "Ödünç Verme ve Kiralama Yasası"
+      },
+      "summary": {
+        "tr": "Mart 1941'de ABD Kongresi, Müttefiklere silah, yiyecek ve malzeme sağlayan Lend-Lease yasasını kabul etti. Savaşa girmeden Britanya'yı, 1941'den sonra Sovyetler Birliği'ni besleyen yaklaşık 50 milyar dolarlık yardım programı doğdu."
+      },
+      "date": "1941-03-11",
+      "location": {
+        "name": {
+          "tr": "Washington"
+        },
+        "coordinates": [-77.04, 38.91]
+      },
+      "importance": 3,
+      "category": "economy",
+      "parties": ["united-states-of-america", "kingdom-of-great-britain", "union-of-soviet-socialist-republics"],
+      "sources": [
+        {
+          "wikipedia": "Lend-Lease"
+        }
+      ]
+    },
+    {
+      "id": "yugoslavya-yunanistan-1941",
+      "title": {
+        "tr": "Yugoslavya ve Yunanistan'ın işgali"
+      },
+      "summary": {
+        "tr": "6 Nisan 1941'de Almanya, İtalya, Macaristan ve Bulgaristan Yugoslavya'ya ve Yunanistan'a saldırdı. İki ülke birkaç haftada teslim oldu; Yugoslavya parçalandı, Yunanistan üçlü işgal altına girdi."
+      },
+      "date": {
+        "start": "1941-04-06",
+        "end": "1941-04-30"
+      },
+      "location": {
+        "name": {
+          "tr": "Belgrad"
+        },
+        "coordinates": [20.46, 44.82]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["nazi-germany", "kingdom-of-italy", "yugoslavia", "greece"],
+      "versus": ["yugoslavia", "greece"],
+      "sources": [
+        {
+          "wikipedia": "Invasion of Yugoslavia"
+        }
+      ]
+    },
+    {
+      "id": "barbarossa-1941",
+      "title": {
+        "tr": "Barbarossa Harekâtı"
+      },
+      "summary": {
+        "tr": "22 Haziran 1941'de Almanya ve müttefikleri, saldırmazlık paktını bozarak Sovyetler Birliği'ne üç milyondan fazla askerle saldırdı. Tarihin en büyük kara harekâtı, savaşın kaderini belirleyecek Doğu Cephesi'ni açtı."
+      },
+      "date": "1941-06-22",
+      "location": {
+        "name": {
+          "tr": "Brest-Litovsk"
+        },
+        "coordinates": [23.69, 52.1]
+      },
+      "importance": 5,
+      "category": "military",
+      "parties": ["nazi-germany", "union-of-soviet-socialist-republics"],
+      "sources": [
+        {
+          "wikipedia": "Operation Barbarossa"
+        }
+      ]
+    },
+    {
+      "id": "leningrad-kusatmasi-1941",
+      "title": {
+        "tr": "Leningrad Kuşatması"
+      },
+      "summary": {
+        "tr": "8 Eylül 1941'de Alman ve Fin birlikleri Leningrad'ı çembere aldı; 872 gün süren kuşatmada kıtlık ve soğuk yüzünden yaklaşık bir milyon sivil öldü. Kent Ocak 1944'te kurtarıldı."
+      },
+      "date": {
+        "start": "1941-09-08",
+        "end": "1944-01-27"
+      },
+      "location": {
+        "name": {
+          "tr": "Leningrad"
+        },
+        "coordinates": [30.32, 59.93]
+      },
+      "importance": 4,
+      "category": "military",
+      "parties": ["nazi-germany", "union-of-soviet-socialist-republics", "republic-of-finland"],
+      "versus": ["union-of-soviet-socialist-republics"],
+      "sources": [
+        {
+          "wikipedia": "Siege of Leningrad"
+        }
+      ]
+    },
+    {
+      "id": "pearl-harbor-1941",
+      "title": {
+        "tr": "Pearl Harbor saldırısı"
+      },
+      "summary": {
+        "tr": "7 Aralık 1941'de Japon donanmasının uçak gemileri Hawaii'deki Pearl Harbor üssüne baskın düzenledi. Saldırı ABD'yi İkinci Dünya Savaşı'na soktu; Almanya ve İtalya birkaç gün sonra ABD'ye savaş ilan etti."
+      },
+      "date": "1941-12-07",
+      "location": {
+        "name": {
+          "tr": "Pearl Harbor"
+        },
+        "coordinates": [-157.97, 21.36]
+      },
+      "importance": 5,
+      "category": "military",
+      "parties": ["empire-of-japan", "united-states-of-america"],
+      "sources": [
+        {
+          "wikipedia": "Attack on Pearl Harbor"
+        }
+      ]
+    },
+    {
+      "id": "singapur-dususu-1942",
+      "title": {
+        "tr": "Malaya Seferi ve Singapur'un düşüşü"
+      },
+      "summary": {
+        "tr": "Aralık 1941'de Malaya'ya çıkan Japon ordusu, iki ayda yarımadayı aldı; 15 Şubat 1942'de Singapur'daki 80 bin kişilik Britanya ve Hint-Avustralya garnizonu teslim oldu. Britanya tarihinin en büyük teslimlerinden biriydi."
+      },
+      "date": {
+        "start": "1941-12-08",
+        "end": "1942-02-15"
+      },
+      "location": {
+        "name": {
+          "tr": "Singapur"
+        },
+        "coordinates": [103.82, 1.35]
+      },
+      "importance": 4,
+      "category": "military",
+      "parties": ["empire-of-japan", "kingdom-of-great-britain"],
+      "sources": [
+        {
+          "wikipedia": "Battle of Singapore"
+        }
+      ]
+    },
+    {
+      "id": "wannsee-1942",
+      "title": {
+        "tr": "Wannsee Konferansı"
+      },
+      "summary": {
+        "tr": "20 Ocak 1942'de Berlin'in Wannsee semtinde toplanan üst düzey Nazi yetkilileri ve devlet memurları, Avrupa Yahudilerinin “nihai çözüm” adıyla sistemli biçimde yok edilmesinin örgütlenmesini görüştü."
+      },
+      "date": "1942-01-20",
+      "location": {
+        "name": {
+          "tr": "Berlin-Wannsee"
+        },
+        "coordinates": [13.17, 52.43]
+      },
+      "importance": 4,
+      "category": "society",
+      "parties": ["nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Wannsee Conference"
+        }
+      ]
+    },
+    {
+      "id": "sostakovic-leningrad-senfonisi-1942",
+      "title": {
+        "tr": "Leningrad Senfonisi'nin ilk seslendirilişi"
+      },
+      "summary": {
+        "tr": "Dmitri Şostakoviç'in kuşatma altındaki Leningrad'da yazmaya başladığı 7. Senfoni, 5 Mart 1942'de Kuybışev'de ilk kez çalındı; 9 Ağustos'ta kuşatılmış kentte aç müzisyenlerce seslendirilerek direnişin simgesi oldu."
+      },
+      "date": "1942-03-05",
+      "location": {
+        "name": {
+          "tr": "Kuybışev (Samara)"
+        },
+        "coordinates": [50.1, 53.2]
+      },
+      "importance": 2,
+      "category": "culture",
+      "parties": ["union-of-soviet-socialist-republics"],
+      "sources": [
+        {
+          "wikipedia": "Symphony No. 7 (Shostakovich)"
+        }
+      ]
+    },
+    {
+      "id": "midway-1942",
+      "title": {
+        "tr": "Midway Muharebesi"
+      },
+      "summary": {
+        "tr": "4–7 Haziran 1942'de ABD donanması, Orta Pasifik'teki Midway Adası yakınlarında Japon uçak gemisi filosunun dört gemisini batırdı. Savaşın Pasifik'teki dönüm noktası oldu; Japonya bir daha taarruz inisiyatifini kazanamadı."
+      },
+      "date": {
+        "start": "1942-06-04",
+        "end": "1942-06-07"
+      },
+      "location": {
+        "name": {
+          "tr": "Midway Adası"
+        },
+        "coordinates": [-177.38, 28.21]
+      },
+      "importance": 4,
+      "category": "military",
+      "parties": ["united-states-of-america", "empire-of-japan"],
+      "sources": [
+        {
+          "wikipedia": "Battle of Midway"
+        }
+      ]
+    },
+    {
+      "id": "anne-frank-saklanma-1942",
+      "title": {
+        "tr": "Frank ailesi saklanmaya çekildi"
+      },
+      "summary": {
+        "tr": "6 Temmuz 1942'de Anne Frank ve ailesi, Alman işgalindeki Amsterdam'da Prinsengracht 263'ün arka ek binasına saklandı. Yaklaşık iki yıl süren saklanma 1944'te ihbar üzerine sona erdi; Anne'in günlüğü Holokost'un en çok okunan tanıklıklarından biri oldu."
+      },
+      "date": "1942-07-06",
+      "location": {
+        "name": {
+          "tr": "Amsterdam"
+        },
+        "coordinates": [4.88, 52.38]
+      },
+      "importance": 2,
+      "category": "society",
+      "parties": ["netherlands", "nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Anne Frank"
+        }
+      ]
+    },
+    {
+      "id": "stalingrad-1942",
+      "title": {
+        "tr": "Stalingrad Muharebesi"
+      },
+      "summary": {
+        "tr": "Ağustos 1942'de Volga kıyısındaki Stalingrad'a ulaşan Alman 6. Ordusu, kent içinde ağır çatışmalara girdi; Kızıl Ordu'nun Kasım'da başlattığı kuşatma harekâtıyla Şubat 1943'te teslim oldu. Savaşın Avrupa'daki dönüm noktası sayılır."
+      },
+      "date": {
+        "start": "1942-08-23",
+        "end": "1943-02-02"
+      },
+      "location": {
+        "name": {
+          "tr": "Stalingrad"
+        },
+        "coordinates": [44.52, 48.71]
+      },
+      "importance": 5,
+      "category": "military",
+      "parties": ["union-of-soviet-socialist-republics", "nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Battle of Stalingrad"
+        }
+      ]
+    },
+    {
+      "id": "el-alamein-1942",
+      "title": {
+        "tr": "İkinci El Alamein Muharebesi"
+      },
+      "summary": {
+        "tr": "23 Ekim–11 Kasım 1942'de General Montgomery komutasındaki Britanya Sekizinci Ordusu, Rommel'in Alman–İtalyan kuvvetlerini Mısır sınırında yenip geri püskürttü. Mihver'in Kuzey Afrika'daki ilerleyişi kesin olarak durdu."
+      },
+      "date": {
+        "start": "1942-10-23",
+        "end": "1942-11-11"
+      },
+      "location": {
+        "name": {
+          "tr": "El Alamein"
+        },
+        "coordinates": [28.95, 30.83]
+      },
+      "importance": 4,
+      "category": "military",
+      "parties": ["kingdom-of-great-britain", "kingdom-of-egypt", "nazi-germany", "kingdom-of-italy"],
+      "versus": ["nazi-germany", "kingdom-of-italy"],
+      "sources": [
+        {
+          "wikipedia": "Second Battle of El Alamein"
+        }
+      ]
+    },
+    {
+      "id": "ilk-nukleer-zincir-1942",
+      "title": {
+        "tr": "İlk kontrollü nükleer zincir tepkimesi"
+      },
+      "summary": {
+        "tr": "2 Aralık 1942'de Enrico Fermi'nin ekibi Chicago Üniversitesi'nin stadyum tribünleri altında ilk kontrollü nükleer zincir tepkimesini gerçekleştirdi. Çalışma, atom bombasını geliştiren Manhattan Projesi'nin dönüm noktalarından biriydi."
+      },
+      "date": "1942-12-02",
+      "location": {
+        "name": {
+          "tr": "Chicago"
+        },
+        "coordinates": [-87.6, 41.79]
+      },
+      "importance": 3,
+      "category": "economy",
+      "parties": ["united-states-of-america"],
+      "sources": [
+        {
+          "wikipedia": "Chicago Pile-1"
+        }
+      ]
+    },
+    {
+      "id": "bengal-kitligi-1943",
+      "title": {
+        "tr": "Bengal Kıtlığı"
+      },
+      "summary": {
+        "tr": "1943'te Britanya Hindistanı'nın Bengal bölgesinde, savaş dönemi tahıl alım ve nakliye politikaları, Japon işgali sonrası pirinç ithalatının kesilmesi ve kasırgayla birleşen kıtlıkta tahminen iki ila üç milyon insan öldü."
+      },
+      "date": {
+        "start": "1943-01-01",
+        "end": "1943-12-31"
+      },
+      "location": {
+        "name": {
+          "tr": "Kalküta"
+        },
+        "coordinates": [88.36, 22.57]
+      },
+      "importance": 3,
+      "category": "disaster",
+      "parties": ["british-raj", "kingdom-of-great-britain"],
+      "sources": [
+        {
+          "wikipedia": "Bengal famine of 1943"
+        }
+      ]
+    },
+    {
+      "id": "varsova-getto-ayaklanmasi-1943",
+      "title": {
+        "tr": "Varşova Gettosu Ayaklanması"
+      },
+      "summary": {
+        "tr": "19 Nisan 1943'te Varşova Gettosu'nda kalan Yahudiler, sürgünlere karşı silahlı direnişe geçti. Ayaklanma bir ay boyunca sürdü; Almanlar gettoyu yerle bir etti."
+      },
+      "date": {
+        "start": "1943-04-19",
+        "end": "1943-05-16"
+      },
+      "location": {
+        "name": {
+          "tr": "Varşova"
+        },
+        "coordinates": [21.01, 52.25]
+      },
+      "importance": 3,
+      "category": "society",
+      "parties": ["nazi-germany", "second-polish-republic"],
+      "sources": [
+        {
+          "wikipedia": "Warsaw Ghetto Uprising"
+        }
+      ]
+    },
+    {
+      "id": "sicilya-cikarmasi-1943",
+      "title": {
+        "tr": "Sicilya Çıkarması"
+      },
+      "summary": {
+        "tr": "10 Temmuz 1943'te Müttefikler Sicilya'ya çıktı; adayı bir ayda aldılar. Mussolini devrildi, İtalya'da iktidarı alan hükûmet Eylül'de ateşkes istedi."
+      },
+      "date": {
+        "start": "1943-07-10",
+        "end": "1943-08-17"
+      },
+      "location": {
+        "name": {
+          "tr": "Gela, Sicilya"
+        },
+        "coordinates": [14.25, 37.07]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["united-states-of-america", "kingdom-of-great-britain", "kingdom-of-italy", "nazi-germany"],
+      "versus": ["kingdom-of-italy", "nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Allied invasion of Sicily"
+        }
+      ]
+    },
+    {
+      "id": "italya-ateskesi-1943",
+      "title": {
+        "tr": "İtalya'nın ateşkesi"
+      },
+      "summary": {
+        "tr": "8 Eylül 1943'te İtalya Müttefiklerle ateşkes imzaladığını açıkladı; Almanya hemen ülkenin kuzey ve orta bölümünü işgal etti, İtalya iki yönetime bölündü. Savaş yarımadada bir yıldan fazla sürdü."
+      },
+      "date": "1943-09-08",
+      "location": {
+        "name": {
+          "tr": "Roma"
+        },
+        "coordinates": [12.5, 41.9]
+      },
+      "importance": 3,
+      "category": "politics",
+      "parties": ["kingdom-of-italy", "united-states-of-america", "kingdom-of-great-britain", "nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Armistice of Cassibile"
+        }
+      ]
+    },
+    {
+      "id": "tahran-konferansi-1943",
+      "title": {
+        "tr": "Tahran Konferansı"
+      },
+      "summary": {
+        "tr": "28 Kasım–1 Aralık 1943'te Roosevelt, Churchill ve Stalin ilk kez bir araya geldi. Batı'da ikinci cephenin 1944'te açılması ve Sovyetler Birliği'nin Almanya yenildikten sonra Japonya'ya savaş ilan etmesi karara bağlandı."
+      },
+      "date": {
+        "start": "1943-11-28",
+        "end": "1943-12-01"
+      },
+      "location": {
+        "name": {
+          "tr": "Tahran"
+        },
+        "coordinates": [51.39, 35.69]
+      },
+      "importance": 3,
+      "category": "politics",
+      "parties": ["union-of-soviet-socialist-republics", "united-states-of-america", "kingdom-of-great-britain", "pahlavi-dynasty"],
+      "sources": [
+        {
+          "wikipedia": "Tehran Conference"
+        }
+      ]
+    },
+    {
+      "id": "normandiya-1944",
+      "title": {
+        "tr": "Normandiya Çıkarması (D-Day)"
+      },
+      "summary": {
+        "tr": "6 Haziran 1944'te Britanya, ABD ve Kanada kuvvetleri Normandiya sahillerine çıktı: tarihin en büyük amfibi harekâtı Batı Avrupa'da ikinci cepheyi açtı. Ağustos'ta Paris kurtarıldı."
+      },
+      "date": "1944-06-06",
+      "location": {
+        "name": {
+          "tr": "Omaha Plajı, Normandiya"
+        },
+        "coordinates": [-0.87, 49.37]
+      },
+      "importance": 5,
+      "category": "military",
+      "parties": ["united-states-of-america", "kingdom-of-great-britain", "free-french", "nazi-germany"],
+      "versus": ["nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Normandy landings"
+        }
+      ]
+    },
+    {
+      "id": "bagration-1944",
+      "title": {
+        "tr": "Bagration Harekâtı"
+      },
+      "summary": {
+        "tr": "22 Haziran 1944'te Kızıl Ordu Belarus'ta büyük bir taarruz başlattı; iki ayda Alman Orta Ordular Grubu'nu yok edip Polonya sınırına ulaştı. Alman ordusunun savaştaki en ağır yenilgilerinden biriydi."
+      },
+      "date": {
+        "start": "1944-06-22",
+        "end": "1944-08-19"
+      },
+      "location": {
+        "name": {
+          "tr": "Minsk"
+        },
+        "coordinates": [27.57, 53.9]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["union-of-soviet-socialist-republics", "nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Operation Bagration"
+        }
+      ]
+    },
+    {
+      "id": "bretton-woods-1944",
+      "title": {
+        "tr": "Bretton Woods Konferansı"
+      },
+      "summary": {
+        "tr": "Temmuz 1944'te 44 ülkenin temsilcileri New Hampshire'daki Bretton Woods'ta savaş sonrası uluslararası para düzenini kurdu: Uluslararası Para Fonu ve Dünya Bankası'nın temelleri atıldı, dolar altına bağlı bir referans para oldu."
+      },
+      "date": {
+        "start": "1944-07-01",
+        "end": "1944-07-22"
+      },
+      "location": {
+        "name": {
+          "tr": "Bretton Woods"
+        },
+        "coordinates": [-71.46, 44.26]
+      },
+      "importance": 3,
+      "category": "economy",
+      "parties": ["united-states-of-america", "kingdom-of-great-britain"],
+      "sources": [
+        {
+          "wikipedia": "Bretton Woods Conference"
+        }
+      ]
+    },
+    {
+      "id": "varsova-ayaklanmasi-1944",
+      "title": {
+        "tr": "Varşova Ayaklanması"
+      },
+      "summary": {
+        "tr": "1 Ağustos 1944'te Polonya Yurt Ordusu, Kızıl Ordu kentin kapılarına gelmişken Varşova'yı Almanlardan kurtarmak için ayaklandı. 63 gün süren direniş bastırıldı; yüz binlerce kişi öldü, kent büyük ölçüde yıkıldı."
+      },
+      "date": {
+        "start": "1944-08-01",
+        "end": "1944-10-02"
+      },
+      "location": {
+        "name": {
+          "tr": "Varşova"
+        },
+        "coordinates": [21.01, 52.23]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["second-polish-republic", "nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Warsaw Uprising"
+        }
+      ]
+    },
+    {
+      "id": "v2-fuzeleri-1944",
+      "title": {
+        "tr": "V-2 füzelerinin ilk kullanımı"
+      },
+      "summary": {
+        "tr": "8 Eylül 1944'te Almanya, uzun menzilli balistik füze V-2'yi ilk kez Paris ve Londra'ya karşı kullandı. Savunması olmayan bu silah savaşın gidişini değiştirmedi ama sonraki roket ve uzay programlarının temelini attı."
+      },
+      "date": "1944-09-08",
+      "location": {
+        "name": {
+          "tr": "Londra (Chiswick)"
+        },
+        "coordinates": [-0.27, 51.49]
+      },
+      "importance": 2,
+      "category": "military",
+      "parties": ["nazi-germany", "kingdom-of-great-britain"],
+      "sources": [
+        {
+          "wikipedia": "V-2 rocket"
+        }
+      ]
+    },
+    {
+      "id": "ardenler-1944",
+      "title": {
+        "tr": "Ardenler Taarruzu"
+      },
+      "summary": {
+        "tr": "16 Aralık 1944'te Almanya, Müttefiklerin Antwerp limanına ilerleyişini kesmek için Ardenler'de son büyük taarruzunu başlattı. Bastogne'da Amerikan direnişi ve hava desteği taarruzu durdurdu; Almanya'nın yedek kuvvetleri tükendi."
+      },
+      "date": {
+        "start": "1944-12-16",
+        "end": "1945-01-25"
+      },
+      "location": {
+        "name": {
+          "tr": "Bastogne"
+        },
+        "coordinates": [5.72, 50]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["united-states-of-america", "nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Battle of the Bulge"
+        }
+      ]
+    },
+    {
+      "id": "auschwitz-kurtulus-1945",
+      "title": {
+        "tr": "Auschwitz'in kurtarılması"
+      },
+      "summary": {
+        "tr": "27 Ocak 1945'te Kızıl Ordu, Polonya'daki Auschwitz-Birkenau imha kampına girdi. Kamp sisteminde yaklaşık 1,1 milyon insan, çoğu Yahudi olmak üzere, öldürülmüştü; tarih Holokost'u anma günü olarak anılır."
+      },
+      "date": "1945-01-27",
+      "location": {
+        "name": {
+          "tr": "Oświęcim"
+        },
+        "coordinates": [19.2, 50.03]
+      },
+      "importance": 4,
+      "category": "society",
+      "parties": ["union-of-soviet-socialist-republics", "nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Auschwitz concentration camp"
+        }
+      ]
+    },
+    {
+      "id": "yalta-1945",
+      "title": {
+        "tr": "Yalta Konferansı"
+      },
+      "summary": {
+        "tr": "4–11 Şubat 1945'te Roosevelt, Churchill ve Stalin Kırım'da, savaş sonrası Almanya'nın işgal bölgelerine bölünmesini, Birleşmiş Milletler'in kuruluşunu ve Doğu Avrupa'nın geleceğini görüştü. Kararların yorumu Soğuk Savaş'ın tartışma konularından biri oldu."
+      },
+      "date": {
+        "start": "1945-02-04",
+        "end": "1945-02-11"
+      },
+      "location": {
+        "name": {
+          "tr": "Yalta"
+        },
+        "coordinates": [34.17, 44.49]
+      },
+      "importance": 4,
+      "category": "politics",
+      "parties": ["union-of-soviet-socialist-republics", "united-states-of-america", "kingdom-of-great-britain"],
+      "sources": [
+        {
+          "wikipedia": "Yalta Conference"
+        }
+      ]
+    },
+    {
+      "id": "dresden-bombardimani-1945",
+      "title": {
+        "tr": "Dresden'in bombalanması"
+      },
+      "summary": {
+        "tr": "13–15 Şubat 1945'te Britanya ve ABD hava kuvvetleri, Elbe kıyısındaki Dresden'i yoğun bombardımana tuttu; çıkan yangın fırtınası kentin merkezini yok etti, yirmi beş bin kadar insan öldü. Saldırının askerî gerekçesi hâlâ tartışılır."
+      },
+      "date": {
+        "start": "1945-02-13",
+        "end": "1945-02-15"
+      },
+      "location": {
+        "name": {
+          "tr": "Dresden"
+        },
+        "coordinates": [13.74, 51.05]
+      },
+      "importance": 3,
+      "category": "military",
+      "parties": ["kingdom-of-great-britain", "united-states-of-america", "nazi-germany"],
+      "versus": ["nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Bombing of Dresden in World War II"
+        }
+      ]
+    },
+    {
+      "id": "berlin-muharebesi-1945",
+      "title": {
+        "tr": "Berlin Muharebesi"
+      },
+      "summary": {
+        "tr": "16 Nisan 1945'te Kızıl Ordu Oder'den Berlin'e taarruz etti; kent iki hafta içinde kuşatıldı ve ele geçirildi. Hitler 30 Nisan'da intihar etti, Alman başkentinin düşmesiyle Avrupa'da savaşın sonu geldi."
+      },
+      "date": {
+        "start": "1945-04-16",
+        "end": "1945-05-02"
+      },
+      "location": {
+        "name": {
+          "tr": "Berlin"
+        },
+        "coordinates": [13.4, 52.52]
+      },
+      "importance": 4,
+      "category": "military",
+      "parties": ["union-of-soviet-socialist-republics", "nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Battle of Berlin"
+        }
+      ]
+    },
+    {
+      "id": "almanya-teslimi-1945",
+      "title": {
+        "tr": "Almanya'nın teslimi"
+      },
+      "summary": {
+        "tr": "7 Mayıs 1945'te Reims'te imzalanan koşulsuz teslim, 8 Mayıs'ta (Sovyet tarafıyla birlikte) Berlin-Karlshorst'ta onaylandı. Avrupa'da savaş sona erdi; Almanya dört işgal bölgesine ayrıldı."
+      },
+      "date": "1945-05-08",
+      "location": {
+        "name": {
+          "tr": "Berlin-Karlshorst"
+        },
+        "coordinates": [13.55, 52.49]
+      },
+      "importance": 5,
+      "category": "politics",
+      "parties": [
+        "nazi-germany",
+        "union-of-soviet-socialist-republics",
+        "united-states-of-america",
+        "kingdom-of-great-britain",
+        "free-french"
+      ],
+      "sources": [
+        {
+          "wikipedia": "German Instrument of Surrender"
+        }
+      ]
+    },
+    {
+      "id": "potsdam-1945",
+      "title": {
+        "tr": "Potsdam Konferansı"
+      },
+      "summary": {
+        "tr": "17 Temmuz–2 Ağustos 1945'te Truman, Churchill (sonra Attlee) ve Stalin Berlin yakınlarında Almanya'nın yönetimi, sınırları ve tazminatları konusunda anlaştı; Japonya'ya teslim çağrısı yapıldı."
+      },
+      "date": {
+        "start": "1945-07-17",
+        "end": "1945-08-02"
+      },
+      "location": {
+        "name": {
+          "tr": "Potsdam"
+        },
+        "coordinates": [13.06, 52.4]
+      },
+      "importance": 3,
+      "category": "politics",
+      "parties": ["union-of-soviet-socialist-republics", "united-states-of-america", "kingdom-of-great-britain", "nazi-germany"],
+      "sources": [
+        {
+          "wikipedia": "Potsdam Conference"
+        }
+      ]
+    },
+    {
+      "id": "hirosima-1945",
+      "title": {
+        "tr": "Hiroşima'ya atom bombası"
+      },
+      "summary": {
+        "tr": "6 Ağustos 1945'te ABD'nin B-29 uçağı Enola Gay, Hiroşima'ya savaşta kullanılan ilk atom bombasını bıraktı; 70 binden fazla kişi anında, yıl sonuna dek yaklaşık 140 bin kişi öldü."
+      },
+      "date": "1945-08-06",
+      "location": {
+        "name": {
+          "tr": "Hiroşima"
+        },
+        "coordinates": [132.45, 34.39]
+      },
+      "importance": 5,
+      "category": "military",
+      "parties": ["united-states-of-america", "empire-of-japan"],
+      "sources": [
+        {
+          "wikipedia": "Atomic bombings of Hiroshima and Nagasaki"
+        }
+      ]
+    },
+    {
+      "id": "nagasaki-1945",
+      "title": {
+        "tr": "Nagasaki'ye atom bombası"
+      },
+      "summary": {
+        "tr": "9 Ağustos 1945'te ikinci atom bombası Nagasaki'ye atıldı; aynı gün Sovyetler Birliği Japonya'ya savaş ilan edip Mançurya'ya girdi. Japonya birkaç gün içinde teslim kararı aldı."
+      },
+      "date": "1945-08-09",
+      "location": {
+        "name": {
+          "tr": "Nagasaki"
+        },
+        "coordinates": [129.87, 32.75]
+      },
+      "importance": 4,
+      "category": "military",
+      "parties": ["united-states-of-america", "empire-of-japan", "union-of-soviet-socialist-republics"],
+      "versus": ["empire-of-japan"],
+      "sources": [
+        {
+          "wikipedia": "Atomic bombings of Hiroshima and Nagasaki"
+        }
+      ]
+    },
+    {
+      "id": "japonya-teslimi-1945",
+      "title": {
+        "tr": "Japonya'nın teslimi"
+      },
+      "summary": {
+        "tr": "2 Eylül 1945'te Japon yetkililer, Tokyo Körfezi'ndeki USS Missouri zırhlısında teslim belgesini imzaladı. İkinci Dünya Savaşı sona erdi; Japonya Müttefik (esasen Amerikan) işgaline girdi."
+      },
+      "date": "1945-09-02",
+      "location": {
+        "name": {
+          "tr": "Tokyo Körfezi"
+        },
+        "coordinates": [139.78, 35.3]
+      },
+      "importance": 4,
+      "category": "politics",
+      "parties": ["empire-of-japan", "united-states-of-america", "kingdom-of-great-britain", "union-of-soviet-socialist-republics"],
+      "sources": [
+        {
+          "wikipedia": "Surrender of Japan"
+        }
+      ]
+    }
+  ]
+}
