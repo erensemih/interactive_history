@@ -53,6 +53,8 @@ npm run build && npm run preview
 npm test             # birim testleri + veri doğrulaması
 npm run e2e          # gerçek tarayıcıda kabul senaryosu (aşağıya bakın)
 npm run e2e:ai       # okuma arkadaşı (sohbet) için aynısı, komut dosyalı modelle
+npm run smoke        # her turun varsayılan denetimi: tsc + birim + derleme + hızlı e2e (≈3 dk)
+npm run full         # tam doğrulama: smoke'un ön adımları + tam e2e + tam e2e:ai (yalnızca istenince; ≈31 dk)
 npm run data:validate
 npm run data:period -- --list        # yayındaki ve arşivdeki dönemler (bir dönemi yayına almak: data/README.md)
 ```
@@ -523,10 +525,32 @@ veriden çıkan deterministik iskeleti), `steps`
 
 ## Doğrulama
 
-`npm test` (birim testleri) ve `npm run e2e:ai` (okuma arkadaşı, aşağıda) bu bölümdeki kabul senaryosuna ek olarak çalışır.
+**Çalışma kuralı (her turda ne koşulur).** Varsayılan: **`npm run smoke`** (tsc + birim testleri + veri doğrulama + derleme + iki
+e2e takımının hızlı kipi) ve buna **değişikliği kapsayan gruplar** (`E2E_ONLY=…`). **Tam takım (`npm run full`) yalnızca istenince
+koşulur.** Görsel inceleme her yayından sonra elle yapılır; bu yüzden betikler ekran görüntülerini ve rapor dosyalarını yalnızca
+`E2E_SHOTS=1` ile yazar (görsel olarak belirsiz bir şey olursa yalnızca o alınır). Aynı kural, oturumlar arasında kalıcı olması için
+[`CLAUDE.md`](CLAUDE.md) dosyasında da durur.
 
-`npm run e2e`, üretim derlemesini gerçek (başsız) Chromium'da şu senaryoyla sınar ve `docs/verification/` altına
-ekran görüntüleri ve `RAPOR.md` yazar:
+| Komut | Ne koşar | Ölçülen süre |
+|---|---|---|
+| `npm run smoke` | tsc, birim (404 test), veri doğrulama, derleme, hızlı e2e: base bölüm 0–3 (39 denetim) + AI A, B (iki tek adımlı yanıt), G (gerçek `sample` bağdaştırıcısı), H (telefon) senaryoları (125 denetim) | **3 dk 1 sn** (e2e kısmı 2 dk 28 sn) |
+| `E2E_ONLY=7,9 node scripts/verify-e2e.mjs` | yalnızca bu base bölümleri (0–6 tek bloktur: biri istenirse hepsi koşar) | bölüm süreleri aşağıda |
+| `E2E_ONLY=A3,K node scripts/verify-ai-e2e.mjs` | yalnızca bu AI grupları (harfler raporun başlıklarındaki gibi) | grup süreleri aşağıda |
+| `npm run full` | smoke'un ön adımları + tam base e2e (154 denetim) + tam AI e2e (437 denetim) | **31 dk 2 sn** (base 5 dk 34 sn, AI 24 dk 51 sn) |
+
+Tek koşuda ölçülen süreler (sn, hareket azaltılmış kip): base e2e 0–6 bloğu 58 (yalnız 0–3: 9) · 7: 96 · 8: 34 · 9: 53 · 10: 42 ·
+11: 43; AI e2e L 29 · S 37 · A 56 · V 120 · W 57 · A2 24 · A3 87 · A4 30 · B 44 · C 9 · C2 16 · D 14 · J 65 · K 133 · P 269 · R 79 ·
+T 80 · F 106 · E 97 · G 83 · H 54. (Öncesi, animasyonlu kamerayla: base ≈9 dk, AI ≈30 dk, birlikte ≈40 dk.)
+
+Testler varsayılan olarak **"hareketi azalt" kipinde** koşar: her sayfa `reducedMotion: 'reduce'` ile açılır, kamera anında gider
+(MapLibre süreyi 0'a çeker; panel kayması ve kaydırma da bu tercihe uyar). Animasyonun kendisini sınayan kontroller animasyonlu
+açılır (base e2e bölüm 9'daki "hareket yumuşak" kontrolü: `open(…, { reducedMotion: 'no-preference' })`; AI e2e'de
+`open(…, { animated: true })`); hepsini animasyonlu koşmak için `E2E_MOTION=full`. Bu kip beklemeyi azaltır ama yok etmez: süre
+çoğunlukla yazılım GL'nin her durum değişikliğinde haritayı yeniden çizmesine, sayfa açılışlarına (~7–9 sn) ve gerçek
+zamanlayıcılara (otomatik oynatma, akış) gider. Makine tek tarayıcı koşusuna göre ölçülmüştür; iki koşuyu birlikte çalıştırmayın.
+
+`npm run e2e`, üretim derlemesini gerçek (başsız) Chromium'da şu senaryoyla sınar (ekran görüntüleri ve `RAPOR.md` yalnızca
+`E2E_SHOTS=1` ile `docs/verification/` altına yazılır; oradaki görüntüler son `E2E_SHOTS=1` koşusundan kalmadır):
 
 0. Açılış: uygulama savaş yıllarında açılır (aralık 1939–1945, sınır yılı 1942) ve açılıştan sonra başlıkta "yükleniyor…" kalmaz.
 1. 1940–1944 aralığında (sınır yılı 1942) Almanya'da bir nokta → **Nazi Almanyası** vurgulanır, çizelgede yalnızca bu aralıktaki Alman
@@ -559,13 +583,14 @@ kaybolmadığı, cetvelde uca tıklamanın pencereyi küçültmediği, ekran oku
 yakınlaştırdığı, telefon genişliğinde taşma olmadığı, dokunuşun olayı açıp adını gösterdiği (ve ekranda ipucu bırakmadığı) ve
 "hareketi azalt" tercihinde görünümün animasyonsuz değiştiği denetlenir.
 
-Son koşu: **154 / 154 denetim geçti** (`docs/verification/RAPOR.md`).
+Son tam koşu: **154 / 154 denetim geçti** (hareket azaltılmış kip, 5 dk 34 sn).
 
 ### Okuma arkadaşı ve temiz harita: `npm run e2e:ai`
 
 Gerçek Chromium'da, komut dosyalı sağlayıcıyla (gerçek model yok; araç çağrıları ve akış gerçek bir yanıttaki gibi çalışır) şunları
-sınar ve `docs/verification/AI-RAPOR.md` ile `ai-*.png` yazar (gruplar raporda aynı harflerle başlar; `E2E_ONLY=A3,K` yalnızca o
-grupları çalıştırır, `E2E_VERBOSE=1` duran bir senaryonun hatasını tam yazar). Senaryo, uygulamanın açıldığı dönemdedir: **1800–2000,
+sınar (`ai-*.png` ve `AI-RAPOR.md` yalnızca `E2E_SHOTS=1` ile yazılır; gruplar raporda aynı harflerle başlar; `E2E_ONLY=A3,K`
+yalnızca o grupları çalıştırır, `E2E_SUITE=smoke` (ya da `--smoke`) hızlı kipi, `E2E_TIMES=1` her senaryonun süresini,
+`E2E_VERBOSE=1` duran bir senaryonun hatasını tam yazar). Senaryo, uygulamanın açıldığı dönemdedir: **1800–2000,
 savaş yılları** (aralık 1939–1945, sınırlar 1942'nin). Örnek yer Almanya'da bir noktadır (Hamburg: üstünde olay işaretçisi olmayan boş
 kara; Berlin, Wannsee'nin işaretçisinin tam altındadır) ve **Nazi Almanyası**dır; komut dosyalı model onu sekiz adımda anlatır (1939'dan
 1945'te Berlin'e; dördüncüde Barbarossa, altıncıda Stalingrad ve El Alamein). Olay sayıları, satır sayıları ve yer çizelgesinin uzunluğu
@@ -670,7 +695,7 @@ sayfadan sayılır, betikte sabit sayı yoktur.
     başlığın altında ve adım korunur; tek adımlı yanıtta altyazı ve görünür "Devamını oku", adım denetimi yok; hata ve izin kutuları
     ekranın içinde; Harita takibi sorusu telefonda küçük kalır.
 
-Son koşu: **437 / 437 denetim geçti** (`docs/verification/AI-RAPOR.md`).
+Son tam koşu: **437 / 437 denetim geçti** (hareket azaltılmış kip, 24 dk 51 sn).
 
 **Neyi sınamıyor:** gerçek bir modelin istemi ne kadar iyi izlediğini. Gerçek `sample` bu ortamdan çağrılamaz; model çıktısı biçimine
 karşı bağışlayıcı okunur (yukarıya bakın) ama ilk gerçek kullanımda gözle bakılmalıdır.
@@ -686,7 +711,11 @@ karşı bağışlayıcı okunur (yukarıya bakın) ama ilk gerçek kullanımda g
   Normandiya çizgisi Grönland'dan başlar, Fransa'nın 1940'ta satırı olmadığı için Fransa Muharebesi'nin çizgisi Almanya ile Britanya'yı
   bağlar; yer noktası bazen bir olay işaretinin yıl yazısına biner (Hamburg ve Dover), cetveldeki "1950" yazısı adım noktalarının
   sütununa ~3 px değer; haritaya hiçbir şey çizmeyen (düz metin) bir yanıt, yer seçili değilken dünya olaylarını yanıt kapanana kadar
-  haritadan çeker (tek anlatıcı kuralı) ve daha önce çizilmiş bir sahnenin üstüne gelirse o sahneyi olduğu gibi bırakır.
+  haritadan çeker (tek anlatıcı kuralı) ve daha önce çizilmiş bir sahnenin üstüne gelirse o sahneyi olduğu gibi bırakır; tam ekran
+  okumanın köşedeki küçük haritasında (~340×230 px) uzak bir olay (ör. El Alamein) en düşük yakınlaştırmada görünümün birkaç piksel
+  dışında kalabilir ve her bağlantı ya da çizelge tıklaması merkezi biraz doğuya kaydırır (animasyonlu ve hareketi azalt
+  kiplerinde aynıdır; işaretçinin "görünür" sayılması bu birkaç piksele bağlıdır, e2e bu yüzden iki yolu karşılaştırırken
+  kameraya bağlı alanları çıkarır).
 - Okuma arkadaşı: gerçek model çıktısı bu ortamda sınanamadı (yukarıya bakın). Yönerge dosyasını düzenlemek uygulamayı yeniden
   derlemeyi ve yeniden yayınlamayı gerektirir (dosya derlemede gömülür). Otomatik oynatma süreleri (2,2 sn + sözcük başına
   0,36 sn; hızlar 0,65 / 1 / 1,8) ve ilerleme çubuğunda yan yana düşen noktaların kaydırılması (en çok 26 px) ilk sürümün varsayılanlarıdır

@@ -46,10 +46,16 @@
  * changing mid-conversation (D), no label covering another (K), stopping, failing and settings (E), the real `sample`
  * adapter (G) and the phone (H).
  *
- * Writes screenshots (ai-*.png) and a Turkish report (AI-RAPOR.md) to docs/verification/.
- *   E2E_ONLY=A3,K  runs only those groups (the code before the first "." of a heading) while working on them;
- *   E2E_VERBOSE=1  prints the whole error of a scenario that stopped;
- *   E2E_URL        reuses a server that is already running.
+ * Switches (all optional):
+ *   E2E_SUITE=smoke  (or --smoke) the quick pass: only the scenarios marked `guard.smoke` (a few minutes in all);
+ *   E2E_ONLY=A3,K    runs only those groups (the code before the first "." of a heading) while working on them;
+ *   E2E_MOTION=full  animate the camera and the panels everywhere. By default every page asks for reduced motion (a
+ *                    camera move is then instant, which removes most of the waiting); the scenarios about the
+ *                    animation itself open their page with `animated: true`;
+ *   E2E_SHOTS=1      also writes the screenshots (ai-*.png) and a Turkish report (AI-RAPOR.md) to docs/verification/;
+ *   E2E_TIMES=1      prints how long every scenario took (the sections' totals are always printed);
+ *   E2E_VERBOSE=1    prints the whole error of a scenario that stopped;
+ *   E2E_URL          reuses a server that is already running.
  */
 import { spawn, execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -60,7 +66,11 @@ import { chromium } from 'playwright-core';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'docs', 'verification');
 const PORT = Number(process.env.E2E_PORT ?? 4174);
-mkdirSync(OUT, { recursive: true });
+const SHOTS = process.env.E2E_SHOTS === '1';
+const SMOKE = process.env.E2E_SUITE === 'smoke' || process.argv.includes('--smoke');
+const MOTION = process.env.E2E_MOTION === 'full' ? 'no-preference' : 'reduce';
+const T_START = Date.now();
+if (SHOTS) mkdirSync(OUT, { recursive: true });
 
 const results = [];
 const sections = [];
@@ -80,9 +90,14 @@ function check(name, ok, detail = '') {
  * scenario, and the next scenario still runs: one broken step must not hide what the others found.
  */
 const ONLY = process.env.E2E_ONLY?.split(',').map((x) => x.trim());
-async function guard(run) {
+const guardTimes = [];
+async function guard(run, { smoke = false } = {}) {
   // E2E_ONLY=A3,K runs just those scenarios (while working on them); scenarios that lean on an earlier one then fail.
   if (ONLY && !ONLY.includes(currentSection.split('.')[0])) return;
+  // E2E_SUITE=smoke runs only the scenarios marked with guard.smoke(…)
+  if (SMOKE && !smoke) return;
+  const t0 = Date.now();
+  const first = results.length;
   try {
     await run();
   } catch (err) {
@@ -93,7 +108,15 @@ async function guard(run) {
       String(err.message).split('\n')[0],
     );
   }
+  guardTimes.push({
+    section: currentSection,
+    ms: Date.now() - t0,
+    checks: results.length - first,
+    first: results[first]?.name ?? '',
+  });
 }
+/** A scenario that belongs to the quick pass (E2E_SUITE=smoke) as well as to the full run. */
+guard.smoke = (run) => guard(run, { smoke: true });
 
 /* ------------------------------------------------------------------ server */
 async function startServer() {
@@ -154,11 +177,12 @@ async function bordersSettled(page, timeout = 15000) {
 /** A fresh page with the app loaded (the hash may already describe a range and a place). */
 async function open(
   hash = '#t=1939-1945',
-  { viewport = { width: 1440, height: 900 }, init, initArg, mobile = false } = {},
+  { viewport = { width: 1440, height: 900 }, init, initArg, mobile = false, animated = false } = {},
 ) {
   const ctx = await browser.newContext({
     viewport,
     deviceScaleFactor: mobile ? 2 : 1,
+    reducedMotion: animated ? 'no-preference' : MOTION,
     ...(mobile ? { isMobile: true, hasTouch: true } : {}),
   });
   const page = await ctx.newPage();
@@ -320,7 +344,9 @@ const ask = (page, question) =>
     await page.keyboard.press('Enter');
   });
 
-const shot = (page, name, full = false) => page.screenshot({ path: join(OUT, name), fullPage: full });
+/** A screenshot for the report: taken only when the run was asked for them (E2E_SHOTS=1). */
+const shot = (page, name, full = false) =>
+  SHOTS ? page.screenshot({ path: join(OUT, name), fullPage: full }) : undefined;
 
 /**
  * True when `fn` (run in the page) holds within `timeout` ms. For what the page draws a frame or two after its state has changed
@@ -1150,7 +1176,7 @@ await guard(async () => {
 section(
   'A. İzle: Almanya, 1942 (kullanıcının örneği): çok adımlı anlatım adım adım ilerler; her adım yalnızca kendi çizimini gösterir; savaş olayları doğru görünür; kamera adımı izler',
 );
-await guard(async () => {
+await guard.smoke(async () => {
   const page = await open(WAR);
   const germany = await pixelOf(page, HAMBURG.lon, HAMBURG.lat);
   await page.click('[data-testid=intro-close]').catch(() => undefined);
@@ -2823,7 +2849,7 @@ await guard(async () => {
 });
 
 // B2: an event of the data: the real Stalingrad answer is one step, with the one-sentence caption over the map and the long text in Read
-await guard(async () => {
+await guard.smoke(async () => {
   const page = await open(AT_HAMBURG);
   const camBefore = await camera(page);
   await page.evaluate(RECORD_FOOT);
@@ -2922,7 +2948,7 @@ await guard(async () => {
 });
 
 // B3: a model that writes plain text and nothing else (no steps, no caption, no map calls): the page makes the caption itself
-await guard(async () => {
+await guard.smoke(async () => {
   const page = await open(AT_HAMBURG);
   await page.evaluate(RECORD_FOOT);
   await ask(page, PLAIN_QUESTION);
@@ -3989,6 +4015,15 @@ const eventState = (page) =>
       read: window.__ayni.ai.presentation.readMode,
     };
   });
+/**
+ * Two event states are the same when everything is except what depends on where the camera happens to stand (which markers
+ * fit the view, where the card sits): in the small map of the full-screen reader a far event lies a few pixels outside the
+ * view, and whether its marker still counts as shown depends on those pixels.
+ */
+const sameEventState = (a, b) => {
+  const plain = ({ markers, cardRect, ...rest }) => JSON.stringify(rest);
+  return plain(a) === plain(b);
+};
 /** The events a text names as `[words](olay:id)`, in the order it names them (the checks follow the words the mock writes). */
 const evtRefIds = (words) => [...words.matchAll(/\]\(olay:([A-Za-z0-9_-]+)\)/g)].map((m) => m[1]);
 /** One step's part of an answer's full text (the mock writes "## 6. Title" before each step). */
@@ -4262,7 +4297,7 @@ await guard(async () => {
   const fullRef = await eventState(page);
   check(
     'Tam ekranda da metindeki bağlantı çizelgedeki noktayla aynı şeyi yapar: olay açık, işaretçisi küçük haritada vurgulu, soru kutusunda olay çipi; okuyucu ve adım yerinde',
-    JSON.stringify(fullRef) === JSON.stringify(fullTimeline) &&
+    sameEventState(fullRef, fullTimeline) &&
       fullRef.event === 'el-alamein-1942' &&
       fullRef.selectedMarker.join() === 'el-alamein-1942' &&
       /El Alamein/.test(fullRef.chip ?? '') &&
@@ -5339,7 +5374,7 @@ const INSTRUCTION_FILE = readFileSync(join(ROOT, 'instructions', 'okuma-arkadasi
 const EGH_STEPPING_IDS = ['watch-prev', 'watch-next', 'watch-count', 'watch-play', 'watch-speed', 'watch-read'];
 const eghSteppingOn = (page) =>
   page.evaluate((ids) => ids.filter((id) => document.querySelector(`[data-testid=${id}]`)), EGH_STEPPING_IDS);
-await guard(async () => {
+await guard.smoke(async () => {
   const page = await open(AT_HAMBURG, { init: FAKE_RUNTIME, initArg: { hold: true } });
   check(
     'Gerçek çalışma zamanı varken deneme kipi uyarısı yok; sağlayıcı “sample”',
@@ -5964,7 +5999,7 @@ await guard(async () => {
 section(
   'H. Telefon: harita tüm sahne; kart üstte küçük bir sayfa; altyazı ve soru kutusu altta; metin her zaman tam ekran',
 );
-await guard(async () => {
+await guard.smoke(async () => {
   const page = await open(AT_HAMBURG, { viewport: { width: 390, height: 844 }, mobile: true });
   const g0 = await page.evaluate(() => {
     const r = (s) => {
@@ -6414,6 +6449,25 @@ lines.push(
   '- `ai-5-hata.png`, `ai-6-mobil.png`, `ai-6b-mobil-oku.png`, `ai-7-ayarlar.png`, `ai-8-gercek-sample.png`',
   '',
 );
-writeFileSync(join(OUT, 'AI-RAPOR.md'), lines.join('\n'));
-console.log(`\n${passed}/${results.length} denetim geçti. Rapor: docs/verification/AI-RAPOR.md`);
+if (SHOTS) writeFileSync(join(OUT, 'AI-RAPOR.md'), lines.join('\n'));
+const perSection = new Map();
+for (const g of guardTimes) perSection.set(g.section, (perSection.get(g.section) ?? 0) + g.ms);
+console.log('\nBölüm süreleri:');
+for (const [title, ms] of perSection) console.log(`  ${String(Math.round(ms / 1000)).padStart(4)} sn  ${title}`);
+if (process.env.E2E_TIMES) {
+  console.log('\nSenaryo süreleri:');
+  for (const g of guardTimes)
+    console.log(
+      `  ${String(Math.round(g.ms / 1000)).padStart(4)} sn  ${g.checks} denetim  ${g.section.split('.')[0]}: ${g.first.slice(0, 90)}`,
+    );
+}
+const failed = results.filter((r) => !r.ok);
+if (failed.length) {
+  console.log('\nBaşarısız denetimler:');
+  for (const r of failed) console.log(`  ✗ ${r.name}${r.detail ? `  (${r.detail})` : ''}`);
+}
+const mode = `${SMOKE ? 'hızlı' : ONLY ? `E2E_ONLY=${ONLY.join(',')}` : 'tam'} · ${MOTION === 'reduce' ? 'hareket azaltılmış' : 'animasyonlu'}`;
+console.log(
+  `\n${passed}/${results.length} denetim geçti (${mode}) · ${Math.round((Date.now() - T_START) / 1000)} sn${SHOTS ? ' · Rapor: docs/verification/AI-RAPOR.md' : ''}`,
+);
 process.exit(passed === results.length ? 0 : 1);

@@ -16,6 +16,8 @@
     "data:period": "node scripts/use-period.mjs",
     "e2e": "node scripts/validate-data.mjs && vite build && node scripts/verify-e2e.mjs",
     "e2e:ai": "node scripts/validate-data.mjs && vite build && node scripts/verify-ai-e2e.mjs",
+    "smoke": "tsc --noEmit && vitest run && node scripts/validate-data.mjs && vite build && node scripts/verify-e2e.mjs --smoke && node scripts/verify-ai-e2e.mjs --smoke",
+    "full": "tsc --noEmit && vitest run && node scripts/validate-data.mjs && vite build && node scripts/verify-e2e.mjs && node scripts/verify-ai-e2e.mjs",
     "format": "prettier --write \"src/**/*.{ts,css}\" \"tests/**/*.ts\" \"scripts/**/*.mjs\" \"public/data/events/*.json\" public/data/entities.json",
     "data:fetch": "python3 -I scripts/pipeline/fetch_sources.py",
     "data:borders": "python3 -I scripts/pipeline/build_borders.py"

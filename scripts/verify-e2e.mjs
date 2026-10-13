@@ -21,10 +21,18 @@
  * moment after a long jump in time, and never stays that way), a long range of the 200 years still works, and the
  * first and last years of the data are reachable.
  *
- * Writes screenshots and a Turkish report to docs/verification/.
+ * Switches (all optional):
+ *   E2E_SUITE=smoke   (or --smoke) the quick pass: only SMOKE_SECTIONS (and, of the main block, sections 0–3)
+ *   E2E_ONLY=7,9      only these sections (0–6 are one block: they share a page and each other's state)
+ *   E2E_MOTION=full   animate the camera and the panels everywhere. By default every page asks for reduced motion (a
+ *                     camera move is then instant, which removes most of the waiting); the checks that are about the
+ *                     animation itself open their page animated.
+ *   E2E_SHOTS=1       also write the screenshots and the Turkish report to docs/verification/
+ *   E2E_URL=…         use a build that is already served instead of starting `vite preview`
  */
 import { spawn, execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -32,13 +40,42 @@ import { chromium } from 'playwright-core';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'docs', 'verification');
 const PORT = Number(process.env.E2E_PORT ?? 4173);
-mkdirSync(OUT, { recursive: true });
-rmSync(join(OUT, 'hata.png'), { force: true }); // a failure screenshot from an earlier run must not linger
+const SHOTS = process.env.E2E_SHOTS === '1';
+const SMOKE = process.env.E2E_SUITE === 'smoke' || process.argv.includes('--smoke');
+const MOTION = process.env.E2E_MOTION === 'full' ? 'no-preference' : 'reduce';
+const ONLY = process.env.E2E_ONLY?.split(',')
+  .map((x) => x.trim())
+  .filter(Boolean);
+/** The sections (besides the main block, 0–3) that the quick pass runs. */
+const SMOKE_SECTIONS = [];
+/** Sections 0–6 share one page and each other's state: asking for any of them runs the whole block. */
+const wants = (n) => {
+  if (SMOKE) return SMOKE_SECTIONS.includes(n) || n === 0;
+  if (!ONLY) return true;
+  return ONLY.includes(String(n)) || (n === 0 && ONLY.some((x) => Number(x) <= 6));
+};
+const FAILURE_SHOT = join(tmpdir(), 'ayni-e2e-hata.png');
+if (SHOTS) {
+  mkdirSync(OUT, { recursive: true });
+  rmSync(join(OUT, 'hata.png'), { force: true });
+}
+const T_START = Date.now();
 
 const results = [];
 function check(name, ok, detail = '') {
   results.push({ name, ok: !!ok, detail });
   console.log(`${ok ? '  ✓' : '  ✗'} ${name}${detail ? `  (${detail})` : ''}`);
+}
+/** A screenshot for the report: taken only when the run was asked for them (E2E_SHOTS=1). */
+const shot = (pg, name, options = {}) => (SHOTS ? pg.screenshot({ path: join(OUT, name), ...options }) : undefined);
+const sectionTimes = [];
+let sectionStart = Date.now();
+function section(title) {
+  const now = Date.now();
+  if (sectionTimes.length) sectionTimes[sectionTimes.length - 1].ms = now - sectionStart;
+  sectionStart = now;
+  sectionTimes.push({ title, ms: 0 });
+  console.log(`\n${title}`);
 }
 
 /* ------------------------------------------------------------------ server */
@@ -80,7 +117,11 @@ const expectedMapEvents = (events, from, to) =>
 /* ---------------------------------------------------------------- the test */
 const server = await startServer();
 const browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+const page = await browser.newPage({
+  viewport: { width: 1440, height: 900 },
+  deviceScaleFactor: 1,
+  reducedMotion: MOTION,
+});
 const problems = [];
 page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));
 page.on('console', (m) => {
@@ -137,6 +178,12 @@ const bordersSettled = async (pg) => {
     null,
     { timeout: 40000 },
   );
+};
+/** Waits until the camera has stopped (an eased move takes up to ~2.6 s; with reduced motion it is over at once). */
+const cameraIdle = async (pg) => {
+  await frames(pg, 3);
+  await pg.waitForFunction(() => !window.__ayni.map.isMoving(), null, { timeout: 15000 });
+  await frames(pg, 2);
 };
 /** Sets the range the way the ruler would (the ruler's own pointer and keyboard use is checked separately). */
 const setRange = async (from, to) => {
@@ -233,1498 +280,1541 @@ const trackCamera = (pg, ms) =>
     ms,
   );
 
+/**
+ * A fresh page load in its own context (pass context options in `extra`, e.g. { reducedMotion: 'no-preference' } for a
+ * check about the animation itself). Resolves when the app is up and the border years of the shown year are on the map.
+ */
+const open = async (hash = '', viewport = { width: 1440, height: 900 }, extra = {}) => {
+  const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, reducedMotion: MOTION, ...extra });
+  const p = await ctx.newPage();
+  const errs = [];
+  p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`));
+  p.on('console', (m) => {
+    if (m.type() === 'error') errs.push(`console.error: ${m.text()}`);
+  });
+  await p.goto(server.url + hash);
+  await p.waitForFunction(() => window.__ayni, null, { timeout: 60000 });
+  await p.waitForSelector('#loading', { state: 'detached', timeout: 120000 });
+  await bordersSettled(p);
+  await p.waitForTimeout(900);
+  return { ctx, p, errs };
+};
+const cameraOf = (p) =>
+  p.evaluate(() => {
+    const m = window.__ayni.map;
+    const c = m.getCenter();
+    return { lng: c.lng, lat: c.lat, zoom: m.getZoom(), bearing: m.getBearing(), pitch: m.getPitch() };
+  });
+
 console.log(`\nAynı Zamanda · uçtan uca doğrulama · ${server.url}\n`);
 try {
-  await page.goto(server.url);
-  await page.waitForFunction(() => window.__ayni, null, { timeout: 60000 });
-  await page.waitForSelector('#loading', { state: 'detached', timeout: 120000 });
-  await page.evaluate(() => document.fonts.ready);
-  await settle(800);
-  const allEvents = loadEvents();
+  if (wants(0)) {
+    await page.goto(server.url);
+    await page.waitForFunction(() => window.__ayni, null, { timeout: 60000 });
+    await page.waitForSelector('#loading', { state: 'detached', timeout: 120000 });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(800);
+    const allEvents = loadEvents();
 
-  /* ---- 0. initial state */
-  console.log('0. Açılış');
-  check('Başlık "Dünya" ve seçili yer yok', (await text('[data-testid=title-main]')) === 'Dünya');
-  check('Çizelge "yer seçilmedi" durumunda', (await text('[data-testid=timeline-name]')).includes('seçilmedi'));
-  check(
-    'Uygulama savaş yıllarında açılır: aralık 1939–1945, haritadaki sınırlar 1942’nin',
-    JSON.stringify(await page.evaluate(() => window.__ayni.store.state.range)) === '{"from":1939,"to":1945}' &&
-      (await text('[data-testid=title-year]')) === '1942',
-  );
-  check(
-    'Açılıştan sonra başlıkta “yükleniyor…” kalmaz: 1942’nin sınırları haritada',
-    (await page.evaluate(() => window.__ayni.bordersReady())) &&
-      (await page.locator('[data-testid=borders-loading]').count()) === 0,
-  );
-  await page.screenshot({ path: join(OUT, '01-acilis.png') });
-  // the introduction is a small card over the right of the map; the reader closes it with its cross and it stays closed
-  await page.click('[data-testid=intro-close]');
-  await settle(300);
-  check(
-    'Tanıtım kartı ✕ ile kapanır (sağ taraf boşalır)',
-    (await page.locator('.card-host').isHidden()) || !(await page.locator('[data-testid=intro-card]').isVisible()),
-  );
-
-  /* ---- 1. 1942 + Germany */
-  console.log("\n1. 1940–1944 aralığı (sınır yılı 1942), Almanya'da bir nokta");
-  // (the place timeline shows the selected range and nothing beyond it: the war's first and last year are left out)
-  await setRange(1940, 1944);
-  check(
-    'Aralık 1940–1944',
-    JSON.stringify(await page.evaluate(() => window.__ayni.store.state.range)) === '{"from":1940,"to":1944}',
-  );
-  check('Haritadaki sınır yılı 1942', (await text('[data-testid=title-year]')) === '1942');
-
-  let baseCam = await camera();
-  const baseGeo = await geometry();
-  const markersBefore = await markerIds();
-  const mapEventsBefore = await page.evaluate(() =>
-    window.__ayni
-      .view()
-      .mapEvents.map((e) => e.id)
-      .sort(),
-  );
-
-  const germany = await pixelOf(...GERMANY); // (the pin and the clicks below are measured from this point)
-  await page.mouse.click(germany.x, germany.y);
-  await page.waitForFunction(
-    () => document.querySelector('[data-testid=title-main]').textContent.trim() !== 'Dünya',
-    null,
-    { timeout: 8000 },
-  );
-  await settle(600);
-
-  const t1 = (await text('[data-testid=title-main]')).trim();
-  check('Başlık: Nazi Almanyası', t1 === 'Nazi Almanyası', t1);
-  check(
-    'Bilgi panelinde yer kartı Nazi Almanyası',
-    (await text('[data-testid=place-title]')).trim() === 'Nazi Almanyası',
-  );
-  const hl = await page.evaluate(() => {
-    const m = window.__ayni.map;
-    return {
-      filter: JSON.stringify(m.getFilter('polity-selected-line')),
-      drawn: m.queryRenderedFeatures({ layers: ['polity-selected-line'] }).length,
-    };
-  });
-  check(
-    'Nazi Almanyası poligonu vurgu katmanında çiziliyor',
-    hl.filter.includes('nazi-germany') && hl.drawn > 0,
-    `${hl.drawn} parça`,
-  );
-  check(
-    'Zaman çizelgesi başlığı Nazi Almanyası',
-    (await text('[data-testid=timeline-name]')).trim() === 'Nazi Almanyası',
-  );
-  const tl1 = await page.$$eval('.tl-ev', (els) => els.map((e) => e.dataset.id));
-  const germanIds = allEvents.filter((e) => e.parties.includes('nazi-germany')).map((e) => e.id);
-  check(
-    'Çizelgede Alman olayları var',
-    tl1.length >= 3 && tl1.every((id) => germanIds.includes(id)),
-    `${tl1.length} olay: ${tl1.join(', ')}`,
-  );
-  check('Aralıktaki Alman olayı (Stalingrad, 1942) çizelgede', tl1.includes('stalingrad-1942'));
-  check(
-    'Çizelgedeki her olay seçili aralıkla (1940–1944) kesişiyor: aralığın dışından olay yok',
-    tl1.every((id) => {
-      const e = allEvents.find((x) => x.id === id);
-      return yearOf(e.date) <= 1944 && endYearOf(e.date) >= 1940;
-    }),
-  );
-  check(
-    'Aralığın hemen dışındaki olaylar çizelgede yok: Polonya’nın işgali (1939), Berlin Muharebesi (1945)',
-    !tl1.includes('polonya-isgali-1939') && !tl1.includes('berlin-muharebesi-1945'),
-  );
-  check('Küresel (Almanya dışı) olay çizelgede yok', !tl1.includes('pearl-harbor-1941'));
-  const cam1 = await camera();
-  check('Harita HAREKET ETMEDİ (merkez, yakınlaştırma, açı)', sameCamera(baseCam, cam1), JSON.stringify(cam1));
-  check(
-    'Yer seçilince dünya olayları haritadan çekilir (anlatıcı seçili yer; hiçbir şey seçili değilken işaretçiler vardı)',
-    markersBefore.length >= 5 && (await markerIds()).length === 0,
-    `${markersBefore.length} → ${(await markerIds()).length} işaretçi`,
-  );
-  check(
-    'Haritanın olay kümesi (veri) yerden bağımsız aynı; yalnızca çizilip çizilmemesi anlatıcıya bağlı',
-    JSON.stringify(
-      await page.evaluate(() =>
-        window.__ayni
-          .view()
-          .mapEvents.map((e) => e.id)
-          .sort(),
-      ),
-    ) === JSON.stringify(mapEventsBefore),
-  );
-  check(
-    'Düzen kaymadı (üst çubuk, harita, soru kutusu ve alt bölüm aynı boyutta; kart haritanın üstünde bir katman)',
-    JSON.stringify(await geometry()) === JSON.stringify(baseGeo),
-  );
-  const pin = await page.locator('.pin:not([hidden])').boundingBox();
-  check(
-    'Seçilen noktada yer iğnesi var',
-    !!pin && Math.abs(pin.x + pin.width / 2 - germany.x) < 3 && Math.abs(pin.y + pin.height / 2 - germany.y) < 3,
-  );
-  await page.screenshot({ path: join(OUT, '02-almanya-1942.png') });
-
-  /* ---- 2. The Soviet Union */
-  console.log("\n2. Sovyetler Birliği'nde bir nokta");
-  // the info card covers that corner of the map while the German place is open: it is closed (✕) before the next click
-  await page.click('[data-testid=place-close]');
-  await settle(400);
-  check(
-    'Karttaki ✕ kartı kapatır ve yer seçimini kaldırır; harita yerinde',
-    (await text('[data-testid=title-main]')) === 'Dünya' && sameCamera(baseCam, await camera()),
-  );
-  check(
-    'Seçim kalkınca dünya olayları haritaya aynı kümeyle döner',
-    JSON.stringify(await markerIds()) === JSON.stringify(markersBefore),
-  );
-  const soviet = await pixelOf(...SOVIET);
-  await page.mouse.click(soviet.x, soviet.y);
-  await page.waitForFunction(
-    () => document.querySelector('[data-testid=title-main]').textContent.includes('Sovyetler'),
-    null,
-    { timeout: 8000 },
-  );
-  await settle(600);
-  const t2 = (await text('[data-testid=title-main]')).trim();
-  check('Başlık: Sovyetler Birliği', t2 === 'Sovyetler Birliği', t2);
-  const hl2 = await page.evaluate(() => JSON.stringify(window.__ayni.map.getFilter('polity-selected-line')));
-  check('Sovyetler Birliği poligonu vurgulandı', hl2.includes('union-of-soviet-socialist-republics'));
-  const tl2 = await page.$$eval('.tl-ev', (els) => els.map((e) => e.dataset.id));
-  const sovietIds = allEvents.filter((e) => e.parties.includes('union-of-soviet-socialist-republics')).map((e) => e.id);
-  check(
-    'Çizelgede yalnızca Sovyet olayları var',
-    tl2.length >= 2 && tl2.every((id) => sovietIds.includes(id)),
-    tl2.join(', '),
-  );
-  const cam2 = await camera();
-  check('Harita HAREKET ETMEDİ (Sovyetler tıklaması)', sameCamera(baseCam, cam2));
-  check('Düzen kaymadı', JSON.stringify(await geometry()) === JSON.stringify(baseGeo));
-  check('Sovyetler’de de dünya olayları haritada yok (anlatıcı seçili yer)', (await markerIds()).length === 0);
-  await page.screenshot({ path: join(OUT, '03-sovyetler-1942.png') });
-
-  /* ---- 3. range 1938–1942 */
-  console.log('\n3. Aralık 1938–1942');
-  await setRange(1938, 1942);
-  const range3 = await page.evaluate(() => window.__ayni.store.state.range);
-  check('Aralık 1938–1942', range3.from === 1938 && range3.to === 1942);
-  check('Sınır yılı aralığın ortası (1940)', (await text('[data-testid=title-year]')) === '1940');
-  const expected = expectedMapEvents(allEvents, 1938, 1942).sort();
-  const actual = await page.evaluate(() =>
-    window.__ayni
-      .view()
-      .mapEvents.map((e) => e.id)
-      .sort(),
-  );
-  check(
-    'Haritanın olay kümesi, aralığa göre hesaplanan kümeyle birebir aynı',
-    JSON.stringify(expected) === JSON.stringify(actual),
-    `${actual.length} olay`,
-  );
-  check(
-    'Münih Antlaşması (1938) ve Fransa Muharebesi (1940) kümede',
-    actual.includes('munih-antlasmasi-1938') && actual.includes('fransa-muharebesi-1940'),
-  );
-  check(
-    'Aralık dışı olaylar (Normandiya 1944, Hiroşima 1945) yok',
-    !actual.includes('normandiya-1944') && !actual.includes('hirosima-1945'),
-  );
-  check('Yer seçiliyken aralık değişince de haritada dünya olayı işaretçisi yok', (await markerIds()).length === 0);
-  const listIds = await page.$$eval('.evlist .row', (els) => els.map((e) => e.dataset.id).sort());
-  check(
-    'Paneldeki "başka yerlerde" listesi aynı küme',
-    JSON.stringify(listIds) === JSON.stringify(expected.filter((id) => !sovietIds.includes(id)).sort()),
-    `${listIds.length} satır`,
-  );
-  check(
-    'Seçili yer (Sovyetler Birliği) korundu',
-    (await text('[data-testid=title-main]')).trim() === 'Sovyetler Birliği',
-  );
-  const cam3 = await camera();
-  check('Harita HAREKET ETMEDİ (aralık değişimi)', sameCamera(baseCam, cam3));
-  await page.screenshot({ path: join(OUT, '04-aralik-1938-1942.png') });
-
-  /* ---- 4. markers and timeline nodes */
-  console.log('\n4. İşaretçi ve çizelge tıklamaları');
-  // the world's events are on the map when no place is selected: the place is let go of first
-  await page.click('[data-testid=place-close]');
-  await settle(500);
-  const visible = await markerIds();
-  check(
-    'Yer bırakılınca görünen her işaretçi aralığın içinde ve dünya olayları geri geldi',
-    visible.length >= 5 && visible.every((id) => expected.includes(id)),
-    `${visible.length} görünür`,
-  );
-  // the biggest events of the range come first: one of them is on the map whatever the thinning of a crowded Europe leaves
-  const pickedId = ['barbarossa-1941', 'polonya-isgali-1939', 'fransa-muharebesi-1940'].find((id) =>
-    visible.includes(id),
-  );
-  const picked = await page.evaluate((id) => {
-    const ev = id ? window.__ayni.data.eventsById.get(id) : null;
-    return ev ? { title: ev.title, dateLabel: ev.dateLabel } : null;
-  }, pickedId);
-  const marker = page.locator(`.evt[data-id="${pickedId}"]`);
-  check(
-    'Büyük bir savaş olayının işaretçisi haritada görünür (Barbarossa, Polonya’nın işgali ya da Fransa Muharebesi)',
-    !!picked && (await marker.count()) === 1 && !(await marker.evaluate((el) => el.classList.contains('is-hidden'))),
-    String(pickedId),
-  );
-  await marker.click();
-  await settle(500);
-  check(
-    'İşaretçi tıklaması olayı bilgi panelinde açar',
-    !!picked && (await text('[data-testid=event-title]')).trim() === picked.title,
-    picked?.title ?? '',
-  );
-  check(
-    'Olay kartı tarihi Türkçe (ay adıyla, veriden gelen biçimde)',
-    !!picked &&
-      (await text('[data-testid=event-date]')).includes(picked.dateLabel) &&
-      /(Ocak|Şubat|Mart|Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül|Ekim|Kasım|Aralık) 19(3\d|4\d)/.test(picked.dateLabel),
-    picked?.dateLabel ?? '',
-  );
-  check('İşaretçi tıklaması da haritayı oynatmadı', sameCamera(baseCam, await camera()));
-  check(
-    'İşaretçi tıklaması yer seçmedi (başlık “Dünya” kaldı)',
-    (await text('[data-testid=title-main]')).trim() === 'Dünya',
-  );
-  await page.screenshot({ path: join(OUT, '05-olay-detayi.png') });
-
-  // Select Germany again, then a timeline dot
-  const germany2 = await pixelOf(...GERMANY);
-  await page.mouse.click(germany2.x, germany2.y);
-  await settle(600);
-  check(
-    'Aralık 1938–1942 iken Almanya → Nazi Almanyası',
-    (await text('[data-testid=title-main]')).trim() === 'Nazi Almanyası',
-  );
-
-  // A dot on the timeline opens its event (a dot of the event that is open already would close it: nothing is open now).
-  // When the event is already in sight the map stays exactly where it is.
-  await page.evaluate(() => window.__ayni.store.selectEvent(null));
-  await settle(300);
-  const sighted = await page.evaluate(() => {
-    const vm = window.__ayni.view();
-    const m = window.__ayni.map;
-    const box = document.querySelector('#map').getBoundingClientRect();
-    const covered = [
-      ...document.querySelectorAll(
-        '.map-zoom, .legend, .map-stats:not([hidden]), [data-avoid]:not(.foot-guard):not([hidden])',
-      ),
-    ].map((el) => el.getBoundingClientRect());
-    const ev = vm.places[0].timeline.find((e) => {
-      const p = m.project([e.location.lon, e.location.lat]);
-      const x = box.left + p.x;
-      const y = box.top + p.y;
-      return (
-        p.x > 80 &&
-        p.x < box.width - 90 &&
-        p.y > 70 &&
-        p.y < box.height - 60 &&
-        !covered.some((r) => x > r.left - 20 && x < r.right + 20 && y > r.top - 20 && y < r.bottom + 20)
-      );
-    });
-    return ev ? ev.id : null;
-  });
-  await page.locator(`.tl-ev[data-id="${sighted}"]`).click();
-  await settle(700);
-  const evId = await page.evaluate(() => window.__ayni.store.state.selectedEventId);
-  check('Çizelge noktası tıklaması olayı açar', evId === sighted, String(sighted));
-  check('Zaten görünen bir olayı çizelgeden açmak haritayı oynatmaz', sameCamera(baseCam, await camera()));
-
-  // A local event (importance < 3) is not in the map's own set. Opened from the timeline it is drawn anyway and stays visible.
-  const local = await page.evaluate(() => {
-    const vm = window.__ayni.view();
-    const ev = window.__ayni.data.events.find(
-      (e) => e.importance < 3 && vm.places[0].timeline.some((t) => t.id === e.id),
+    /* ---- 0. initial state */
+    section('0. Açılış');
+    check('Başlık "Dünya" ve seçili yer yok', (await text('[data-testid=title-main]')) === 'Dünya');
+    check('Çizelge "yer seçilmedi" durumunda', (await text('[data-testid=timeline-name]')).includes('seçilmedi'));
+    check(
+      'Uygulama savaş yıllarında açılır: aralık 1939–1945, haritadaki sınırlar 1942’nin',
+      JSON.stringify(await page.evaluate(() => window.__ayni.store.state.range)) === '{"from":1939,"to":1945}' &&
+        (await text('[data-testid=title-year]')) === '1942',
     );
-    return ev ? { id: ev.id } : null;
-  });
-  check('Nazi Almanyası çizelgesinde yerel (önem < 3) bir olay var (Anne Frank, 1942)', !!local, local?.id ?? '');
-  if (local) {
-    const setBefore = await page.evaluate(() =>
-      JSON.stringify(
-        window.__ayni
-          .view()
-          .mapEvents.map((e) => e.id)
-          .sort(),
-      ),
+    check(
+      'Açılıştan sonra başlıkta “yükleniyor…” kalmaz: 1942’nin sınırları haritada',
+      (await page.evaluate(() => window.__ayni.bordersReady())) &&
+        (await page.locator('[data-testid=borders-loading]').count()) === 0,
     );
-    await page.locator(`.tl-ev[data-id="${local.id}"]`).click();
-    await settle(3300); // an event out of sight is eased into view, which takes up to ~2.6 s
-    const st = await page.evaluate((id) => {
-      const el = document.querySelector(`.evt[data-id="${id}"]`);
-      const ev = window.__ayni.data.eventsById.get(id);
-      const pt = window.__ayni.map.project([ev.location.lon, ev.location.lat]);
-      const box = document.querySelector('#map').getBoundingClientRect();
+    await shot(page, '01-acilis.png');
+    // the introduction is a small card over the right of the map; the reader closes it with its cross and it stays closed
+    await page.click('[data-testid=intro-close]');
+    await settle(300);
+    check(
+      'Tanıtım kartı ✕ ile kapanır (sağ taraf boşalır)',
+      (await page.locator('.card-host').isHidden()) || !(await page.locator('[data-testid=intro-card]').isVisible()),
+    );
+
+    /* ---- 1. 1942 + Germany */
+    section("1. 1940–1944 aralığı (sınır yılı 1942), Almanya'da bir nokta");
+    // (the place timeline shows the selected range and nothing beyond it: the war's first and last year are left out)
+    await setRange(1940, 1944);
+    check(
+      'Aralık 1940–1944',
+      JSON.stringify(await page.evaluate(() => window.__ayni.store.state.range)) === '{"from":1940,"to":1944}',
+    );
+    check('Haritadaki sınır yılı 1942', (await text('[data-testid=title-year]')) === '1942');
+
+    let baseCam = await camera();
+    const baseGeo = await geometry();
+    const markersBefore = await markerIds();
+    const mapEventsBefore = await page.evaluate(() =>
+      window.__ayni
+        .view()
+        .mapEvents.map((e) => e.id)
+        .sort(),
+    );
+
+    const germany = await pixelOf(...GERMANY); // (the pin and the clicks below are measured from this point)
+    await page.mouse.click(germany.x, germany.y);
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid=title-main]').textContent.trim() !== 'Dünya',
+      null,
+      { timeout: 8000 },
+    );
+    await settle(600);
+
+    const t1 = (await text('[data-testid=title-main]')).trim();
+    check('Başlık: Nazi Almanyası', t1 === 'Nazi Almanyası', t1);
+    check(
+      'Bilgi panelinde yer kartı Nazi Almanyası',
+      (await text('[data-testid=place-title]')).trim() === 'Nazi Almanyası',
+    );
+    const hl = await page.evaluate(() => {
+      const m = window.__ayni.map;
       return {
-        drawn: !!el && !el.classList.contains('is-hidden'),
-        selected: !!el && el.classList.contains('is-selected'),
-        inMapSet: window.__ayni.view().mapEvents.some((e) => e.id === id),
-        inView: pt.x >= 0 && pt.y >= 0 && pt.x <= box.width && pt.y <= box.height,
+        filter: JSON.stringify(m.getFilter('polity-selected-line')),
+        drawn: m.queryRenderedFeatures({ layers: ['polity-selected-line'] }).length,
       };
-    }, local.id);
+    });
     check(
-      'Haritanın kendi kümesinde olmayan yerel olay, çizelgeden açılınca işaretçiyle çizilir ve seçili görünür',
-      st.drawn && st.selected && !st.inMapSet,
-      local.id,
+      'Nazi Almanyası poligonu vurgu katmanında çiziliyor',
+      hl.filter.includes('nazi-germany') && hl.drawn > 0,
+      `${hl.drawn} parça`,
     );
-    check('Yerel olayın yeri görünüm içinde', st.inView);
     check(
-      'Haritanın olay kümesi (yalnızca zaman aralığına bağlı) bundan etkilenmez',
-      setBefore ===
-        (await page.evaluate(() =>
+      'Zaman çizelgesi başlığı Nazi Almanyası',
+      (await text('[data-testid=timeline-name]')).trim() === 'Nazi Almanyası',
+    );
+    const tl1 = await page.$$eval('.tl-ev', (els) => els.map((e) => e.dataset.id));
+    const germanIds = allEvents.filter((e) => e.parties.includes('nazi-germany')).map((e) => e.id);
+    check(
+      'Çizelgede Alman olayları var',
+      tl1.length >= 3 && tl1.every((id) => germanIds.includes(id)),
+      `${tl1.length} olay: ${tl1.join(', ')}`,
+    );
+    check('Aralıktaki Alman olayı (Stalingrad, 1942) çizelgede', tl1.includes('stalingrad-1942'));
+    check(
+      'Çizelgedeki her olay seçili aralıkla (1940–1944) kesişiyor: aralığın dışından olay yok',
+      tl1.every((id) => {
+        const e = allEvents.find((x) => x.id === id);
+        return yearOf(e.date) <= 1944 && endYearOf(e.date) >= 1940;
+      }),
+    );
+    check(
+      'Aralığın hemen dışındaki olaylar çizelgede yok: Polonya’nın işgali (1939), Berlin Muharebesi (1945)',
+      !tl1.includes('polonya-isgali-1939') && !tl1.includes('berlin-muharebesi-1945'),
+    );
+    check('Küresel (Almanya dışı) olay çizelgede yok', !tl1.includes('pearl-harbor-1941'));
+    const cam1 = await camera();
+    check('Harita HAREKET ETMEDİ (merkez, yakınlaştırma, açı)', sameCamera(baseCam, cam1), JSON.stringify(cam1));
+    check(
+      'Yer seçilince dünya olayları haritadan çekilir (anlatıcı seçili yer; hiçbir şey seçili değilken işaretçiler vardı)',
+      markersBefore.length >= 5 && (await markerIds()).length === 0,
+      `${markersBefore.length} → ${(await markerIds()).length} işaretçi`,
+    );
+    check(
+      'Haritanın olay kümesi (veri) yerden bağımsız aynı; yalnızca çizilip çizilmemesi anlatıcıya bağlı',
+      JSON.stringify(
+        await page.evaluate(() =>
+          window.__ayni
+            .view()
+            .mapEvents.map((e) => e.id)
+            .sort(),
+        ),
+      ) === JSON.stringify(mapEventsBefore),
+    );
+    check(
+      'Düzen kaymadı (üst çubuk, harita, soru kutusu ve alt bölüm aynı boyutta; kart haritanın üstünde bir katman)',
+      JSON.stringify(await geometry()) === JSON.stringify(baseGeo),
+    );
+    const pin = await page.locator('.pin:not([hidden])').boundingBox();
+    check(
+      'Seçilen noktada yer iğnesi var',
+      !!pin && Math.abs(pin.x + pin.width / 2 - germany.x) < 3 && Math.abs(pin.y + pin.height / 2 - germany.y) < 3,
+    );
+    await shot(page, '02-almanya-1942.png');
+
+    /* ---- 2. The Soviet Union */
+    section("2. Sovyetler Birliği'nde bir nokta");
+    // the info card covers that corner of the map while the German place is open: it is closed (✕) before the next click
+    await page.click('[data-testid=place-close]');
+    await settle(400);
+    check(
+      'Karttaki ✕ kartı kapatır ve yer seçimini kaldırır; harita yerinde',
+      (await text('[data-testid=title-main]')) === 'Dünya' && sameCamera(baseCam, await camera()),
+    );
+    check(
+      'Seçim kalkınca dünya olayları haritaya aynı kümeyle döner',
+      JSON.stringify(await markerIds()) === JSON.stringify(markersBefore),
+    );
+    const soviet = await pixelOf(...SOVIET);
+    await page.mouse.click(soviet.x, soviet.y);
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid=title-main]').textContent.includes('Sovyetler'),
+      null,
+      { timeout: 8000 },
+    );
+    await settle(600);
+    const t2 = (await text('[data-testid=title-main]')).trim();
+    check('Başlık: Sovyetler Birliği', t2 === 'Sovyetler Birliği', t2);
+    const hl2 = await page.evaluate(() => JSON.stringify(window.__ayni.map.getFilter('polity-selected-line')));
+    check('Sovyetler Birliği poligonu vurgulandı', hl2.includes('union-of-soviet-socialist-republics'));
+    const tl2 = await page.$$eval('.tl-ev', (els) => els.map((e) => e.dataset.id));
+    const sovietIds = allEvents
+      .filter((e) => e.parties.includes('union-of-soviet-socialist-republics'))
+      .map((e) => e.id);
+    check(
+      'Çizelgede yalnızca Sovyet olayları var',
+      tl2.length >= 2 && tl2.every((id) => sovietIds.includes(id)),
+      tl2.join(', '),
+    );
+    const cam2 = await camera();
+    check('Harita HAREKET ETMEDİ (Sovyetler tıklaması)', sameCamera(baseCam, cam2));
+    check('Düzen kaymadı', JSON.stringify(await geometry()) === JSON.stringify(baseGeo));
+    check('Sovyetler’de de dünya olayları haritada yok (anlatıcı seçili yer)', (await markerIds()).length === 0);
+    await shot(page, '03-sovyetler-1942.png');
+
+    /* ---- 3. range 1938–1942 */
+    section('3. Aralık 1938–1942');
+    await setRange(1938, 1942);
+    const range3 = await page.evaluate(() => window.__ayni.store.state.range);
+    check('Aralık 1938–1942', range3.from === 1938 && range3.to === 1942);
+    check('Sınır yılı aralığın ortası (1940)', (await text('[data-testid=title-year]')) === '1940');
+    const expected = expectedMapEvents(allEvents, 1938, 1942).sort();
+    const actual = await page.evaluate(() =>
+      window.__ayni
+        .view()
+        .mapEvents.map((e) => e.id)
+        .sort(),
+    );
+    check(
+      'Haritanın olay kümesi, aralığa göre hesaplanan kümeyle birebir aynı',
+      JSON.stringify(expected) === JSON.stringify(actual),
+      `${actual.length} olay`,
+    );
+    check(
+      'Münih Antlaşması (1938) ve Fransa Muharebesi (1940) kümede',
+      actual.includes('munih-antlasmasi-1938') && actual.includes('fransa-muharebesi-1940'),
+    );
+    check(
+      'Aralık dışı olaylar (Normandiya 1944, Hiroşima 1945) yok',
+      !actual.includes('normandiya-1944') && !actual.includes('hirosima-1945'),
+    );
+    check('Yer seçiliyken aralık değişince de haritada dünya olayı işaretçisi yok', (await markerIds()).length === 0);
+    const listIds = await page.$$eval('.evlist .row', (els) => els.map((e) => e.dataset.id).sort());
+    check(
+      'Paneldeki "başka yerlerde" listesi aynı küme',
+      JSON.stringify(listIds) === JSON.stringify(expected.filter((id) => !sovietIds.includes(id)).sort()),
+      `${listIds.length} satır`,
+    );
+    check(
+      'Seçili yer (Sovyetler Birliği) korundu',
+      (await text('[data-testid=title-main]')).trim() === 'Sovyetler Birliği',
+    );
+    const cam3 = await camera();
+    check('Harita HAREKET ETMEDİ (aralık değişimi)', sameCamera(baseCam, cam3));
+    await shot(page, '04-aralik-1938-1942.png');
+
+    if (!SMOKE) {
+      /* ---- 4. markers and timeline nodes */
+      section('4. İşaretçi ve çizelge tıklamaları');
+      // the world's events are on the map when no place is selected: the place is let go of first
+      await page.click('[data-testid=place-close]');
+      await settle(500);
+      const visible = await markerIds();
+      check(
+        'Yer bırakılınca görünen her işaretçi aralığın içinde ve dünya olayları geri geldi',
+        visible.length >= 5 && visible.every((id) => expected.includes(id)),
+        `${visible.length} görünür`,
+      );
+      // the biggest events of the range come first: one of them is on the map whatever the thinning of a crowded Europe leaves
+      const pickedId = ['barbarossa-1941', 'polonya-isgali-1939', 'fransa-muharebesi-1940'].find((id) =>
+        visible.includes(id),
+      );
+      const picked = await page.evaluate((id) => {
+        const ev = id ? window.__ayni.data.eventsById.get(id) : null;
+        return ev ? { title: ev.title, dateLabel: ev.dateLabel } : null;
+      }, pickedId);
+      const marker = page.locator(`.evt[data-id="${pickedId}"]`);
+      check(
+        'Büyük bir savaş olayının işaretçisi haritada görünür (Barbarossa, Polonya’nın işgali ya da Fransa Muharebesi)',
+        !!picked &&
+          (await marker.count()) === 1 &&
+          !(await marker.evaluate((el) => el.classList.contains('is-hidden'))),
+        String(pickedId),
+      );
+      await marker.click();
+      await settle(500);
+      check(
+        'İşaretçi tıklaması olayı bilgi panelinde açar',
+        !!picked && (await text('[data-testid=event-title]')).trim() === picked.title,
+        picked?.title ?? '',
+      );
+      check(
+        'Olay kartı tarihi Türkçe (ay adıyla, veriden gelen biçimde)',
+        !!picked &&
+          (await text('[data-testid=event-date]')).includes(picked.dateLabel) &&
+          /(Ocak|Şubat|Mart|Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül|Ekim|Kasım|Aralık) 19(3\d|4\d)/.test(
+            picked.dateLabel,
+          ),
+        picked?.dateLabel ?? '',
+      );
+      check('İşaretçi tıklaması da haritayı oynatmadı', sameCamera(baseCam, await camera()));
+      check(
+        'İşaretçi tıklaması yer seçmedi (başlık “Dünya” kaldı)',
+        (await text('[data-testid=title-main]')).trim() === 'Dünya',
+      );
+      await shot(page, '05-olay-detayi.png');
+
+      // Select Germany again, then a timeline dot
+      const germany2 = await pixelOf(...GERMANY);
+      await page.mouse.click(germany2.x, germany2.y);
+      await settle(600);
+      check(
+        'Aralık 1938–1942 iken Almanya → Nazi Almanyası',
+        (await text('[data-testid=title-main]')).trim() === 'Nazi Almanyası',
+      );
+
+      // A dot on the timeline opens its event (a dot of the event that is open already would close it: nothing is open now).
+      // When the event is already in sight the map stays exactly where it is.
+      await page.evaluate(() => window.__ayni.store.selectEvent(null));
+      await settle(300);
+      const sighted = await page.evaluate(() => {
+        const vm = window.__ayni.view();
+        const m = window.__ayni.map;
+        const box = document.querySelector('#map').getBoundingClientRect();
+        const covered = [
+          ...document.querySelectorAll(
+            '.map-zoom, .legend, .map-stats:not([hidden]), [data-avoid]:not(.foot-guard):not([hidden])',
+          ),
+        ].map((el) => el.getBoundingClientRect());
+        const ev = vm.places[0].timeline.find((e) => {
+          const p = m.project([e.location.lon, e.location.lat]);
+          const x = box.left + p.x;
+          const y = box.top + p.y;
+          return (
+            p.x > 80 &&
+            p.x < box.width - 90 &&
+            p.y > 70 &&
+            p.y < box.height - 60 &&
+            !covered.some((r) => x > r.left - 20 && x < r.right + 20 && y > r.top - 20 && y < r.bottom + 20)
+          );
+        });
+        return ev ? ev.id : null;
+      });
+      await page.locator(`.tl-ev[data-id="${sighted}"]`).click();
+      await settle(700);
+      const evId = await page.evaluate(() => window.__ayni.store.state.selectedEventId);
+      check('Çizelge noktası tıklaması olayı açar', evId === sighted, String(sighted));
+      check('Zaten görünen bir olayı çizelgeden açmak haritayı oynatmaz', sameCamera(baseCam, await camera()));
+
+      // A local event (importance < 3) is not in the map's own set. Opened from the timeline it is drawn anyway and stays visible.
+      const local = await page.evaluate(() => {
+        const vm = window.__ayni.view();
+        const ev = window.__ayni.data.events.find(
+          (e) => e.importance < 3 && vm.places[0].timeline.some((t) => t.id === e.id),
+        );
+        return ev ? { id: ev.id } : null;
+      });
+      check('Nazi Almanyası çizelgesinde yerel (önem < 3) bir olay var (Anne Frank, 1942)', !!local, local?.id ?? '');
+      if (local) {
+        const setBefore = await page.evaluate(() =>
           JSON.stringify(
             window.__ayni
               .view()
               .mapEvents.map((e) => e.id)
               .sort(),
           ),
-        )),
-    );
-    baseCam = await camera(); // opening an event that was out of sight may legitimately have eased the map out
-  }
+        );
+        await page.locator(`.tl-ev[data-id="${local.id}"]`).click();
+        await cameraIdle(page); // an event out of sight is eased into view (up to ~2.6 s unless motion is reduced)
+        const st = await page.evaluate((id) => {
+          const el = document.querySelector(`.evt[data-id="${id}"]`);
+          const ev = window.__ayni.data.eventsById.get(id);
+          const pt = window.__ayni.map.project([ev.location.lon, ev.location.lat]);
+          const box = document.querySelector('#map').getBoundingClientRect();
+          return {
+            drawn: !!el && !el.classList.contains('is-hidden'),
+            selected: !!el && el.classList.contains('is-selected'),
+            inMapSet: window.__ayni.view().mapEvents.some((e) => e.id === id),
+            inView: pt.x >= 0 && pt.y >= 0 && pt.x <= box.width && pt.y <= box.height,
+          };
+        }, local.id);
+        check(
+          'Haritanın kendi kümesinde olmayan yerel olay, çizelgeden açılınca işaretçiyle çizilir ve seçili görünür',
+          st.drawn && st.selected && !st.inMapSet,
+          local.id,
+        );
+        check('Yerel olayın yeri görünüm içinde', st.inView);
+        check(
+          'Haritanın olay kümesi (yalnızca zaman aralığına bağlı) bundan etkilenmez',
+          setBefore ===
+            (await page.evaluate(() =>
+              JSON.stringify(
+                window.__ayni
+                  .view()
+                  .mapEvents.map((e) => e.id)
+                  .sort(),
+              ),
+            )),
+        );
+        baseCam = await camera(); // opening an event that was out of sight may legitimately have eased the map out
+      }
 
-  // sea click
-  const sea = await pixelOf(-40, 30);
-  const before = await page.evaluate(() => JSON.stringify(window.__ayni.store.state.places));
-  await page.mouse.click(sea.x, sea.y);
-  await settle(400);
-  check(
-    'Denize tıklamak seçimi değiştirmez, harita oynamaz',
-    before === (await page.evaluate(() => JSON.stringify(window.__ayni.store.state.places))) &&
-      sameCamera(baseCam, await camera()),
-  );
-  check('Deniz tıklaması kullanıcıya açıklanır', await page.locator('#toast').isVisible());
+      // sea click
+      const sea = await pixelOf(-40, 30);
+      const before = await page.evaluate(() => JSON.stringify(window.__ayni.store.state.places));
+      await page.mouse.click(sea.x, sea.y);
+      await settle(400);
+      check(
+        'Denize tıklamak seçimi değiştirmez, harita oynamaz',
+        before === (await page.evaluate(() => JSON.stringify(window.__ayni.store.state.places))) &&
+          sameCamera(baseCam, await camera()),
+      );
+      check('Deniz tıklaması kullanıcıya açıklanır', await page.locator('#toast').isVisible());
 
-  /* ---- 5. time controls: the ruler is the whole control */
-  console.log('\n5. Zaman denetimi (yalnızca cetvel)');
-  const removed = await page.evaluate(() => ({
-    inputs: document.querySelectorAll('.dock input, .year-input').length,
-    chips: document.querySelectorAll('.dock .chip, .dock .presets').length,
-    row: document.querySelectorAll('.dock-controls, .dock-block, .dock-hint, .dock-funnel, .ruler-bins').length,
-    words: /Haritadaki sınırlar|Uzunluk|Başlangıç yılı\s*–|1 yıl|5 yıl|25 yıl|100 yıl/.test(
-      document.querySelector('.dock').innerText,
-    ),
-  }));
-  check(
-    'Kontrol satırı kalktı: yıl kutuları, 1/5/25/100 yıl düğmeleri, "Haritadaki sınırlar", ipucu satırı',
-    removed.inputs === 0 && removed.chips === 0 && removed.row === 0 && !removed.words,
-    JSON.stringify(removed),
-  );
-  await setRange(1940, 1964);
-  const r5 = await page.evaluate(() => window.__ayni.store.state.range);
-  check('Aralık cetvelin okunuşunda görünür (1940–1964)', (await text('[data-testid=range-readout]')) === '1940–1964');
-  await page.locator('[data-testid=handle-end]').focus();
-  await page.keyboard.press('ArrowRight');
-  await settle(300);
-  const r6 = await page.evaluate(() => window.__ayni.store.state.range);
-  check('Klavye: bitiş tutamacı +1 yıl', r6.to === r5.to + 1, JSON.stringify(r6));
-  // drag the brush body
-  const brush = await page.locator('[data-testid=brush]').boundingBox();
-  // grab the brush a little inside its left edge: its middle belongs to the "borders year" marker
-  const grabX = brush.x + 24;
-  await page.mouse.move(grabX, brush.y + brush.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(grabX + 120, brush.y + brush.height / 2, { steps: 6 });
-  await page.mouse.up();
-  await settle(500);
-  const r7 = await page.evaluate(() => window.__ayni.store.state.range);
-  check(
-    'Cetvelde aralık çubuğunu sürüklemek aralığı kaydırır, uzunluk korunur',
-    r7.from > r6.from && r7.to - r7.from === r6.to - r6.from,
-    JSON.stringify(r7),
-  );
-  // a drag on the brush's edge resizes the range
-  const edge = await page.locator('[data-testid=handle-end]').boundingBox();
-  await page.mouse.move(edge.x + 12, edge.y + 8);
-  await page.mouse.down();
-  await page.mouse.move(edge.x + 12 + 60, edge.y + 8, { steps: 5 });
-  await page.mouse.up();
-  await settle(400);
-  const r8 = await page.evaluate(() => window.__ayni.store.state.range);
-  check(
-    'Çubuğun kenarını sürüklemek aralığı uzatır, başlangıç yerinde kalır',
-    r8.from === r7.from && r8.to > r7.to,
-    JSON.stringify(r8),
-  );
-  // the "borders year" marker moves the displayed year inside the range, without touching the range
-  const beforeYear = await text('[data-testid=title-year]');
-  const rangeBefore = await page.evaluate(() => JSON.stringify(window.__ayni.store.state.range));
-  const cur = await page.locator('[data-testid=cursor]').boundingBox();
-  await page.mouse.move(cur.x + cur.width / 2, cur.y + 8);
-  await page.mouse.down();
-  await page.mouse.move(cur.x + cur.width / 2 + 40, cur.y + 8, { steps: 5 });
-  await page.mouse.up();
-  await settle(500);
-  check(
-    'İşareti sürüklemek haritanın sınır yılını değiştirir (başlıktaki not güncellenir), aralığa dokunmaz',
-    (await text('[data-testid=title-year]')) !== beforeYear &&
-      rangeBefore === (await page.evaluate(() => JSON.stringify(window.__ayni.store.state.range))),
-    `${beforeYear} → ${await text('[data-testid=title-year]')}`,
-  );
-  check('Zaman denetimleri haritayı oynatmadı', sameCamera(baseCam, await camera()));
-  check(
-    'Adres çubuğu durumu taşır (#t=…&p=…)',
-    await page.evaluate(() => /t=\d{4}-\d{4}/.test(location.hash) && /p=/.test(location.hash)),
-  );
-
-  // Escape closes the event first, then the place
-  await page.keyboard.press('Escape');
-  await settle(300);
-  const afterFirst = await page.evaluate(() => ({
-    e: window.__ayni.store.state.selectedEventId,
-    p: window.__ayni.store.state.places.length,
-  }));
-  await page.keyboard.press('Escape');
-  await settle(400);
-  const afterSecond = await page.evaluate(() => ({
-    e: window.__ayni.store.state.selectedEventId,
-    p: window.__ayni.store.state.places.length,
-  }));
-  check(
-    'Esc önce olayı, sonra yeri kapatır',
-    afterFirst.e === null &&
-      afterFirst.p === 1 &&
-      afterSecond.p === 0 &&
-      (await text('[data-testid=title-main]')) === 'Dünya',
-  );
-  check('Seçimi kaldırmak haritayı oynatmadı', sameCamera(baseCam, await camera()));
-
-  /* ---- 6. sanity: a real drag DOES move the camera (so "did not move" is meaningful) */
-  console.log('\n6. Duyarlılık denetimi');
-  const mid = await pixelOf(60, 40);
-  await page.mouse.move(mid.x, mid.y);
-  await page.mouse.down();
-  await page.mouse.move(mid.x - 140, mid.y + 40, { steps: 8 });
-  await page.mouse.up();
-  await settle(700);
-  check('Kullanıcı sürüklemesi haritayı gerçekten hareket ettirir', !sameCamera(baseCam, await camera()));
-  await page.mouse.wheel(0, -300);
-  await settle(900);
-  check('Fare tekerleği yakınlaştırır', (await camera()).zoom > baseCam.zoom);
-  await page.screenshot({ path: join(OUT, '06-surukleme-sonrasi.png') });
-
-  /* ---- 7. keyboard, accessibility and robustness (each on a fresh page load) */
-  console.log('\n7. Klavye, erişilebilirlik ve sağlamlık');
-  const open = async (hash = '', viewport = { width: 1440, height: 900 }, extra = {}) => {
-    const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, ...extra });
-    const p = await ctx.newPage();
-    const errs = [];
-    p.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`));
-    p.on('console', (m) => {
-      if (m.type() === 'error') errs.push(`console.error: ${m.text()}`);
-    });
-    await p.goto(server.url + hash);
-    await p.waitForFunction(() => window.__ayni, null, { timeout: 60000 });
-    await p.waitForSelector('#loading', { state: 'detached', timeout: 120000 });
-    await bordersSettled(p);
-    await p.waitForTimeout(900);
-    return { ctx, p, errs };
-  };
-  const cameraOf = (p) =>
-    p.evaluate(() => {
-      const m = window.__ayni.map;
-      const c = m.getCenter();
-      return { lng: c.lng, lat: c.lat, zoom: m.getZoom(), bearing: m.getBearing(), pitch: m.getPitch() };
-    });
-
-  // 7a. a malformed or truncated link must not brick start-up
-  {
-    const { ctx, p, errs } = await open('#t=1942&p=10,100&e=bu-olay-yok&v=1//2&c=');
-    const st = await p.evaluate(() => ({ ...window.__ayni.store.state }));
-    check(
-      'Bozuk bir bağlantı (p=10,100, bilinmeyen e=, v=1//2) uygulamayı çökertmez',
-      st.places.length === 0 && st.selectedEventId === null && st.range.from === 1942 && errs.length === 0,
-      errs[0] ?? '',
-    );
-    await ctx.close();
-  }
-  {
-    const { ctx, p } = await open('#t=1942&p=9.2,');
-    check(
-      'Yarım kalmış p= sahte bir yer seçmez',
-      (await p.evaluate(() => window.__ayni.store.state.places.length)) === 0,
-    );
-    await ctx.close();
-  }
-
-  // 7b. the camera enters the link only after the user has moved the map themselves
-  {
-    const { ctx, p } = await open('#t=1940-1944');
-    await p.waitForTimeout(500);
-    const before = await p.evaluate(() => location.hash);
-    const r = await p.locator('#map').boundingBox();
-    await p.mouse.move(r.x + r.width / 2, r.y + r.height / 2);
-    await p.mouse.down();
-    await p.mouse.move(r.x + r.width / 2 - 90, r.y + r.height / 2 + 20, { steps: 6 });
-    await p.mouse.up();
-    await p.waitForTimeout(900);
-    const after = await p.evaluate(() => location.hash);
-    check(
-      'Adres çubuğu kamerayı yalnızca kullanıcı haritayı oynattıktan sonra taşır',
-      !before.includes('v=') && after.includes('v='),
-      `${before} → ${after}`,
-    );
-    await ctx.close();
-  }
-
-  // 7c. markers: one Tab stop, arrow keys, hidden ones are unreachable, the tooltip survives pointer travel
-  {
-    const { ctx, p, errs } = await open('#t=1940-1944');
-    const stops = await p.evaluate(() => [...document.querySelectorAll('.evt')].filter((e) => e.tabIndex === 0).length);
-    const hiddenFocusable = await p.evaluate(
-      () =>
-        [...document.querySelectorAll('.evt.is-hidden')].filter(
-          (e) => getComputedStyle(e).visibility !== 'hidden' || e.tabIndex === 0,
-        ).length,
-    );
-    check('Haritadaki işaretçiler tek bir Tab durağıdır', stops === 1, `${stops} durak`);
-    check('Gizlenen işaretçiler klavyeyle ve ekran okuyucuyla erişilemez', hiddenFocusable === 0);
-
-    const cam0 = await cameraOf(p);
-    await p.locator('.evt[tabindex="0"]').focus();
-    const first = await p.evaluate(() => document.activeElement?.dataset.id);
-    await p.keyboard.press('ArrowRight');
-    await p.keyboard.press('ArrowRight');
-    const second = await p.evaluate(() => document.activeElement?.dataset.id);
-    check('Ok tuşları işaretçiler arasında gezinir', !!second && second !== first, `${first} → ${second}`);
-    check('Ok tuşları haritayı kaydırmaz', sameCamera(cam0, await cameraOf(p)));
-    check(
-      'Odaklanan işaretçinin ipucu görünür',
-      await p.evaluate(
-        () => !document.querySelector('.tip').hidden && document.querySelector('.tip').textContent.length > 3,
-      ),
-    );
-    await p.keyboard.press('Enter');
-    await p.waitForTimeout(500);
-    const focusedTitle = await p.evaluate(() => document.activeElement?.getAttribute('data-testid'));
-    check('Klavyeyle seçilen olayın kartına odak gider', focusedTitle === 'event-title', String(focusedTitle));
-    check('Klavyeyle olay seçmek haritayı oynatmaz', sameCamera(cam0, await cameraOf(p)));
-    await p.keyboard.press('Escape');
-    await p.waitForTimeout(300);
-    check('Esc olay kartını kapatır', (await p.evaluate(() => window.__ayni.store.state.selectedEventId)) === null);
-
-    // the pointer travelling from the map onto a marker keeps that marker's tooltip
-    const target = await p.evaluate(() => {
-      const el = document.querySelector('.evt:not(.is-hidden)');
-      const r = el.querySelector('.evt-mark').getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: el.dataset.id };
-    });
-    await p.mouse.move(target.x - 90, target.y + 70);
-    await p.waitForTimeout(250);
-    await p.mouse.move(target.x, target.y, { steps: 8 });
-    await p.waitForTimeout(400);
-    const tipShown = await p.evaluate(() => {
-      const t = document.querySelector('.tip');
-      return !t.hidden && t.querySelector('.tip-event') !== null;
-    });
-    check('İşaretçinin üstüne gelince ipucu kalıcı görünür (harita çıkışı onu gizlemez)', tipShown, target.id);
-    check('Sayfa sürümünde konsol hatası yok (7)', errs.length === 0, errs[0] ?? '');
-    await ctx.close();
-  }
-
-  // 7c2. timeline dots carry no permanent label: hovering one names it, and removing the hovered one clears the name
-  {
-    const { ctx, p, errs } = await open('#t=1940-1944&p=9.2,48.8');
-    check(
-      'Çizelgede kalıcı olay etiketi yok (seçili olay yokken)',
-      (await p.locator('.tl-label, .tl-tag').count()) === 0,
-    );
-    const dotEl = p.locator('.tl-ev:not(.is-context)').first();
-    const id = await dotEl.getAttribute('data-id');
-    const title = await p.evaluate((i) => window.__ayni.data.eventsById.get(i).title, id);
-    await dotEl.hover();
-    await p.waitForTimeout(500);
-    const shown = await p.evaluate((want) => {
-      const tip = document.querySelector('.tip');
-      return { text: tip.hidden ? '' : tip.textContent, hover: window.__ayni.store.state.hoverEventId === want };
-    }, id);
-    check(
-      'Noktanın üstüne gelince olayın adı görünür (ipucu) ve nokta vurgulanır',
-      shown.text.includes(title) && shown.hover,
-      title,
-    );
-    await p.keyboard.press('Escape'); // Esc dismisses hover content and, with nothing open, deselects the place
-    await p.mouse.move(5, 5);
-    await p.waitForTimeout(900);
-    check(
-      'Üzerinde durulan nokta kaldırılınca ipucu ve vurgu temizlenir',
-      await p.evaluate(() => document.querySelector('.tip').hidden && window.__ayni.store.state.hoverEventId === null),
-    );
-    check('Çizelge etkileşimlerinde konsol hatası yok', errs.length === 0, errs[0] ?? '');
-    await ctx.close();
-  }
-
-  // 7d. ruler: a click on empty track near an end slides the window, it never shrinks it
-  {
-    const { ctx, p } = await open('#t=1900-1999');
-    const track = await p.locator('.ruler-track').boundingBox();
-    await p.mouse.click(track.x + track.width * 0.985, track.y + track.height - 6);
-    await p.waitForTimeout(500);
-    const r = await p.evaluate(() => window.__ayni.store.state.range);
-    check(
-      'Cetvelde uca yakın boş yere tıklamak 100 yıllık pencereyi küçültmez',
-      r.to - r.from + 1 === 100 && r.to === 2000,
-      JSON.stringify(r),
-    );
-    await ctx.close();
-  }
-
-  // 7e. the ruler by keyboard: arrows slide the window, Shift moves by ten, the ends stop at the data
-  {
-    const { ctx, p } = await open('#t=1850-1900&p=9.2,48.8');
-    const range = () => p.evaluate(() => window.__ayni.store.state.range);
-    await p.locator('[data-testid=brush]').focus();
-    await p.keyboard.press('ArrowRight');
-    let r = await range();
-    check('Cetvel: → aralığı 1 yıl kaydırır, uzunluk korunur', r.from === 1851 && r.to === 1901, JSON.stringify(r));
-    await p.keyboard.press('Shift+ArrowRight');
-    r = await range();
-    check('Cetvel: Shift+→ aralığı 10 yıl kaydırır', r.from === 1861 && r.to === 1911, JSON.stringify(r));
-    await p.keyboard.press('End');
-    r = await range();
-    check(
-      'Cetvel: End aralığı verinin sonuna dayar, küçültmez',
-      r.to === 2000 && r.to - r.from === 50,
-      JSON.stringify(r),
-    );
-    await p.locator('[data-testid=handle-start]').focus();
-    await p.keyboard.press('Home');
-    r = await range();
-    check('Cetvel: başlangıç tutamacı + Home → 1800', r.from === 1800 && r.to === 2000, JSON.stringify(r));
-    check(
-      'Cetvelin dört kaydırıcısı ekran okuyucuya adlarıyla görünür',
-      (await p.locator('.dock [role=slider][aria-label]').count()) === 4,
-    );
-    await ctx.close();
-  }
-
-  // 7f. screen readers: no page-wide live region, one status line that says what changed
-  {
-    const { ctx, p } = await open('#t=1942');
-    check('Kök öğe canlı bölge değil', (await p.locator('#app').getAttribute('aria-live')) === null);
-    const germany = await p.evaluate(() => {
-      const pt = window.__ayni.map.project([9.2, 48.8]);
-      const r = document.querySelector('#map').getBoundingClientRect();
-      return { x: r.left + pt.x, y: r.top + pt.y };
-    });
-    await p.mouse.click(germany.x, germany.y);
-    await p.waitForTimeout(600);
-    check(
-      'Yer seçimi durum satırında duyurulur',
-      (await p.locator('#sr-status').innerText()).includes('Nazi Almanyası'),
-      await p.locator('#sr-status').innerText(),
-    );
-    await ctx.close();
-  }
-
-  // 7g. a mouse in a narrow window still zooms with the wheel; a pasted link replaces the view
-  {
-    const { ctx, p } = await open('#t=1942', { width: 860, height: 800 });
-    const z0 = (await cameraOf(p)).zoom;
-    const r = await p.locator('#map').boundingBox();
-    // (in a narrow window the info card is a sheet over the top of the map: the wheel is turned below it)
-    await p.mouse.move(r.x + r.width / 2, r.y + r.height * 0.62);
-    await p.mouse.wheel(0, -300);
-    await p.waitForTimeout(900);
-    check('Dar pencerede de fare tekerleği haritayı yakınlaştırır', (await cameraOf(p)).zoom > z0);
-    await p.evaluate(() => {
-      location.hash = '#t=1950';
-    });
-    await p.waitForTimeout(600);
-    const pasted = await p.evaluate(() => ({ from: window.__ayni.store.state.range.from, hash: location.hash }));
-    check('Aynı sekmeye yapıştırılan bağlantı görünümü değiştirir', pasted.from === 1950, JSON.stringify(pasted));
-    await ctx.close();
-  }
-
-  /* ---- 8. title above the map, no blue polities, the bottom area, one dot, the place pin, the legend */
-  console.log('\n8. Başlık, renkler, alt bölüm, işaretçiler, yer noktası, lejant');
-  {
-    const { ctx, p, errs } = await open('#t=1940-1944&p=9.2,48.8');
-    const toPx = (lon, lat) =>
-      p.evaluate(
-        ([lo, la]) => {
-          const q = window.__ayni.map.project([lo, la]);
-          const r = document.querySelector('#map').getBoundingClientRect();
-          return [r.left + q.x, r.top + q.y];
-        },
-        [lon, lat],
+      /* ---- 5. time controls: the ruler is the whole control */
+      section('5. Zaman denetimi (yalnızca cetvel)');
+      const removed = await page.evaluate(() => ({
+        inputs: document.querySelectorAll('.dock input, .year-input').length,
+        chips: document.querySelectorAll('.dock .chip, .dock .presets').length,
+        row: document.querySelectorAll('.dock-controls, .dock-block, .dock-hint, .dock-funnel, .ruler-bins').length,
+        words: /Haritadaki sınırlar|Uzunluk|Başlangıç yılı\s*–|1 yıl|5 yıl|25 yıl|100 yıl/.test(
+          document.querySelector('.dock').innerText,
+        ),
+      }));
+      check(
+        'Kontrol satırı kalktı: yıl kutuları, 1/5/25/100 yıl düğmeleri, "Haritadaki sınırlar", ipucu satırı',
+        removed.inputs === 0 && removed.chips === 0 && removed.row === 0 && !removed.words,
+        JSON.stringify(removed),
+      );
+      await setRange(1940, 1964);
+      const r5 = await page.evaluate(() => window.__ayni.store.state.range);
+      check(
+        'Aralık cetvelin okunuşunda görünür (1940–1964)',
+        (await text('[data-testid=range-readout]')) === '1940–1964',
+      );
+      await page.locator('[data-testid=handle-end]').focus();
+      await page.keyboard.press('ArrowRight');
+      await settle(300);
+      const r6 = await page.evaluate(() => window.__ayni.store.state.range);
+      check('Klavye: bitiş tutamacı +1 yıl', r6.to === r5.to + 1, JSON.stringify(r6));
+      // drag the brush body
+      const brush = await page.locator('[data-testid=brush]').boundingBox();
+      // grab the brush a little inside its left edge: its middle belongs to the "borders year" marker
+      const grabX = brush.x + 24;
+      await page.mouse.move(grabX, brush.y + brush.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(grabX + 120, brush.y + brush.height / 2, { steps: 6 });
+      await page.mouse.up();
+      await settle(500);
+      const r7 = await page.evaluate(() => window.__ayni.store.state.range);
+      check(
+        'Cetvelde aralık çubuğunu sürüklemek aralığı kaydırır, uzunluk korunur',
+        r7.from > r6.from && r7.to - r7.from === r6.to - r6.from,
+        JSON.stringify(r7),
+      );
+      // a drag on the brush's edge resizes the range
+      const edge = await page.locator('[data-testid=handle-end]').boundingBox();
+      await page.mouse.move(edge.x + 12, edge.y + 8);
+      await page.mouse.down();
+      await page.mouse.move(edge.x + 12 + 60, edge.y + 8, { steps: 5 });
+      await page.mouse.up();
+      await settle(400);
+      const r8 = await page.evaluate(() => window.__ayni.store.state.range);
+      check(
+        'Çubuğun kenarını sürüklemek aralığı uzatır, başlangıç yerinde kalır',
+        r8.from === r7.from && r8.to > r7.to,
+        JSON.stringify(r8),
+      );
+      // the "borders year" marker moves the displayed year inside the range, without touching the range
+      const beforeYear = await text('[data-testid=title-year]');
+      const rangeBefore = await page.evaluate(() => JSON.stringify(window.__ayni.store.state.range));
+      const cur = await page.locator('[data-testid=cursor]').boundingBox();
+      await page.mouse.move(cur.x + cur.width / 2, cur.y + 8);
+      await page.mouse.down();
+      await page.mouse.move(cur.x + cur.width / 2 + 40, cur.y + 8, { steps: 5 });
+      await page.mouse.up();
+      await settle(500);
+      check(
+        'İşareti sürüklemek haritanın sınır yılını değiştirir (başlıktaki not güncellenir), aralığa dokunmaz',
+        (await text('[data-testid=title-year]')) !== beforeYear &&
+          rangeBefore === (await page.evaluate(() => JSON.stringify(window.__ayni.store.state.range))),
+        `${beforeYear} → ${await text('[data-testid=title-year]')}`,
+      );
+      check('Zaman denetimleri haritayı oynatmadı', sameCamera(baseCam, await camera()));
+      check(
+        'Adres çubuğu durumu taşır (#t=…&p=…)',
+        await page.evaluate(() => /t=\d{4}-\d{4}/.test(location.hash) && /p=/.test(location.hash)),
       );
 
-    // -- the place title
-    const head = await p.evaluate(() => {
-      const bar = document.querySelector('.map-head');
-      const title = document.querySelector('[data-testid=title-main]');
-      const mapEl = document.querySelector('.map-wrap');
-      const b = bar.getBoundingClientRect();
-      const t = title.getBoundingClientRect();
-      const m = mapEl.getBoundingClientRect();
-      const cs = getComputedStyle(title);
-      return {
-        size: parseFloat(cs.fontSize),
-        family: cs.fontFamily,
-        text: bar.innerText.replace(/\s+/g, ' ').trim(),
-        eyebrow: !!bar.querySelector('.eyebrow'),
-        insideMap: !!mapEl.querySelector('.title-main, .map-title, .eyebrow'),
-        above: t.bottom <= m.top + 0.5 && b.bottom <= m.top + 0.5,
-      };
-    });
-    check(
-      'Başlık haritanın üstündeki şeritte; harita alanının içinde değil, yani hiçbir sınırı ya da işaretçiyi örtemez',
-      head.above && !head.insideMap,
-    );
-    check('Başlık belirgin biçimde küçüldü (öncesi 42 px)', head.size <= 26 && head.size >= 18, `${head.size} px`);
-    check('"SEÇİLİ YER" etiketi yok', !/seçili yer/i.test(head.text) && !head.eyebrow, head.text);
-    check('Başlığın yazı tipi aynı kaldı (Newsreader, serif)', /Newsreader/.test(head.family), head.family);
-    check('"1942 yılının sınırları" notu başlığın yanında', head.text.includes('1942 yılının sınırları'), head.text);
-    await p.screenshot({ path: join(OUT, '07-baslik.png'), clip: { x: 0, y: 0, width: 1030, height: 90 } });
-
-    // -- colours: no polity is blue
-    const tints = await p.evaluate(() =>
-      Array.from({ length: 9 }, (_, i) =>
-        getComputedStyle(document.documentElement).getPropertyValue(`--tint-${i}`).trim(),
-      ),
-    );
-    check(
-      'Dokuz devlet tonunun hiçbiri mavi, turkuaz ya da mor değil',
-      tints.every((h) => /^#[0-9a-f]{6}$/i.test(h) && !isBlueish(h)),
-      tints.join(' '),
-    );
-    const paintColours = await p.evaluate(
-      () =>
-        JSON.stringify(window.__ayni.map.getPaintProperty('polity-fill', 'fill-color')).match(/#[0-9a-fA-F]{6}/g) ?? [],
-    );
-    check(
-      'Haritanın devlet dolgusunda kullanılan renklerin hiçbiri mavi değil',
-      paintColours.length >= 8 && paintColours.every((h) => !isBlueish(h)),
-      `${paintColours.length} renk`,
-    );
-    const land = [
-      [112, 33],
-      [2.3, 47],
-      [38, 56],
-      [77.2, 28.6],
-      [52, 32],
-      [68, 48],
-      [85, 45],
-      [15, 62],
-      [10, 51],
-      [-3.7, 40.4],
-    ];
-    const pts = [];
-    for (const [lo, la] of land) pts.push(await toPx(lo, la));
-    const onPolity = await p.evaluate(
-      (points) =>
-        points.map(([x, y]) => {
-          const r = document.querySelector('#map').getBoundingClientRect();
-          return (
-            window.__ayni.map.queryRenderedFeatures([x - r.left, y - r.top], { layers: ['polity-fill'] }).length > 0
-          );
-        }),
-      pts,
-    );
-    const rendered = (await pixelsAt(p, pts)).map(rgbHex).filter((_, i) => onPolity[i]);
-    check(
-      'Haritada çizilen devlet piksellerinin hiçbiri mavi değil',
-      rendered.length >= 6 && rendered.every((h) => !isBlueish(h)),
-      rendered.join(' '),
-    );
-    const seaHex = rgbHex((await pixelsAt(p, [await toPx(-40, 30)]))[0]);
-    check('Deniz hâlâ mavi (mavi yalnızca deniz ve göllere ayrılmış)', isBlueish(seaHex), seaHex);
-    await p.screenshot({ path: join(OUT, '10-isaretciler-lejant.png') });
-
-    // -- the bottom area
-    const dock = await p.evaluate(() => {
-      const d = document.querySelector('.dock').getBoundingClientRect();
-      const plot = document.querySelector('.tl-plot').innerText;
-      return {
-        h: d.height,
-        titles: window.__ayni.view().places[0].timeline.map((e) => e.title),
-        plot,
-        labels: document.querySelectorAll('.tl-label, .tl-tag').length,
-      };
-    });
-    check(
-      'Alt bölüm (cetvel + çizelge) ince: en çok 84 px (ilk sürümün 286 px’inin dörtte biri kadar), ekranın %10’undan az',
-      dock.h >= 70 && dock.h <= 84 && dock.h / 900 < 0.1,
-      `${dock.h} px = %${Math.round((dock.h / 286) * 100)}`,
-    );
-    check(
-      'Çizelgede hiçbir olay adı kalıcı yazılı değil (yalnızca üzerine gelince)',
-      dock.labels === 0 && dock.titles.length >= 3 && dock.titles.every((t) => !dock.plot.includes(t)),
-      `${dock.titles.length} olay`,
-    );
-    await p.screenshot({ path: join(OUT, '08-alt-bolum.png'), clip: { x: 0, y: 816, width: 1440, height: 84 } });
-
-    // -- the selected place: a solid dot with a fading glow, no ring
-    const pin = await p.evaluate(() => {
-      const dotEl = document.querySelector('.pin:not([hidden]) .pin-dot');
-      const glow = document.querySelector('.pin:not([hidden]) .pin-glow');
-      const cd = getComputedStyle(dotEl);
-      const cg = getComputedStyle(glow);
-      const pseudo = (q) => {
-        const c = getComputedStyle(dotEl.parentElement, q).content;
-        return !!c && c !== 'none' && c !== 'normal';
-      };
-      return {
-        bg: cd.backgroundColor,
-        radius: cd.borderRadius,
-        border: cd.borderTopWidth,
-        outline: cd.outlineStyle,
-        w: dotEl.getBoundingClientRect().width,
-        glowW: glow.getBoundingClientRect().width,
-        glowImage: cg.backgroundImage,
-        glowBorder: cg.borderTopWidth,
-        rings:
-          document.querySelectorAll('.pin:not([hidden]) i:not(.pin-dot)').length +
-          (pseudo('::before') || pseudo('::after') ? 1 : 0),
-      };
-    });
-    check(
-      'Seçili yer: dolu kırmızı nokta, halka yok',
-      pin.bg === 'rgb(207, 58, 33)' &&
-        pin.radius.includes('50%') &&
-        pin.border === '0px' &&
-        pin.outline === 'none' &&
-        pin.rings === 0,
-      JSON.stringify({ bg: pin.bg, border: pin.border, rings: pin.rings }),
-    );
-    check(
-      'Noktanın çevresinde yarıçapsal sönen yumuşak kırmızı ışıma var (nokta ana öğe, ışıma geniş ve silik)',
-      /radial-gradient/.test(pin.glowImage) && pin.glowW >= pin.w * 4 && pin.glowBorder === '0px',
-      `${pin.w}px nokta, ${pin.glowW}px ışıma`,
-    );
-
-    // -- every event dot is the same shape and size, told apart by colour alone
-    // (the place's timeline has dots only while a place is selected, and the world's events are on the map only while none
-    // is: the timeline's dots are measured first, then the place is let go of for the map's)
-    const timelineDots = await p.evaluate(() =>
-      [...document.querySelectorAll('.tl-ev .dot')]
-        .map((el) => el.getBoundingClientRect())
-        .filter((r) => r.width > 0)
-        .map((r) => `${Math.round(r.width)}x${Math.round(r.height)}`),
-    );
-    await p.click('[data-testid=place-close]');
-    await p.waitForTimeout(700);
-    const dots = await p.evaluate(() => {
-      const info = (sel) =>
-        [...document.querySelectorAll(sel)]
-          .map((el) => el.getBoundingClientRect())
-          .filter((r) => r.width > 0) // what a closed fold of the card keeps is not on screen
-          .map((r) => `${Math.round(r.width)}x${Math.round(r.height)}`);
-      const radius = [...document.querySelectorAll('.dot')].map((el) => getComputedStyle(el).borderRadius);
-      const visible = [...document.querySelectorAll('.evt:not(.is-hidden)')].map((el) => el.dataset.id);
-      const importances = [...new Set(visible.map((id) => window.__ayni.data.eventsById.get(id).importance))];
-      const legendColour = Object.fromEntries(
-        [...document.querySelectorAll('.legend li')].map((li) => [
-          li.dataset.category,
-          getComputedStyle(li.querySelector('.dot')).backgroundColor,
-        ]),
+      // Escape closes the event first, then the place
+      await page.keyboard.press('Escape');
+      await settle(300);
+      const afterFirst = await page.evaluate(() => ({
+        e: window.__ayni.store.state.selectedEventId,
+        p: window.__ayni.store.state.places.length,
+      }));
+      await page.keyboard.press('Escape');
+      await settle(400);
+      const afterSecond = await page.evaluate(() => ({
+        e: window.__ayni.store.state.selectedEventId,
+        p: window.__ayni.store.state.places.length,
+      }));
+      check(
+        'Esc önce olayı, sonra yeri kapatır',
+        afterFirst.e === null &&
+          afterFirst.p === 1 &&
+          afterSecond.p === 0 &&
+          (await text('[data-testid=title-main]')) === 'Dünya',
       );
-      const wrong = visible.filter((id) => {
-        const el = document.querySelector(`.evt[data-id="${id}"] .dot`);
-        return getComputedStyle(el).backgroundColor !== legendColour[window.__ayni.data.eventsById.get(id).category];
+      check('Seçimi kaldırmak haritayı oynatmadı', sameCamera(baseCam, await camera()));
+
+      /* ---- 6. sanity: a real drag DOES move the camera (so "did not move" is meaningful) */
+      section('6. Duyarlılık denetimi');
+      const mid = await pixelOf(60, 40);
+      await page.mouse.move(mid.x, mid.y);
+      await page.mouse.down();
+      await page.mouse.move(mid.x - 140, mid.y + 40, { steps: 8 });
+      await page.mouse.up();
+      await settle(700);
+      check('Kullanıcı sürüklemesi haritayı gerçekten hareket ettirir', !sameCamera(baseCam, await camera()));
+      await page.mouse.wheel(0, -300);
+      await settle(900);
+      check('Fare tekerleği yakınlaştırır', (await camera()).zoom > baseCam.zoom);
+      await shot(page, '06-surukleme-sonrasi.png');
+    }
+    check('Sayfada konsol/sayfa hatası yok', problems.length === 0, problems.slice(0, 3).join(' | '));
+  }
+
+  if (wants(7)) {
+    /* ---- 7. keyboard, accessibility and robustness (each on a fresh page load) */
+    section('7. Klavye, erişilebilirlik ve sağlamlık');
+
+    // 7a. a malformed or truncated link must not brick start-up
+    {
+      const { ctx, p, errs } = await open('#t=1942&p=10,100&e=bu-olay-yok&v=1//2&c=');
+      const st = await p.evaluate(() => ({ ...window.__ayni.store.state }));
+      check(
+        'Bozuk bir bağlantı (p=10,100, bilinmeyen e=, v=1//2) uygulamayı çökertmez',
+        st.places.length === 0 && st.selectedEventId === null && st.range.from === 1942 && errs.length === 0,
+        errs[0] ?? '',
+      );
+      await ctx.close();
+    }
+    {
+      const { ctx, p } = await open('#t=1942&p=9.2,');
+      check(
+        'Yarım kalmış p= sahte bir yer seçmez',
+        (await p.evaluate(() => window.__ayni.store.state.places.length)) === 0,
+      );
+      await ctx.close();
+    }
+
+    // 7b. the camera enters the link only after the user has moved the map themselves
+    {
+      const { ctx, p } = await open('#t=1940-1944');
+      await p.waitForTimeout(500);
+      const before = await p.evaluate(() => location.hash);
+      const r = await p.locator('#map').boundingBox();
+      await p.mouse.move(r.x + r.width / 2, r.y + r.height / 2);
+      await p.mouse.down();
+      await p.mouse.move(r.x + r.width / 2 - 90, r.y + r.height / 2 + 20, { steps: 6 });
+      await p.mouse.up();
+      await p.waitForTimeout(900);
+      const after = await p.evaluate(() => location.hash);
+      check(
+        'Adres çubuğu kamerayı yalnızca kullanıcı haritayı oynattıktan sonra taşır',
+        !before.includes('v=') && after.includes('v='),
+        `${before} → ${after}`,
+      );
+      await ctx.close();
+    }
+
+    // 7c. markers: one Tab stop, arrow keys, hidden ones are unreachable, the tooltip survives pointer travel
+    {
+      const { ctx, p, errs } = await open('#t=1940-1944');
+      const stops = await p.evaluate(
+        () => [...document.querySelectorAll('.evt')].filter((e) => e.tabIndex === 0).length,
+      );
+      const hiddenFocusable = await p.evaluate(
+        () =>
+          [...document.querySelectorAll('.evt.is-hidden')].filter(
+            (e) => getComputedStyle(e).visibility !== 'hidden' || e.tabIndex === 0,
+          ).length,
+      );
+      check('Haritadaki işaretçiler tek bir Tab durağıdır', stops === 1, `${stops} durak`);
+      check('Gizlenen işaretçiler klavyeyle ve ekran okuyucuyla erişilemez', hiddenFocusable === 0);
+
+      const cam0 = await cameraOf(p);
+      await p.locator('.evt[tabindex="0"]').focus();
+      const first = await p.evaluate(() => document.activeElement?.dataset.id);
+      await p.keyboard.press('ArrowRight');
+      await p.keyboard.press('ArrowRight');
+      const second = await p.evaluate(() => document.activeElement?.dataset.id);
+      check('Ok tuşları işaretçiler arasında gezinir', !!second && second !== first, `${first} → ${second}`);
+      check('Ok tuşları haritayı kaydırmaz', sameCamera(cam0, await cameraOf(p)));
+      check(
+        'Odaklanan işaretçinin ipucu görünür',
+        await p.evaluate(
+          () => !document.querySelector('.tip').hidden && document.querySelector('.tip').textContent.length > 3,
+        ),
+      );
+      await p.keyboard.press('Enter');
+      await p.waitForTimeout(500);
+      const focusedTitle = await p.evaluate(() => document.activeElement?.getAttribute('data-testid'));
+      check('Klavyeyle seçilen olayın kartına odak gider', focusedTitle === 'event-title', String(focusedTitle));
+      check('Klavyeyle olay seçmek haritayı oynatmaz', sameCamera(cam0, await cameraOf(p)));
+      await p.keyboard.press('Escape');
+      await p.waitForTimeout(300);
+      check('Esc olay kartını kapatır', (await p.evaluate(() => window.__ayni.store.state.selectedEventId)) === null);
+
+      // the pointer travelling from the map onto a marker keeps that marker's tooltip
+      const target = await p.evaluate(() => {
+        const el = document.querySelector('.evt:not(.is-hidden)');
+        const r = el.querySelector('.evt-mark').getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: el.dataset.id };
       });
-      return {
-        map: info('.evt:not(.is-hidden) .dot'),
-        timeline: info('.tl-ev .dot'),
-        legend: info('.legend .dot'),
-        panel: info('.card-host .dot'),
-        radius: [...new Set(radius)],
-        importances,
-        colours: Object.values(legendColour),
-        wrong,
-        shapes: document.querySelectorAll('.evt svg, .tl-ev svg, .legend svg, .row-mark svg, svg.mk').length,
-        importanceUi: document.querySelectorAll('[data-importance], .importance, .ruler-bins, .bin').length,
-      };
-    });
-    const sizes = new Set([...dots.map, ...timelineDots, ...dots.legend, ...dots.panel]);
-    check(
-      'Tüm olay noktaları (harita, çizelge, lejant, panel) aynı şekil ve boyutta',
-      sizes.size === 1 &&
-        dots.map.length >= 5 &&
-        timelineDots.length >= 3 &&
-        dots.legend.length === 6 &&
-        dots.radius.length === 1 &&
-        dots.radius[0].includes('50%') &&
-        dots.shapes === 0,
-      `${[...sizes].join(',')} · harita ${dots.map.length}, çizelge ${timelineDots.length}, lejant ${dots.legend.length}, panel ${dots.panel.length}`,
-    );
-    check(
-      'İşaretçi boyutu önemle değişmez (haritada birden çok önem düzeyi var, boyut tek)',
-      dots.importances.length >= 2 && new Set(dots.map).size === 1,
-      `önem düzeyleri: ${dots.importances.join(',')}`,
-    );
-    check(
-      'Türler yalnızca renkle ayrışır: 6 ayrı renk, haritadaki her işaretçi lejanttaki türünün rengini taşır',
-      new Set(dots.colours).size === 6 && dots.wrong.length === 0,
-      dots.wrong.join(',') || dots.colours.join(' '),
-    );
-    check('Arayüzde önem göstergesi kalmadı (nokta boyutu, kart bloğu, cetvel histogramı)', dots.importanceUi === 0);
+      await p.mouse.move(target.x - 90, target.y + 70);
+      await p.waitForTimeout(250);
+      await p.mouse.move(target.x, target.y, { steps: 8 });
+      await p.waitForTimeout(400);
+      const tipShown = await p.evaluate(() => {
+        const t = document.querySelector('.tip');
+        return !t.hidden && t.querySelector('.tip-event') !== null;
+      });
+      check('İşaretçinin üstüne gelince ipucu kalıcı görünür (harita çıkışı onu gizlemez)', tipShown, target.id);
+      check('Sayfa sürümünde konsol hatası yok (7)', errs.length === 0, errs[0] ?? '');
+      await ctx.close();
+    }
 
-    // -- the legend: untitled, always there, colours only
-    const legend = await p.evaluate(() => {
-      const lg = document.querySelector('.legend');
-      const map = document.querySelector('.map-wrap').getBoundingClientRect();
-      const r = lg.getBoundingClientRect();
-      return {
-        items: [...lg.querySelectorAll('li')].map((li) => li.innerText.trim()),
-        cats: window.__ayni.data.categories.map((c) => c.label),
-        details: lg.querySelectorAll('details, summary').length,
-        heading: !!lg.querySelector('h1, h2, h3, h4, p, legend, summary, .eyebrow'),
-        text: lg.innerText,
-        inside: r.width > 0 && r.left >= map.left && r.right <= map.right && r.top >= map.top && r.bottom <= map.bottom,
-        corner: r.left - map.left <= 20 && (r.top - map.top <= 20 || map.bottom - r.bottom <= 20),
-        height: r.height,
-      };
-    });
-    check(
-      'Lejant başlıksız, açılır-kapanır değil, haritanın köşesinde her zaman görünür',
-      legend.details === 0 && !legend.heading && legend.inside && legend.corner,
-      `${Math.round(legend.height)} px yüksek`,
-    );
-    check(
-      'Lejant yalnızca renkleri açıklar: 6 olay türü, adlar veriyle aynı; "Okuma kılavuzu", boyut, şekil, önem yok',
-      legend.items.length === 6 &&
-        legend.items.every((t, i) => t === legend.cats[i]) &&
-        !/önem|boyut|şekil|kılavuz/i.test(legend.text),
-      legend.items.join(' · '),
-    );
+    // 7c2. timeline dots carry no permanent label: hovering one names it, and removing the hovered one clears the name
+    {
+      const { ctx, p, errs } = await open('#t=1940-1944&p=9.2,48.8');
+      check(
+        'Çizelgede kalıcı olay etiketi yok (seçili olay yokken)',
+        (await p.locator('.tl-label, .tl-tag').count()) === 0,
+      );
+      const dotEl = p.locator('.tl-ev:not(.is-context)').first();
+      const id = await dotEl.getAttribute('data-id');
+      const title = await p.evaluate((i) => window.__ayni.data.eventsById.get(i).title, id);
+      await dotEl.hover();
+      await p.waitForTimeout(500);
+      const shown = await p.evaluate((want) => {
+        const tip = document.querySelector('.tip');
+        return { text: tip.hidden ? '' : tip.textContent, hover: window.__ayni.store.state.hoverEventId === want };
+      }, id);
+      check(
+        'Noktanın üstüne gelince olayın adı görünür (ipucu) ve nokta vurgulanır',
+        shown.text.includes(title) && shown.hover,
+        title,
+      );
+      await p.keyboard.press('Escape'); // Esc dismisses hover content and, with nothing open, deselects the place
+      await p.mouse.move(5, 5);
+      await p.waitForTimeout(900);
+      check(
+        'Üzerinde durulan nokta kaldırılınca ipucu ve vurgu temizlenir',
+        await p.evaluate(
+          () => document.querySelector('.tip').hidden && window.__ayni.store.state.hoverEventId === null,
+        ),
+      );
+      check('Çizelge etkileşimlerinde konsol hatası yok', errs.length === 0, errs[0] ?? '');
+      await ctx.close();
+    }
 
-    // -- hover texts that replaced the permanent ones (the place is chosen again: its timeline carries one of them)
-    const again = await toPx(...GERMANY);
-    await p.mouse.click(again[0], again[1]);
-    await p.waitForTimeout(700);
-    // Land the data has no polity for: central Africa around 1900 (by 1942 almost every spot of land belongs to some power).
-    // The range is moved to 1898–1902 for this one look, with the place left selected, and put back after it.
-    await p.evaluate(() => window.__ayni.store.setRange({ from: 1898, to: 1902 }));
-    await bordersSettled(p);
-    await p.waitForTimeout(500);
-    const noData = await toPx(20, 10); // Chad
-    await p.mouse.move(noData[0], noData[1]);
-    await p.waitForTimeout(500);
-    check(
-      'Sınır verisi olmayan karanın üstünde ipucu açıklar (Orta Afrika, 1900; lejanttan çıkan "noktalı zemin" bilgisi burada)',
-      await p.evaluate(
-        () =>
-          !document.querySelector('.tip').hidden &&
-          /sınır verisi yok/i.test(document.querySelector('.tip').textContent),
-      ),
-    );
-    await p.evaluate(() => window.__ayni.store.setRange({ from: 1940, to: 1944 }));
-    await bordersSettled(p);
-    await p.waitForTimeout(500);
-    const brazilAt = await toPx(-52, -12); // Brazil: the open place's card lies over the north-east of the map
-    await p.mouse.move(brazilAt[0], brazilAt[1]);
-    await p.waitForTimeout(500);
-    check(
-      'Bir devletin üstünde ipucu devletin adını söyler',
-      await p.evaluate(
-        () => !document.querySelector('.tip').hidden && /Brezilya/.test(document.querySelector('.tip').textContent),
-      ),
-    );
-    await p.locator('.tl-seg').first().hover();
-    await p.waitForTimeout(400);
-    check(
-      'Çizelgenin renkli şeridinin üstünde ipucu o noktanın egemenini söyler',
-      await p.evaluate(
-        () =>
-          !document.querySelector('.tip').hidden && /Nazi Almanyası/.test(document.querySelector('.tip').textContent),
-      ),
-    );
-    check('Bu sayfada konsol hatası yok (8)', errs.length === 0, errs[0] ?? '');
-    await ctx.close();
+    // 7d. ruler: a click on empty track near an end slides the window, it never shrinks it
+    {
+      const { ctx, p } = await open('#t=1900-1999');
+      const track = await p.locator('.ruler-track').boundingBox();
+      await p.mouse.click(track.x + track.width * 0.985, track.y + track.height - 6);
+      await p.waitForTimeout(500);
+      const r = await p.evaluate(() => window.__ayni.store.state.range);
+      check(
+        'Cetvelde uca yakın boş yere tıklamak 100 yıllık pencereyi küçültmez',
+        r.to - r.from + 1 === 100 && r.to === 2000,
+        JSON.stringify(r),
+      );
+      await ctx.close();
+    }
+
+    // 7e. the ruler by keyboard: arrows slide the window, Shift moves by ten, the ends stop at the data
+    {
+      const { ctx, p } = await open('#t=1850-1900&p=9.2,48.8');
+      const range = () => p.evaluate(() => window.__ayni.store.state.range);
+      await p.locator('[data-testid=brush]').focus();
+      await p.keyboard.press('ArrowRight');
+      let r = await range();
+      check('Cetvel: → aralığı 1 yıl kaydırır, uzunluk korunur', r.from === 1851 && r.to === 1901, JSON.stringify(r));
+      await p.keyboard.press('Shift+ArrowRight');
+      r = await range();
+      check('Cetvel: Shift+→ aralığı 10 yıl kaydırır', r.from === 1861 && r.to === 1911, JSON.stringify(r));
+      await p.keyboard.press('End');
+      r = await range();
+      check(
+        'Cetvel: End aralığı verinin sonuna dayar, küçültmez',
+        r.to === 2000 && r.to - r.from === 50,
+        JSON.stringify(r),
+      );
+      await p.locator('[data-testid=handle-start]').focus();
+      await p.keyboard.press('Home');
+      r = await range();
+      check('Cetvel: başlangıç tutamacı + Home → 1800', r.from === 1800 && r.to === 2000, JSON.stringify(r));
+      check(
+        'Cetvelin dört kaydırıcısı ekran okuyucuya adlarıyla görünür',
+        (await p.locator('.dock [role=slider][aria-label]').count()) === 4,
+      );
+      await ctx.close();
+    }
+
+    // 7f. screen readers: no page-wide live region, one status line that says what changed
+    {
+      const { ctx, p } = await open('#t=1942');
+      check('Kök öğe canlı bölge değil', (await p.locator('#app').getAttribute('aria-live')) === null);
+      const germany = await p.evaluate(() => {
+        const pt = window.__ayni.map.project([9.2, 48.8]);
+        const r = document.querySelector('#map').getBoundingClientRect();
+        return { x: r.left + pt.x, y: r.top + pt.y };
+      });
+      await p.mouse.click(germany.x, germany.y);
+      await p.waitForTimeout(600);
+      check(
+        'Yer seçimi durum satırında duyurulur',
+        (await p.locator('#sr-status').innerText()).includes('Nazi Almanyası'),
+        await p.locator('#sr-status').innerText(),
+      );
+      await ctx.close();
+    }
+
+    // 7g. a mouse in a narrow window still zooms with the wheel; a pasted link replaces the view
+    {
+      const { ctx, p } = await open('#t=1942', { width: 860, height: 800 });
+      const z0 = (await cameraOf(p)).zoom;
+      const r = await p.locator('#map').boundingBox();
+      // (in a narrow window the info card is a sheet over the top of the map: the wheel is turned below it)
+      await p.mouse.move(r.x + r.width / 2, r.y + r.height * 0.62);
+      await p.mouse.wheel(0, -300);
+      await p.waitForTimeout(900);
+      check('Dar pencerede de fare tekerleği haritayı yakınlaştırır', (await cameraOf(p)).zoom > z0);
+      await p.evaluate(() => {
+        location.hash = '#t=1950';
+      });
+      await p.waitForTimeout(600);
+      const pasted = await p.evaluate(() => ({ from: window.__ayni.store.state.range.from, hash: location.hash }));
+      check('Aynı sekmeye yapıştırılan bağlantı görünümü değiştirir', pasted.from === 1950, JSON.stringify(pasted));
+      await ctx.close();
+    }
   }
-  {
-    // crisp crops for the report (the checks above run at 1×)
-    const { ctx, p } = await open('#t=1940-1944&p=9.2,48.8', { width: 1440, height: 900 }, { deviceScaleFactor: 2 });
-    await p.mouse.move(700, 300);
-    const at = await p.evaluate(() => {
-      const r = document.querySelector('.pin:not([hidden]) .pin-dot').getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-    });
-    await p.screenshot({
-      path: join(OUT, '09-yer-noktasi.png'),
-      clip: { x: at.x - 90, y: at.y - 65, width: 180, height: 130 },
-    });
-    await ctx.close();
+
+  if (wants(8)) {
+    /* ---- 8. title above the map, no blue polities, the bottom area, one dot, the place pin, the legend */
+    section('8. Başlık, renkler, alt bölüm, işaretçiler, yer noktası, lejant');
+    {
+      const { ctx, p, errs } = await open('#t=1940-1944&p=9.2,48.8');
+      const toPx = (lon, lat) =>
+        p.evaluate(
+          ([lo, la]) => {
+            const q = window.__ayni.map.project([lo, la]);
+            const r = document.querySelector('#map').getBoundingClientRect();
+            return [r.left + q.x, r.top + q.y];
+          },
+          [lon, lat],
+        );
+
+      // -- the place title
+      const head = await p.evaluate(() => {
+        const bar = document.querySelector('.map-head');
+        const title = document.querySelector('[data-testid=title-main]');
+        const mapEl = document.querySelector('.map-wrap');
+        const b = bar.getBoundingClientRect();
+        const t = title.getBoundingClientRect();
+        const m = mapEl.getBoundingClientRect();
+        const cs = getComputedStyle(title);
+        return {
+          size: parseFloat(cs.fontSize),
+          family: cs.fontFamily,
+          text: bar.innerText.replace(/\s+/g, ' ').trim(),
+          eyebrow: !!bar.querySelector('.eyebrow'),
+          insideMap: !!mapEl.querySelector('.title-main, .map-title, .eyebrow'),
+          above: t.bottom <= m.top + 0.5 && b.bottom <= m.top + 0.5,
+        };
+      });
+      check(
+        'Başlık haritanın üstündeki şeritte; harita alanının içinde değil, yani hiçbir sınırı ya da işaretçiyi örtemez',
+        head.above && !head.insideMap,
+      );
+      check('Başlık belirgin biçimde küçüldü (öncesi 42 px)', head.size <= 26 && head.size >= 18, `${head.size} px`);
+      check('"SEÇİLİ YER" etiketi yok', !/seçili yer/i.test(head.text) && !head.eyebrow, head.text);
+      check('Başlığın yazı tipi aynı kaldı (Newsreader, serif)', /Newsreader/.test(head.family), head.family);
+      check('"1942 yılının sınırları" notu başlığın yanında', head.text.includes('1942 yılının sınırları'), head.text);
+      await shot(p, '07-baslik.png', { clip: { x: 0, y: 0, width: 1030, height: 90 } });
+
+      // -- colours: no polity is blue
+      const tints = await p.evaluate(() =>
+        Array.from({ length: 9 }, (_, i) =>
+          getComputedStyle(document.documentElement).getPropertyValue(`--tint-${i}`).trim(),
+        ),
+      );
+      check(
+        'Dokuz devlet tonunun hiçbiri mavi, turkuaz ya da mor değil',
+        tints.every((h) => /^#[0-9a-f]{6}$/i.test(h) && !isBlueish(h)),
+        tints.join(' '),
+      );
+      const paintColours = await p.evaluate(
+        () =>
+          JSON.stringify(window.__ayni.map.getPaintProperty('polity-fill', 'fill-color')).match(/#[0-9a-fA-F]{6}/g) ??
+          [],
+      );
+      check(
+        'Haritanın devlet dolgusunda kullanılan renklerin hiçbiri mavi değil',
+        paintColours.length >= 8 && paintColours.every((h) => !isBlueish(h)),
+        `${paintColours.length} renk`,
+      );
+      const land = [
+        [112, 33],
+        [2.3, 47],
+        [38, 56],
+        [77.2, 28.6],
+        [52, 32],
+        [68, 48],
+        [85, 45],
+        [15, 62],
+        [10, 51],
+        [-3.7, 40.4],
+      ];
+      const pts = [];
+      for (const [lo, la] of land) pts.push(await toPx(lo, la));
+      const onPolity = await p.evaluate(
+        (points) =>
+          points.map(([x, y]) => {
+            const r = document.querySelector('#map').getBoundingClientRect();
+            return (
+              window.__ayni.map.queryRenderedFeatures([x - r.left, y - r.top], { layers: ['polity-fill'] }).length > 0
+            );
+          }),
+        pts,
+      );
+      const rendered = (await pixelsAt(p, pts)).map(rgbHex).filter((_, i) => onPolity[i]);
+      check(
+        'Haritada çizilen devlet piksellerinin hiçbiri mavi değil',
+        rendered.length >= 6 && rendered.every((h) => !isBlueish(h)),
+        rendered.join(' '),
+      );
+      const seaHex = rgbHex((await pixelsAt(p, [await toPx(-40, 30)]))[0]);
+      check('Deniz hâlâ mavi (mavi yalnızca deniz ve göllere ayrılmış)', isBlueish(seaHex), seaHex);
+      await shot(p, '10-isaretciler-lejant.png');
+
+      // -- the bottom area
+      const dock = await p.evaluate(() => {
+        const d = document.querySelector('.dock').getBoundingClientRect();
+        const plot = document.querySelector('.tl-plot').innerText;
+        return {
+          h: d.height,
+          titles: window.__ayni.view().places[0].timeline.map((e) => e.title),
+          plot,
+          labels: document.querySelectorAll('.tl-label, .tl-tag').length,
+        };
+      });
+      check(
+        'Alt bölüm (cetvel + çizelge) ince: en çok 84 px (ilk sürümün 286 px’inin dörtte biri kadar), ekranın %10’undan az',
+        dock.h >= 70 && dock.h <= 84 && dock.h / 900 < 0.1,
+        `${dock.h} px = %${Math.round((dock.h / 286) * 100)}`,
+      );
+      check(
+        'Çizelgede hiçbir olay adı kalıcı yazılı değil (yalnızca üzerine gelince)',
+        dock.labels === 0 && dock.titles.length >= 3 && dock.titles.every((t) => !dock.plot.includes(t)),
+        `${dock.titles.length} olay`,
+      );
+      await shot(p, '08-alt-bolum.png', { clip: { x: 0, y: 816, width: 1440, height: 84 } });
+
+      // -- the selected place: a solid dot with a fading glow, no ring
+      const pin = await p.evaluate(() => {
+        const dotEl = document.querySelector('.pin:not([hidden]) .pin-dot');
+        const glow = document.querySelector('.pin:not([hidden]) .pin-glow');
+        const cd = getComputedStyle(dotEl);
+        const cg = getComputedStyle(glow);
+        const pseudo = (q) => {
+          const c = getComputedStyle(dotEl.parentElement, q).content;
+          return !!c && c !== 'none' && c !== 'normal';
+        };
+        return {
+          bg: cd.backgroundColor,
+          radius: cd.borderRadius,
+          border: cd.borderTopWidth,
+          outline: cd.outlineStyle,
+          w: dotEl.getBoundingClientRect().width,
+          glowW: glow.getBoundingClientRect().width,
+          glowImage: cg.backgroundImage,
+          glowBorder: cg.borderTopWidth,
+          rings:
+            document.querySelectorAll('.pin:not([hidden]) i:not(.pin-dot)').length +
+            (pseudo('::before') || pseudo('::after') ? 1 : 0),
+        };
+      });
+      check(
+        'Seçili yer: dolu kırmızı nokta, halka yok',
+        pin.bg === 'rgb(207, 58, 33)' &&
+          pin.radius.includes('50%') &&
+          pin.border === '0px' &&
+          pin.outline === 'none' &&
+          pin.rings === 0,
+        JSON.stringify({ bg: pin.bg, border: pin.border, rings: pin.rings }),
+      );
+      check(
+        'Noktanın çevresinde yarıçapsal sönen yumuşak kırmızı ışıma var (nokta ana öğe, ışıma geniş ve silik)',
+        /radial-gradient/.test(pin.glowImage) && pin.glowW >= pin.w * 4 && pin.glowBorder === '0px',
+        `${pin.w}px nokta, ${pin.glowW}px ışıma`,
+      );
+
+      // -- every event dot is the same shape and size, told apart by colour alone
+      // (the place's timeline has dots only while a place is selected, and the world's events are on the map only while none
+      // is: the timeline's dots are measured first, then the place is let go of for the map's)
+      const timelineDots = await p.evaluate(() =>
+        [...document.querySelectorAll('.tl-ev .dot')]
+          .map((el) => el.getBoundingClientRect())
+          .filter((r) => r.width > 0)
+          .map((r) => `${Math.round(r.width)}x${Math.round(r.height)}`),
+      );
+      await p.click('[data-testid=place-close]');
+      await p.waitForTimeout(700);
+      const dots = await p.evaluate(() => {
+        const info = (sel) =>
+          [...document.querySelectorAll(sel)]
+            .map((el) => el.getBoundingClientRect())
+            .filter((r) => r.width > 0) // what a closed fold of the card keeps is not on screen
+            .map((r) => `${Math.round(r.width)}x${Math.round(r.height)}`);
+        const radius = [...document.querySelectorAll('.dot')].map((el) => getComputedStyle(el).borderRadius);
+        const visible = [...document.querySelectorAll('.evt:not(.is-hidden)')].map((el) => el.dataset.id);
+        const importances = [...new Set(visible.map((id) => window.__ayni.data.eventsById.get(id).importance))];
+        const legendColour = Object.fromEntries(
+          [...document.querySelectorAll('.legend li')].map((li) => [
+            li.dataset.category,
+            getComputedStyle(li.querySelector('.dot')).backgroundColor,
+          ]),
+        );
+        const wrong = visible.filter((id) => {
+          const el = document.querySelector(`.evt[data-id="${id}"] .dot`);
+          return getComputedStyle(el).backgroundColor !== legendColour[window.__ayni.data.eventsById.get(id).category];
+        });
+        return {
+          map: info('.evt:not(.is-hidden) .dot'),
+          timeline: info('.tl-ev .dot'),
+          legend: info('.legend .dot'),
+          panel: info('.card-host .dot'),
+          radius: [...new Set(radius)],
+          importances,
+          colours: Object.values(legendColour),
+          wrong,
+          shapes: document.querySelectorAll('.evt svg, .tl-ev svg, .legend svg, .row-mark svg, svg.mk').length,
+          importanceUi: document.querySelectorAll('[data-importance], .importance, .ruler-bins, .bin').length,
+        };
+      });
+      const sizes = new Set([...dots.map, ...timelineDots, ...dots.legend, ...dots.panel]);
+      check(
+        'Tüm olay noktaları (harita, çizelge, lejant, panel) aynı şekil ve boyutta',
+        sizes.size === 1 &&
+          dots.map.length >= 5 &&
+          timelineDots.length >= 3 &&
+          dots.legend.length === 6 &&
+          dots.radius.length === 1 &&
+          dots.radius[0].includes('50%') &&
+          dots.shapes === 0,
+        `${[...sizes].join(',')} · harita ${dots.map.length}, çizelge ${timelineDots.length}, lejant ${dots.legend.length}, panel ${dots.panel.length}`,
+      );
+      check(
+        'İşaretçi boyutu önemle değişmez (haritada birden çok önem düzeyi var, boyut tek)',
+        dots.importances.length >= 2 && new Set(dots.map).size === 1,
+        `önem düzeyleri: ${dots.importances.join(',')}`,
+      );
+      check(
+        'Türler yalnızca renkle ayrışır: 6 ayrı renk, haritadaki her işaretçi lejanttaki türünün rengini taşır',
+        new Set(dots.colours).size === 6 && dots.wrong.length === 0,
+        dots.wrong.join(',') || dots.colours.join(' '),
+      );
+      check('Arayüzde önem göstergesi kalmadı (nokta boyutu, kart bloğu, cetvel histogramı)', dots.importanceUi === 0);
+
+      // -- the legend: untitled, always there, colours only
+      const legend = await p.evaluate(() => {
+        const lg = document.querySelector('.legend');
+        const map = document.querySelector('.map-wrap').getBoundingClientRect();
+        const r = lg.getBoundingClientRect();
+        return {
+          items: [...lg.querySelectorAll('li')].map((li) => li.innerText.trim()),
+          cats: window.__ayni.data.categories.map((c) => c.label),
+          details: lg.querySelectorAll('details, summary').length,
+          heading: !!lg.querySelector('h1, h2, h3, h4, p, legend, summary, .eyebrow'),
+          text: lg.innerText,
+          inside:
+            r.width > 0 && r.left >= map.left && r.right <= map.right && r.top >= map.top && r.bottom <= map.bottom,
+          corner: r.left - map.left <= 20 && (r.top - map.top <= 20 || map.bottom - r.bottom <= 20),
+          height: r.height,
+        };
+      });
+      check(
+        'Lejant başlıksız, açılır-kapanır değil, haritanın köşesinde her zaman görünür',
+        legend.details === 0 && !legend.heading && legend.inside && legend.corner,
+        `${Math.round(legend.height)} px yüksek`,
+      );
+      check(
+        'Lejant yalnızca renkleri açıklar: 6 olay türü, adlar veriyle aynı; "Okuma kılavuzu", boyut, şekil, önem yok',
+        legend.items.length === 6 &&
+          legend.items.every((t, i) => t === legend.cats[i]) &&
+          !/önem|boyut|şekil|kılavuz/i.test(legend.text),
+        legend.items.join(' · '),
+      );
+
+      // -- hover texts that replaced the permanent ones (the place is chosen again: its timeline carries one of them)
+      const again = await toPx(...GERMANY);
+      await p.mouse.click(again[0], again[1]);
+      await p.waitForTimeout(700);
+      // Land the data has no polity for: central Africa around 1900 (by 1942 almost every spot of land belongs to some power).
+      // The range is moved to 1898–1902 for this one look, with the place left selected, and put back after it.
+      await p.evaluate(() => window.__ayni.store.setRange({ from: 1898, to: 1902 }));
+      await bordersSettled(p);
+      await p.waitForTimeout(500);
+      const noData = await toPx(20, 10); // Chad
+      await p.mouse.move(noData[0], noData[1]);
+      await p.waitForTimeout(500);
+      check(
+        'Sınır verisi olmayan karanın üstünde ipucu açıklar (Orta Afrika, 1900; lejanttan çıkan "noktalı zemin" bilgisi burada)',
+        await p.evaluate(
+          () =>
+            !document.querySelector('.tip').hidden &&
+            /sınır verisi yok/i.test(document.querySelector('.tip').textContent),
+        ),
+      );
+      await p.evaluate(() => window.__ayni.store.setRange({ from: 1940, to: 1944 }));
+      await bordersSettled(p);
+      await p.waitForTimeout(500);
+      const brazilAt = await toPx(-52, -12); // Brazil: the open place's card lies over the north-east of the map
+      await p.mouse.move(brazilAt[0], brazilAt[1]);
+      await p.waitForTimeout(500);
+      check(
+        'Bir devletin üstünde ipucu devletin adını söyler',
+        await p.evaluate(
+          () => !document.querySelector('.tip').hidden && /Brezilya/.test(document.querySelector('.tip').textContent),
+        ),
+      );
+      await p.locator('.tl-seg').first().hover();
+      await p.waitForTimeout(400);
+      check(
+        'Çizelgenin renkli şeridinin üstünde ipucu o noktanın egemenini söyler',
+        await p.evaluate(
+          () =>
+            !document.querySelector('.tip').hidden && /Nazi Almanyası/.test(document.querySelector('.tip').textContent),
+        ),
+      );
+      check('Bu sayfada konsol hatası yok (8)', errs.length === 0, errs[0] ?? '');
+      await ctx.close();
+    }
+    {
+      // crisp crops for the report (the checks above run at 1×)
+      const { ctx, p } = await open('#t=1940-1944&p=9.2,48.8', { width: 1440, height: 900 }, { deviceScaleFactor: 2 });
+      await p.mouse.move(700, 300);
+      const at = await p.evaluate(() => {
+        const r = document.querySelector('.pin:not([hidden]) .pin-dot').getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      });
+      await shot(p, '09-yer-noktasi.png', { clip: { x: at.x - 90, y: at.y - 65, width: 180, height: 130 } });
+      await ctx.close();
+    }
   }
 
-  /* ---- 9. an event opened from the timeline: always on the map; the map eases out just far enough; the panel follows */
-  console.log('\n9. Zaman çizelgesinden olay seçimi (Stalingrad, 1942)');
-  {
-    const { ctx, p, errs } = await open('#t=1940-1944&p=9.2,48.8');
-    await p.evaluate(() => window.__ayni.map.jumpTo({ center: [112, 33], zoom: 4.6 })); // the user has zoomed into China
-    await p.waitForTimeout(1500);
-    const snapshot = () =>
-      p.evaluate(() => {
+  if (wants(9)) {
+    /* ---- 9. an event opened from the timeline: always on the map; the map eases out just far enough; the panel follows */
+    section('9. Zaman çizelgesinden olay seçimi (Stalingrad, 1942)');
+    {
+      // the one page of the suite where the camera really animates: the check below is about the animation itself
+      const { ctx, p, errs } = await open('#t=1940-1944&p=9.2,48.8', undefined, { reducedMotion: 'no-preference' });
+      await p.evaluate(() => window.__ayni.map.jumpTo({ center: [112, 33], zoom: 4.6 })); // the user has zoomed into China
+      await p.waitForTimeout(1500);
+      const snapshot = () =>
+        p.evaluate(() => {
+          const m = window.__ayni.map;
+          const b = m.getBounds();
+          const box = document.querySelector('#map').getBoundingClientRect();
+          const ev = window.__ayni.data.eventsById.get('stalingrad-1942');
+          const q = m.project([ev.location.lon, ev.location.lat]);
+          const rects = [
+            ...document.querySelectorAll(
+              '.map-zoom, .legend, .map-stats:not([hidden]), [data-avoid]:not(.foot-guard):not([hidden])',
+            ),
+          ].map((el) => el.getBoundingClientRect());
+          const x = box.left + q.x;
+          const y = box.top + q.y;
+          const el = document.querySelector('.evt[data-id="stalingrad-1942"]');
+          return {
+            z: m.getZoom(),
+            minZoom: m.getMinZoom(),
+            bounds: [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()],
+            W: box.width,
+            H: box.height,
+            x: q.x,
+            y: q.y,
+            dx: q.x - box.width / 2,
+            dy: q.y - box.height / 2,
+            behindControl: rects.some((r) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom),
+            drawn: !!el && !el.classList.contains('is-hidden'),
+          };
+        });
+      const pre = await snapshot();
+      check(
+        "Çin'e yakınlaşılmış; Stalingrad şu an görünümün dışında ve haritada çizili değil",
+        pre.z > 4 && !pre.drawn,
+        `yakınlaştırma ${pre.z.toFixed(2)}`,
+      );
+      check(
+        'Stalingrad, Nazi Almanyası çizelgesinde bir nokta olarak duruyor',
+        (await p.locator('.tl-ev[data-id="stalingrad-1942"]').count()) === 1,
+      );
+      await shot(p, '11-stalingrad-once-cin.png');
+
+      const tracking = trackCamera(p, 4200);
+      await p.locator('.tl-ev[data-id="stalingrad-1942"]').click();
+      const samples = await tracking;
+      const z0 = samples[0].z;
+      const zEnd = samples[samples.length - 1].z;
+      const total = z0 - zEnd;
+      const maxStep = Math.max(...samples.slice(1).map((s, i) => Math.abs(s.z - samples[i].z)));
+      const between = new Set(samples.filter((s) => s.z < z0 - 0.03 && s.z > zEnd + 0.03).map((s) => s.z.toFixed(2)))
+        .size;
+      const firstMove = samples.find((s) => Math.abs(s.z - z0) > 0.005)?.t ?? 0;
+      const lastMove = [...samples].reverse().find((s) => Math.abs(s.z - zEnd) > 0.005)?.t ?? 0;
+      check('Harita uzaklaştı (en az bir yakınlaştırma düzeyi)', total > 1, `${total.toFixed(2)} düzey`);
+      // A jump has no in-between frames and covers the whole way in one step. Software GL draws only a few frames of a move
+      // (about two a second while the camera moves, against sixty when nothing moves), so the count of in-between frames
+      // cannot be held to a frame rate measured over the whole window: three are asked, the real test of "no jump" is the
+      // biggest step.
+      const wanted = 3;
+      check(
+        'Hareket yumuşak: atlama yok, ara kareler var (tek karede en çok %45 yol)',
+        maxStep < 0.45 * total && between >= wanted,
+        `${between} ara kare (en az ${wanted}), en büyük adım ${maxStep.toFixed(2)} / ${total.toFixed(2)}`,
+      );
+      check(
+        'Hareket takip edilebilecek kadar uzun sürer (≥ 0,8 sn)',
+        lastMove - firstMove >= 800,
+        `${lastMove - firstMove} ms`,
+      );
+      check(
+        'Yalnızca uzaklaşır: hareket sırasında geri yakınlaşma yok',
+        samples.every((s, i) => i === 0 || s.z <= samples[i - 1].z + 1e-6),
+      );
+
+      await p.waitForTimeout(300);
+      const post = await snapshot();
+      check(
+        'Stalingrad artık görünümde: kenarlardan uzakta, kontrollerin arkasında değil, işaretçisi çizili',
+        post.drawn &&
+          post.x >= 30 &&
+          post.x <= post.W - 50 &&
+          post.y >= 40 &&
+          post.y <= post.H - 30 &&
+          !post.behindControl,
+        `${Math.round(post.x)},${Math.round(post.y)} / ${Math.round(post.W)}×${Math.round(post.H)}`,
+      );
+      const [pw, ps, pe, pn] = pre.bounds;
+      const [qw, qs, qe, qn] = post.bounds;
+      check(
+        'Önceki görünüm yeni görünümün içinde kalır (Çin hâlâ ekranda)',
+        qw <= pw + 0.01 && qs <= ps + 0.01 && qe >= pe - 0.01 && qn >= pn - 0.01,
+        `[${pre.bounds.map((v) => v.toFixed(0))}] ⊂ [${post.bounds.map((v) => v.toFixed(0))}]`,
+      );
+      // "just enough": the least zoom-out that brings Stalingrad inside the margins (the same margins the app keeps clear)
+      const margin = { top: 44, right: 60, bottom: 36, left: 36 };
+      let need = Infinity;
+      for (let L = 0; L <= 12; L += 0.01) {
+        const k = 2 ** -L;
+        const x = pre.W / 2 + pre.dx * k;
+        const y = pre.H / 2 + pre.dy * k;
+        if (x >= margin.left && x <= pre.W - margin.right && y >= margin.top && y <= pre.H - margin.bottom) {
+          need = L;
+          break;
+        }
+      }
+      const used = pre.z - post.z;
+      check(
+        'Harita yalnızca gerektiği kadar uzaklaştı (en az gereken düzey + küçük pay)',
+        Math.abs(used - need) <= 0.25 && post.z > post.minZoom + 0.2,
+        `kullanılan ${used.toFixed(2)} düzey, gereken ${need.toFixed(2)}`,
+      );
+
+      // the highlight on the map marker
+      const mk = await p.evaluate(() => {
+        const el = document.querySelector('.evt[data-id="stalingrad-1942"]');
+        const mark = el.querySelector('.evt-mark');
+        const ring = getComputedStyle(mark, '::after');
+        const glow = getComputedStyle(mark, '::before');
+        const callout = getComputedStyle(el, '::after');
+        const other = [...document.querySelectorAll('.evt:not(.is-hidden):not(.is-selected)')][0];
+        const otherRing = other ? getComputedStyle(other.querySelector('.evt-mark'), '::after') : null;
+        const r = mark.getBoundingClientRect();
+        return {
+          selected: el.classList.contains('is-selected'),
+          pressed: el.getAttribute('aria-pressed'),
+          ringW: parseFloat(ring.borderTopWidth),
+          ringColour: ring.borderTopColor,
+          ringOpacity: Number(ring.opacity),
+          glowOpacity: Number(glow.opacity),
+          callout: callout.display !== 'none' ? callout.content.replace(/^"|"$/g, '') : '',
+          otherOpacity: otherRing ? Number(otherRing.opacity) : null,
+          centre: { x: r.left + r.width / 2, y: r.top + r.height / 2 },
+        };
+      });
+      check(
+        'Stalingrad işaretçisi belirgin biçimde vurgulu: ≥ 3 px vurgu halkası, ışıma, adı yanında',
+        mk.selected &&
+          mk.pressed === 'true' &&
+          mk.ringW >= 3 &&
+          mk.ringColour === 'rgb(207, 58, 33)' &&
+          mk.ringOpacity === 1 &&
+          mk.glowOpacity === 1 &&
+          mk.callout === 'Stalingrad Muharebesi',
+        JSON.stringify({ ring: mk.ringW, colour: mk.ringColour, callout: mk.callout }),
+      );
+      check(
+        'Vurgu yalnızca seçili olayda: haritada başka işaretçi yok (yer seçili, anlatıcı o) ya da varsa halkası yok',
+        mk.otherOpacity === 0 || mk.otherOpacity === null,
+        String(mk.otherOpacity),
+      );
+      const reds = await colourCount(
+        p,
+        { x: mk.centre.x - 34, y: mk.centre.y - 34, width: 68, height: 68 },
+        [207, 58, 33],
+        48,
+      );
+      check(
+        'Vurgu gözle de seçilir: işaretçinin çevresinde yüzlerce vurgu rengi pikseli',
+        reds >= 120,
+        `${reds} piksel`,
+      );
+      await p.mouse.move(700, 20); // off the timeline: the screenshot should not show the hover tooltip
+      await p.waitForTimeout(400);
+      await shot(p, '12-stalingrad-sonra.png');
+
+      // the same event on the timeline
+      const tl = await p.evaluate(() => {
+        const d = document.querySelector('.tl-ev[data-id="stalingrad-1942"]');
+        const tag = document.querySelector('.tl-tag');
+        const t = tag ? tag.getBoundingClientRect() : null;
+        return {
+          selected: d.classList.contains('is-selected'),
+          tag: tag ? tag.textContent.replace(/\s+/g, ' ').trim() : '',
+          covers: t
+            ? [...document.querySelectorAll('.tl-ev:not(.is-selected)')].filter((o) => {
+                const r = o.querySelector('.dot').getBoundingClientRect();
+                return r.left < t.right && r.right > t.left && r.top < t.bottom && r.bottom > t.top;
+              }).length
+            : -1,
+        };
+      });
+      check(
+        'Çizelgede seçili nokta vurgulu ve adı yanında kalır (seçili olayın etiketi görünür kalabilir)',
+        tl.selected && tl.tag.includes('Stalingrad Muharebesi') && tl.tag.includes('1942'),
+        tl.tag,
+      );
+      check('Ad etiketi başka bir noktayı örtmez', tl.covers === 0, String(tl.covers));
+
+      // the panel: the event is the focus, the place folds into one line
+      const panel = await p.evaluate(() => ({
+        line: document.querySelector('[data-testid=place-line]')?.innerText.replace(/\s+/g, ' ').trim() ?? null,
+        event: !!document.querySelector('[data-testid=event-card]'),
+        placeCard: !!document.querySelector('[data-testid=place-card]'),
+        lineHeight: document.querySelector('[data-testid=place-line]')?.getBoundingClientRect().height ?? 0,
+      }));
+      check(
+        'Panel: olay odakta (tam kart); yer tek satırlık başlığa küçüldü (ad + aralık), yer kartı gizli',
+        panel.event &&
+          !panel.placeCard &&
+          !!panel.line &&
+          panel.line.includes('Nazi Almanyası') &&
+          panel.line.includes('1940–1944') &&
+          panel.lineHeight <= 56,
+        `${panel.line} (${Math.round(panel.lineHeight)} px)`,
+      );
+
+      // back to the place: by the header, by the close button, by Esc
+      const camBefore = await cameraOf(p);
+      await p.locator('[data-testid=place-line]').click();
+      await p.waitForTimeout(600);
+      const back = await p.evaluate(() => ({
+        event: window.__ayni.store.state.selectedEventId,
+        placeCard: !!document.querySelector('[data-testid=place-card]'),
+        eventCard: !!document.querySelector('[data-testid=event-card]'),
+        line: !!document.querySelector('[data-testid=place-line]'),
+        selectedMarker: document.querySelectorAll('.evt.is-selected').length,
+        title: document.querySelector('[data-testid=place-title]')?.textContent.trim(),
+      }));
+      check(
+        'Başlığa tıklamak yer görünümüne döndürür: olay kapanır, yer kartı tam boyutta, işaretçi vurgusu kalkar',
+        back.event === null &&
+          back.placeCard &&
+          !back.eventCard &&
+          !back.line &&
+          back.selectedMarker === 0 &&
+          back.title === 'Nazi Almanyası',
+        JSON.stringify(back),
+      );
+      check('Yer görünümüne dönmek haritayı oynatmaz', sameCamera(camBefore, await cameraOf(p)));
+      await shot(p, '13-olay-kapaninca.png');
+
+      await p.locator('.tl-ev[data-id="stalingrad-1942"]').click();
+      await p.waitForTimeout(700);
+      await p.locator('[data-testid=event-card] button[aria-label="Olayı kapat"]').click();
+      await p.waitForTimeout(500);
+      check(
+        'Olay kartının kapatma düğmesi de yer görünümüne döndürür',
+        await p.evaluate(
+          () =>
+            !!document.querySelector('[data-testid=place-card]') &&
+            !document.querySelector('[data-testid=event-card]') &&
+            window.__ayni.store.state.selectedEventId === null,
+        ),
+      );
+      await p.locator('.tl-ev[data-id="stalingrad-1942"]').click();
+      await p.waitForTimeout(500);
+      await p.keyboard.press('Escape');
+      await p.waitForTimeout(400);
+      check(
+        'Esc de olayı kapatır; yer seçili kalır ve panel yer görünümüne döner',
+        await p.evaluate(
+          () => !!document.querySelector('[data-testid=place-card]') && window.__ayni.store.state.places.length === 1,
+        ),
+      );
+      check('Bu senaryoda konsol hatası yok (9)', errs.length === 0, errs[0] ?? '');
+      await ctx.close();
+    }
+    {
+      // an event the zoom budget would hide is drawn anyway while it is open
+      const { ctx, p } = await open('#t=1800-2000&p=9.2,48.8');
+      const hidden = await p.evaluate(() => {
+        const vm = window.__ayni.view();
+        const shown = new Set(window.__ayni.visibleMarkerIds());
+        const onTimeline = new Set(vm.places[0].timeline.map((e) => e.id));
+        return vm.mapEvents.filter((e) => onTimeline.has(e.id) && !shown.has(e.id)).map((e) => e.id);
+      });
+      check(
+        'Geniş aralıkta, yakınlaştırma bütçesi yüzünden haritada çizilmeyen olaylar var',
+        hidden.length >= 2,
+        `${hidden.length} olay`,
+      );
+      for (const id of hidden.slice(0, 2)) {
+        await p.locator(`.tl-ev[data-id="${id}"]`).click();
+        await cameraIdle(p);
+        const st = await p.evaluate((eid) => {
+          const el = document.querySelector(`.evt[data-id="${eid}"]`);
+          return {
+            drawn: !!el && !el.classList.contains('is-hidden'),
+            selected: !!el && el.classList.contains('is-selected'),
+          };
+        }, id);
+        check(`Seçilince çizilir (bütçe ve önem süzgeci aşılır): ${id}`, st.drawn && st.selected);
+      }
+      await ctx.close();
+    }
+  }
+
+  if (wants(10)) {
+    /* ---- 10. narrow screens, touch, reduced motion */
+    section('10. Dar ekran, dokunmatik, azaltılmış hareket');
+    {
+      const { ctx, p, errs } = await open(
+        '#t=1942&p=9.2,48.8',
+        { width: 390, height: 844 },
+        { hasTouch: true, isMobile: true },
+      );
+      const m = await p.evaluate(() => {
+        const map = document.querySelector('.map-wrap').getBoundingClientRect();
+        const head = document.querySelector('.map-head').getBoundingClientRect();
+        const lg = document.querySelector('.legend').getBoundingClientRect();
+        const st = document.querySelector('.map-stats:not([hidden])')?.getBoundingClientRect();
+        const meets = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+        return {
+          overflow: document.documentElement.scrollWidth > innerWidth,
+          above: head.bottom <= map.top + 0.5,
+          dock: document.querySelector('.dock').getBoundingClientRect().height,
+          legendInside: lg.left >= map.left && lg.right <= map.right && lg.bottom <= map.bottom,
+          legendClash: st ? meets(lg, st) : false,
+        };
+      });
+      check(
+        'Telefon: yatay taşma yok, başlık haritanın üstünde, alt bölüm ince (≈ 80 px)',
+        !m.overflow && m.above && m.dock >= 70 && m.dock <= 90,
+        `${m.dock} px`,
+      );
+      check('Telefon: lejant haritanın içinde ve sayaçla çakışmıyor', m.legendInside && !m.legendClash);
+      await shot(p, '14-mobil.png');
+      const dotEl = p.locator('.tl-ev:not(.is-context)').first();
+      const id = await dotEl.getAttribute('data-id');
+      const title = await p.evaluate((i) => window.__ayni.data.eventsById.get(i).title, id);
+      await dotEl.tap();
+      await p.waitForTimeout(700);
+      const tapped = await p.evaluate(() => ({
+        open: window.__ayni.store.state.selectedEventId,
+        tag: document.querySelector('.tl-tag')?.textContent.replace(/\s+/g, ' ').trim() ?? '',
+        tipHidden: document.querySelector('.tip').hidden,
+      }));
+      check(
+        'Dokunmatik: noktaya dokununca olay açılır ve adı çizelgede görünür',
+        tapped.open === id && tapped.tag.includes(title),
+        `${title} → ${tapped.tag}`,
+      );
+      check('Dokunmatik: dokunuştan sonra ekranda takılı kalan bir ipucu yok', tapped.tipHidden);
+      check('Telefonda konsol hatası yok', errs.length === 0, errs[0] ?? '');
+      await ctx.close();
+    }
+    {
+      const { ctx, p } = await open(
+        '#t=1940-1944&p=9.2,48.8',
+        { width: 1440, height: 900 },
+        { reducedMotion: 'reduce' },
+      );
+      await p.evaluate(() => window.__ayni.map.jumpTo({ center: [112, 33], zoom: 4.6 }));
+      await p.waitForTimeout(1200);
+      const z0 = (await cameraOf(p)).zoom;
+      await p.locator('.tl-ev[data-id="stalingrad-1942"]').click();
+      await p.waitForTimeout(500);
+      const z1 = (await cameraOf(p)).zoom;
+      const seen = await p.evaluate(() => {
         const m = window.__ayni.map;
-        const b = m.getBounds();
-        const box = document.querySelector('#map').getBoundingClientRect();
         const ev = window.__ayni.data.eventsById.get('stalingrad-1942');
         const q = m.project([ev.location.lon, ev.location.lat]);
-        const rects = [
-          ...document.querySelectorAll(
-            '.map-zoom, .legend, .map-stats:not([hidden]), [data-avoid]:not(.foot-guard):not([hidden])',
-          ),
-        ].map((el) => el.getBoundingClientRect());
-        const x = box.left + q.x;
-        const y = box.top + q.y;
-        const el = document.querySelector('.evt[data-id="stalingrad-1942"]');
-        return {
-          z: m.getZoom(),
-          minZoom: m.getMinZoom(),
-          bounds: [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()],
-          W: box.width,
-          H: box.height,
-          x: q.x,
-          y: q.y,
-          dx: q.x - box.width / 2,
-          dy: q.y - box.height / 2,
-          behindControl: rects.some((r) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom),
-          drawn: !!el && !el.classList.contains('is-hidden'),
-        };
+        const box = document.querySelector('#map').getBoundingClientRect();
+        return q.x > 0 && q.y > 0 && q.x < box.width && q.y < box.height;
       });
-    const pre = await snapshot();
-    check(
-      "Çin'e yakınlaşılmış; Stalingrad şu an görünümün dışında ve haritada çizili değil",
-      pre.z > 4 && !pre.drawn,
-      `yakınlaştırma ${pre.z.toFixed(2)}`,
-    );
-    check(
-      'Stalingrad, Nazi Almanyası çizelgesinde bir nokta olarak duruyor',
-      (await p.locator('.tl-ev[data-id="stalingrad-1942"]').count()) === 1,
-    );
-    await p.screenshot({ path: join(OUT, '11-stalingrad-once-cin.png') });
-
-    const tracking = trackCamera(p, 4200);
-    await p.locator('.tl-ev[data-id="stalingrad-1942"]').click();
-    const samples = await tracking;
-    const z0 = samples[0].z;
-    const zEnd = samples[samples.length - 1].z;
-    const total = z0 - zEnd;
-    const maxStep = Math.max(...samples.slice(1).map((s, i) => Math.abs(s.z - samples[i].z)));
-    const between = new Set(samples.filter((s) => s.z < z0 - 0.03 && s.z > zEnd + 0.03).map((s) => s.z.toFixed(2)))
-      .size;
-    const firstMove = samples.find((s) => Math.abs(s.z - z0) > 0.005)?.t ?? 0;
-    const lastMove = [...samples].reverse().find((s) => Math.abs(s.z - zEnd) > 0.005)?.t ?? 0;
-    check('Harita uzaklaştı (en az bir yakınlaştırma düzeyi)', total > 1, `${total.toFixed(2)} düzey`);
-    // (the number of in-between frames follows the page's own frame rate: software GL on a busy machine draws few of them,
-    // so what is asked is "most of the frames a move that long should have", up to five; the real test of "no jump" is the
-    // biggest step)
-    const fps = samples.length / 4.2;
-    const wanted = Math.min(5, Math.max(2, Math.floor(((fps * (lastMove - firstMove)) / 1000) * 0.6)));
-    check(
-      'Hareket yumuşak: atlama yok, ara kareler var (tek karede en çok %45 yol)',
-      maxStep < 0.45 * total && between >= wanted,
-      `${between} ara kare (en az ${wanted}; ${fps.toFixed(1)} kare/sn), en büyük adım ${maxStep.toFixed(2)} / ${total.toFixed(2)}`,
-    );
-    check(
-      'Hareket takip edilebilecek kadar uzun sürer (≥ 0,8 sn)',
-      lastMove - firstMove >= 800,
-      `${lastMove - firstMove} ms`,
-    );
-    check(
-      'Yalnızca uzaklaşır: hareket sırasında geri yakınlaşma yok',
-      samples.every((s, i) => i === 0 || s.z <= samples[i - 1].z + 1e-6),
-    );
-
-    await p.waitForTimeout(300);
-    const post = await snapshot();
-    check(
-      'Stalingrad artık görünümde: kenarlardan uzakta, kontrollerin arkasında değil, işaretçisi çizili',
-      post.drawn &&
-        post.x >= 30 &&
-        post.x <= post.W - 50 &&
-        post.y >= 40 &&
-        post.y <= post.H - 30 &&
-        !post.behindControl,
-      `${Math.round(post.x)},${Math.round(post.y)} / ${Math.round(post.W)}×${Math.round(post.H)}`,
-    );
-    const [pw, ps, pe, pn] = pre.bounds;
-    const [qw, qs, qe, qn] = post.bounds;
-    check(
-      'Önceki görünüm yeni görünümün içinde kalır (Çin hâlâ ekranda)',
-      qw <= pw + 0.01 && qs <= ps + 0.01 && qe >= pe - 0.01 && qn >= pn - 0.01,
-      `[${pre.bounds.map((v) => v.toFixed(0))}] ⊂ [${post.bounds.map((v) => v.toFixed(0))}]`,
-    );
-    // "just enough": the least zoom-out that brings Stalingrad inside the margins (the same margins the app keeps clear)
-    const margin = { top: 44, right: 60, bottom: 36, left: 36 };
-    let need = Infinity;
-    for (let L = 0; L <= 12; L += 0.01) {
-      const k = 2 ** -L;
-      const x = pre.W / 2 + pre.dx * k;
-      const y = pre.H / 2 + pre.dy * k;
-      if (x >= margin.left && x <= pre.W - margin.right && y >= margin.top && y <= pre.H - margin.bottom) {
-        need = L;
-        break;
-      }
+      check(
+        '"Hareketi azalt" tercihinde görünüm animasyonsuz değişir ve olay yine görünür olur',
+        z1 < z0 - 1 && seen,
+        `${z0.toFixed(2)} → ${z1.toFixed(2)}`,
+      );
+      await ctx.close();
     }
-    const used = pre.z - post.z;
-    check(
-      'Harita yalnızca gerektiği kadar uzaklaştı (en az gereken düzey + küçük pay)',
-      Math.abs(used - need) <= 0.25 && post.z > post.minZoom + 0.2,
-      `kullanılan ${used.toFixed(2)} düzey, gereken ${need.toFixed(2)}`,
-    );
-
-    // the highlight on the map marker
-    const mk = await p.evaluate(() => {
-      const el = document.querySelector('.evt[data-id="stalingrad-1942"]');
-      const mark = el.querySelector('.evt-mark');
-      const ring = getComputedStyle(mark, '::after');
-      const glow = getComputedStyle(mark, '::before');
-      const callout = getComputedStyle(el, '::after');
-      const other = [...document.querySelectorAll('.evt:not(.is-hidden):not(.is-selected)')][0];
-      const otherRing = other ? getComputedStyle(other.querySelector('.evt-mark'), '::after') : null;
-      const r = mark.getBoundingClientRect();
-      return {
-        selected: el.classList.contains('is-selected'),
-        pressed: el.getAttribute('aria-pressed'),
-        ringW: parseFloat(ring.borderTopWidth),
-        ringColour: ring.borderTopColor,
-        ringOpacity: Number(ring.opacity),
-        glowOpacity: Number(glow.opacity),
-        callout: callout.display !== 'none' ? callout.content.replace(/^"|"$/g, '') : '',
-        otherOpacity: otherRing ? Number(otherRing.opacity) : null,
-        centre: { x: r.left + r.width / 2, y: r.top + r.height / 2 },
-      };
-    });
-    check(
-      'Stalingrad işaretçisi belirgin biçimde vurgulu: ≥ 3 px vurgu halkası, ışıma, adı yanında',
-      mk.selected &&
-        mk.pressed === 'true' &&
-        mk.ringW >= 3 &&
-        mk.ringColour === 'rgb(207, 58, 33)' &&
-        mk.ringOpacity === 1 &&
-        mk.glowOpacity === 1 &&
-        mk.callout === 'Stalingrad Muharebesi',
-      JSON.stringify({ ring: mk.ringW, colour: mk.ringColour, callout: mk.callout }),
-    );
-    check(
-      'Vurgu yalnızca seçili olayda: haritada başka işaretçi yok (yer seçili, anlatıcı o) ya da varsa halkası yok',
-      mk.otherOpacity === 0 || mk.otherOpacity === null,
-      String(mk.otherOpacity),
-    );
-    const reds = await colourCount(
-      p,
-      { x: mk.centre.x - 34, y: mk.centre.y - 34, width: 68, height: 68 },
-      [207, 58, 33],
-      48,
-    );
-    check('Vurgu gözle de seçilir: işaretçinin çevresinde yüzlerce vurgu rengi pikseli', reds >= 120, `${reds} piksel`);
-    await p.mouse.move(700, 20); // off the timeline: the screenshot should not show the hover tooltip
-    await p.waitForTimeout(400);
-    await p.screenshot({ path: join(OUT, '12-stalingrad-sonra.png') });
-
-    // the same event on the timeline
-    const tl = await p.evaluate(() => {
-      const d = document.querySelector('.tl-ev[data-id="stalingrad-1942"]');
-      const tag = document.querySelector('.tl-tag');
-      const t = tag ? tag.getBoundingClientRect() : null;
-      return {
-        selected: d.classList.contains('is-selected'),
-        tag: tag ? tag.textContent.replace(/\s+/g, ' ').trim() : '',
-        covers: t
-          ? [...document.querySelectorAll('.tl-ev:not(.is-selected)')].filter((o) => {
-              const r = o.querySelector('.dot').getBoundingClientRect();
-              return r.left < t.right && r.right > t.left && r.top < t.bottom && r.bottom > t.top;
-            }).length
-          : -1,
-      };
-    });
-    check(
-      'Çizelgede seçili nokta vurgulu ve adı yanında kalır (seçili olayın etiketi görünür kalabilir)',
-      tl.selected && tl.tag.includes('Stalingrad Muharebesi') && tl.tag.includes('1942'),
-      tl.tag,
-    );
-    check('Ad etiketi başka bir noktayı örtmez', tl.covers === 0, String(tl.covers));
-
-    // the panel: the event is the focus, the place folds into one line
-    const panel = await p.evaluate(() => ({
-      line: document.querySelector('[data-testid=place-line]')?.innerText.replace(/\s+/g, ' ').trim() ?? null,
-      event: !!document.querySelector('[data-testid=event-card]'),
-      placeCard: !!document.querySelector('[data-testid=place-card]'),
-      lineHeight: document.querySelector('[data-testid=place-line]')?.getBoundingClientRect().height ?? 0,
-    }));
-    check(
-      'Panel: olay odakta (tam kart); yer tek satırlık başlığa küçüldü (ad + aralık), yer kartı gizli',
-      panel.event &&
-        !panel.placeCard &&
-        !!panel.line &&
-        panel.line.includes('Nazi Almanyası') &&
-        panel.line.includes('1940–1944') &&
-        panel.lineHeight <= 56,
-      `${panel.line} (${Math.round(panel.lineHeight)} px)`,
-    );
-
-    // back to the place: by the header, by the close button, by Esc
-    const camBefore = await cameraOf(p);
-    await p.locator('[data-testid=place-line]').click();
-    await p.waitForTimeout(600);
-    const back = await p.evaluate(() => ({
-      event: window.__ayni.store.state.selectedEventId,
-      placeCard: !!document.querySelector('[data-testid=place-card]'),
-      eventCard: !!document.querySelector('[data-testid=event-card]'),
-      line: !!document.querySelector('[data-testid=place-line]'),
-      selectedMarker: document.querySelectorAll('.evt.is-selected').length,
-      title: document.querySelector('[data-testid=place-title]')?.textContent.trim(),
-    }));
-    check(
-      'Başlığa tıklamak yer görünümüne döndürür: olay kapanır, yer kartı tam boyutta, işaretçi vurgusu kalkar',
-      back.event === null &&
-        back.placeCard &&
-        !back.eventCard &&
-        !back.line &&
-        back.selectedMarker === 0 &&
-        back.title === 'Nazi Almanyası',
-      JSON.stringify(back),
-    );
-    check('Yer görünümüne dönmek haritayı oynatmaz', sameCamera(camBefore, await cameraOf(p)));
-    await p.screenshot({ path: join(OUT, '13-olay-kapaninca.png') });
-
-    await p.locator('.tl-ev[data-id="stalingrad-1942"]').click();
-    await p.waitForTimeout(700);
-    await p.locator('[data-testid=event-card] button[aria-label="Olayı kapat"]').click();
-    await p.waitForTimeout(500);
-    check(
-      'Olay kartının kapatma düğmesi de yer görünümüne döndürür',
-      await p.evaluate(
-        () =>
-          !!document.querySelector('[data-testid=place-card]') &&
-          !document.querySelector('[data-testid=event-card]') &&
-          window.__ayni.store.state.selectedEventId === null,
-      ),
-    );
-    await p.locator('.tl-ev[data-id="stalingrad-1942"]').click();
-    await p.waitForTimeout(500);
-    await p.keyboard.press('Escape');
-    await p.waitForTimeout(400);
-    check(
-      'Esc de olayı kapatır; yer seçili kalır ve panel yer görünümüne döner',
-      await p.evaluate(
-        () => !!document.querySelector('[data-testid=place-card]') && window.__ayni.store.state.places.length === 1,
-      ),
-    );
-    check('Bu senaryoda konsol hatası yok (9)', errs.length === 0, errs[0] ?? '');
-    await ctx.close();
-  }
-  {
-    // an event the zoom budget would hide is drawn anyway while it is open
-    const { ctx, p } = await open('#t=1800-2000&p=9.2,48.8');
-    const hidden = await p.evaluate(() => {
-      const vm = window.__ayni.view();
-      const shown = new Set(window.__ayni.visibleMarkerIds());
-      const onTimeline = new Set(vm.places[0].timeline.map((e) => e.id));
-      return vm.mapEvents.filter((e) => onTimeline.has(e.id) && !shown.has(e.id)).map((e) => e.id);
-    });
-    check(
-      'Geniş aralıkta, yakınlaştırma bütçesi yüzünden haritada çizilmeyen olaylar var',
-      hidden.length >= 2,
-      `${hidden.length} olay`,
-    );
-    for (const id of hidden.slice(0, 2)) {
-      await p.locator(`.tl-ev[data-id="${id}"]`).click();
-      await p.waitForTimeout(3300);
-      const st = await p.evaluate((eid) => {
-        const el = document.querySelector(`.evt[data-id="${eid}"]`);
-        return {
-          drawn: !!el && !el.classList.contains('is-hidden'),
-          selected: !!el && el.classList.contains('is-selected'),
-        };
-      }, id);
-      check(`Seçilince çizilir (bütçe ve önem süzgeci aşılır): ${id}`, st.drawn && st.selected);
-    }
-    await ctx.close();
   }
 
-  /* ---- 10. narrow screens, touch, reduced motion */
-  console.log('\n10. Dar ekran, dokunmatik, azaltılmış hareket');
-  {
-    const { ctx, p, errs } = await open(
-      '#t=1942&p=9.2,48.8',
-      { width: 390, height: 844 },
-      { hasTouch: true, isMobile: true },
-    );
-    const m = await p.evaluate(() => {
-      const map = document.querySelector('.map-wrap').getBoundingClientRect();
-      const head = document.querySelector('.map-head').getBoundingClientRect();
-      const lg = document.querySelector('.legend').getBoundingClientRect();
-      const st = document.querySelector('.map-stats:not([hidden])')?.getBoundingClientRect();
-      const meets = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-      return {
-        overflow: document.documentElement.scrollWidth > innerWidth,
-        above: head.bottom <= map.top + 0.5,
-        dock: document.querySelector('.dock').getBoundingClientRect().height,
-        legendInside: lg.left >= map.left && lg.right <= map.right && lg.bottom <= map.bottom,
-        legendClash: st ? meets(lg, st) : false,
-      };
-    });
-    check(
-      'Telefon: yatay taşma yok, başlık haritanın üstünde, alt bölüm ince (≈ 80 px)',
-      !m.overflow && m.above && m.dock >= 70 && m.dock <= 90,
-      `${m.dock} px`,
-    );
-    check('Telefon: lejant haritanın içinde ve sayaçla çakışmıyor', m.legendInside && !m.legendClash);
-    await p.screenshot({ path: join(OUT, '14-mobil.png') });
-    const dotEl = p.locator('.tl-ev:not(.is-context)').first();
-    const id = await dotEl.getAttribute('data-id');
-    const title = await p.evaluate((i) => window.__ayni.data.eventsById.get(i).title, id);
-    await dotEl.tap();
-    await p.waitForTimeout(700);
-    const tapped = await p.evaluate(() => ({
-      open: window.__ayni.store.state.selectedEventId,
-      tag: document.querySelector('.tl-tag')?.textContent.replace(/\s+/g, ' ').trim() ?? '',
-      tipHidden: document.querySelector('.tip').hidden,
-    }));
-    check(
-      'Dokunmatik: noktaya dokununca olay açılır ve adı çizelgede görünür',
-      tapped.open === id && tapped.tag.includes(title),
-      `${title} → ${tapped.tag}`,
-    );
-    check('Dokunmatik: dokunuştan sonra ekranda takılı kalan bir ipucu yok', tapped.tipHidden);
-    check('Telefonda konsol hatası yok', errs.length === 0, errs[0] ?? '');
-    await ctx.close();
-  }
-  {
-    const { ctx, p } = await open('#t=1940-1944&p=9.2,48.8', { width: 1440, height: 900 }, { reducedMotion: 'reduce' });
-    await p.evaluate(() => window.__ayni.map.jumpTo({ center: [112, 33], zoom: 4.6 }));
-    await p.waitForTimeout(1200);
-    const z0 = (await cameraOf(p)).zoom;
-    await p.locator('.tl-ev[data-id="stalingrad-1942"]').click();
-    await p.waitForTimeout(500);
-    const z1 = (await cameraOf(p)).zoom;
-    const seen = await p.evaluate(() => {
-      const m = window.__ayni.map;
-      const ev = window.__ayni.data.eventsById.get('stalingrad-1942');
-      const q = m.project([ev.location.lon, ev.location.lat]);
-      const box = document.querySelector('#map').getBoundingClientRect();
-      return q.x > 0 && q.y > 0 && q.x < box.width && q.y < box.height;
-    });
-    check(
-      '"Hareketi azalt" tercihinde görünüm animasyonsuz değişir ve olay yine görünür olur',
-      z1 < z0 - 1 && seen,
-      `${z0.toFixed(2)} → ${z1.toFixed(2)}`,
-    );
-    await ctx.close();
-  }
+  if (wants(11)) {
+    /* ---- 11. the 200 years: border rows come in a window of years; the first and last years are reachable */
+    section('11. 1800–2000: sınırlar yıl penceresiyle gelir; ilk ve son yıllar');
+    {
+      const { ctx, p, errs } = await open('#t=1800-1806');
+      const readout = () =>
+        p.evaluate(() => ({
+          year: document.querySelector('[data-testid=title-year]')?.textContent ?? '',
+          title: document.querySelector('[data-testid=title-main]')?.textContent.trim() ?? '',
+          ready: window.__ayni.bordersReady(),
+          loading: document.querySelectorAll('[data-testid=borders-loading]').length,
+          fill: JSON.stringify(window.__ayni.map.getFilter('polity-fill')),
+          selected: JSON.stringify(window.__ayni.map.getFilter('polity-selected-line')),
+          drawn: window.__ayni.map.queryRenderedFeatures({ layers: ['polity-selected-line'] }).length,
+        }));
+      const at = (lon, lat) =>
+        p.evaluate(
+          ([lo, la]) => {
+            const q = window.__ayni.map.project([lo, la]);
+            const r = document.querySelector('#map').getBoundingClientRect();
+            return { x: r.left + q.x, y: r.top + q.y };
+          },
+          [lon, lat],
+        );
 
-  /* ---- 11. the 200 years: border rows come in a window of years; the first and last years are reachable */
-  console.log('\n11. 1800–2000: sınırlar yıl penceresiyle gelir; ilk ve son yıllar');
-  {
-    const { ctx, p, errs } = await open('#t=1800-1806');
-    const readout = () =>
-      p.evaluate(() => ({
-        year: document.querySelector('[data-testid=title-year]')?.textContent ?? '',
-        title: document.querySelector('[data-testid=title-main]')?.textContent.trim() ?? '',
-        ready: window.__ayni.bordersReady(),
-        loading: document.querySelectorAll('[data-testid=borders-loading]').length,
-        fill: JSON.stringify(window.__ayni.map.getFilter('polity-fill')),
-        selected: JSON.stringify(window.__ayni.map.getFilter('polity-selected-line')),
-        drawn: window.__ayni.map.queryRenderedFeatures({ layers: ['polity-selected-line'] }).length,
-      }));
-    const at = (lon, lat) =>
-      p.evaluate(
-        ([lo, la]) => {
-          const q = window.__ayni.map.project([lo, la]);
-          const r = document.querySelector('#map').getBoundingClientRect();
-          return { x: r.left + q.x, y: r.top + q.y };
+      // The outline of the selected polity is a map layer: it is drawn once the tiles of the (new) window have been made and
+      // painted, which takes a moment in software GL, so it is waited for rather than read after a fixed pause.
+      const outlineDrawn = () =>
+        p
+          .waitForFunction(
+            () => window.__ayni.map.queryRenderedFeatures({ layers: ['polity-selected-line'] }).length > 0,
+            null,
+            { timeout: 20000 },
+          )
+          .catch(() => undefined);
+
+      // the first years of the data: Paris is the French Consulate, and its outline is drawn from the windowed source
+      let r = await readout();
+      check(
+        'İlk yıllar: sınır yılı 1803, harita hazır, başlıkta “yükleniyor…” yok',
+        r.year === '1803' && r.ready && r.loading === 0,
+      );
+      const paris = await at(2.35, 48.86);
+      await p.mouse.click(paris.x, paris.y);
+      await p.waitForFunction(
+        () => document.querySelector('[data-testid=title-main]').textContent.trim() !== 'Dünya',
+        null,
+        {
+          timeout: 8000,
         },
-        [lon, lat],
+      );
+      await outlineDrawn();
+      r = await readout();
+      check(
+        '1803’te Paris, Fransa Konsolosluğu’dur; vurgusu pencereli kaynaktan çizilir',
+        r.title === 'Fransa Konsolosluğu' && r.selected.includes('french-consulate') && r.drawn > 0,
+        `${r.title} · ${r.drawn} parça`,
       );
 
-    // The outline of the selected polity is a map layer: it is drawn once the tiles of the (new) window have been made and
-    // painted, which takes a moment in software GL, so it is waited for rather than read after a fixed pause.
-    const outlineDrawn = () =>
-      p
-        .waitForFunction(
-          () => window.__ayni.map.queryRenderedFeatures({ layers: ['polity-selected-line'] }).length > 0,
-          null,
-          { timeout: 20000 },
-        )
-        .catch(() => undefined);
-
-    // the first years of the data: Paris is the French Consulate, and its outline is drawn from the windowed source
-    let r = await readout();
-    check(
-      'İlk yıllar: sınır yılı 1803, harita hazır, başlıkta “yükleniyor…” yok',
-      r.year === '1803' && r.ready && r.loading === 0,
-    );
-    const paris = await at(2.35, 48.86);
-    await p.mouse.click(paris.x, paris.y);
-    await p.waitForFunction(
-      () => document.querySelector('[data-testid=title-main]').textContent.trim() !== 'Dünya',
-      null,
-      {
-        timeout: 8000,
-      },
-    );
-    await outlineDrawn();
-    r = await readout();
-    check(
-      '1803’te Paris, Fransa Konsolosluğu’dur; vurgusu pencereli kaynaktan çizilir',
-      r.title === 'Fransa Konsolosluğu' && r.selected.includes('french-consulate') && r.drawn > 0,
-      `${r.title} · ${r.drawn} parça`,
-    );
-
-    // a long step in time (1803 → 1942) fetches the window of those years; the same place is Nazi Germany's now
-    await p.evaluate(() => window.__ayni.store.setRange({ from: 1940, to: 1944 }));
-    await bordersSettled(p);
-    await outlineDrawn();
-    r = await readout();
-    check(
-      'Uzun sıçramadan sonra (1803 → 1942) pencere gelir: süzgeç gösterilen yılı kullanır, başlıkta “yükleniyor…” kalmaz',
-      r.year === '1942' && r.fill.includes('1942') && r.ready && r.loading === 0,
-      r.fill,
-    );
-    check(
-      'Aynı nokta artık Nazi Almanyası (Paris, 1942) ve vurgusu çizili',
-      r.title === 'Nazi Almanyası' && r.drawn > 0,
-      r.title,
-    );
-
-    // the last years of the data
-    await p.evaluate(() => window.__ayni.store.setRange({ from: 1994, to: 2000 }));
-    await bordersSettled(p);
-    await outlineDrawn();
-    r = await readout();
-    check(
-      'Son yıllar: sınır yılı 1997, Paris Fransa Beşinci Cumhuriyeti',
-      r.year === '1997' && r.title === 'Fransa Beşinci Cumhuriyeti' && r.ready && r.loading === 0,
-      `${r.year} · ${r.title}`,
-    );
-    // the very last year, and then the very first again
-    await p.evaluate(() => window.__ayni.store.setRange({ from: 2000, to: 2000 }));
-    await bordersSettled(p);
-    r = await readout();
-    check('Verinin son yılı (2000) gösterilir', r.year === '2000' && r.ready && r.loading === 0, r.year);
-    await p.evaluate(() => window.__ayni.store.setRange({ from: 1800, to: 1800 }));
-    await bordersSettled(p);
-    r = await readout();
-    check('Verinin ilk yılı (1800) gösterilir', r.year === '1800' && r.ready && r.loading === 0, r.year);
-
-    // dragging the border year across the whole 200 years never leaves the header stuck on “yükleniyor…”
-    await p.evaluate(() => window.__ayni.store.setRange({ from: 1800, to: 2000 }));
-    await bordersSettled(p);
-    for (const y of [1815, 1914, 1942, 1989, 1815]) {
-      await p.evaluate((yy) => window.__ayni.store.setDisplayYear(yy), y);
+      // a long step in time (1803 → 1942) fetches the window of those years; the same place is Nazi Germany's now
+      await p.evaluate(() => window.__ayni.store.setRange({ from: 1940, to: 1944 }));
       await bordersSettled(p);
-    }
-    r = await readout();
-    check(
-      '200 yıllık aralıkta sınır yılı uçtan uca gezdirilince son yıl (1815) hazır ve “yükleniyor…” kalmaz',
-      r.year === '1815' && r.ready && r.loading === 0 && r.fill.includes('1815'),
-      r.year,
-    );
-    check('Bu senaryoda konsol hatası yok (11)', errs.length === 0, errs[0] ?? '');
-    await ctx.close();
-  }
+      await outlineDrawn();
+      r = await readout();
+      check(
+        'Uzun sıçramadan sonra (1803 → 1942) pencere gelir: süzgeç gösterilen yılı kullanır, başlıkta “yükleniyor…” kalmaz',
+        r.year === '1942' && r.fill.includes('1942') && r.ready && r.loading === 0,
+        r.fill,
+      );
+      check(
+        'Aynı nokta artık Nazi Almanyası (Paris, 1942) ve vurgusu çizili',
+        r.title === 'Nazi Almanyası' && r.drawn > 0,
+        r.title,
+      );
 
-  check('Sayfada konsol/sayfa hatası yok', problems.length === 0, problems.slice(0, 3).join(' | '));
+      // the last years of the data
+      await p.evaluate(() => window.__ayni.store.setRange({ from: 1994, to: 2000 }));
+      await bordersSettled(p);
+      await outlineDrawn();
+      r = await readout();
+      check(
+        'Son yıllar: sınır yılı 1997, Paris Fransa Beşinci Cumhuriyeti',
+        r.year === '1997' && r.title === 'Fransa Beşinci Cumhuriyeti' && r.ready && r.loading === 0,
+        `${r.year} · ${r.title}`,
+      );
+      // the very last year, and then the very first again
+      await p.evaluate(() => window.__ayni.store.setRange({ from: 2000, to: 2000 }));
+      await bordersSettled(p);
+      r = await readout();
+      check('Verinin son yılı (2000) gösterilir', r.year === '2000' && r.ready && r.loading === 0, r.year);
+      await p.evaluate(() => window.__ayni.store.setRange({ from: 1800, to: 1800 }));
+      await bordersSettled(p);
+      r = await readout();
+      check('Verinin ilk yılı (1800) gösterilir', r.year === '1800' && r.ready && r.loading === 0, r.year);
+
+      // dragging the border year across the whole 200 years never leaves the header stuck on “yükleniyor…”
+      await p.evaluate(() => window.__ayni.store.setRange({ from: 1800, to: 2000 }));
+      await bordersSettled(p);
+      for (const y of [1815, 1914, 1942, 1989, 1815]) {
+        await p.evaluate((yy) => window.__ayni.store.setDisplayYear(yy), y);
+        await bordersSettled(p);
+      }
+      r = await readout();
+      check(
+        '200 yıllık aralıkta sınır yılı uçtan uca gezdirilince son yıl (1815) hazır ve “yükleniyor…” kalmaz',
+        r.year === '1815' && r.ready && r.loading === 0 && r.fill.includes('1815'),
+        r.year,
+      );
+      check('Bu senaryoda konsol hatası yok (11)', errs.length === 0, errs[0] ?? '');
+      await ctx.close();
+    }
+  }
 } catch (err) {
   check('Senaryo hatasız tamamlandı', false, String(err.message ?? err).split('\n')[0]);
-  await page.screenshot({ path: join(OUT, 'hata.png') }).catch(() => {});
+  await page
+    .screenshot({ path: FAILURE_SHOT })
+    .then(() => console.log(`Hata ekran görüntüsü: ${FAILURE_SHOT}`))
+    .catch(() => {});
 } finally {
+  if (sectionTimes.length) sectionTimes[sectionTimes.length - 1].ms = Date.now() - sectionStart;
   await browser.close();
   server.stop();
 }
@@ -1760,6 +1850,15 @@ const lines = [
   '- `14-mobil.png`: telefon genişliği (390 px)',
   '',
 ];
-writeFileSync(join(OUT, 'RAPOR.md'), lines.join('\n'));
-console.log(`\n${results.length - failed.length}/${results.length} denetim geçti. Rapor: docs/verification/RAPOR.md`);
+if (SHOTS) writeFileSync(join(OUT, 'RAPOR.md'), lines.join('\n'));
+console.log('\nBölüm süreleri:');
+for (const t of sectionTimes) console.log(`  ${String(Math.round(t.ms / 1000)).padStart(4)} sn  ${t.title}`);
+if (failed.length) {
+  console.log('\nBaşarısız denetimler:');
+  for (const r of failed) console.log(`  ✗ ${r.name}${r.detail ? `  (${r.detail})` : ''}`);
+}
+const mode = `${SMOKE ? 'hızlı' : ONLY ? `E2E_ONLY=${ONLY.join(',')}` : 'tam'} · ${MOTION === 'reduce' ? 'hareket azaltılmış' : 'animasyonlu'}`;
+console.log(
+  `\n${results.length - failed.length}/${results.length} denetim geçti (${mode}) · ${Math.round((Date.now() - T_START) / 1000)} sn${SHOTS ? ' · Rapor: docs/verification/RAPOR.md' : ''}`,
+);
 process.exit(failed.length ? 1 : 0);
