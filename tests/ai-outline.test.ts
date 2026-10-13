@@ -14,6 +14,7 @@ const ottoman = (r = range): AiContext => ({
       id: '35.500,38.900',
       point: { lon: 35.5, lat: 38.9 },
       title: 'Osmanlı İmparatorluğu',
+      occupation: null,
       holder: { id: 'ottoman-empire', name: 'Osmanlı İmparatorluğu' },
       regions: ['Anadolu'],
       lineage: ['ottoman-empire', 'anatolia'],

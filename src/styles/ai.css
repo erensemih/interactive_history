@@ -120,6 +120,117 @@
   stroke-linejoin: round;
 }
 
+/* routes: a curved arrow through places, one look per type, the same every time. Pen and ink like everything else the AI
+   draws, told apart by pattern: an advance is solid and heavy, a retreat dashed with an open head, a migration dotted, a
+   trade or supply road long-and-short dashes. The last stop carries the arrowhead; the stops before it are small dots. */
+.ai-route {
+  animation: ai-in 0.5s ease both;
+}
+
+.ai-route .casing,
+.ai-route .line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ai-route .casing {
+  stroke: var(--paper);
+  stroke-opacity: 0.9;
+  stroke-width: 7.4;
+}
+
+.ai-route .line {
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+
+.ai-route .head {
+  fill: var(--ink);
+  stroke: var(--paper);
+  stroke-width: 1.5;
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
+
+.ai-route .stop {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.ai-route[data-type='advance'] .casing {
+  stroke-width: 8.4;
+}
+.ai-route[data-type='advance'] .line {
+  stroke-width: 3.8;
+}
+.ai-route[data-type='advance'] .stop {
+  fill: var(--ink);
+  stroke: var(--paper);
+  stroke-width: 1.6;
+}
+
+.ai-route[data-type='retreat'] .line {
+  stroke-dasharray: 9 7;
+  stroke-linecap: butt;
+}
+.ai-route[data-type='retreat'] .head {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 2.2;
+  paint-order: normal;
+}
+
+.ai-route[data-type='migration'] .casing {
+  stroke-width: 8;
+}
+.ai-route[data-type='migration'] .line {
+  stroke-width: 3.8;
+  stroke-dasharray: 0.1 7.2;
+}
+.ai-route[data-type='migration'] .stop {
+  r: 3;
+}
+
+.ai-route[data-type='trade'] .casing {
+  stroke-width: 6;
+}
+.ai-route[data-type='trade'] .line {
+  stroke-width: 2.4;
+  stroke-dasharray: 14 5 3 5;
+  stroke-linecap: butt;
+}
+.ai-route[data-type='trade'] .stop {
+  r: 3.2;
+}
+
+/* a route that is asked to animate draws itself in along its path, stop by stop, the head last (not at all when the reader
+   asked the system for reduced motion: it is simply there) */
+.ai-route .reveal {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 30;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: ai-route-draw 2s cubic-bezier(0.45, 0, 0.25, 1) 0.25s forwards;
+}
+
+@keyframes ai-route-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-route .reveal {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
 /* A war event, drawn by the app the same way every time: one ink line from the first side's polity through the event's own
    marker to the second side's, the marker sitting on a paper ring where the line passes. No glyph, no name box: the marker
    is the glyph, and the name shows on hover like every marker's. */
@@ -206,7 +317,8 @@
   font-size: 13px;
 }
 
-.ai-flag.is-link {
+.ai-flag.is-link,
+.ai-flag.is-route {
   font-family: var(--font-sans);
   font-weight: 600;
   font-size: 12px;

@@ -4,7 +4,7 @@ import type { AppData } from '../data/load';
 import { EMPTY_RESOLVED, type FrameTarget, type ResolvedDrawing } from '../ai/types';
 import { frameBounds, framePadding, isFramed, projectWith } from '../domain/camera';
 import { isLand, primaryAt, rowsContaining } from '../domain/geo';
-import { unionBoundsAll, zoomOutToRevealAll, type Rect } from '../domain/reveal';
+import { revealMove, type Rect } from '../domain/reveal';
 import type { HistoricalEvent, PlacePoint } from '../domain/types';
 import { AiDrawingLayer } from './aiLayer';
 import { PolityLabels } from './labels';
@@ -101,6 +101,11 @@ export class MapView {
   private selectedIds: string[] = [];
   /** Polities in the AI's spotlight: lit solid and vivid while the rest of the map fades back. */
   private spotIds: string[] = [];
+  /** The paint of the spotlight's fill: each polity in its own vivid hue, or in its side's colour. */
+  private vividExpr: ExpressionSpecification | null = null;
+  /** The sides of the drawing on screen (kept so that a drawing set before the map is ready is painted when it is). */
+  private sides: ResolvedDrawing['sides'] = [];
+  private sidesKey = '';
   private hoverId: string | null = null;
   /** Somebody narrates the map (the AI, else the selected place): the event markers other than the ones the narrator or the reader brings are off the map. */
   private narrator: Narrator | null = null;
@@ -249,6 +254,7 @@ export class MapView {
       ...t.vivid.flatMap((c, i) => [i, c]),
       t.vivid[0] ?? '#74c859',
     ] as unknown as ExpressionSpecification;
+    this.vividExpr = vividExpr;
     const zoomWidth = (a: number, b: number, c: number): ExpressionSpecification => [
       'interpolate',
       ['linear'],
@@ -471,6 +477,26 @@ export class MapView {
     }
     // the rest of the map fades only while something is lit
     this.map.setPaintProperty('ai-veil', 'background-opacity', this.spotIds.length ? SPOT_VEIL : 0);
+    this.applySides();
+  }
+
+  /** The lit polities of a conflict are painted by side, one colour for the whole bloc; without sides each keeps its own hue. */
+  private applySides() {
+    if (!this.ready || !this.vividExpr) return;
+    const sides = this.sides;
+    const colours = this.theme.sides;
+    const key = sides.map((s) => `${s.index}:${s.polities.join(',')}`).join('|');
+    if (key === this.sidesKey) return;
+    this.sidesKey = key;
+    const paint = sides.length
+      ? ([
+          'match',
+          ['get', 'id'],
+          ...sides.flatMap((s) => [s.polities, colours[s.index] ?? colours[0] ?? '#7d2250']),
+          this.vividExpr,
+        ] as unknown as ExpressionSpecification)
+      : this.vividExpr;
+    this.map.setPaintProperty('ai-fill', 'fill-color', paint);
   }
 
   private applySelection() {
@@ -625,6 +651,8 @@ export class MapView {
       this.labels.setEmphasis(this.spotIds);
       this.applyAi();
     }
+    this.sides = d.sides;
+    this.applySides();
     this.ai.setDrawing(d, description);
     const told = d.events.map((e) => e.id);
     if (told.length !== this.toldIds.length || told.some((id, i) => id !== this.toldIds[i])) {
@@ -637,9 +665,11 @@ export class MapView {
   /**
    * Brings an event into view if it is out of sight, changing the camera as little as possible: the map
    * zooms out about its current centre just far enough (nothing pans, and the view the user was in stays
-   * inside the new one), eased so the user can follow where it went. If even the widest view cannot show
-   * it, the map falls back to the smallest view that holds the old view and the event. Does nothing when
-   * the event is already visible, so clicking a marker never moves the map.
+   * inside the new one), eased so the user can follow where it went. If even the widest view the map has
+   * (a small window sits at its minimum zoom) cannot show it, the map goes that wide and its centre moves the
+   * shortest way that brings the event inside the margins, within the map's limits. Does nothing when the
+   * event is already visible, so clicking a marker never moves the map, and revealing the same event twice
+   * never moves it again.
    */
   revealEvent(ev: HistoricalEvent) {
     this.bringIntoView([ev.location]);
@@ -690,37 +720,30 @@ export class MapView {
       const p = map.project([pt.lon, pt.lat]);
       return { dx: p.x - width / 2, dy: p.y - height / 2 };
     });
-    const levels = zoomOutToRevealAll({
+    // The map's limits in map pixels: the view stays inside them, so the centre cannot be moved past them.
+    const bounds = map.getMaxBounds();
+    const nw = bounds && map.project(bounds.getNorthWest());
+    const se = bounds && map.project(bounds.getSouthEast());
+    const move = revealMove({
       offsets,
       width,
       height,
       margin: REVEAL_MARGIN,
       avoid: this.cb.avoidRects(),
+      zoom: map.getZoom(),
+      minZoom: map.getMinZoom(),
+      limits: nw && se ? { left: nw.x, top: nw.y, right: se.x, bottom: se.y } : null,
     });
-    if (levels === 0) return;
-    const zoom = map.getZoom() - levels - 0.05;
-    if (Number.isFinite(levels) && zoom >= map.getMinZoom()) {
-      map.easeTo({ zoom, duration: Math.min(2600, 900 + 500 * levels), easing: easeInOutSine });
-      return;
-    }
-    const b = map.getBounds();
-    const [w, s, e, n] = unionBoundsAll([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], points);
-    map.fitBounds(
-      [
-        [w, s],
-        [e, n],
-      ],
-      {
-        padding: {
-          top: REVEAL_MARGIN.top + 16,
-          right: REVEAL_MARGIN.right + 16,
-          bottom: REVEAL_MARGIN.bottom + 16,
-          left: REVEAL_MARGIN.left + 16,
-        },
-        duration: 1800,
-        easing: easeInOutSine,
-      },
-    );
+    if (!move) return;
+    const levels = map.getZoom() - move.zoom;
+    const travel = Math.hypot(move.pan.x, move.pan.y);
+    map.easeTo({
+      zoom: move.zoom,
+      // no centre unless it has to move: a plain zoom-out keeps the centre exactly where it is
+      ...(travel > 0 ? { center: map.unproject([width / 2 + move.pan.x, height / 2 + move.pan.y]) } : {}),
+      duration: Math.min(2600, 900 + 500 * levels + 0.7 * travel),
+      easing: easeInOutSine,
+    });
   }
 
   setHoverEvent(id: string | null) {

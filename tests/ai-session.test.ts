@@ -92,7 +92,7 @@ describe('a narration', () => {
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     const req = provider.requests[0]!;
     expect(req.tier).toBe('quick');
-    expect(req.tools.map((t) => t.name)).toEqual(['step', 'show_event', 'highlight', 'connect', 'mark']);
+    expect(req.tools.map((t) => t.name)).toEqual(['step', 'show_event', 'highlight', 'sides', 'route', 'connect', 'mark']);
     expect(req.turns[0]!.content.startsWith(INSTRUCTIONS_FILE)).toBe(true); // the owner's file, as it is, in every call
     expect(req.turns.at(-1)!.content).toContain(`İSTEK\n${NARRATION_REQUEST}`);
     expect(req.turns.at(-1)!.content).toContain('nazi-germany | Nazi Almanyası');
@@ -192,7 +192,7 @@ describe('a model that does not write quite what was asked', () => {
     ]);
     expect(answer.plan.drawingAt(1).highlights).toEqual(['nazi-germany', 'union-of-soviet-socialist-republics']);
     expect(answer.plan.drawingAt(2).links).toEqual([
-      { from: 'nazi-germany', to: 'kingdom-of-italy', relation: 'alliance' },
+      { from: { kind: 'polity', id: 'nazi-germany' }, to: { kind: 'polity', id: 'kingdom-of-italy' }, relation: 'alliance' },
     ]);
     expect(answer.plan.drawingAt(2).year).toBeUndefined();
   });
@@ -584,10 +584,10 @@ describe('tools that are not there', () => {
     };
     const session = makeSession(provider);
     await session.send({ text: 'Soru 1', mode: 'qa' }, berlin());
-    expect(seen).toEqual([5, 0]);
+    expect(seen).toEqual([7, 0]);
     expect(last(session)).toMatchObject({ status: 'done', text: 'Yalnızca metin.', notes: [NO_TOOLS_NOTE] });
     await session.send({ text: 'Soru 2', mode: 'qa' }, berlin());
-    expect(seen).toEqual([5, 0, 0]); // no second round trip for the same refusal
+    expect(seen).toEqual([7, 0, 0]); // no second round trip for the same refusal
   });
 
   it('a view that reports no tools gets plain text and a note, with no polity list in the prompt', async () => {

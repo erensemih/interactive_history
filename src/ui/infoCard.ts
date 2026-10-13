@@ -219,6 +219,14 @@ export class InfoCard {
         </button>
       </div>
       <h2 class="card-title" data-testid="place-title">${place.title}</h2>
+      ${
+        place.occupation && holder
+          ? html`<p class="card-sub card-occupation" data-testid="place-occupation">
+              ${place.occupation.name}, o yıl ${holder.name} tarafından işgal edilmişti. Sınır verisi burayı
+              ${holder.name} toprağı olarak çizer; bu bir işgaldir, bir devlet değişikliği değil.
+            </p>`
+          : nothing
+      }
       ${parents.length ? html`<p class="card-sub">${parents.map((p) => p.name).join(' · ')} üyesi</p>` : nothing}
       ${
         holder

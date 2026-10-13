@@ -209,6 +209,13 @@
   font-weight: 450;
 }
 
+/* the name of an occupied land: its own name, then the word for the occupation under it */
+.plabel.is-occupation {
+  font-style: italic;
+  letter-spacing: 0.01em;
+  color: rgb(31 27 22 / 0.86);
+}
+
 .plabel.is-selected {
   color: var(--accent-ink);
   font-weight: 650;

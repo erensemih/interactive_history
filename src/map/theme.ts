@@ -12,6 +12,8 @@ export interface MapTheme {
   tints: string[];
   /** The spotlight's twin of each tint: the same hue, darker and saturated. */
   vivid: string[];
+  /** The colours of the sides of a conflict, one bloc colour each. */
+  sides: string[];
 }
 
 function token(style: CSSStyleDeclaration, name: string, fallback: string): string {
@@ -40,6 +42,7 @@ export function readTheme(count: number): MapTheme {
     paper: token(s, '--paper', '#f5f0e4'),
     tints,
     vivid,
+    sides: [token(s, '--side-0', '#7d2250'), token(s, '--side-1', '#e0a526'), token(s, '--side-2', '#3d8b57')],
   };
 }
 

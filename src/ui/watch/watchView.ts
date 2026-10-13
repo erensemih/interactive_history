@@ -212,6 +212,25 @@ export class WatchView {
     </section>`;
   }
 
+  /** The key of the sides the step shows: each side's name in the colour the map paints it. */
+  private sidesKey(item: AssistantItem, n: number): TemplateResult | typeof nothing {
+    const sides = item.plan.drawingAt(n).sides;
+    if (!sides.length) return nothing;
+    const { resolver } = this.deps.session;
+    return html`<ul class="watch-sides" data-testid="watch-sides" aria-label="Taraflar">
+      ${sides.map(
+        (side, i) =>
+          html`<li
+            data-side=${i}
+            style=${`--side: var(--side-${i})`}
+            title=${side.polities.map((id) => resolver.nameOf(id)).join(', ')}
+          >
+            <i class="watch-side-swatch" aria-hidden="true"></i><span>${side.name}</span>
+          </li>`,
+      )}
+    </ul>`;
+  }
+
   /* ------------------------------------------------------ a narration in steps */
 
   private captions(item: AssistantItem): TemplateResult {
@@ -333,6 +352,7 @@ export class WatchView {
       <p class="watch-caption" data-testid="watch-caption" aria-live="polite" aria-atomic="true">
         ${inline(withoutOpenReference(step.caption), this.known)}
       </p>
+      ${this.sidesKey(item, step.n)}
       ${
         several
           ? nothing

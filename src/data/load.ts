@@ -3,7 +3,10 @@ import { boundsOf, type LandPart } from '../domain/geo';
 import { normalizeEvent, type RawEvent } from '../domain/events';
 import type { EncodedMeta } from './borderCodec';
 import { BorderStore, polysOf } from './borderStore';
+import { CapitalIndex, type CapitalsDoc } from './capitals';
+import { applyRowCorrections, OccupationIndex, type CorrectionsDoc } from './corrections';
 import { gunzipBase64 } from './gzip';
+import { PlaceIndex, type PlacesDoc } from './places';
 import type { BorderProps, BorderRow, CategoryDef, Entity, HistoricalEvent, YearRange } from '../domain/types';
 
 export interface SourceInfo {
@@ -28,6 +31,12 @@ export interface AppData {
   events: HistoricalEvent[];
   eventsById: Map<string, HistoricalEvent>;
   tintCount: number;
+  /** The gazetteer: cities the model may name as the end of a line or the stop of a route. */
+  places: PlaceIndex;
+  /** Where polities were governed from, year by year. */
+  capitals: CapitalIndex;
+  /** The lands the border data draws as their occupier's, named as occupied (the Second World War correction layer). */
+  occupations: OccupationIndex;
   sources: { borders: SourceInfo; coast: SourceInfo };
   /** Things in the data files that were skipped or ignored (also logged to the console). */
   warnings: string[];
@@ -72,6 +81,15 @@ export interface EntitiesDoc {
 
 const dataUrl = (path: string) => `${import.meta.env.BASE_URL}data/${path}`;
 
+/** A file the app can do without (an archived period has no gazetteer or corrections): null when it is not there. */
+async function getJsonOptional<T>(path: string): Promise<T | null> {
+  try {
+    return await getJson<T>(path);
+  } catch {
+    return null;
+  }
+}
+
 async function getJson<T>(path: string): Promise<T> {
   // The single-file build (scripts/build-standalone.mjs) carries its data inside the page; big files gzipped.
   const inline = document.getElementById(`data:${path}`);
@@ -94,6 +112,10 @@ export interface RawFiles {
   /** The range the period opens on, as `events/index.json` gives it (absent: the middle of the data). */
   open?: { from: number; to: number };
   land: FeatureCollection<Geometry> & { meta?: { source?: SourceInfo } };
+  /** The gazetteer, the capitals table and the correction layer; each optional (a period may have none). */
+  places?: PlacesDoc | null;
+  capitals?: CapitalsDoc | null;
+  corrections?: CorrectionsDoc | null;
   bordersRaw: FeatureCollection<Geometry, BorderProps> & {
     meta?: EncodedMeta & { coast?: SourceInfo; source?: SourceInfo };
   };
@@ -101,12 +123,15 @@ export interface RawFiles {
 
 export async function loadData(onProgress?: (label: string) => void): Promise<AppData> {
   onProgress?.('Veri dosyaları okunuyor…');
-  const [index, entitiesDoc, categoriesDoc, eventsIndex, land] = await Promise.all([
+  const [index, entitiesDoc, categoriesDoc, eventsIndex, land, places, capitals, corrections] = await Promise.all([
     getJson<PolitiesIndex>('borders/polities.json'),
     getJson<EntitiesDoc>('entities.json'),
     getJson<RawFiles['categoriesDoc']>('categories.json'),
     getJson<{ files: string[]; open?: YearRange }>('events/index.json'),
     getJson<RawFiles['land']>('geo/land.json'),
+    getJsonOptional<PlacesDoc>('places.json'),
+    getJsonOptional<CapitalsDoc>('capitals.json'),
+    getJsonOptional<CorrectionsDoc>('corrections/ww2.json'),
   ]);
   const [from, to] = index.meta.range;
   onProgress?.('Sınırlar yükleniyor…');
@@ -116,7 +141,18 @@ export async function loadData(onProgress?: (label: string) => void): Promise<Ap
   for (const file of eventsIndex.files) {
     eventSets.push({ file, doc: await getJson<{ set?: string; events: RawEvent[] }>(`events/${file}`) });
   }
-  return assembleData({ index, entitiesDoc, categoriesDoc, eventSets, open: eventsIndex.open, land, bordersRaw });
+  return assembleData({
+    index,
+    entitiesDoc,
+    categoriesDoc,
+    eventSets,
+    open: eventsIndex.open,
+    land,
+    places,
+    capitals,
+    corrections,
+    bordersRaw,
+  });
 }
 
 /** The range the app opens on: the one the period names when it lies inside the data, else seven years in the middle of it. */
@@ -140,6 +176,9 @@ export function assembleData({
   eventSets,
   open,
   land,
+  places: placesDoc,
+  capitals: capitalsDoc,
+  corrections,
   bordersRaw,
 }: RawFiles): AppData {
   const [from, to] = index.meta.range;
@@ -181,6 +220,7 @@ export function assembleData({
 
   /* border rows (the file order is kept: big first, so small polities paint on top). Their shapes stay in the
      file's compact form until needed: a row's `polys` decodes it on first read. */
+  for (const line of applyRowCorrections(bordersRaw, corrections ?? null)) console.info(`[veri] düzeltme: ${line}`);
   const borders = new BorderStore(bordersRaw);
   const rows: BorderRow[] = [];
   borders.features.forEach((f, i) => {
@@ -218,6 +258,8 @@ export function assembleData({
   }
   events.sort((a, b) => a.start - b.start || b.importance - a.importance);
 
+  const places = new PlaceIndex(placesDoc ?? null);
+
   return {
     extent: { from, to },
     open: openingRange(open, { from, to }),
@@ -230,6 +272,9 @@ export function assembleData({
     events,
     eventsById: new Map(events.map((e) => [e.id, e])),
     tintCount: index.meta.tintCount,
+    places,
+    capitals: new CapitalIndex(capitalsDoc ?? null, places),
+    occupations: new OccupationIndex(corrections ?? null, rows),
     warnings,
     sources: {
       borders: safeSource(index.meta.source),

@@ -170,10 +170,12 @@ gelir gelmez İzle'yi başlatır: ilk adımın altyazısı ve haritası hazırd�
   yer ya da aralık değişirse metinde bir **"Bağlam değişti"** ayırıcısı (eski → yeni) çıkar; okur eski konuya dönerse kalkar; model de
   bir sonraki istekte bunu bir cümleyle öğrenir. Yıl imlecini oynatmak ya da bir olay açmak "yeni konu" sayılmaz. Açık olay kartı
   soru kutusunda bağlam olarak görünür ("açık olay, soruya eklenir"); kartta *Bunu sohbette sor* olayı soruya ekler ve kartı kapatır.
-- **Model NEYİ gösterir, uygulama NASIL gösterir.** Haritaya çizim yalnızca araç çağrılarıyla olur ve **beş araç** vardır; hiçbiri görünüşle
-  ya da kameralı ilgili değildir: `step` (adımı bildirir: numara, başlık, altyazı ve isteğe bağlı `year`), `show_event` (verideki bir
-  olayı gösterir), `highlight` (hangi devletlerin öne çıkacağını söyler), `connect` (veride olmayan bir ilişki için savaş / ittifak /
-  ticaret / antlaşma çizgisi) ve `mark` (veride olmayan bir yer için koordinat + kısa etiket). `set_year` ve `focus` kalktı: yıl
+- **Model NEYİ gösterir, uygulama NASIL gösterir.** Haritaya çizim yalnızca araç çağrılarıyla olur ve **yedi araç** vardır; hiçbiri görünüşle
+  ya da kameralı ilgili değildir. Sırası önem sırasıdır (bir görünüm daha az araca izin verirse ilkleri kalır): `step` (adımı bildirir:
+  numara, başlık, altyazı ve isteğe bağlı `year`), `show_event` (verideki bir olayı gösterir), `highlight` (hangi devletlerin öne
+  çıkacağını söyler), `sides` (bir çatışmanın **taraflarını** devlet gruplarıyla tanımlar), `route` (sıralı yerlerden geçen **yönlü
+  bir yol**: sefer, ilerleyiş, göç, ticaret yolu), `connect` (veride olmayan bir ilişki için iki yer arasına savaş / ittifak /
+  ticaret / antlaşma çizgisi) ve `mark` (veride olmayan bir yer için kısa etiketli işaret). `set_year` ve `focus` kalktı: yıl
   `step`'in parametresidir (olay gösteren adımda gerekmez), bölgeyi uygulama kendisi çerçeveler.
   - **Olay-merkezli gösterim.** Anlatılan şey verideki bir olaysa model yalnızca *hangi olay* olduğunu söyler (`show_event`); uygulama onu
     **olayın türüne göre, her seferinde aynı biçimde** çizer (`src/ai/eventKinds.ts`, `src/ai/drawing.ts`): olayın **tarafları** öne çıkar
@@ -181,11 +183,32 @@ gelir gelmez İzle'yi başlatır: ilk adımın altyazısı ve haritası hazırd�
     kâğıt renkli bir halkanın içinde durur: işaret ile çizgi tek şey okunur, aynı savaş her seferinde aynı görünür. Taraflar `parties`'ten
     gelir: ilk taraf ile ikincisi arasında; ilk ikisi aynı safsa (Dunkirk: Britanya ve Fransa, Almanya'ya karşı; Normandiya
     Çıkarması; Dresden'in bombalanması) olay kaydındaki isteğe bağlı **`versus`** alanı karşı safı söyler (`public/data/schema/events.schema.json`).
-    Çizgi, her devletten olaya en yakın ana parçasından çıkar. Olay bir tarafın sonu olduysa (1945 olayları: Nazi Almanyası'nın
-    satırları 1944'te biter) adım, o devletin sınırlarının hâlâ olduğu en son yılı (en çok üç yıl önce) gösterir (Berlin Muharebesi ve
-    Almanya'nın teslimi 1944 sınırlarıyla görünür); savaş yine çizilir. Savaş olmayan türler (siyaset, ekonomi, toplum, kültür, afet)
-    tarafları öne çıkarır ve işaretini koyar. Modelin kendi `connect`'i
-    olayın zaten çizilen savaş çizgisiyle aynı iki devleti bağlıyorsa ikinci kez çizilmez.
+    Çizgi her safın **ilk sayılan tarafının o yılki başkentinden** çıkar (olay kayıtlarında taraflar olaydaki paylarının sırasıyla yazılır;
+    Normandiya'da Britanya ilk sıradadır, çizgi Londra'dan çıkar), başkent tablosunda olmayan bir devlette olaya en yakın ana parçasının
+    ortasından. (Eskiden çizgi devletin çokgeninin ortasından çıkıyordu; ABD'nin çokgeni 1944'te Grönland'ı da içerdiği için Normandiya
+    çizgisi Grönland'dan başlıyordu.) Olay bir tarafın sonu olduysa ve devletin o yıl sınırı yoksa adım, o devletin sınırlarının hâlâ olduğu
+    en son yılı (en çok üç yıl önce) gösterir; savaş yine çizilir. (Nazi Almanyası'nın satırları Cliopatria'da 1944'te biter; küçük
+    düzeltme katmanı 1945'i de ekler, bu yüzden Berlin Muharebesi 1945 sınırlarıyla görünür.) Savaş olmayan türler (siyaset, ekonomi,
+    toplum, kültür, afet) tarafları öne çıkarır ve işaretini koyar. Modelin kendi `connect`'i olayın zaten çizilen savaş çizgisiyle aynı
+    iki devleti bağlıyorsa ikinci kez çizilmez.
+  - **Çizgilerin uçları ve yolların durakları YERLERDİR, devletlerin ortası değil.** `connect`in iki ucu ve `route`un her durağı bir
+    *yer*dir: (1) bir **şehir** (adıyla; eski ve yerel adlar da aynı noktaya çözülür: "Stalingrad", "Danzig", "Königsberg", "Peking"),
+    (2) uygulamanın **olay kayıtlarından** birinin yeri (olay kimliği), (3) bir **koordinat** ("52.23, 21.01"), ya da (4) bir **devlet**:
+    o zaman gösterilen yılın **başkenti** kullanılır (`src/data/capitals.ts`; tabloda olmayan devlette diğer uca en yakın ana parçasının
+    ortası, bu da yoksa ana parçasının ortası). Bir şehir adı birden çok yere uyuyorsa en tanınmış olan seçilir (başkent, sonra nüfus;
+    `src/data/places.ts`); tanınmayan bir yer **sessizce atlanır** (modele "atlandı" denir) ve yanlış bir çizgi çizilmez. O yılda sınırı
+    olmayan bir devlet durak olamaz.
+  - **`route`: yönlü yol.** `via` en az iki, en çok sekiz yer, **sırayla**; `type` dört türden biridir ve her tür hep aynı görünür
+    (`src/styles/ai.css`): **ilerleyiş / sefer** (`advance`, kalın düz çizgi, dolu ok), **geri çekilme** (`retreat`, kesikli çizgi, açık
+    ok), **göç / sürgün** (`migration`, noktalı çizgi), **ticaret / ikmal yolu** (`trade`, nokta-çizgi). Yol iki yer arasında hafif bir
+    yay, daha çoksa duraklardan geçen yumuşak bir eğridir (Catmull-Rom → kübik Bézier, `routePath`) ve ucu hep okludur; çizgi okun
+    ucundan 9 px önce biter. Model yolun **çizilerek belirip belirmeyeceğine** (`animate: true`) karar verir; "hareketi azalt" isteyen
+    okurda hiçbir zaman canlandırılmaz. Etiket yolun üstünde kayarak boş bir yer bulur.
+  - **`sides`: kim kiminle.** Bir çatışmanın 2–3 tarafı, her biri `{name, polities}` ile bildirilir (örn. Mihver / Müttefikler). Uygulama her
+    tarafı **tek bir blok olarak, birbirinden belirgin tek renkle** boyar (`--side-0..2`: şarap kırmızısı, kehribar, yeşil; renk görme
+    farklılıklarında da ayrışır, `tests/palette.test.ts`) ve tarafların adını renkleriyle anlatım kutusunda gösterir (kutu: İzle'de altyazının
+    altı). Sırası adımın tarafları olduğu için bir taraf o yıl haritadan çıksa bile diğerlerinin rengi değişmez. Tarafların devletleri
+    zaten öne çıkar; taraf bildirilmemişse öne çıkan her devlet eskisi gibi kendi renginde kalır. Bir devlet tek tarafta olur.
   - **Spot ışığı.** Bir adımda öne çıkan devletler (modelin `highlight`'ı + gösterilen olayların tarafları + kendi çizgilerinin uçları)
     **dolgun ve canlı** çizilir: kendi renklerinin canlı ikizi (`--vivid-N`; aynı ton, daha koyu ve doygun), kâğıt rengi bir kenar ve mürekkep
     çerçeve; haritanın geri kalanı **soluk**tur (üstüne %62 kâğıt rengi bir örtü; *bulanıklık yok*, yalnızca daha az renk) ve öne
@@ -266,11 +289,17 @@ bölümü gelir). Dosya derleme sırasında uygulamaya gömülür (`src/ai/instr
 `npm run build` / `npm run build:standalone` ile (ve yayında yeniden yayınlayınca) geçerli olur. Dosya "haritada neyin görüneceğine sen
 karar verirsin, nasıl görüneceğine uygulama" der; adı geçen eylemleri sayfanın notları gerçek araçlara eşler: verideki bir olayı
 göstermek → `show_event` (yalnızca hangi olay: uygulama onu tarafları ve türüne uygun biçimiyle çizer), hangi devletlerin öne
-çıkacağını söylemek → `highlight`, veride olmayan bir ilişkiyi çizmek → `connect`, veride olmayan bir yeri işaretlemek → `mark`,
-adımları bildirmek → `step`, bir olayı metinde işaretlemek → `[olay adı](olay:KİMLİK)`. Kamera için araç yoktur ("kamerayı düşünmene
-gerek yok"). Notlar modelin *nasıl konuşacağını* değil, uygulamanın *mekaniğini* anlatır (hangi araç ne yapar, yanıt hangi iki turda
-verilir, hangi biçim neye benzer, örnek, anlatım iskeleti); üslup ve içerik dosyanın, yani sizin işinizdir. Adım başına iki metin gerekir:
-`step` aracı **başlık + altyazı** ister, tam metin sonra "## n. Başlık" altında gelir.
+çıkacağını söylemek → `highlight`, bir çatışmanın taraflarını (kim kiminle) göstermek → `sides`, bir ordunun ilerleyişini / bir seferi /
+bir göçü / bir ticaret yolunu çizmek → `route`, veride olmayan bir ilişkiyi çizmek → `connect`, veride olmayan bir yeri işaretlemek →
+`mark`, adımları bildirmek → `step`, bir olayı metinde işaretlemek → `[olay adı](olay:KİMLİK)`. Çizgilerin uçlarının ve yolların
+duraklarının *yer* olduğunu (şehir, olayın yeri, koordinat; devlet verilirse o yılın başkenti) hem dosya hem notlar söyler. Kamera için
+araç yoktur ("kamerayı düşünmene gerek yok"). Dosyada ayrıca **"Tartışmalı sınırlar"** bölümü vardır: haritadaki sınırlar bir veri
+setinin yorumudur, kesin gerçek değildir; tartışmalı bir konuda haritanın çizdiği gösterilir ama tartışmanın varlığı söylenir ve
+tarafların görüşleri dengeli aktarılır, hüküm verilmez; işgal edilmiş bir toprak işgalcinin toprağı gibi anlatılmaz. (Sayfa bu
+bölümü destekler: işgal altındaki bir yer seçiliyken isteğe, sınır verisinin orayı işgalcinin toprağı olarak çizdiğini ama gerçekte
+işgal altında olduğunu söyleyen bir satır eklenir.) Notlar modelin *nasıl konuşacağını* değil, uygulamanın *mekaniğini* anlatır (hangi
+araç ne yapar, yanıt hangi iki turda verilir, hangi biçim neye benzer, örnek, anlatım iskeleti); üslup ve içerik dosyanın, yani sizin
+işinizdir. Adım başına iki metin gerekir: `step` aracı **başlık + altyazı** ister, tam metin sonra "## n. Başlık" altında gelir.
 
 **Tur sayısı az olsun diye iki turlu bir protokol.** Her araç turu ayrı bir (ücretli) istektir ve araç girdileri akmaz. Bu yüzden adımlı
 bir yanıtta model **birinci turda, metin yazmadan, tek seferde** adımları (`step{n, title, caption}`) ve her adımın çizimlerini (`step`
@@ -285,8 +314,10 @@ ya da `tools_unavailable` gelirse) aynı soru yalnızca metin olarak sorulur (he
 **Claude olmayan yerde: deneme kipi.** `claude.use("sample")` boş dönerse (yerel geliştirme, kaydedilmiş dosya, başka bir ev sahibi)
 sohbet **komut dosyalı bir sağlayıcıya** düşer ve bunu açıkça yazar (soru kutusunun üstünde "Deneme kipi"). Komut dosyalı sağlayıcı gerçek
 bir çağrının yaptığını yapar: düşünür, birinci turdaki araç çağrılarını gerçekten çalıştırır, metni parça parça akıtır. Almanya'nın savaşı
-(Nazi Almanyası'ndan bir yer, aralık 1941–1944'ü kapsıyorsa: 8 adım), Stalingrad sorusu (tek adım), Almanya–İtalya ittifakı sorusu (tek
-adım, veride olmayan bir ilişki: `connect`), **düz metin** yanıtı (biçimi izlemeyen bir model: güvenlik ağını sınamak için; soruda "düz
+(Nazi Almanyası'ndan bir yer, aralık 1941–1944'ü kapsıyorsa: 8 adım; dördüncü adımda iki taraf (`sides`) ve Brest-Litovsk'tan
+Moskova'ya bir ilerleyiş yolu (`route`, canlandırılır), yedincide Alman geri çekilişi yolu), Stalingrad sorusu (tek adım), Almanya–İtalya
+ittifakı sorusu (tek adım, veride olmayan bir ilişki: Berlin ile Roma arasında `connect`), Mihver ve Müttefikler sorusu (tek adım,
+`sides`), **düz metin** yanıtı (biçimi izlemeyen bir model: güvenlik ağını sınamak için; soruda "düz
 metin" geçerse) ve açık olay sorusu için hazır yanıtları vardır; geri kalan her yer ve aralık için yanıtı uygulamanın kendi
 verisinden (yerin egemenleri, olay kayıtları) üretir. Soru metnine `[hata:rate_limited]` gibi bir işaret eklemek hata ekranlarını görmek
 için o hatayı üretir.
@@ -308,7 +339,7 @@ anınca). Bağlamın şekli (yer listesi, yer başına aralık) ve `SourceProvid
 | **Sınır verisi: Seshat Cliopatria** (CC BY 4.0) | Devletler için, çoğunlukla aralıksız sınır verir (yıl yıl seçilebilir); zaman sürükleyince sınırlar gerçekten kayar. Alternatif `historical-basemaps` yalnızca birkaç anlık görüntü sunuyor ve GPL-3.0. 1800–2000'de savaş yıllarını da kapsar (yıllık anlık görüntüler; neyi gösterip neyi göstermediği için "Bilinen veri sınırlamaları"). Cliopatria ayrıca her devlet için Wikipedia/Wikidata kimliği ve üst-alt ilişkisi taşır. Bedeli: yalnızca devletleri haritalar; devlet kaydı olmayan karalar noktalı "veri yok" zemini olarak gösterilir. |
 | **Yer = bir nokta, devlet = o noktanın o yıldaki sahibi** | Stuttgart 1806'da Württemberg Krallığı, 1942'de Nazi Almanyası, 1946'da Fransız işgal bölgesi, 1950'de Batı Almanya'dır. Zaman çizelgesi, aralık boyunca o noktayı elinde tutan *tüm* devletlerin (ve üst yapılarının, bulunduğu bölgenin) olaylarını toplar; böylece "yerin tarihi" okunur. |
 | **Haritadaki olay sayısı: yakınlaştırma bütçesi; önem yalnızca eleme için** | Her olayın içsel bir önem puanı (1–5) vardır, ama arayüz bunu **göstermez** (boyut, rozet, etiket yok): neyin önemli olduğuna kullanıcı karar verir. Puan yalnızca kalabalığı ayıklar: haritada yalnızca puanı ≥3 olanlar yer alır (daha yerel olanlar yalnızca çizelgededir); bütçe *görünümdeki* olaylara harcanır (dünya görünümünde az, yakınlaştıkça o bölgenin daha fazlası) ve ekranda çakışanlardan puanı düşük olan elenir. Sağ alttaki not kaç olayın çizildiğini ve geri kalanının neden görünmediğini söyler. |
-| **Açık olay bu elemenin dışındadır, görünüm en az değişir** | Açık olay, bütçeye, önem süzgecine ve çakışmaya bakılmadan çizilir. Görünüm dışındaysa harita merkezi etrafında *yalnızca uzaklaşır* (Web Mercator'da merkezden uzaklık her yakınlaştırma düzeyinde yarıya iner; bu yüzden gereken en az düzey doğrudan hesaplanır, `domain/reveal.ts`) ve kontrollerin (`+/−`, lejant, sayaç) arkasında kalmamasına dikkat edilir. |
+| **Açık olay bu elemenin dışındadır, görünüm en az değişir** | Açık olay, bütçeye, önem süzgecine ve çakışmaya bakılmadan çizilir. Görünüm dışındaysa harita merkezi etrafında *yalnızca uzaklaşır* (Web Mercator'da merkezden uzaklık her yakınlaştırma düzeyinde yarıya iner; bu yüzden gereken en az düzey doğrudan hesaplanır, `domain/reveal.ts`) ve kontrollerin (`+/−`, lejant, sayaç) arkasında kalmamasına dikkat edilir. Olay zaten görünürse harita hiç oynamaz; aynı olayı yeniden açmak da haritayı bir daha kımıldatmaz. Harita en geniş görünümüne varmış ve olay yine de sığmıyorsa (tam ekran okuyucunun köşedeki küçük penceresi en küçük yakınlaştırmadadır), yakınlaştırma o en geniş değere iner ve merkez, olayı kenar paylarının içine alan *en kısa yoldan* kaydırılır; harita sınırları aşılmaz. |
 | **Aralık seçici: yalnızca cetvel** | Tek yıl da 100 yıl da aynı denetimle seçilir; sayı kutusu ya da hazır süre düğmesi yoktur. Fırçanın içindeki işaret, o aralık içinde hangi yılın sınırlarının çizileceğini seçtirir; seçilen yıl harita başlığının yanındaki notta görünür. Alt bölüm bu yüzden iki ince satırdır (≈ 80 px). |
 | **Yer başlığı haritanın üstündedir, haritanın içinde değil** | Başlık ve "… yılının sınırları" notu, haritanın üstündeki sabit yükseklikli bir şeritte durur; hiçbir sınırı ya da işaretçiyi örtemez ve adın uzunluğu haritayı yeniden boyutlandırıp kaymış gibi göstermez. |
 | **Bilgi kartı seçimlerle yönlenir: yer bağlam, olay odak** | Kart, `{ type: 'place' \| 'event', id }` başvurularının listesini bölümlere çevirir. Yalnızca yer seçiliyse kart yeri anlatır (ayrıntılar ve "aynı sırada, başka yerlerde" listesi kapalı bölümlerdedir: kart kısa kalır); olay açıksa olayı anlatır ve yer tek satırlık bir başlığa (ad + aralık) küçülür; başlığa tıklamak ya da olayı kapatmak yer görünümüne döndürür. Kart küçüktür, ✕ ile kapanır ve okur bir şey sorunca kendiliğinden bir sekmeye çekilir. |

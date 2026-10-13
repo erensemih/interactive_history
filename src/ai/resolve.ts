@@ -1,9 +1,13 @@
+import type { CapitalIndex } from '../data/capitals';
+import type { PlaceIndex } from '../data/places';
 import { pointInPolygon } from '../domain/geo';
 import { overlaps } from '../domain/time';
 import type { Bounds, BorderRow, Entity, HistoricalEvent, PlacePoint, PolygonCoords, YearRange } from '../domain/types';
 import { eventKindOf, warSides } from './eventKinds';
+import { normalizeName } from '../domain/names';
 import { shortName } from '../ui/format';
 import { withoutOpenReference } from '../ui/read/segments';
+import type { PlaceRef } from './types';
 
 /** What the resolver needs of the app's data (`AppData` fits). */
 export interface ResolveData {
@@ -11,6 +15,9 @@ export interface ResolveData {
   rows: readonly BorderRow[];
   /** The app's own events: what the model may point at instead of drawing a mark of its own. */
   events?: readonly HistoricalEvent[];
+  /** The gazetteer and the table of capitals: where lines and routes begin, end and stop. */
+  places?: PlaceIndex;
+  capitals?: CapitalIndex;
 }
 
 export interface CatalogEntry {
@@ -29,23 +36,12 @@ export interface EventCatalogEntry {
   place: string;
 }
 
+export { normalizeName };
+
 /** The map's own bounds (see MapView): a point outside them cannot be drawn. */
 const LON_LIMIT = 179.9;
 const LAT_MIN = -60;
 const LAT_MAX = 82;
-
-const FOLD: Record<string, string> = { ı: 'i', ß: 'ss', æ: 'ae', œ: 'oe', ø: 'o', đ: 'd', ł: 'l' };
-
-/** Lower case, accents and Turkish letters folded, everything but letters and digits turned into single spaces. */
-export function normalizeName(text: string): string {
-  return text
-    .toLocaleLowerCase('tr')
-    .normalize('NFD')
-    .replace(/\p{M}+/gu, '')
-    .replace(/[ıßæœøđł]/g, (c) => FOLD[c] ?? c)
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-}
 
 /** A short label from the model: control characters and markdown marks removed, one line, at most `max` characters. */
 export function cleanLabel(value: unknown, max: number): string | null {
@@ -141,10 +137,16 @@ export class Resolver {
     return this.data.entities.get(id)?.name ?? id;
   }
 
-  /** The border row of `id` valid in `year`. */
+  /**
+   * The border row of `id` valid in `year`. (The correction layer may add a small piece to a polity for some years, an
+   * island that the data left out: the polity's own row is the biggest one.)
+   */
   rowAt(id: string, year: number): BorderRow | null {
-    for (const row of this.rowsById.get(id) ?? []) if (row.from <= year && year <= row.to) return row;
-    return null;
+    let best: BorderRow | null = null;
+    for (const row of this.rowsById.get(id) ?? []) {
+      if (row.from <= year && year <= row.to && (!best || row.area > best.area)) best = row;
+    }
+    return best;
   }
 
   /** Does the polity have borders at any time in the range? */
@@ -321,6 +323,102 @@ export class Resolver {
       .filter((ev) => overlaps(ev.start, ev.end, range.from, range.to + 1))
       .sort((a, b) => a.start - b.start || (a.id < b.id ? -1 : 1))
       .map((ev) => ({ id: ev.id, title: ev.title, dateLabel: ev.dateLabel, place: ev.location.name }));
+  }
+
+  /* --------------------------------------------------------------- places */
+
+  /** The capital of the polity in the year, from the table (null: the table does not know it). */
+  capitalPoint(id: string, year: number): PlacePoint | null {
+    const place = this.data.capitals?.at(id, year);
+    return place ? { lon: place.lon, lat: place.lat } : null;
+  }
+
+  /**
+   * "enlem, boylam" as a point ("52.23, 21.01"; an object with lat/lon or an array works too). A first number that
+   * cannot be a latitude is taken to be the longitude, so a model that swaps them is still understood.
+   */
+  coordinates(value: unknown): PlacePoint | null {
+    let a: number | null = null;
+    let b: number | null = null;
+    if (typeof value === 'string') {
+      const m = /^\s*(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)\s*$/.exec(value);
+      if (m) [a, b] = [Number(m[1]), Number(m[2])];
+    } else if (Array.isArray(value) && value.length === 2) {
+      [a, b] = [toNumber(value[0]), toNumber(value[1])];
+    } else if (value && typeof value === 'object') {
+      const o = value as Record<string, unknown>;
+      const lat = toNumber(o.lat ?? o.latitude ?? o.enlem);
+      const lon = toNumber(o.lon ?? o.lng ?? o.longitude ?? o.boylam);
+      if (lat !== null && lon !== null) return this.point(lon, lat);
+    }
+    if (a === null || b === null) return null;
+    return Math.abs(a) > 90 && Math.abs(b) <= 90 ? this.point(a, b) : this.point(b, a);
+  }
+
+  /**
+   * The place a model reference means, or null: coordinates; an event of the data (its id; its place is the point); a
+   * polity (its id; it stands for its capital in the year); a city of the gazetteer by any of its names (historical
+   * ones too); a polity by its name; an event by its title. A polity that has no borders in the range is not a place.
+   */
+  placeRef(value: unknown, range: YearRange): PlaceRef | null {
+    const point = this.coordinates(value);
+    if (point) return { kind: 'point', point };
+    if (typeof value !== 'string') return null;
+    const raw = value.trim();
+    if (!raw) return null;
+    const ev = this.eventsById.get(raw);
+    if (ev) return { kind: 'event', id: ev.id, name: ev.location.name };
+    if (this.rowsById.has(raw)) return this.presentIn(raw, range) ? { kind: 'polity', id: raw } : null;
+    const city = this.data.places?.find(raw)[0];
+    if (city) return { kind: 'city', id: city.id, name: city.tr };
+    const polity = this.polity(raw, range);
+    if (polity) return { kind: 'polity', id: polity };
+    const byTitle = this.event(raw);
+    return byTitle ? { kind: 'event', id: byTitle.id, name: byTitle.location.name } : null;
+  }
+
+  /**
+   * Where a place is on the map in `year`. A polity is its capital that year; where the table has none, the middle of its
+   * biggest part (or, when `toward` says where the other end is, of the part nearest to it); null without borders.
+   */
+  placePoint(ref: PlaceRef, year: number, toward?: PlacePoint): PlacePoint | null {
+    switch (ref.kind) {
+      case 'point':
+        return ref.point;
+      case 'event': {
+        const ev = this.eventsById.get(ref.id);
+        return ev ? { lon: ev.location.lon, lat: ev.location.lat } : null;
+      }
+      case 'city': {
+        const city = this.data.places?.byId(ref.id);
+        return city ? { lon: city.lon, lat: city.lat } : null;
+      }
+      case 'polity':
+        // a polity with no borders in the year is nowhere on the map, whatever the table says of its capital
+        if (!this.rowAt(ref.id, year)) return null;
+        return (
+          this.capitalPoint(ref.id, year) ??
+          (toward ? this.anchorToward(ref.id, year, toward) : this.anchorAt(ref.id, year))
+        );
+    }
+  }
+
+  /** What to call a place in words. */
+  placeName(ref: PlaceRef): string {
+    switch (ref.kind) {
+      case 'polity':
+        return this.nameOf(ref.id);
+      case 'point':
+        return ref.name ?? `${ref.point.lat.toFixed(2)}, ${ref.point.lon.toFixed(2)}`;
+      default:
+        return ref.name;
+    }
+  }
+
+  /** Are the two references the same place? */
+  samePlace(a: PlaceRef, b: PlaceRef): boolean {
+    if (a.kind === 'point' && b.kind === 'point') return distanceKm(a.point, b.point) < 5;
+    return a.kind === b.kind && a.kind !== 'point' && b.kind !== 'point' && a.id === b.id;
   }
 
   /** A point the map can show, rounded to about 100 m. */

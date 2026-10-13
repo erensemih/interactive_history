@@ -35,6 +35,7 @@ const context: AiContext = {
       id: '35.500,38.900',
       point: { lon: 35.5, lat: 38.9 },
       title: 'Osmanlı İmparatorluğu',
+      occupation: null,
       holder: { id: 'ottoman-empire', name: 'Osmanlı İmparatorluğu' },
       regions: ['Anadolu'],
       lineage: ['ottoman-empire', 'anatolia'],
@@ -76,23 +77,63 @@ describe('instructions', () => {
     const plan = new TurnPlan();
     const offered = createTools({ resolver, range, plan }).map((t) => t.name);
     const text = instructions(true);
+    const literal = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     // what the file says the model may do, and the tool the notes give each of them
     for (const [inFile, inNotes, tool] of [
       ['sadece o olayı göster', 'veri setindeki bir olayı göstermek', 'show_event'],
       ['Hangi devletlerin öne çıkacağını', 'hangi devletlerin öne çıkacağını söylemek', 'highlight'],
+      ['Bir çatışmanın taraflarını', 'bir çatışmanın taraflarını (kim kiminle) göstermek', 'sides'],
+      [
+        'sıralı yerlerden geçen yönlü bir yol',
+        'bir ordunun ilerleyişini, bir seferi, bir geri çekilişi, bir göçü ya da bir ticaret yolunu çizmek',
+        'route',
+      ],
       ['Kendi çizgi', 'veride olmayan bir ilişkiyi çizmek', 'connect'],
-      ['işaretlerini yalnızca veride olmayan', 'veride olmayan bir yeri işaretlemek', 'mark'],
+      ['yol ve işaretlerini', 'veride olmayan bir yeri işaretlemek', 'mark'],
       ['Her adım için iki metin', 'adımları bildirmek', 'step'],
     ] as const) {
       expect(INSTRUCTIONS_FILE).toContain(inFile);
       expect(offered).toContain(tool);
-      expect(text).toMatch(new RegExp(`${inNotes}[^\\n]*→ \`${tool}\``)); // "action → `tool`"
+      expect(text).toMatch(new RegExp(`${literal(inNotes)}[^\\n]*→ \`${tool}\``)); // "action → `tool`"
     }
     // every tool of the page is named in the notes, and no tool the file does not have a use for is offered
-    expect(offered).toEqual(['step', 'show_event', 'highlight', 'connect', 'mark']);
+    expect(offered).toEqual(['step', 'show_event', 'highlight', 'sides', 'route', 'connect', 'mark']);
     for (const name of offered) expect(text).toContain(`\`${name}\``);
     expect(text).toContain('POLİTİLER');
     expect(text).toContain('OLAYLAR');
+  });
+
+  it('say what a place is: where lines begin and end and routes stop, with a polity standing for its capital', () => {
+    const text = instructions(true);
+    expect(INSTRUCTIONS_FILE).toContain('devletlerin ortası değil');
+    expect(INSTRUCTIONS_FILE).toContain('o yılın başkenti');
+    expect(text).toMatch(/Yerler\. `connect`in uçları ve `route`un durakları devletlerin ortası değil, YERLERDİR/);
+    expect(text).toContain('eski adlar da tanınır');
+    expect(text).toContain('"enlem, boylam"');
+    expect(text).toContain('o yılın başkenti kullanılır');
+    expect(text).toMatch(/Yerini emin olmadığın bir yeri koordinatla uydurma/);
+  });
+
+  it('say what sides and routes are for, and show them on the worked example', () => {
+    const text = instructions(true);
+    expect(text).toMatch(/uygulama her tarafı tek bir blok olarak/);
+    expect(text).toMatch(/ayrıca `highlight` çağırma/);
+    expect(text).toMatch(/animate:true ise yol adım açılınca çizilerek belirir/);
+    const example = text.slice(text.indexOf('ÖRNEK (iki adımlı)'));
+    expect(example).toContain('sides{step:1,sides:[');
+    expect(example).toContain('route{step:1,via:[');
+    expect(example).toContain('type:"advance"');
+  });
+
+  it('give the file the section on disputed borders, between the display rules and the tone', () => {
+    expect(INSTRUCTIONS_FILE).toContain('## Tartışmalı sınırlar');
+    const at = INSTRUCTIONS_FILE.indexOf('## Tartışmalı sınırlar');
+    expect(at).toBeGreaterThan(INSTRUCTIONS_FILE.indexOf('## Gösterim'));
+    expect(at).toBeLessThan(INSTRUCTIONS_FILE.indexOf('## Ton'));
+    const section = INSTRUCTIONS_FILE.slice(at, INSTRUCTIONS_FILE.indexOf('## Ton')).replace(/\s+/g, ' ');
+    expect(section).toContain('Haritadaki sınırlar bir veri setinin yorumudur, kesin gerçek değildir.');
+    expect(section).toContain('Hüküm verme, taraf tutma.');
+    expect(section).toContain('İşgal edilmiş bir toprağı işgalcinin toprağı gibi anlatma; işgal olduğunu söyle.');
   });
 
   it('say what the app does so the model does not have to: no camera, no looks, the year from the events', () => {

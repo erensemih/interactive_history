@@ -1,11 +1,16 @@
 import type { Map as MLMap } from 'maplibre-gl';
 import type { AppData } from '../data/load';
+import { primaryAt, rowsContaining } from '../domain/geo';
 import type { Rect } from '../domain/reveal';
 import type { BorderRow } from '../domain/types';
+import type { OccupationLabel } from '../data/corrections';
 
 interface Candidate {
   row: BorderRow;
   name: string;
+  /** Lines to set the name in as they are (an occupied land: its name and "(Alman işgali)"). */
+  lines?: string[];
+  occupation?: boolean;
 }
 
 interface Box {
@@ -88,6 +93,11 @@ export class PolityLabels {
       const ent = this.data.entities.get(row.id);
       if (!ent) continue;
       out.push({ row, name: ent.name });
+    }
+    // Lands the border data draws as their occupier's are named as occupied, so Warsaw is not just "Nazi Almanyası".
+    const holder = (lon: number, lat: number) => primaryAt(rowsContaining(this.data.rows, lon, lat), year);
+    for (const o of this.data.occupations.labels(year, holder)) {
+      out.push({ row: occupationRow(o, year), name: o.name, lines: [o.name, `(${o.label})`], occupation: true });
     }
     out.sort((a, b) => b.row.area - a.row.area);
     this.candidates = out;
@@ -195,7 +205,7 @@ export class PolityLabels {
       ? [...this.candidates.filter((c) => must(c.row.id)), ...this.candidates.filter((c) => !must(c.row.id))]
       : this.candidates;
 
-    for (const { row, name } of order) {
+    for (const { row, name, lines: preset, occupation } of order) {
       const [lon, lat, r] = row.label!;
       const cosLat = Math.cos((lat * Math.PI) / 180);
       const kmPerPx = (40075.017 * Math.max(cosLat, 0.05)) / world;
@@ -213,15 +223,16 @@ export class PolityLabels {
       const room = Math.min(bboxW * 0.96, Math.max(r * degPx * 3.4, side * 0.5));
 
       let fs = Math.min(MAX_FONT, Math.max(MIN_FONT, 7 + side * 0.075));
+      if (occupation) fs = Math.max(MIN_FONT, fs * 0.72);
       const big = fs >= 17.5;
-      const caps = big;
-      const spacing = big ? 0.14 : 0.02;
-      const weight = big ? 500 : 450;
-      const italic = !big;
+      const caps = big && !occupation;
+      const spacing = big && !occupation ? 0.14 : 0.02;
+      const weight = big && !occupation ? 500 : 450;
+      const italic = !big || !!occupation;
 
-      let lines = [name];
-      let w = this.textWidth(name, weight, italic, caps, spacing) * fs;
-      if (w > room) {
+      let lines = preset ?? [name];
+      let w = Math.max(...lines.map((l) => this.textWidth(l, weight, italic, caps, spacing))) * fs;
+      if (w > room && !preset) {
         const words = name.split(' ');
         if (words.length > 1) {
           const mid = Math.ceil(words.length / 2);
@@ -274,6 +285,7 @@ export class PolityLabels {
       }
       el.style.fontSize = `${fs.toFixed(1)}px`;
       el.style.transform = `translate(${cx.toFixed(1)}px, ${cy.toFixed(1)}px) translate(-50%, -50%)`;
+      el.classList.toggle('is-occupation', !!occupation);
       el.classList.toggle('is-caps', caps);
       el.classList.toggle('is-italic', italic);
       el.classList.toggle('is-selected', this.selected.has(row.id));
@@ -289,6 +301,31 @@ export class PolityLabels {
 }
 
 const keyOf = (row: BorderRow) => `${row.id}@${row.from}`;
+
+/**
+ * A stand-in row for the name of an occupied land: it has no shape of its own (nothing is drawn for it), only the point
+ * its name goes to and a size, so that the name is typeset and thinned like a polity's.
+ */
+function occupationRow(o: OccupationLabel, year: number): BorderRow {
+  const sideDeg = Math.sqrt(o.area) / 111;
+  const halfW = sideDeg / (2 * Math.max(Math.cos((o.lat * Math.PI) / 180), 0.2));
+  const bbox: [number, number, number, number] = [
+    o.lon - halfW,
+    o.lat - sideDeg / 2,
+    o.lon + halfW,
+    o.lat + sideDeg / 2,
+  ];
+  return {
+    id: `occupation:${o.id}`,
+    from: year,
+    to: year,
+    area: o.area,
+    label: [o.lon, o.lat, sideDeg * 0.3],
+    bbox,
+    box: bbox,
+    polys: [],
+  } as BorderRow;
+}
 
 /** The smallest move that takes a box clear of what it clashes with and keeps it on the map, or null. */
 function nudgeFree(box: Box, clashes: (b: Box) => boolean, W: number, H: number): { dx: number; dy: number } | null {

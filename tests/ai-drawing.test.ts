@@ -9,8 +9,9 @@ import {
   TurnPlan,
 } from '../src/ai/drawing';
 import { eventKindOf, warSides } from '../src/ai/eventKinds';
-import { Resolver } from '../src/ai/resolve';
-import type { MapAction } from '../src/ai/types';
+import { distanceKm, Resolver } from '../src/ai/resolve';
+import type { MapAction, PlaceRef, RouteType, Side } from '../src/ai/types';
+import { withMiniPlaces } from './helpers/places';
 import { archivedData } from './helpers/shipped';
 
 const hl = (step: number, ...polities: string[]): MapAction => ({ kind: 'highlight', step, polities });
@@ -23,8 +24,8 @@ const link = (
 ): MapAction => ({
   kind: 'connect',
   step,
-  from,
-  to,
+  from: { kind: 'polity', id: from },
+  to: { kind: 'polity', id: to },
   relation,
   ...(label ? { label } : {}),
 });
@@ -36,6 +37,21 @@ const mark = (step: number, lon: number, lat: number, label: string): MapAction 
 });
 const event = (step: number, id: string): MapAction => ({ kind: 'event', step, id });
 const year = (step: number, y: number): MapAction => ({ kind: 'set_year', step, year: y });
+const city = (id: string, name: string): PlaceRef => ({ kind: 'city', id, name });
+const polity = (id: string): PlaceRef => ({ kind: 'polity', id });
+const at = (lon: number, lat: number): PlaceRef => ({ kind: 'point', point: { lon, lat } });
+const route = (
+  step: number,
+  via: PlaceRef[],
+  type: RouteType = 'advance',
+  animate = false,
+  label?: string,
+): MapAction => ({ kind: 'route', step, via, type, animate, ...(label ? { label } : {}) });
+const sides = (step: number, ...list: Side[]): MapAction => ({ kind: 'sides', step, sides: list });
+const IST = city('istanbul', 'İstanbul');
+const VIE = city('vienna', 'Viyana');
+const EDI = city('edirne', 'Edirne');
+const PAR = city('paris', 'Paris');
 
 describe('drawingOf', () => {
   it('is what the actions ask for, without repeating a polity, a link, a mark or an event', () => {
@@ -50,7 +66,9 @@ describe('drawingOf', () => {
       mark(1, 28.98, 41.02, 'istanbul'),
     ]);
     expect(d.highlights).toEqual(['a', 'b', 'c']);
-    expect(d.links).toEqual([{ from: 'b', to: 'a', relation: 'war', label: 'Yeni etiket' }]); // same pair and kind: replaced
+    expect(d.links).toEqual([
+      { from: polity('b'), to: polity('a'), relation: 'war', label: 'Yeni etiket' }, // same pair and kind: replaced
+    ]);
     expect(d.events).toEqual(['x']);
     expect(d.marks).toHaveLength(1);
   });
@@ -58,6 +76,50 @@ describe('drawingOf', () => {
   it('keeps links of different kinds between the same two polities', () => {
     const d = drawingOf([link(1, 'a', 'b', 'war'), link(1, 'a', 'b', 'trade')]);
     expect(d.links.map((l) => l.relation)).toEqual(['war', 'trade']);
+  });
+
+  it('a link is the same link whichever end is named first, and whatever kinds of place its ends are', () => {
+    const d = drawingOf([
+      { kind: 'connect', step: 1, from: IST, to: VIE, relation: 'war' },
+      { kind: 'connect', step: 1, from: VIE, to: IST, relation: 'war', label: 'Yeni' },
+      { kind: 'connect', step: 1, from: IST, to: polity('kingdom-of-france'), relation: 'war' }, // another end: another link
+      { kind: 'connect', step: 1, from: at(28.98, 41.01), to: VIE, relation: 'war' }, // a point is not the city
+    ]);
+    expect(d.links).toHaveLength(3);
+    expect(d.links[0]).toMatchObject({ from: VIE, to: IST, label: 'Yeni' });
+  });
+
+  it('a route is a route once however often it is asked, and only the newest four stay', () => {
+    const d = drawingOf([
+      route(1, [IST, VIE], 'advance'),
+      route(1, [IST, VIE], 'advance', true, 'Sefer'), // the same road: the later ask replaces the earlier
+      route(1, [IST, VIE], 'retreat'), // another type: another route
+      route(1, [VIE, IST], 'advance'), // the other way round is another road: a route has a direction
+    ]);
+    expect(d.routes).toHaveLength(3);
+    expect(d.routes[0]).toMatchObject({ type: 'advance', animate: true, label: 'Sefer' });
+    const many = drawingOf(Array.from({ length: 7 }, (_, i) => route(1, [IST, at(10 + i, 45)], 'trade')));
+    expect(many.routes).toHaveLength(4);
+    expect(many.routes.at(-1)!.via[1]).toEqual(at(16, 45));
+  });
+
+  it('the sides are the latest the step asked for, a polity is on the side it was first named on, and at most three', () => {
+    const d = drawingOf([
+      sides(1, { name: 'Eski', polities: ['a'] }),
+      sides(
+        1,
+        { name: 'X', polities: ['a', 'b'] },
+        { name: 'Y', polities: ['b', 'c'] },
+        { name: 'Boş', polities: ['a'] }, // everything of it is on X: no side left
+        { name: 'Z', polities: ['d'] },
+        { name: 'W', polities: ['e'] }, // a fourth
+      ),
+    ]);
+    expect(d.sides).toEqual([
+      { name: 'X', polities: ['a', 'b'] },
+      { name: 'Y', polities: ['c'] },
+      { name: 'Z', polities: ['d'] },
+    ]);
   });
 
   it('the last year asked for wins', () => {
@@ -88,6 +150,9 @@ describe('drawingOf', () => {
     expect(drawingOf([])).toEqual(emptyDrawing());
     expect(isEmptyDrawing(drawingOf([]))).toBe(true);
     expect(isEmptyDrawing(drawingOf([event(1, 'x')]))).toBe(false);
+    // a route or the sides alone are something to show and to frame
+    expect(isEmptyDrawing(drawingOf([route(1, [IST, VIE])]))).toBe(false);
+    expect(isEmptyDrawing(drawingOf([sides(1, { name: 'A', polities: ['a'] })]))).toBe(false);
   });
 });
 
@@ -349,6 +414,174 @@ describe('resolveDrawing and frameTargetOf (shipped data)', () => {
   });
 });
 
+describe('resolveDrawing with places (a few cities and capitals on the 1400–1600 data)', () => {
+  const resolver = new Resolver(withMiniPlaces(archivedData('1400-1600')));
+  const ISTANBUL = { lon: 28.98, lat: 41.01 };
+  const EDIRNE = { lon: 26.56, lat: 41.68 };
+  const BUDAPEST = { lon: 19.04, lat: 47.5 };
+  const VIENNA = { lon: 16.37, lat: 48.21 };
+  const PARIS = { lon: 2.35, lat: 48.86 };
+
+  it('a war line leaves each side from the capital of its first party that year, not from the middle of its land', () => {
+    const e = resolveDrawing(drawingOf([event(1, 'mohac-1526')]), resolver, 1526).events[0]!;
+    expect(e.war).toMatchObject({ aId: 'ottoman-empire', bId: 'kingdom-of-hungary' });
+    expect(e.war!.a).toEqual(ISTANBUL);
+    expect(e.war!.b).toEqual(BUDAPEST);
+  });
+
+  it('the capital is the one of the year: Edirne before 1453, İstanbul after', () => {
+    const varna = resolveDrawing(drawingOf([event(1, 'varna-1444')]), resolver, 1444).events[0]!;
+    expect(varna.war!.a).toEqual(EDIRNE);
+    expect(resolver.placePoint(polity('ottoman-empire'), 1452)).toEqual(EDIRNE);
+    expect(resolver.placePoint(polity('ottoman-empire'), 1453)).toEqual(ISTANBUL);
+  });
+
+  it('a party the table has no capital for is joined from the part of its land nearest the event', () => {
+    const e = resolveDrawing(drawingOf([event(1, 'caldiran-1514')]), resolver, 1514).events[0]!;
+    expect(e.war).toMatchObject({ aId: 'ottoman-empire', bId: 'safavid-dynasty' });
+    expect(e.war!.a).toEqual(ISTANBUL);
+    expect(resolver.capitalPoint('safavid-dynasty', 1514)).toBeNull();
+    expect(e.war!.b).toEqual(resolver.placePoint(polity('safavid-dynasty'), 1514, e.point));
+    const box = resolver.boundsAt('safavid-dynasty', 1514)!;
+    expect(e.war!.b.lon).toBeGreaterThanOrEqual(box[0]);
+    expect(e.war!.b.lon).toBeLessThanOrEqual(box[2]);
+  });
+
+  it('a polity with no borders that year is nowhere, whatever the table says of its capital', () => {
+    expect(resolver.capitalPoint('mamluk-sultanate', 1500)).toEqual({ lon: 31.25, lat: 30.06 });
+    expect(resolver.placePoint(polity('mamluk-sultanate'), 1500)).toEqual({ lon: 31.25, lat: 30.06 });
+    expect(resolver.placePoint(polity('mamluk-sultanate'), 1530)).toBeNull();
+    expect(resolver.placePoint(polity('atlantis'), 1530)).toBeNull();
+  });
+
+  it('a line runs between places: a city, an event, a point or the capital of a polity', () => {
+    const drawing = drawingOf([
+      { kind: 'connect', step: 1, from: IST, to: VIE, relation: 'war' },
+      {
+        kind: 'connect',
+        step: 1,
+        from: { kind: 'event', id: 'mohac-1526', name: 'Mohaç' },
+        to: polity('kingdom-of-france'),
+        relation: 'trade',
+      },
+      { kind: 'connect', step: 1, from: at(10, 50), to: PAR, relation: 'treaty' },
+    ]);
+    const r = resolveDrawing(drawing, resolver, 1526);
+    expect(r.links.map((l) => [l.a, l.b])).toEqual([
+      [ISTANBUL, VIENNA],
+      [{ lon: 18.68, lat: 45.99 }, PARIS], // (France's capital)
+      [{ lon: 10, lat: 50 }, PARIS],
+    ]);
+  });
+
+  it('a polity at the end of a line is lit, a city is not; a line to nowhere is not drawn', () => {
+    const r = resolveDrawing(
+      drawingOf([
+        { kind: 'connect', step: 1, from: IST, to: polity('kingdom-of-france'), relation: 'alliance' },
+        { kind: 'connect', step: 1, from: VIE, to: polity('mamluk-sultanate'), relation: 'trade' }, // gone by 1530
+      ]),
+      resolver,
+      1530,
+    );
+    expect(r.spotIds).toEqual(['kingdom-of-france']);
+    expect(r.links).toHaveLength(1);
+  });
+
+  it('a polity joined to a city is joined at its capital, and a polity joined to its own capital is not joined at all', () => {
+    const r = resolveDrawing(
+      drawingOf([
+        { kind: 'connect', step: 1, from: polity('ottoman-empire'), to: VIE, relation: 'war' },
+        { kind: 'connect', step: 1, from: polity('ottoman-empire'), to: IST, relation: 'trade' }, // 0 km
+      ]),
+      resolver,
+      1526,
+    );
+    expect(r.links.map((l) => [l.a, l.b])).toEqual([[ISTANBUL, VIENNA]]);
+  });
+
+  it('a polity with no capital in the table is joined from its part nearest the other end', () => {
+    const r = resolveDrawing(
+      drawingOf([{ kind: 'connect', step: 1, from: polity('safavid-dynasty'), to: IST, relation: 'war' }]),
+      resolver,
+      1514,
+    );
+    expect(r.links[0]!.b).toEqual(ISTANBUL);
+    expect(r.links[0]!.a).toEqual(resolver.placePoint(polity('safavid-dynasty'), 1514, ISTANBUL));
+    expect(distanceKm(r.links[0]!.a, ISTANBUL)).toBeLessThan(
+      distanceKm(resolver.placePoint(polity('safavid-dynasty'), 1514)!, ISTANBUL) + 1,
+    );
+  });
+
+  it('a route runs through its stops in the order given, in the year shown, one point for each', () => {
+    const r = resolveDrawing(
+      drawingOf([route(1, [EDI, VIE, polity('kingdom-of-france')], 'advance', true, 'Sefer')]),
+      resolver,
+      1526,
+    );
+    expect(r.routes).toHaveLength(1);
+    expect(r.routes[0]).toMatchObject({ type: 'advance', animate: true, label: 'Sefer' });
+    expect(r.routes[0]!.points).toEqual([EDIRNE, VIENNA, PARIS]);
+  });
+
+  it('a stop that is not on the map that year is left out, and a route with fewer than two stops is not drawn', () => {
+    const r = resolveDrawing(
+      drawingOf([
+        route(1, [EDI, polity('mamluk-sultanate'), VIE]), // the Mamluks are gone in 1530
+        route(1, [EDI, polity('mamluk-sultanate')], 'retreat'),
+      ]),
+      resolver,
+      1530,
+    );
+    expect(r.routes.map((x) => x.type)).toEqual(['advance']);
+    expect(r.routes[0]!.points).toEqual([EDIRNE, VIENNA]);
+  });
+
+  it('two stops that are one place that year are one stop', () => {
+    const r = resolveDrawing(
+      drawingOf([route(1, [IST, polity('ottoman-empire'), VIE], 'advance')]), // the Ottoman capital is İstanbul
+      resolver,
+      1526,
+    );
+    expect(r.routes[0]!.points).toEqual([ISTANBUL, VIENNA]);
+  });
+
+  it('the sides that have borders that year, each keeping its own colour; a side with nobody left is not there', () => {
+    const drawing = drawingOf([
+      sides(
+        1,
+        { name: 'Memluk', polities: ['mamluk-sultanate'] },
+        { name: 'Osmanlı', polities: ['ottoman-empire', 'safavid-dynasty'] },
+        { name: 'Fransa', polities: ['kingdom-of-france', 'atlantis'] },
+      ),
+    ]);
+    const early = resolveDrawing(drawing, resolver, 1510);
+    expect(early.sides.map((x) => [x.index, x.name])).toEqual([
+      [0, 'Memluk'],
+      [1, 'Osmanlı'],
+      [2, 'Fransa'],
+    ]);
+    const late = resolveDrawing(drawing, resolver, 1530);
+    // the Mamluks are gone: their side is, but the others keep the colours they had
+    expect(late.sides.map((x) => [x.index, x.name, x.polities])).toEqual([
+      [1, 'Osmanlı', ['ottoman-empire', 'safavid-dynasty']],
+      [2, 'Fransa', ['kingdom-of-france']], // (and a polity the data does not know is not on the map)
+    ]);
+  });
+
+  it('the polities of the sides are in the spotlight, after the ones the model highlighted, and are framed', () => {
+    const drawing = drawingOf([
+      hl(1, 'kingdom-of-france'),
+      sides(1, { name: 'A', polities: ['ottoman-empire'] }, { name: 'B', polities: ['safavid-dynasty', 'kingdom-of-france'] }),
+      route(1, [EDI, VIE]),
+    ]);
+    const r = resolveDrawing(drawing, resolver, 1520);
+    expect(r.spotIds).toEqual(['kingdom-of-france', 'ottoman-empire', 'safavid-dynasty']);
+    const target = frameTargetOf(r, resolver, 1520)!;
+    expect(target.boxes).toHaveLength(3);
+    expect(target.points).toEqual([EDIRNE, VIENNA]); // the stops of the route are in view too
+  });
+});
+
 describe('describeDrawing', () => {
   const name = (id: string) => ({ a: 'Alfa', b: 'Beta' })[id] ?? id;
   it('says what is drawn, for the model and for screen readers', () => {
@@ -365,5 +598,18 @@ describe('describeDrawing', () => {
     expect(describeDrawing(emptyDrawing(), name)).toBe('');
     expect(isEmptyDrawing(emptyDrawing())).toBe(true);
     expect(isEmptyDrawing(d)).toBe(false);
+  });
+
+  it('names the sides, the places of a line and the stops of a route', () => {
+    const d = drawingOf([
+      sides(1, { name: 'Mihver', polities: ['a'] }, { name: 'Müttefikler', polities: ['b'] }),
+      { kind: 'connect', step: 1, from: IST, to: at(1.5, 2.25), relation: 'trade' },
+      route(1, [EDI, polity('a'), VIE], 'retreat', true, 'Çekiliş'),
+      route(1, [IST, VIE], 'trade'),
+    ]);
+    expect(describeDrawing(d, name)).toBe(
+      'taraflar: Mihver (Alfa) – Müttefikler (Beta); İstanbul – 2.25, 1.5: ticaret; ' +
+        'yol (geri çekilme): Edirne → Alfa → Viyana (Çekiliş); yol (ticaret yolu): İstanbul → Viyana',
+    );
   });
 });

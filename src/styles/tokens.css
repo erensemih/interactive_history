@@ -62,6 +62,14 @@
   --vivid-7: #eb8d07;
   --vivid-8: #8eab08;
 
+  /* the sides of a conflict: when the AI groups polities into sides (Axis, Allies...) each side is painted as one bloc
+     in one of these, over the veil, and named in the caption in the same colour. Wine, amber and green sit far apart
+     for normal sight and for the common colour blindness, and none is blue or violet or near the vermilion of the
+     reader's own selection (tests/palette.test.ts keeps all of this so). At most three sides. */
+  --side-0: #7d2250;
+  --side-1: #e0a526;
+  --side-2: #3d8b57;
+
   /* event markers are plain dots told apart by colour alone (see src/domain/categories.ts); this is the
      hairline that keeps a light dot readable on a pale tint */
   --dot-edge: rgb(31 27 22 / 0.55);

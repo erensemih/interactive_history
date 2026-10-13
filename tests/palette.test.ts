@@ -170,6 +170,40 @@ describe('spotlight colours (the vivid twin of each tint)', () => {
   });
 });
 
+describe('the colours of the sides of a conflict (one bloc colour each, up to three sides)', () => {
+  const sides = [0, 1, 2].map((i) => ({ name: `side-${i}`, hex: token(`side-${i}`) }));
+
+  it('are never blue, teal or violet, and clearly coloured', () => {
+    for (const s of sides) {
+      expect(isBlueish(s.hex), `${s.name} ${s.hex}`).toBe(false);
+      expect(hueChroma(s.hex).chroma, `${s.name} chroma`).toBeGreaterThanOrEqual(0.1);
+    }
+  });
+
+  it('are told apart by everyone: normal sight, protanopia and deuteranopia', () => {
+    for (const [i, a] of sides.entries())
+      for (const b of sides.slice(i + 1)) {
+        expect(deltaE(a.hex, b.hex), `${a.name} / ${b.name}`).toBeGreaterThanOrEqual(20);
+        expect(deltaE(a.hex, b.hex, 'protan'), `${a.name} / ${b.name} (protan)`).toBeGreaterThanOrEqual(12);
+        expect(deltaE(a.hex, b.hex, 'deutan'), `${a.name} / ${b.name} (deutan)`).toBeGreaterThanOrEqual(12);
+      }
+  });
+
+  it('stand out from the sea, the paper, the no-data ground and the vermilion of the selection', () => {
+    for (const s of sides) {
+      expect(deltaE(s.hex, token('sea')), `${s.name} against the sea`).toBeGreaterThanOrEqual(15);
+      expect(deltaE(s.hex, token('paper')), `${s.name} against the paper`).toBeGreaterThanOrEqual(15);
+      expect(deltaE(s.hex, token('land-nodata')), `${s.name} against the no-data ground`).toBeGreaterThanOrEqual(15);
+      expect(deltaE(s.hex, token('accent')), `${s.name} against the accent`).toBeGreaterThanOrEqual(15);
+    }
+  });
+
+  it('the app has exactly as many as it allows sides (a fourth side would have no colour)', async () => {
+    const { LIMITS } = await import('../src/ai/types');
+    expect(sides).toHaveLength(LIMITS.sides);
+  });
+});
+
 describe('event marker colours', () => {
   const entries = Object.entries(CATEGORY_STYLES);
   const pairs = entries.flatMap(([a, sa], i) =>

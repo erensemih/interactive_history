@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { cleanLabel, normalizeName, Resolver } from '../src/ai/resolve';
+import { PlaceIndex } from '../src/data/places';
+import type { BorderRow } from '../src/domain/types';
+import { withMiniPlaces } from './helpers/places';
 import { archivedData } from './helpers/shipped';
 
 const data = archivedData('1400-1600');
@@ -212,5 +215,134 @@ describe('Resolver.eventFor (a mark that is really an event)', () => {
     expect(resolver.eventFor('Mohaç', { lon: 2.35, lat: 48.85 }, range)).toBeNull();
     expect(resolver.eventFor('Mohaç', at('mohac-1526'), { from: 1400, to: 1450 })).toBeNull();
     expect(resolver.eventFor('', { lon: 0, lat: 0 }, range)).toBeNull();
+  });
+});
+
+describe('Resolver places (a few cities and capitals on the 1400–1600 data)', () => {
+  const places = new Resolver(withMiniPlaces(data));
+  const IST = { lon: 28.98, lat: 41.01 };
+
+  it('reads "enlem, boylam" in the ways a model writes it, and understands a swapped pair', () => {
+    expect(places.coordinates('52.23, 21.01')).toEqual({ lon: 21.01, lat: 52.23 });
+    expect(places.coordinates(' 52.23 ; 21.01 ')).toEqual({ lon: 21.01, lat: 52.23 });
+    expect(places.coordinates('-33.9 151.2')).toEqual({ lon: 151.2, lat: -33.9 });
+    expect(places.coordinates([52.23, 21.01])).toEqual({ lon: 21.01, lat: 52.23 });
+    expect(places.coordinates(['52.23', '21,01'])).toEqual({ lon: 21.01, lat: 52.23 });
+    expect(places.coordinates({ lat: 52.23, lon: 21.01 })).toEqual({ lon: 21.01, lat: 52.23 });
+    expect(places.coordinates({ enlem: '52.23', boylam: '21.01' })).toEqual({ lon: 21.01, lat: 52.23 });
+    // a first number that cannot be a latitude is the longitude
+    expect(places.coordinates('120.5, 31.2')).toEqual({ lon: 120.5, lat: 31.2 });
+  });
+
+  it('declines what is not a point, or is a point the map cannot show', () => {
+    for (const bad of ['Berlin', '', '52.23', '1e3, 5', '52,23; 21,01', null, undefined, 5, {}, [1], [1, 2, 3], '95, 100', '-70, 10'])
+      expect(places.coordinates(bad), String(bad)).toBeNull();
+  });
+
+  it('names a place: coordinates first, then an event, a polity, a city by any name, a polity by its name, an event by its title', () => {
+    expect(places.placeRef('41.01, 28.98', range)).toEqual({ kind: 'point', point: IST });
+    expect(places.placeRef('caldiran-1514', range)).toEqual({
+      kind: 'event',
+      id: 'caldiran-1514',
+      name: places.eventById('caldiran-1514')!.location.name,
+    });
+    expect(places.placeRef('ottoman-empire', range)).toEqual({ kind: 'polity', id: 'ottoman-empire' });
+    expect(places.placeRef('Konstantinopolis', range)).toEqual({ kind: 'city', id: 'istanbul', name: 'İstanbul' });
+    expect(places.placeRef('  adrianople ', range)).toEqual({ kind: 'city', id: 'edirne', name: 'Edirne' }); // case and spaces do not matter
+    expect(places.placeRef('Osmanlı İmparatorluğu', range)).toEqual({ kind: 'polity', id: 'ottoman-empire' });
+    expect(places.placeRef('Mohaç Muharebesi', range)).toMatchObject({ kind: 'event', id: 'mohac-1526' });
+  });
+
+  it('declines a place nobody knows, a polity with no borders in the range, and what is not text', () => {
+    expect(places.placeRef('Atlantis', range)).toBeNull();
+    expect(places.placeRef('albanian-principalities', range)).toBeNull(); // gone before the range
+    expect(places.placeRef('', range)).toBeNull();
+    expect(places.placeRef(null, range)).toBeNull();
+    expect(places.placeRef(42, range)).toBeNull();
+    expect(places.placeRef(['İstanbul'], range)).toBeNull();
+  });
+
+  it('puts a city before a polity of the same name: a line goes to the city, a polity is named by its id', () => {
+    const both = new Resolver({
+      ...withMiniPlaces(data),
+      places: new PlaceIndex({
+        meta: { source: { name: 't', url: 'u', license: 'l' } },
+        places: [{ id: 'macaristan', tr: 'Macaristan', en: 'Hungary', lon: 19, lat: 47, pop: 1, cc: 'HU', alt: [] }],
+      }),
+    });
+    expect(both.placeRef('Macaristan', range)).toEqual({ kind: 'city', id: 'macaristan', name: 'Macaristan' });
+    expect(both.placeRef('kingdom-of-hungary', range)).toEqual({ kind: 'polity', id: 'kingdom-of-hungary' });
+  });
+
+  it('puts a place on the map: a city, an event or a point as it is, a polity at its capital of that year', () => {
+    expect(places.placePoint({ kind: 'city', id: 'istanbul', name: 'x' }, 1500)).toEqual(IST);
+    expect(places.placePoint({ kind: 'city', id: 'yok', name: 'x' }, 1500)).toBeNull();
+    expect(places.placePoint({ kind: 'point', point: { lon: 1, lat: 2 } }, 1500)).toEqual({ lon: 1, lat: 2 });
+    expect(places.placePoint({ kind: 'event', id: 'mohac-1526', name: 'x' }, 1500)).toEqual({ lon: 18.68, lat: 45.99 });
+    expect(places.placePoint({ kind: 'event', id: 'yok', name: 'x' }, 1500)).toBeNull();
+    expect(places.placePoint({ kind: 'polity', id: 'ottoman-empire' }, 1540)).toEqual(IST);
+    expect(places.placePoint({ kind: 'polity', id: 'ottoman-empire' }, 1440)).toEqual({ lon: 26.56, lat: 41.68 });
+  });
+
+  it('puts a polity the table has no capital for at the middle of its biggest part, or of the part nearest the other end', () => {
+    const safavid = { kind: 'polity', id: 'safavid-dynasty' } as const;
+    expect(places.capitalPoint('safavid-dynasty', 1520)).toBeNull();
+    expect(places.placePoint(safavid, 1520)).toEqual(places.anchorAt('safavid-dynasty', 1520));
+    expect(places.placePoint(safavid, 1520, IST)).toEqual(places.anchorToward('safavid-dynasty', 1520, IST));
+    // the table is not asked about a polity without borders that year
+    expect(places.placePoint({ kind: 'polity', id: 'mamluk-sultanate' }, 1540)).toBeNull();
+  });
+
+  it('says what a place is called, and when two references are one place', () => {
+    expect(places.placeName({ kind: 'city', id: 'istanbul', name: 'İstanbul' })).toBe('İstanbul');
+    expect(places.placeName({ kind: 'event', id: 'mohac-1526', name: 'Mohaç' })).toBe('Mohaç');
+    expect(places.placeName({ kind: 'polity', id: 'ottoman-empire' })).toBe('Osmanlı İmparatorluğu');
+    expect(places.placeName({ kind: 'point', point: { lon: 21.01, lat: 52.23 } })).toBe('52.23, 21.01');
+    const ist = { kind: 'city', id: 'istanbul', name: 'İstanbul' } as const;
+    expect(places.samePlace(ist, { ...ist, name: 'Konstantiniyye' })).toBe(true);
+    expect(places.samePlace(ist, { kind: 'city', id: 'edirne', name: 'Edirne' })).toBe(false);
+    expect(places.samePlace(ist, { kind: 'polity', id: 'istanbul' })).toBe(false); // (an id of another kind is another thing)
+    expect(places.samePlace({ kind: 'point', point: IST }, { kind: 'point', point: { lon: 28.99, lat: 41.02 } })).toBe(true);
+    expect(places.samePlace({ kind: 'point', point: IST }, { kind: 'point', point: { lon: 29.5, lat: 41.02 } })).toBe(false);
+    expect(places.samePlace({ kind: 'point', point: IST }, ist)).toBe(false);
+  });
+
+  it('without a gazetteer or a table of capitals it still works: polities are their middles, cities are not known', () => {
+    expect(resolver.placeRef('Konstantinopolis', range)).toBeNull();
+    expect(resolver.placeRef('Edirne', range)).toBeNull();
+    // (a name that starts the title of exactly one event is that event's place, the gazetteer or not)
+    expect(resolver.placeRef('Istanbul', range)).toMatchObject({ kind: 'event', id: 'istanbul-fethi-1453' });
+    expect(resolver.placeRef('ottoman-empire', range)).toEqual({ kind: 'polity', id: 'ottoman-empire' });
+    expect(resolver.capitalPoint('ottoman-empire', 1540)).toBeNull();
+    expect(resolver.placePoint({ kind: 'polity', id: 'ottoman-empire' }, 1540)).toEqual(
+      resolver.anchorAt('ottoman-empire', 1540),
+    );
+  });
+});
+
+describe('Resolver.rowAt when the data has more than one row for a polity in a year', () => {
+  const row = (id: string, from: number, to: number, area: number): BorderRow => ({
+    id,
+    from,
+    to,
+    area,
+    label: [10, 10, 1],
+    bbox: [0, 0, 20, 20],
+    box: [0, 0, 20, 20],
+    polys: [[[[0, 0], [20, 0], [20, 20], [0, 20], [0, 0]]]],
+  });
+
+  it('is the biggest row, so a small piece added for some years never takes the place of the polity itself', () => {
+    const r = new Resolver({
+      entities: new Map(),
+      rows: [row('x', 1900, 1990, 1_000_000), row('x', 1942, 1945, 700), row('y', 1900, 1990, 5)],
+    });
+    expect(r.rowAt('x', 1930)?.area).toBe(1_000_000);
+    expect(r.rowAt('x', 1943)?.area).toBe(1_000_000); // not the small piece
+    expect(r.rowAt('x', 1991)).toBeNull();
+    expect(r.rowAt('nobody', 1943)).toBeNull();
+    // and a polity that exists in the year only through a small piece is still there
+    const only = new Resolver({ entities: new Map(), rows: [row('z', 1942, 1945, 700)] });
+    expect(only.rowAt('z', 1943)?.area).toBe(700);
   });
 });

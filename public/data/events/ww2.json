@@ -1028,7 +1028,7 @@
       },
       "importance": 5,
       "category": "military",
-      "parties": ["united-states-of-america", "kingdom-of-great-britain", "free-french", "nazi-germany"],
+      "parties": ["kingdom-of-great-britain", "united-states-of-america", "free-french", "nazi-germany"],
       "versus": ["nazi-germany"],
       "sources": [
         {

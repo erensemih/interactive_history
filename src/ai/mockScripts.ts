@@ -50,8 +50,10 @@ const clip = (text: string, max: number) => (text.length > max ? `${text.slice(0
  * The scripted answers are a stand-in for the model that does what the instructions ask of it (every answer is a
  * narration of one or more steps, each with a caption and a full text), over the 1800–2000 data. The model says WHAT
  * is shown and the app draws it: an event the data has is only named (`show_event`: its parties light up and a war's
- * line runs through its marker), `highlight` adds the polities that stand out besides, and `connect` and `mark` are
- * for what the data does not know (the 1939 Pact of Steel, a place with no event). Texts mention the data's events as
+ * line runs through its marker), `highlight` adds the polities that stand out besides, `sides` groups polities into
+ * the sides of a conflict (the app paints each as one bloc), `route` is a directed path through places (an advance, a
+ * retreat), and `connect` and `mark` are for what the data does not know (the 1939 Pact of Steel, a place with no
+ * event). Lines and routes run between places (cities by name, a polity is its capital). Texts mention the data's events as
  * `[text](olay:id)`, which the page turns into links. Facts are the commonly given ones; where historians disagree
  * the text says so.
  */
@@ -93,6 +95,27 @@ const GERMANY_AT_WAR: ScriptStep[] = [
     actions: [
       ['show_event', { event: 'barbarossa-1941' }],
       ['show_event', { event: 'leningrad-kusatmasi-1941' }],
+      [
+        'sides',
+        {
+          sides: [
+            {
+              name: 'Mihver ve ortakları',
+              polities: ['nazi-germany', 'romania', 'republic-of-finland', 'hungary', 'kingdom-of-italy'],
+            },
+            { name: 'Sovyetler Birliği', polities: ['union-of-soviet-socialist-republics'] },
+          ],
+        },
+      ],
+      [
+        'route',
+        {
+          via: ['Brest-Litovsk', 'Minsk', 'Smolensk', 'Moskova'],
+          type: 'advance',
+          label: 'Alman ilerleyişi',
+          animate: true,
+        },
+      ],
     ],
   },
   {
@@ -123,6 +146,7 @@ const GERMANY_AT_WAR: ScriptStep[] = [
     actions: [
       ['show_event', { event: 'normandiya-1944' }],
       ['show_event', { event: 'bagration-1944' }],
+      ['route', { via: ['Minsk', 'Varşova', 'Berlin'], type: 'retreat', label: 'Alman geri çekilişi' }],
     ],
   },
   {
@@ -162,8 +186,31 @@ const AXIS_ANSWER: ScriptStep = {
   year: 1939,
   actions: [
     ['highlight', { polities: ['nazi-germany', 'kingdom-of-italy'] }],
-    ['connect', { from: 'nazi-germany', to: 'kingdom-of-italy', relation: 'alliance', label: 'Çelik Pakt, 1939' }],
+    ['connect', { from: 'Berlin', to: 'Roma', relation: 'alliance', label: 'Çelik Pakt, 1939' }],
     ['show_event', { event: 'uclu-pakt-1940' }],
+  ],
+};
+
+/** Who stood with whom: the sides of the war, painted as two blocs. */
+const SIDES_ANSWER: ScriptStep = {
+  title: 'Mihver ve Müttefikler',
+  caption:
+    "İkinci Dünya Savaşı'nda bir yanda Mihver (Almanya, İtalya, Japonya), öbür yanda Müttefikler (Britanya, Sovyetler Birliği, ABD) yer aldı; taraflar savaş boyunca değişti.",
+  text: "İkinci Dünya Savaşı'nın iki ana kutbu, 1940 tarihli Üçlü Pakt'la birleşen Almanya, İtalya ve Japonya'nın oluşturduğu Mihver ile Britanya, Sovyetler Birliği ve ABD'nin başını çektiği Müttefiklerdi. Haritada 1942 yılının görünümü bu iki bloğu birer renkle gösteriyor.\n\nGörüntü yine de basitleştirilmiş bir ikilik. Sovyetler Birliği 1939–1941 arasında Almanya ile bir saldırmazlık paktı içindeydi ve savaşa 1941'de, saldırıya uğrayınca girdi; ABD savaşa 1941 sonunda katıldı; Fransa'nın büyük bölümü 1940'tan sonra işgal altındaydı, Tayland Japonya'nın yanında yer aldı, İsveç ve İsviçre gibi bazı ülkeler tarafsız kaldı. Hangi devletin hangi tarafta sayılacağı yıldan yıla değiştiği için buradaki gruplama 1942 içindir.",
+  year: 1942,
+  actions: [
+    [
+      'sides',
+      {
+        sides: [
+          { name: 'Mihver', polities: ['nazi-germany', 'kingdom-of-italy', 'empire-of-japan'] },
+          {
+            name: 'Müttefikler',
+            polities: ['kingdom-of-great-britain', 'union-of-soviet-socialist-republics', 'united-states-of-america'],
+          },
+        ],
+      },
+    ],
   ],
 };
 
@@ -213,6 +260,11 @@ export function createMockScripts(data: Pick<AppData, 'entities' | 'events'>): M
     return single(STALINGRAD_ANSWER);
   };
 
+  const sidesQuestion: MockScript = (req) => {
+    if (req.meta.mode !== 'qa' || !has(req.meta.question, 'mihver', 'muttefik')) return null;
+    return single(SIDES_ANSWER);
+  };
+
   const axisQuestion: MockScript = (req) => {
     const { question } = req.meta;
     if (req.meta.mode !== 'qa' || !has(question, 'italya') || !(has(question, 'ittifak') || has(question, 'mihver')))
@@ -255,6 +307,7 @@ export function createMockScripts(data: Pick<AppData, 'entities' | 'events'>): M
     plainText,
     germanNarration,
     stalingradQuestion,
+    sidesQuestion,
     axisQuestion,
     eventQuestion,
     placeNarration,

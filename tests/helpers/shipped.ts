@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { assembleData, type AppData, type RawFiles } from '../../src/data/load';
 
@@ -6,6 +6,7 @@ const root = join(__dirname, '..', '..');
 
 function load(dir: string): AppData {
   const read = <T>(path: string): T => JSON.parse(readFileSync(join(dir, path), 'utf8')) as T;
+  const readOptional = <T>(path: string): T | null => (existsSync(join(dir, path)) ? read<T>(path) : null);
   const index = read<RawFiles['index']>('borders/polities.json');
   const [from, to] = index.meta.range;
   const eventsIndex = read<{ files: string[]; open?: { from: number; to: number } }>('events/index.json');
@@ -19,6 +20,9 @@ function load(dir: string): AppData {
       doc: read<RawFiles['eventSets'][number]['doc']>(`events/${file}`),
     })),
     land: read<RawFiles['land']>('geo/land.json'),
+    places: readOptional<NonNullable<RawFiles['places']>>('places.json'),
+    capitals: readOptional<NonNullable<RawFiles['capitals']>>('capitals.json'),
+    corrections: readOptional<NonNullable<RawFiles['corrections']>>('corrections/ww2.json'),
     bordersRaw: read<RawFiles['bordersRaw']>(`borders/cliopatria-${from}-${to}.json`),
   });
 }

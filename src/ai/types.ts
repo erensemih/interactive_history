@@ -10,11 +10,41 @@ export const RELATION_WORD: Record<Relation, string> = {
   treaty: 'antlaşma',
 };
 
+/**
+ * The kinds of route the model may draw. Each has one look on the map (src/styles/ai.css), the same every time: an army's
+ * advance or campaign, a retreat, a migration or flight, a trade or supply road.
+ */
+export type RouteType = 'advance' | 'retreat' | 'migration' | 'trade';
+export const ROUTE_TYPES: readonly RouteType[] = ['advance', 'retreat', 'migration', 'trade'];
+export const ROUTE_WORD: Record<RouteType, string> = {
+  advance: 'ilerleyiş',
+  retreat: 'geri çekilme',
+  migration: 'göç',
+  trade: 'ticaret yolu',
+};
+
+/**
+ * A place the model names as the end of a line or the stop of a route. Lines and routes run between PLACES, never
+ * between the middles of polities: an event of the data, a city of the gazetteer, a point, or a polity, which stands
+ * for its capital in the year shown (the middle of its biggest part where the table of capitals does not know one).
+ */
+export type PlaceRef =
+  | { kind: 'polity'; id: string }
+  | { kind: 'event'; id: string; name: string }
+  | { kind: 'city'; id: string; name: string }
+  | { kind: 'point'; point: PlacePoint; name?: string };
+
 /** What one drawing may hold at most: a map stays readable however much the model asks for. */
 export const LIMITS = {
   highlights: 8,
   links: 6,
   marks: 8,
+  routes: 4,
+  /** The stops of one route. */
+  stops: 8,
+  /** The sides of a conflict, and the polities of one side. */
+  sides: 3,
+  sidePolities: 8,
   events: 6,
   label: 28,
   steps: 12,
@@ -30,21 +60,39 @@ export const LIMITS = {
  *
  * The model decides WHAT the map shows and the app decides HOW it looks: an `event` is drawn by the app in a
  * fixed way for its kind (its parties lit, a war's line running through its marker), a `highlight` only says
- * which polities stand out, and `connect` and `mark` are the model's own lines and points for what the data
- * does not know. Nothing here moves the camera: the app frames whatever a step shows.
+ * which polities stand out, `sides` groups polities into the sides of a conflict (the app paints each side as one
+ * bloc), and `connect`, `route` and `mark` are the model's own lines, paths and points for what the data does not
+ * know. Nothing here moves the camera: the app frames whatever a step shows.
  */
 export type MapAction =
   | { kind: 'highlight'; step: number; polities: string[] }
-  | { kind: 'connect'; step: number; from: string; to: string; relation: Relation; label?: string }
+  | { kind: 'connect'; step: number; from: PlaceRef; to: PlaceRef; relation: Relation; label?: string }
+  | { kind: 'route'; step: number; via: PlaceRef[]; type: RouteType; label?: string; animate: boolean }
+  | { kind: 'sides'; step: number; sides: Side[] }
   | { kind: 'mark'; step: number; point: PlacePoint; label: string }
   | { kind: 'event'; step: number; id: string }
   | { kind: 'set_year'; step: number; year: number };
 
 export interface Link {
-  from: string;
-  to: string;
+  from: PlaceRef;
+  to: PlaceRef;
   relation: Relation;
   label?: string;
+}
+
+/** A directed path through ordered places: a campaign, a march, a migration, a trade road. */
+export interface Route {
+  via: PlaceRef[];
+  type: RouteType;
+  label?: string;
+  /** The path draws itself when its step comes up (never when the reader asked for reduced motion). */
+  animate: boolean;
+}
+
+/** One side of a conflict: a name and the polities that stand together. The app paints each side as one bloc. */
+export interface Side {
+  name: string;
+  polities: string[];
 }
 
 /** A place the AI marks itself: for things the app's data does not know (a town, a ford, a port). */
@@ -63,6 +111,10 @@ export interface Drawing {
   highlights: string[];
   /** The model's own lines, for relations the data has no event for. */
   links: Link[];
+  /** Directed paths through places. */
+  routes: Route[];
+  /** The sides of the conflict the step is about: each is painted as one bloc. */
+  sides: Side[];
   /** The model's own points, for places the data has no event for. */
   marks: Mark[];
   /** Events of the app's own data the step talks about: the app draws each by its kind, with its own marker. */
@@ -80,9 +132,23 @@ export interface ResolvedLink extends Link {
   b: PlacePoint;
 }
 
+/** A route with its stops turned into points on the map, for the year shown. */
+export interface ResolvedRoute extends Route {
+  points: PlacePoint[];
+}
+
+/** A side of the conflict in the year shown: its place in the drawing's order (which fixes its colour) and the polities of it that have borders then. */
+export interface ResolvedSide {
+  /** 0-based position among the drawing's sides: the side's colour is the app's `index`th bloc colour. */
+  index: number;
+  name: string;
+  polities: string[];
+}
+
 /**
- * The two sides of a war event, as the map draws them: a line leaves each side's polity from the part nearest the
- * event and runs through the event's marker, so the marker and the line read as one thing.
+ * The two sides of a war event, as the map draws them: a line leaves each side from the capital of its first party
+ * (that year's capital; the middle of its biggest part where the table of capitals has none) and runs through the
+ * event's marker, so the marker and the line read as one thing.
  */
 export interface ResolvedWar {
   aId: string;
@@ -112,6 +178,9 @@ export interface ResolvedDrawing {
   spotIds: string[];
   /** The model's own lines (a war line the data already draws for an event is not repeated here). */
   links: ResolvedLink[];
+  routes: ResolvedRoute[];
+  /** The sides that have at least one polity with borders in the year shown. */
+  sides: ResolvedSide[];
   marks: Mark[];
   events: ResolvedEvent[];
 }
@@ -119,6 +188,8 @@ export interface ResolvedDrawing {
 export const EMPTY_RESOLVED: ResolvedDrawing = {
   spotIds: [],
   links: [],
+  routes: [],
+  sides: [],
   marks: [],
   events: [],
 };

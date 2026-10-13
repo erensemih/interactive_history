@@ -41,6 +41,40 @@ export function decodeGeometry(g: Geometry, scale: number): Geometry {
   return g;
 }
 
+function encodeRing(ring: number[][], scale: number): number[] {
+  // points on the grid; a point that repeats the one before is dropped, and so is the closing point
+  const pts: [number, number][] = [];
+  for (const p of ring) {
+    const x = Math.round(p[0]! * scale);
+    const y = Math.round(p[1]! * scale);
+    const last = pts[pts.length - 1];
+    if (!last || last[0] !== x || last[1] !== y) pts.push([x, y]);
+  }
+  if (pts.length > 1 && pts[0]![0] === pts[pts.length - 1]![0] && pts[0]![1] === pts[pts.length - 1]![1]) pts.pop();
+  if (pts.length < 3) throw new Error('bir halka en az üç ayrı noktadan oluşmalı');
+  const flat: number[] = [];
+  let px = 0;
+  let py = 0;
+  for (const [x, y] of pts) {
+    flat.push(x - px, y - py);
+    px = x;
+    py = y;
+  }
+  return flat;
+}
+
+/**
+ * The inverse of `decodeGeometry`: polygons (each `[outer ring, ...holes]` of `[lon, lat]`, rings closed or not) as the
+ * compact geometry of an encoded border file, with every coordinate rounded to the grid of `1 / scale` degrees. One
+ * polygon makes a Polygon and several a MultiPolygon, like the pipeline writes them (build_borders.py `delta_geometry`).
+ */
+export function encodeGeometry(polygons: number[][][][], scale: number): Geometry {
+  if (!polygons.length) throw new Error('bir şekil en az bir çokgenden oluşmalı');
+  const polys = polygons.map((poly) => poly.map((ring) => encodeRing(ring, scale)));
+  if (polys.length === 1) return { type: 'Polygon', coordinates: polys[0] } as unknown as Geometry;
+  return { type: 'MultiPolygon', coordinates: polys } as unknown as Geometry;
+}
+
 /**
  * Turns a whole encoded border collection back into ordinary GeoJSON, in place. A collection without
  * `meta.encoding` is plain GeoJSON already and is returned untouched; calling this twice is harmless.

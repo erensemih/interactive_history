@@ -1,5 +1,14 @@
 import type { Map as MLMap } from 'maplibre-gl';
-import { RELATION_WORD, type Relation, type ResolvedDrawing, type ResolvedLink, type ResolvedWar } from '../ai/types';
+import {
+  RELATION_WORD,
+  ROUTE_WORD,
+  type Relation,
+  type ResolvedDrawing,
+  type ResolvedLink,
+  type ResolvedRoute,
+  type ResolvedWar,
+  type RouteType,
+} from '../ai/types';
 import type { Rect } from '../domain/reveal';
 import type { PlacePoint } from '../domain/types';
 import { placeFlags, type FlagAnchor, type FlagRequest } from './flags';
@@ -32,6 +41,18 @@ const keyOfLink = (l: ResolvedLink) =>
   `${l.relation}|${l.a.lon.toFixed(2)},${l.a.lat.toFixed(2)}|${l.b.lon.toFixed(2)},${l.b.lat.toFixed(2)}|${l.label ?? ''}`;
 const keyOfMark = (m: { point: PlacePoint; label: string }) =>
   `${m.point.lon.toFixed(3)},${m.point.lat.toFixed(3)}|${m.label}`;
+const keyOfRoute = (r: ResolvedRoute) =>
+  `${r.type}|${r.points.map((p) => `${p.lon.toFixed(2)},${p.lat.toFixed(2)}`).join('>')}|${r.label ?? ''}|${r.animate}`;
+
+/** The arrowhead of each route type, its tip at the origin and pointing along +x. */
+const HEAD_SHAPE: Record<RouteType, string> = {
+  advance: 'M0 0L-16 -8L-16 8Z',
+  retreat: 'M0 0L-14 -7L-14 7Z',
+  migration: 'M0 0L-12 -6L-12 6Z',
+  trade: 'M0 0L-12 -5.5L-12 5.5Z',
+};
+/** How far the stroke stops short of the tip, so that its end does not show past the arrowhead. */
+const HEAD_BACK = 9;
 
 interface LinkEl {
   link: ResolvedLink;
@@ -43,6 +64,25 @@ interface LinkEl {
   heads: SVGPathElement[];
   flag: HTMLElement;
   flagW: number;
+}
+
+/**
+ * A route: a curved arrow through its stops, one look per type (src/styles/ai.css). The arrowhead sits on the last stop;
+ * the other stops are small dots. An animated route draws itself in (a mask that a stroke opens along the path).
+ */
+interface RouteEl {
+  route: ResolvedRoute;
+  group: SVGGElement;
+  casing: SVGPathElement;
+  line: SVGPathElement;
+  head: SVGPathElement;
+  dots: SVGCircleElement[];
+  reveal: SVGPathElement | null;
+  maskId: string | null;
+  flag: HTMLElement;
+  flagW: number;
+  /** The path as the last layout drew it, so a label can slide along it. */
+  samples: { x: number; y: number }[];
 }
 
 interface MarkEl {
@@ -113,6 +153,9 @@ export class AiDrawingLayer {
   private readonly links = new Map<string, LinkEl>();
   private readonly marks = new Map<string, MarkEl>();
   private readonly wars = new Map<string, WarEl>();
+  private readonly routes = new Map<string, RouteEl>();
+  private readonly defs: SVGDefsElement;
+  private routeSeq = 0;
   private compact = false;
   private width = 0;
   private height = 0;
@@ -126,6 +169,8 @@ export class AiDrawingLayer {
     this.host.setAttribute('role', 'img');
     this.host.hidden = true;
     this.lines = svg('svg', { class: 'ai-links', 'aria-hidden': 'true' });
+    this.defs = svg('defs');
+    this.lines.appendChild(this.defs);
     this.flags = document.createElement('div');
     this.flags.className = 'ai-flags';
     this.host.append(this.lines, this.flags);
@@ -150,6 +195,18 @@ export class AiDrawingLayer {
       const k = keyOfLink(link);
       if (!this.links.has(k)) this.links.set(k, this.createLink(link));
     }
+    const wantedRoutes = new Set(drawing.routes.map(keyOfRoute));
+    for (const [k, el] of this.routes) {
+      if (wantedRoutes.has(k)) continue;
+      el.group.remove();
+      el.flag.remove();
+      if (el.maskId) this.defs.querySelector(`#${el.maskId}`)?.remove();
+      this.routes.delete(k);
+    }
+    for (const route of drawing.routes) {
+      const k = keyOfRoute(route);
+      if (!this.routes.has(k)) this.routes.set(k, this.createRoute(route));
+    }
     const wantedMarks = new Set(drawing.marks.map(keyOfMark));
     for (const [k, el] of this.marks) {
       if (wantedMarks.has(k)) continue;
@@ -172,7 +229,7 @@ export class AiDrawingLayer {
       const k = `${w.id}|${warKey(w.war)}`;
       if (!this.wars.has(k)) this.wars.set(k, this.createWar(w.war, w.at));
     }
-    const empty = !drawing.links.length && !drawing.marks.length && !wars.length;
+    const empty = !drawing.links.length && !drawing.routes.length && !drawing.marks.length && !wars.length;
     this.host.hidden = empty;
     if (description) this.host.setAttribute('aria-label', `Yapay zekâ çizimi: ${description}`);
     else this.host.removeAttribute('aria-label');
@@ -224,6 +281,54 @@ export class AiDrawingLayer {
       heads,
       flag,
       flagW: this.textWidth(text, FLAG_FONT.link) + FLAG_PAD_X,
+    };
+  }
+
+  private createRoute(route: ResolvedRoute): RouteEl {
+    const group = svg('g', { class: 'ai-route', 'data-type': route.type });
+    const casing = svg('path', { class: 'casing' });
+    const line = svg('path', { class: 'line' });
+    const head = svg('path', { class: 'head', d: HEAD_SHAPE[route.type] });
+    const dots = route.points.slice(0, -1).map(() => svg('circle', { class: 'stop', r: '3.8' }));
+    group.append(casing, line, ...dots, head);
+    let reveal: SVGPathElement | null = null;
+    let maskId: string | null = null;
+    if (route.animate) {
+      // the path draws itself in: a mask over the whole route, opened by a stroke that grows along the same path
+      maskId = `ai-route-mask-${++this.routeSeq}`;
+      const mask = svg('mask', {
+        id: maskId,
+        maskUnits: 'userSpaceOnUse',
+        x: '-200',
+        y: '-200',
+        width: '6000',
+        height: '4000',
+      });
+      reveal = svg('path', { class: 'reveal', pathLength: '1' });
+      mask.appendChild(reveal);
+      this.defs.appendChild(mask);
+      group.classList.add('is-animated');
+      group.setAttribute('mask', `url(#${maskId})`);
+    }
+    this.lines.appendChild(group);
+    const text = route.label ?? ROUTE_WORD[route.type];
+    const flag = document.createElement('span');
+    flag.className = 'ai-flag is-route';
+    flag.dataset.type = route.type;
+    flag.textContent = text;
+    this.flags.appendChild(flag);
+    return {
+      route,
+      group,
+      casing,
+      line,
+      head,
+      dots,
+      reveal,
+      maskId,
+      flag,
+      flagW: this.textWidth(text, FLAG_FONT.link) + FLAG_PAD_X,
+      samples: [],
     };
   }
 
@@ -291,6 +396,42 @@ export class AiDrawingLayer {
       el.ends[1]!.setAttribute('transform', `translate(${b.x.toFixed(1)} ${b.y.toFixed(1)})`);
       el.ring.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`);
       own.push(reach(a.x, a.y, END_REACH), reach(b.x, b.y, END_REACH));
+    }
+
+    for (const [k, el] of this.routes) {
+      const pts = el.route.points.map((pt) => this.map.project([pt.lon, pt.lat]));
+      if (!pts.every((pt) => Number.isFinite(pt.x) && Number.isFinite(pt.y))) continue;
+      const path = routePath(pts);
+      el.casing.setAttribute('d', path.d);
+      el.line.setAttribute('d', path.d);
+      el.reveal?.setAttribute('d', path.d);
+      el.head.setAttribute(
+        'transform',
+        `translate(${path.tip.x.toFixed(1)} ${path.tip.y.toFixed(1)}) rotate(${path.angle.toFixed(1)})`,
+      );
+      el.dots.forEach((dot, i) =>
+        dot.setAttribute('transform', `translate(${pts[i]!.x.toFixed(1)} ${pts[i]!.y.toFixed(1)})`),
+      );
+      el.samples = path.samples;
+      for (const pt of pts) own.push(reach(pt.x, pt.y, END_REACH));
+      own.push(reach(path.tip.x, path.tip.y, GLYPH_REACH));
+      const where = (f: number) => pointAlong(path.samples, f);
+      const spots = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8].map(where).filter(onMap);
+      el.flag.hidden = this.compact || !spots.length;
+      if (el.flag.hidden) continue;
+      const first = spots[0]!;
+      const prefer: FlagAnchor['prefer'] = ['above', 'below', 'right', 'left'];
+      requests.push({
+        id: k,
+        x: first.x,
+        y: first.y,
+        w: el.flagW,
+        h: FLAG_H,
+        prefer,
+        gap: 13,
+        alternates: spots.slice(1).map((at) => ({ x: at.x, y: at.y, gap: 12, prefer: prefer.slice(0, 2) })),
+      });
+      pending.push({ id: k, el: el.flag });
     }
 
     for (const [k, el] of this.marks) {
@@ -404,6 +545,90 @@ export class AiDrawingLayer {
   }
 }
 
+/** The point `f` (0..1) of the way along a sampled path, by length. */
+function pointAlong(samples: readonly { x: number; y: number }[], f: number): { x: number; y: number } {
+  if (samples.length < 2) return samples[0] ?? { x: 0, y: 0 };
+  const lengths: number[] = [0];
+  for (let i = 1; i < samples.length; i++) {
+    lengths.push(lengths[i - 1]! + Math.hypot(samples[i]!.x - samples[i - 1]!.x, samples[i]!.y - samples[i - 1]!.y));
+  }
+  const total = lengths[lengths.length - 1]! || 1;
+  const want = Math.min(1, Math.max(0, f)) * total;
+  let i = 1;
+  while (i < lengths.length - 1 && lengths[i]! < want) i++;
+  const span = lengths[i]! - lengths[i - 1]! || 1;
+  const t = (want - lengths[i - 1]!) / span;
+  return {
+    x: samples[i - 1]!.x + (samples[i]!.x - samples[i - 1]!.x) * t,
+    y: samples[i - 1]!.y + (samples[i]!.y - samples[i - 1]!.y) * t,
+  };
+}
+
+/**
+ * The curve of a route through its projected stops: a gentle arc for two, a smooth curve through all of them (a
+ * Catmull-Rom spline as cubic Béziers) for more. It ends `HEAD_BACK` pixels before the last stop, where the arrowhead
+ * begins; `tip` is the last stop and `angle` the direction the path arrives from, in degrees.
+ */
+export function routePath(pts: readonly { x: number; y: number }[]): {
+  d: string;
+  tip: { x: number; y: number };
+  angle: number;
+  samples: { x: number; y: number }[];
+} {
+  type P = { x: number; y: number };
+  const f = (n: number) => n.toFixed(1);
+  const segments: [P, P, P, P][] = []; // start, control 1, control 2, end
+  if (pts.length === 2) {
+    const [a, b] = [pts[0]!, pts[1]!];
+    const arc = arcBetween(a, b);
+    segments.push([
+      a,
+      { x: a.x + (2 / 3) * (arc.cx - a.x), y: a.y + (2 / 3) * (arc.cy - a.y) },
+      { x: b.x + (2 / 3) * (arc.cx - b.x), y: b.y + (2 / 3) * (arc.cy - b.y) },
+      b,
+    ]);
+  } else {
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] ?? pts[i]!;
+      const p1 = pts[i]!;
+      const p2 = pts[i + 1]!;
+      const p3 = pts[i + 2] ?? p2;
+      segments.push([
+        p1,
+        { x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 },
+        { x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 },
+        p2,
+      ]);
+    }
+  }
+  const last = segments[segments.length - 1]!;
+  const tip = last[3];
+  const dx = tip.x - last[2].x || 1e-6;
+  const dy = tip.y - last[2].y || 0;
+  const len = Math.hypot(dx, dy) || 1;
+  const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+  // the stroke stops short of the tip (no more than half of the last segment)
+  const back = Math.min(HEAD_BACK, Math.hypot(tip.x - last[0].x, tip.y - last[0].y) / 2);
+  const end = { x: tip.x - (dx / len) * back, y: tip.y - (dy / len) * back };
+  const drawn: [P, P, P, P][] = segments.map((seg, i) =>
+    i === segments.length - 1 ? [seg[0], seg[1], seg[2], end] : seg,
+  );
+  let d = `M${f(drawn[0]![0].x)} ${f(drawn[0]![0].y)}`;
+  const samples: P[] = [drawn[0]![0]];
+  for (const [p0, p1, p2, p3] of drawn) {
+    d += `C${f(p1.x)} ${f(p1.y)} ${f(p2.x)} ${f(p2.y)} ${f(p3.x)} ${f(p3.y)}`;
+    for (let k = 1; k <= 14; k++) {
+      const t = k / 14;
+      const u = 1 - t;
+      samples.push({
+        x: u * u * u * p0.x + 3 * u * u * t * p1.x + 3 * u * t * t * p2.x + t * t * t * p3.x,
+        y: u * u * u * p0.y + 3 * u * u * t * p1.y + 3 * u * t * t * p2.y + t * t * t * p3.y,
+      });
+    }
+  }
+  return { d, tip, angle, samples };
+}
+
 const warKey = (w: ResolvedWar) =>
   `${w.aId}>${w.bId}|${w.a.lon.toFixed(2)},${w.a.lat.toFixed(2)}|${w.b.lon.toFixed(2)},${w.b.lat.toFixed(2)}`;
 
@@ -411,11 +636,7 @@ const warKey = (w: ResolvedWar) =>
  * The war line: from `a` through `p` (the event's marker) to `b`, smooth where it passes `p`. Two curves that meet there
  * with the same direction (that of the line from `a` to `b`), so it reads as one line with the marker on it.
  */
-function throughPoint(
-  a: { x: number; y: number },
-  p: { x: number; y: number },
-  b: { x: number; y: number },
-): string {
+function throughPoint(a: { x: number; y: number }, p: { x: number; y: number }, b: { x: number; y: number }): string {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const len = Math.hypot(dx, dy) || 1;

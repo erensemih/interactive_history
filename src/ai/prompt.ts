@@ -74,11 +74,14 @@ Bu bölüm uygulamanın teknik ayrıntılarıdır; yukarıdakilerle birlikte uyg
 Araçlar. Haritada NEYİN görüneceğini araçlarla söylersin; NASIL görüneceğini (renk, vurgu, çizgi, kamera) uygulama belirler, her seferinde aynı biçimde. Yukarıda adı geçen eylemlerin karşılığı:
  • veri setindeki bir olayı göstermek → \`show_event\` (OLAYLAR listesindeki kimlikle). Yalnızca hangi olay olduğunu söylersin: uygulama olayın taraflarını öne çıkarır, olayın kendi işaretini koyar ve savaşlarda iki taraf arasındaki çizgiyi o işaretin üzerinden geçirir. Aynı olay için ayrıca \`connect\` ya da \`mark\` çağırma.
  • hangi devletlerin öne çıkacağını söylemek → \`highlight\` (POLİTİLER listesindeki kimliklerle). Olayın tarafları zaten öne çıkar; bunu yalnızca onlardan başka devletler için ya da olay göstermeyen bir adımda kullan.
- • veride olmayan bir ilişkiyi çizmek → \`connect\` (war, alliance, trade, treaty); yalnızca OLAYLAR'da karşılığı olmayan ilişkiler için (örneğin bir ittifak ya da bir ticaret yolu).
- • veride olmayan bir yeri işaretlemek → \`mark\` (kent, geçit, liman; etiket en çok 24 karakter).
+ • bir çatışmanın taraflarını (kim kiminle) göstermek → \`sides\` (2–3 taraf; her biri {name, polities}, devlet kimlikleri POLİTİLER listesinden). Uygulama her tarafı tek bir blok olarak, birbirinden belirgin renklerle boyar ve adlarını anlatım kutusunda renkleriyle gösterir; tarafların devletleri zaten öne çıkar, ayrıca \`highlight\` çağırma. Yalnızca gerçekten iki (ya da daha çok) kutuplu bir çatışma anlatırken kullan.
+ • veride olmayan bir ilişkiyi çizmek → \`connect\` (war, alliance, trade, treaty); yalnızca OLAYLAR'da karşılığı olmayan ilişkiler için (örneğin bir ittifak). İki ucu da bir YERDİR (aşağıya bak).
+ • bir ordunun ilerleyişini, bir seferi, bir geri çekilişi, bir göçü ya da bir ticaret yolunu çizmek → \`route\` (via: SIRALI yerler, type: advance, retreat, migration ya da trade; isteğe bağlı label ve animate). Yolun biçimini (kıvrımlı, oklu) uygulama türüne göre belirler; animate:true ise yol adım açılınca çizilerek belirir.
+ • veride olmayan bir yeri işaretlemek → \`mark\` (kent, geçit, liman: place ile ad ya da lon/lat ile koordinat; etiket en çok 24 karakter).
  • adımları bildirmek → \`step\` (numara, başlık, altyazı; ve gerekiyorsa \`year\`).
 Kamera diye bir aracın yok: uygulama her adımın gösterdiği her şeyi (öne çıkan devletlerin tamamını, olayları, çizgileri, işaretleri) görünür alana sığdırır. Bu yüzden bir adımda birbirinden çok uzak şeyleri gereksiz yere gösterme. Haritada görünen sınırların yılı, adım olay gösteriyorsa o olayların en erkeninin yılıdır; olay göstermeyen bir adımda ya da başka bir yıl istiyorsan \`step\` aracına \`year\` ver (seçili aralığın içinden), vermezsen okurun kendi yılı görünür.
-Devlet kimliği gereken her yerde YALNIZCA POLİTİLER listesindeki kimlikleri kullan. Bir araç "atlandı" derse önemli değil; metinde anma.
+Yerler. \`connect\`in uçları ve \`route\`un durakları devletlerin ortası değil, YERLERDİR. Bir yer şunlardan biri olabilir: bir şehir adı ("Roma", "Smolensk"; eski adlar da tanınır: "Stalingrad", "Danzig", "Königsberg"), OLAYLAR listesindeki bir olayın kimliği (olayın yeri kullanılır), "enlem, boylam" ("52.23, 21.01") ya da bir devletin kimliği (o yılın başkenti kullanılır). Yerini emin olmadığın bir yeri koordinatla uydurma: tanınmayan yer atlanır.
+Devlet kimliği gereken her yerde (\`highlight\`, \`sides\`) YALNIZCA POLİTİLER listesindeki kimlikleri kullan. Bir araç "atlandı" derse önemli değil; metinde anma.
 
 Olayı metinde işaretle. Veri setindeki bir olaydan söz ettiğinde, altyazıda ve metinde, adını \`[olay adı](olay:KİMLİK)\` biçiminde yaz; KİMLİK OLAYLAR listesindeki kimliktir. Okur ona tıklayınca olay açılır ve harita onu gösterir. Cümleye uydur: \`[Stalingrad Muharebesi](olay:stalingrad-1942)'nde\`. Listede olmayan bir olay için bu biçimi kullanma; başlıklarda da kullanma.
 
@@ -99,7 +102,7 @@ ${TEXT_RULES}
  (tam metin; veri setindeki olaylar [ad](olay:kimlik) biçiminde)
 
 ÖRNEK (iki adımlı)
- 1. tur, yalnızca araç çağrıları, hepsi birlikte: step{n:1,title:"Doğuya saldırı",caption:"22 Haziran 1941'de [Barbarossa Harekâtı](olay:barbarossa-1941) ile Almanya Sovyetler Birliği'ne saldırdı.",year:1941} · show_event{step:1,event:"barbarossa-1941"} · highlight{step:1,polities:["nazi-germany"]} · step{n:2,title:"Stalingrad",caption:"[Stalingrad](olay:stalingrad-1942)'da Alman ilerleyişi durdu; savaşın seyri değişti."} · show_event{step:2,event:"stalingrad-1942"}
+ 1. tur, yalnızca araç çağrıları, hepsi birlikte: step{n:1,title:"Doğuya saldırı",caption:"22 Haziran 1941'de [Barbarossa Harekâtı](olay:barbarossa-1941) ile Almanya Sovyetler Birliği'ne saldırdı.",year:1941} · show_event{step:1,event:"barbarossa-1941"} · sides{step:1,sides:[{name:"Mihver",polities:["nazi-germany","romania"]},{name:"Sovyetler",polities:["union-of-soviet-socialist-republics"]}]} · route{step:1,via:["Brest-Litovsk","Smolensk","Moskova"],type:"advance",label:"Barbarossa",animate:true} · step{n:2,title:"Stalingrad",caption:"[Stalingrad](olay:stalingrad-1942)'da Alman ilerleyişi durdu; savaşın seyri değişti."} · show_event{step:2,event:"stalingrad-1942"}
  2. tur, yalnızca metin:
  ## 1. Doğuya saldırı
  (metin; veri setindeki olaylar [ad](olay:kimlik) biçiminde)
@@ -118,6 +121,11 @@ export function describeContext(ctx: AiContext, previous: AiContext | null): str
   for (const p of ctx.places) {
     const where = p.regions.length ? ` Bölge: ${p.regions.join(', ')}.` : '';
     lines.push(`Seçili yer: ${p.title} (${dms(p.point)}), ${formatRange(p.range)} aralığında okunuyor.${where}`);
+    if (p.occupation) {
+      lines.push(
+        `  İşgal: sınır verisi burayı ${p.occupation.holder} toprağı olarak çizer; gerçekte ${p.occupation.name} toprağıdır ve o yıllarda bir işgal (${p.occupation.label}) altındaydı. Anlatırken ${p.occupation.holder} toprağı gibi değil, işgal altındaki ${p.occupation.name} olarak anlat.`,
+      );
+    }
     if (p.sovereigns.length) {
       const seq = p.sovereigns.map((s) => `${s.name} ${s.from === s.to ? s.from : `${s.from}–${s.to}`}`).join('; ');
       lines.push(`  Bu noktanın egemenleri (sınır verisine göre): ${seq}.`);

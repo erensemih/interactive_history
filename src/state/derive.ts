@@ -2,6 +2,7 @@ import type { AppData } from '../data/load';
 import { elsewhere, mapEventsInRange, nearestEvent, timelineEvents } from '../domain/events';
 import { resolvePlace } from '../domain/geo';
 import { displayYear } from '../domain/time';
+import type { Occupation } from '../data/corrections';
 import type { Entity, HistoricalEvent, PlacePoint, PlaceResolution, YearRange } from '../domain/types';
 import type { AppState } from './store';
 
@@ -23,8 +24,13 @@ export interface PlaceView {
   /** The polity holding the point at the shown year (null on blank land). */
   holder: Entity | null;
   regions: Entity[];
-  /** Region/polity title for the heading. */
+  /**
+   * Region/polity title for the heading. For an occupied land it says so: "Polonya · Alman işgali" (the border data draws
+   * such a land as its occupier's, so `holder` is still the occupier).
+   */
   title: string;
+  /** Set when the border data draws the place as its occupier's land and the page names it as occupied. */
+  occupation: Occupation | null;
   /** Events on this place's timeline inside the detail domain. */
   timeline: HistoricalEvent[];
   /** Closest event in time, for the empty-state hint. */
@@ -62,7 +68,10 @@ export function deriveView(state: AppState, data: AppData, yearOverride: number 
     const resolution = resolvePlace(data.rows, data.entities.values(), point, year, domain);
     const holder = resolution.row ? (data.entities.get(resolution.row.id) ?? null) : null;
     const regions = resolution.regions.map((id) => data.entities.get(id)).filter((e): e is Entity => !!e);
-    const title = holder?.name ?? regions[0]?.name ?? 'Kayıtlı devlet yok';
+    const occupation = data.occupations.at(point, year, resolution.row);
+    const title = occupation
+      ? `${occupation.name} · ${occupation.label}`
+      : (holder?.name ?? regions[0]?.name ?? 'Kayıtlı devlet yok');
     return {
       id: placeId(point),
       point,
@@ -70,6 +79,7 @@ export function deriveView(state: AppState, data: AppData, yearOverride: number 
       holder,
       regions,
       title,
+      occupation,
       timeline: timelineEvents(data.events, resolution.lineage, domain),
       nearest: nearestEvent(data.events, resolution.lineage, year + 0.5),
     };

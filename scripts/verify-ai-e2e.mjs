@@ -10,7 +10,7 @@
  * tool calls and streams the very same kind of text as a real answer, only with fixed content. The page
  * decides to use it by itself, because `window.claude` does not exist in this browser, and says so over the map.
  * One group (G) injects a fake artifact runtime instead, to drive the real `sample` adapter in the browser
- * (the instruction file as the first turn, the five tools, the plan before the long texts, the whole conversation).
+ * (the instruction file as the first turn, the seven tools, the plan before the long texts, the whole conversation).
  *
  * The scenarios count what the data holds (events, rows, the place timeline) in the page instead of fixed numbers. The
  * example place is a free point in Germany (Hamburg): "Nazi Almanyası" with the borders of 1942, narrated in eight
@@ -494,9 +494,16 @@ const MAP_STATE = () => {
       const e = data.eventsById.get(id);
       strict.push([e.location.lon, e.location.lat]);
     }
+    // the ends of a line and the stops of a route are places: a city, an event, a point, or a polity (its capital that year)
     for (const l of d.links) {
-      for (const id of [l.from, l.to]) {
-        const a = r.anchorAt(id, year);
+      for (const ref of [l.from, l.to]) {
+        const a = r.placePoint(ref, year);
+        if (a) strict.push([a.lon, a.lat]);
+      }
+    }
+    for (const route of d.routes) {
+      for (const ref of route.via) {
+        const a = r.placePoint(ref, year);
         if (a) strict.push([a.lon, a.lat]);
       }
     }
@@ -546,6 +553,8 @@ const MAP_STATE = () => {
   return {
     ids,
     links: [...document.querySelectorAll('.ai-layer .ai-link')].map((e) => e.dataset.relation),
+    routes: [...document.querySelectorAll('.ai-layer .ai-route')].map((e) => e.dataset.type),
+    sides: [...document.querySelectorAll('[data-testid=watch-sides] li span')].map((e) => e.textContent.trim()),
     wars: document.querySelectorAll('.ai-layer .ai-war').length,
     flags: [...document.querySelectorAll('.ai-layer .ai-flag')].filter((e) => !e.hidden).map((e) => e.textContent),
     eventFlags: [...document.querySelectorAll('.ai-layer .ai-flag.is-event')]
@@ -682,11 +691,13 @@ const PLAIN_QUESTION = 'Hava gücü hakkında düz metin ver.';
 const JAPAN_QUESTION = 'Peki Japonya?';
 /**
  * The "Germany at war" narration of the mock, step by step: what each step asks for (and so what it alone shows). The model only
- * names the events and the polities that stand out; the app lights the events' parties (so `ids` is the spotlight: the model's
- * highlights, then the parties of its events) and draws every war as one line through its marker (`wars`). `year` is the border
- * year the step shows: the earliest of its events' years; the Battle of Berlin is a 1945 event but the dataset's Nazi Germany ends
- * in 1944, so the last step shows 1944 (`Resolver.showYearOf`). Of the Battle of France's sides only Britain has borders in 1940
- * (France is German or Vichy then), so its line joins Germany and Britain.
+ * names the events, the polities that stand out and the sides of a conflict; the app lights the events' parties (so `ids` is the
+ * spotlight: the model's highlights, then the polities of its sides, then the parties of its events) and draws every war as one
+ * line through its marker (`wars`), from the capital of each side's first party. `routes` are the model's own directed paths (by
+ * type) and `sides` the names of the sides it painted as blocs (`|` apart). `year` is the border year the step shows: the earliest
+ * of its events' years; Cliopatria's Nazi Germany ends in 1944 and the small correction layer (public/data/corrections/ww2.json)
+ * carries its 1938 borders over 1945, so the Battle of Berlin (1945) is drawn on the borders of 1945. Of the Battle of France's
+ * sides only Britain has borders in 1940 (France is German or Vichy then), so its line joins Germany and Britain.
  */
 const GERMANY = [
   {
@@ -696,6 +707,8 @@ const GERMANY = [
     links: '',
     wars: 1,
     events: ['polonya-isgali-1939'],
+    routes: '',
+    sides: '',
     marks: 0,
     year: '1939',
   },
@@ -706,6 +719,8 @@ const GERMANY = [
     links: '',
     wars: 1,
     events: ['fransa-muharebesi-1940', 'compiegne-ateskesi-1940'],
+    routes: '',
+    sides: '',
     marks: 0,
     year: '1940',
   },
@@ -716,16 +731,20 @@ const GERMANY = [
     links: '',
     wars: 1,
     events: ['britanya-muharebesi-1940'],
+    routes: '',
+    sides: '',
     marks: 0,
     year: '1940',
   },
   {
     n: 4,
     title: 'Doğuya saldırı',
-    ids: 'nazi-germany,union-of-soviet-socialist-republics,republic-of-finland',
+    ids: 'nazi-germany,romania,republic-of-finland,hungary,kingdom-of-italy,union-of-soviet-socialist-republics',
     links: '',
     wars: 2,
     events: ['barbarossa-1941', 'leningrad-kusatmasi-1941'],
+    routes: 'advance',
+    sides: 'Mihver ve ortakları|Sovyetler Birliği',
     marks: 0,
     year: '1941',
   },
@@ -736,6 +755,8 @@ const GERMANY = [
     links: '',
     wars: 0,
     events: ['wannsee-1942'],
+    routes: '',
+    sides: '',
     marks: 0,
     year: '1942',
   },
@@ -746,16 +767,20 @@ const GERMANY = [
     links: '',
     wars: 2,
     events: ['stalingrad-1942', 'el-alamein-1942'],
+    routes: '',
+    sides: '',
     marks: 0,
     year: '1942',
   },
   {
     n: 7,
     title: 'İkinci cephe',
-    ids: 'united-states-of-america,kingdom-of-great-britain,free-french,nazi-germany,union-of-soviet-socialist-republics',
+    ids: 'kingdom-of-great-britain,united-states-of-america,free-french,nazi-germany,union-of-soviet-socialist-republics',
     links: '',
     wars: 2,
     events: ['normandiya-1944', 'bagration-1944'],
+    routes: 'retreat',
+    sides: '',
     marks: 0,
     year: '1944',
   },
@@ -766,8 +791,10 @@ const GERMANY = [
     links: '',
     wars: 1,
     events: ['berlin-muharebesi-1945', 'almanya-teslimi-1945'],
+    routes: '',
+    sides: '',
     marks: 0,
-    year: '1944',
+    year: '1945',
   },
 ];
 /** A caption as the reader sees it: the names of events are links, but the words are the same. */
@@ -1317,9 +1344,11 @@ await guard.smoke(async () => {
     boxes.push(await rectOf(page, '[data-testid=watch]'));
     const expected = exp.events;
     check(
-      `${exp.n}. adım yalnızca kendi çizimini gösteriyor: ${exp.ids.split(',').length} devlet öne çıkar, ${exp.wars} savaş çizgisi, ${exp.links || 'kendi çizgisi yok'}, ${expected.length} olay işareti, ${exp.marks} serbest işaret, ${exp.year}`,
+      `${exp.n}. adım yalnızca kendi çizimini gösteriyor: ${exp.ids.split(',').length} devlet öne çıkar, ${exp.wars} savaş çizgisi, ${exp.links || 'kendi çizgisi yok'}, ${exp.routes ? `${exp.routes} yolu` : 'yolu yok'}, ${exp.sides ? `taraflar: ${exp.sides.replace('|', ' / ')}` : 'taraf boyaması yok'}, ${expected.length} olay işareti, ${exp.marks} serbest işaret, ${exp.year}`,
       state.ids.join() === exp.ids &&
         state.links.join() === exp.links &&
+        state.routes.join() === exp.routes &&
+        state.sides.join('|') === exp.sides &&
         state.wars === exp.wars &&
         sameSet(state.markers, expected) &&
         state.eventFlags.length === 0 &&
@@ -1412,7 +1441,7 @@ await guard.smoke(async () => {
       [...lap.clash, ...lap.out, ...lap.underControl].join(' | '),
     );
     // --- a war of the Second World War shows right: its own marker, the line between its two sides, the sides lit, the year's borders
-    if (exp.n === 4 || exp.n === 6 || exp.n === 8) {
+    if (exp.n === 4 || exp.n === 6 || exp.n === 7 || exp.n === 8) {
       const war = await page.evaluate(
         ([id, sides]) => {
           const m = window.__ayni.map;
@@ -1457,15 +1486,60 @@ await guard.smoke(async () => {
         {
           4: ['barbarossa-1941', [['nazi-germany', 'union-of-soviet-socialist-republics']]],
           6: ['stalingrad-1942', [['union-of-soviet-socialist-republics', 'nazi-germany']]],
+          7: ['normandiya-1944', [['kingdom-of-great-britain', 'nazi-germany']]],
           8: ['berlin-muharebesi-1945', [['union-of-soviet-socialist-republics', 'nazi-germany']]],
         }[exp.n],
       );
-      const label = { 4: 'Barbarossa', 6: 'Stalingrad', 8: 'Berlin Muharebesi' }[exp.n];
-      const want = { 4: '1941', 6: '1942', 8: '1945' }[exp.n];
+      const label = { 4: 'Barbarossa', 6: 'Stalingrad', 7: 'Normandiya Çıkarması', 8: 'Berlin Muharebesi' }[exp.n];
+      const want = { 4: '1941', 6: '1942', 7: '1944', 8: '1945' }[exp.n];
+      const sidesOf = {
+        4: 'Sovyetler Birliği ile Nazi Almanyası',
+        6: 'Sovyetler Birliği ile Nazi Almanyası',
+        7: 'Britanya ile Nazi Almanyası',
+        8: 'Sovyetler Birliği ile Nazi Almanyası',
+      }[exp.n];
       check(
-        `${exp.n}. adım, ${label}: olayın kendi işareti haritada (düğme, yılı ${want}, seçili değil: yalnızca anlatılan olay), çizgisi iki tarafı (Sovyetler Birliği ile Nazi Almanyası) birleştiriyor: uçları o iki devletin içinde`,
+        `${exp.n}. adım, ${label}: olayın kendi işareti haritada (düğme, yılı ${want}, seçili değil: yalnızca anlatılan olay), çizgisi iki tarafı (${sidesOf}) birleştiriyor: uçları o iki devletin içinde`,
         war.there && war.tag === 'BUTTON' && war.year === want && !war.selected && war.joined,
         `${war.year} · ${war.ends}`,
+      );
+    }
+    // --- the war line of the Normandy landings leaves from a place, not from the middle of a polity: London, not Greenland
+    if (exp.n === 7) {
+      const line = await page.evaluate(() => {
+        const m = window.__ayni.map;
+        const box = document.querySelector('#map').getBoundingClientRect();
+        const mark = document.querySelector('.evt[data-id="normandiya-1944"] .evt-mark').getBoundingClientRect();
+        const c = { x: mark.left + mark.width / 2, y: mark.top + mark.height / 2 };
+        const lines = [...document.querySelectorAll('.ai-layer .ai-war')].map((g) => {
+          const ring = g.querySelector('circle.ring').getBoundingClientRect();
+          const ends = [...g.querySelectorAll('circle.end')].map((e) => {
+            const r = e.getBoundingClientRect();
+            const ll = m.unproject([r.left + r.width / 2 - box.left, r.top + r.height / 2 - box.top]);
+            return { lon: ll.lng, lat: ll.lat };
+          });
+          return { d: Math.hypot(ring.left + ring.width / 2 - c.x, ring.top + ring.height / 2 - c.y), ends };
+        });
+        return lines.sort((a, b) => a.d - b.d)[0];
+      });
+      const km = (a, b) => {
+        const r = Math.PI / 180;
+        const h =
+          Math.sin(((b.lat - a.lat) * r) / 2) ** 2 +
+          Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(((b.lon - a.lon) * r) / 2) ** 2;
+        return 2 * 6371 * Math.asin(Math.sqrt(h));
+      };
+      const LONDON_PT = { lon: -0.13, lat: 51.5 };
+      const BERLIN_PT = { lon: 13.4, lat: 52.52 };
+      const GREENLAND = { lon: -42, lat: 72 };
+      check(
+        'Normandiya Çıkarması’nın savaş çizgisi Londra’dan başlar (Grönland’dan değil: ABD’nin çokgeni 1944’te Grönland’ı da içerir) ve Berlin’de biter; olayın işareti çizginin üzerinde',
+        !!line &&
+          km(line.ends[0], LONDON_PT) < 25 &&
+          km(line.ends[1], BERLIN_PT) < 25 &&
+          km(line.ends[0], GREENLAND) > 2500 &&
+          line.d <= 1,
+        line ? `Londra’ya ${Math.round(km(line.ends[0], LONDON_PT))} km · Berlin’e ${Math.round(km(line.ends[1], BERLIN_PT))} km · Grönland’a ${Math.round(km(line.ends[0], GREENLAND))} km` : 'çizgi yok',
       );
     }
     if (exp.n === 4) {
@@ -3785,7 +3859,12 @@ const SAMPLE = async ({ b64, lit }) => {
       });
     }
   const everything = [...grid.values()];
-  const want = (s) => (s.lit ? vivid[s.tint] : blend(tints[s.tint], paper, veil));
+  // the polities a step painted by side are in their side's colour (one for the whole bloc), the other lit ones in their vivid twin
+  const sideColour = new Map();
+  (window.__ayni.ai.director.drawing?.sides ?? []).forEach((side, i) => {
+    for (const id of side.polities) sideColour.set(id, hex(`--side-${i}`));
+  });
+  const want = (s) => (s.lit ? (sideColour.get(s.id) ?? vivid[s.tint]) : blend(tints[s.tint], paper, veil));
   for (const s of everything) s.dev = dE(s.rgb, want(s));
   const samples = everything.filter((s) => s.inside);
   const good = samples.filter((s) => s.dev <= 3);
@@ -4016,13 +4095,42 @@ const eventState = (page) =>
     };
   });
 /**
- * Two event states are the same when everything is except what depends on where the camera happens to stand (which markers
- * fit the view, where the card sits): in the small map of the full-screen reader a far event lies a few pixels outside the
- * view, and whether its marker still counts as shown depends on those pixels.
+ * Where an event's marker lies in the map (map pixels) and how big the map is (the full-screen reader's little window is
+ * 338 × 234 on a 1440 × 900 page), whether the marker is drawn and highlighted, and where the camera stands.
  */
-const sameEventState = (a, b) => {
-  const plain = ({ markers, cardRect, ...rest }) => JSON.stringify(rest);
-  return plain(a) === plain(b);
+const markerIn = (page, id) =>
+  page.evaluate((id) => {
+    const m = window.__ayni.map;
+    const where = window.__ayni.data.eventsById.get(id).location;
+    const p = m.project([where.lon, where.lat]);
+    const canvas = m.getCanvas();
+    const c = m.getCenter();
+    const el = document.querySelector(`.evt[data-id="${id}"]`);
+    return {
+      x: Math.round(p.x * 10) / 10,
+      y: Math.round(p.y * 10) / 10,
+      w: canvas.clientWidth,
+      h: canvas.clientHeight,
+      drawn: !!el && !el.classList.contains('is-hidden'),
+      selected: !!el && el.classList.contains('is-selected'),
+      camera: { lng: c.lng, lat: c.lat, zoom: m.getZoom() },
+    };
+  }, id);
+/** Is the marker inside the margins the app keeps clear around an opened event (36 left, 60 right, 44 above, 36 below), give or take a pixel? */
+const inMargins = (m) => m.x >= 35 && m.x <= m.w - 59 && m.y >= 43 && m.y <= m.h - 35;
+/** How far apart two cameras' centres are, in pixels of the map at the first one's zoom. */
+const centreShift = (a, b) => {
+  const at = (c, zoom) => {
+    const world = 512 * 2 ** zoom;
+    const phi = (c.lat * Math.PI) / 180;
+    return {
+      x: ((c.lng + 180) / 360) * world,
+      y: (0.5 - Math.log(Math.tan(Math.PI / 4 + phi / 2)) / (2 * Math.PI)) * world,
+    };
+  };
+  const p = at(a, a.zoom);
+  const q = at(b, a.zoom);
+  return Math.hypot(p.x - q.x, p.y - q.y);
 };
 /** The events a text names as `[words](olay:id)`, in the order it names them (the checks follow the words the mock writes). */
 const evtRefIds = (words) => [...words.matchAll(/\]\(olay:([A-Za-z0-9_-]+)\)/g)].map((m) => m[1]);
@@ -4285,19 +4393,29 @@ await guard(async () => {
   );
 
   // --- in the text, full screen: the card has no room beside the small map, so the event shows as in a timeline click there
+  // The camera the little map had when this was found: it shows Asia at the lowest zoom, and El Alamein lies 16 px short of
+  // the west margin and 34 px short of the foot's. Zooming out cannot bring it in (the map is at its lowest zoom already).
+  await page.evaluate(() => window.__ayni.map.jumpTo({ center: [77.73, 57.3], zoom: 1.1 }));
+  await settle(page, 400);
+  const fullStart = await markerIn(page, 'el-alamein-1942');
   await page.locator('.dock [data-id="el-alamein-1942"]').first().click();
   await settle(page, 700);
+  await cameraRests(page);
   const fullTimeline = await eventState(page);
+  const timelineAt = await markerIn(page, 'el-alamein-1942');
   await page.keyboard.press('Escape');
   await settle(page, 500);
   const fullAfter = await eventState(page);
+  const escAt = await markerIn(page, 'el-alamein-1942');
   await page.mouse.move(300, 420);
   await page.click('[data-testid=chat-step][data-n="6"] button.evt-ref[data-event="el-alamein-1942"]');
   await settle(page, 800);
+  await cameraRests(page);
   const fullRef = await eventState(page);
+  const linkAt = await markerIn(page, 'el-alamein-1942');
   check(
     'Tam ekranda da metindeki bağlantı çizelgedeki noktayla aynı şeyi yapar: olay açık, işaretçisi küçük haritada vurgulu, soru kutusunda olay çipi; okuyucu ve adım yerinde',
-    sameEventState(fullRef, fullTimeline) &&
+    JSON.stringify(fullRef) === JSON.stringify(fullTimeline) &&
       fullRef.event === 'el-alamein-1942' &&
       fullRef.selectedMarker.join() === 'el-alamein-1942' &&
       /El Alamein/.test(fullRef.chip ?? '') &&
@@ -4305,6 +4423,27 @@ await guard(async () => {
       fullRef.read === 'full' &&
       fullRef.step === 6,
     `${fullRef.chip}`,
+  );
+  const pulled = centreShift(fullStart.camera, timelineAt.camera);
+  check(
+    'Tam ekranda küçük haritanın göremediği olay (El Alamein) çizelgedeki noktaya tıklanınca haritaya gelir: işaretçisi kenar paylarının içinde, çizili ve vurgulu; kamera en az oynar (yakınlaştırma aynı, merkez en çok 60 px kayar)',
+    !inMargins(fullStart) &&
+      timelineAt.drawn &&
+      timelineAt.selected &&
+      inMargins(timelineAt) &&
+      Math.abs(timelineAt.camera.zoom - fullStart.camera.zoom) < 1e-9 &&
+      pulled > 1 &&
+      pulled <= 60,
+    `önce (${fullStart.x}, ${fullStart.y}) → sonra (${timelineAt.x}, ${timelineAt.y}) / ${timelineAt.w}×${timelineAt.h} · merkez ${pulled.toFixed(0)} px`,
+  );
+  check(
+    'Esc kamerayı oynatmaz; metindeki bağlantıyla olayı yeniden açmak da (olay zaten görünüyor): merkez ve yakınlaştırma aynı, işaretçi yerinde, çizili ve vurgulu',
+    sameCamera(escAt.camera, timelineAt.camera) &&
+      sameCamera(linkAt.camera, timelineAt.camera) &&
+      linkAt.drawn &&
+      linkAt.selected &&
+      inMargins(linkAt),
+    `(${linkAt.x}, ${linkAt.y}) · merkez ${centreShift(timelineAt.camera, linkAt.camera).toFixed(3)} px kaydı`,
   );
   await shot(page, 'ai-r3-tam-ekranda-olay-adi.png');
   check(
@@ -4322,6 +4461,18 @@ await guard(async () => {
       fullClosed.view === 'read' &&
       fullClosed.read === 'full' &&
       fullClosed.step === 6,
+  );
+  await page.click('[data-testid=chat-step][data-n="6"] button.evt-ref[data-event="el-alamein-1942"]');
+  await settle(page, 600);
+  await cameraRests(page);
+  const reopenedAt = await markerIn(page, 'el-alamein-1942');
+  check(
+    'Kapatıp aynı bağlantıyla yeniden açmak kamerayı bir daha oynatmaz: merkez ve yakınlaştırma ilk açılıştakiyle aynı, işaretçi içeride, çizili ve vurgulu',
+    sameCamera(reopenedAt.camera, timelineAt.camera) &&
+      reopenedAt.drawn &&
+      reopenedAt.selected &&
+      inMargins(reopenedAt),
+    `(${reopenedAt.x}, ${reopenedAt.y})`,
   );
   await page.context().close();
 });
@@ -5303,6 +5454,57 @@ const FAKE_RUNTIME = (opts = {}) => {
         "## 1. Stalingrad\nAğustos 1942'de Volga kıyısına ulaşan Alman 6. Ordusu, kentte aylarca süren sokak çatışmalarına girdi.",
       rest: " Kızıl Ordu 19 Kasım'da karşı taarruza geçip ordunun çevresini kapattı; [Stalingrad Muharebesi](olay:stalingrad-1942) Şubat 1943'te Alman teslimiyle sona erdi.\n\nSonuç yalnızca bir yenilgi değildi: Almanya doğuda bir daha genel bir taarruz başlatamadı. Kayıp sayıları tartışmalıdır.",
     },
+    // the places of lines and routes by name (old names included), the four kinds of route, and the sides of a conflict
+    places: {
+      plan: (by, ctx) => [
+        by.step.execute(
+          {
+            n: 1,
+            title: 'Eski adlarla',
+            caption: 'Çizgi Stalingrad’dan Danzig’e uzanır: ikisi de eski ad, uygulama bugünkü noktalarına çözer.',
+            year: 1942,
+          },
+          ctx,
+        ),
+        by.connect.execute({ step: 1, from: 'Stalingrad', to: 'Danzig', relation: 'war', label: 'Eski adlar' }, ctx),
+        by.step.execute(
+          { n: 2, title: 'Dört yol', caption: 'İlerleyiş, geri çekilme, göç ve ticaret yolu: her biri kendi biçiminde.', year: 1942 },
+          ctx,
+        ),
+        by.route.execute(
+          {
+            step: 2,
+            via: ['Brest-Litovsk', 'Minsk', 'Smolensk', 'Moskova'],
+            type: 'advance',
+            label: 'İlerleyiş',
+            animate: true,
+          },
+          ctx,
+        ),
+        by.route.execute({ step: 2, via: ['Stalingrad', 'Kiev', 'Varşova'], type: 'retreat', label: 'Geri çekilme' }, ctx),
+        by.route.execute({ step: 2, via: ['Roma', 'Viyana', 'Budapeşte'], type: 'migration', label: 'Göç' }, ctx),
+        by.route.execute({ step: 2, via: ['Paris', 'Berlin', 'Prag'], type: 'trade', label: 'Ticaret yolu' }, ctx),
+        by.step.execute(
+          { n: 3, title: 'İki blok', caption: 'Mihver bir renkte, Müttefikler öbüründe: kim kiminle, bir bakışta.', year: 1942 },
+          ctx,
+        ),
+        by.sides.execute(
+          {
+            step: 3,
+            sides: [
+              { name: 'Mihver', polities: ['nazi-germany', 'kingdom-of-italy', 'empire-of-japan'] },
+              {
+                name: 'Müttefikler',
+                polities: ['kingdom-of-great-britain', 'union-of-soviet-socialist-republics', 'united-states-of-america'],
+              },
+            ],
+          },
+          ctx,
+        ),
+      ],
+      first: '## 1. Eski adlarla\nModel yerleri eski adlarıyla söyledi',
+      rest: ', uygulama onları bugünkü noktalarına çözdü.\n\n## 2. Dört yol\nDört yol türü, her biri kendi biçiminde.\n\n## 3. İki blok\nMihver ve Müttefikler iki renkte.',
+    },
     plain: {
       plan: null,
       first: "Hava gücü, İkinci Dünya Savaşı'nın sonucunu belirleyen etkenlerden biriydi.",
@@ -5493,8 +5695,8 @@ await guard.smoke(async () => {
   );
   check('Araçlarla çağrıda cache hiç gönderilmiyor (çalışma zamanı reddederdi)', call.hasCache === false);
   check(
-    'Beş araç, bu sırayla: step, show_event, highlight, connect, mark (kamera ya da görünüş aracı yok)',
-    call.tools.join() === 'step,show_event,highlight,connect,mark',
+    'Yedi araç, önem sırasıyla: step, show_event, highlight, sides, route, connect, mark (kamera ya da görünüş aracı yok)',
+    call.tools.join() === 'step,show_event,highlight,sides,route,connect,mark',
     call.tools.join(),
   );
   check(
@@ -5986,7 +6188,7 @@ await guard(async () => {
   check(
     'Araçlı çağrı “tools_unavailable” ile reddedilirse aynı soru bir kez araçsız (cache:false) yeniden sorulur; yanıt gelir, “yalnızca metin” notu görünür',
     (await page.evaluate(() => window.__sampleCalls.length)) === 2 &&
-      withTools.tools.length === 5 &&
+      withTools.tools.length === 7 &&
       plainCall.tools.length === 0 &&
       plainCall.cache === false &&
       (await page.evaluate(() => window.__ayni.ai.session.items.at(-1).status)) === 'done' &&
@@ -6401,6 +6603,294 @@ await guard(async () => {
 });
 
 /* ================================================================ finish */
+/* ============================================ Y. places, routes and sides */
+section(
+  'Y. Yerler, yollar ve taraflar: çizgiler şehirlerden başlar (eski adlar da çözülür), dört yol türü her biri kendi biçiminde, taraflar tek blok olarak boyanır',
+);
+const kmBetween = (a, b) => {
+  const r = Math.PI / 180;
+  const h =
+    Math.sin(((b.lat - a.lat) * r) / 2) ** 2 +
+    Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(((b.lon - a.lon) * r) / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(h));
+};
+/** The places of the elements of a layer (the centres of their circles), as longitude and latitude. */
+const lonLatOf = (page, selector) =>
+  page.evaluate((sel) => {
+    const m = window.__ayni.map;
+    const box = document.querySelector('#map').getBoundingClientRect();
+    return [...document.querySelectorAll(sel)].map((e) => {
+      const r = e.getBoundingClientRect();
+      const ll = m.unproject([r.left + r.width / 2 - box.left, r.top + r.height / 2 - box.top]);
+      return { lon: ll.lng, lat: ll.lat };
+    });
+  }, selector);
+await guard(async () => {
+  const page = await open(AT_HAMBURG, { init: FAKE_RUNTIME, initArg: { shapes: ['places'] } });
+  await page.fill('[data-testid=chat-input]', 'Yerler, yollar ve taraflar nasıl çiziliyor?');
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('[data-testid=watch-caption]', { timeout: 20000 });
+  await finalStatus(page);
+  await cameraRests(page, 12000);
+  await settle(page, 500);
+  const results = await page.evaluate(() => window.__toolResults);
+  check(
+    'Model yerleri adlarıyla söyledi (Stalingrad, Danzig, Brest-Litovsk, Moskova, Varşova, Budapeşte…); uygulama hepsini tanıdı: hiçbir çağrı atlanmadı, hiçbir durak düşmedi',
+    results.length === 9 && results.every((r) => r === 'tamam'),
+    JSON.stringify(results.filter((r) => r !== 'tamam')),
+  );
+  check(
+    'Yedi aracın hepsi sayfada: step, show_event, highlight, sides, route, connect, mark',
+    (await page.evaluate(() => window.__sampleCalls[0].tools.join())) ===
+      'step,show_event,highlight,sides,route,connect,mark',
+  );
+
+  // --- step 1: the ends of a line are places; an old name is the same place as the new one
+  const ends = await lonLatOf(page, '.ai-layer .ai-link circle.end');
+  const first = await drawing(page);
+  const VOLGOGRAD = { lon: 44.5, lat: 48.71 };
+  const GDANSK = { lon: 18.65, lat: 54.35 };
+  check(
+    'Çizginin uçları yerlerdir: “Stalingrad” bugünkü Volgograd’ın, “Danzig” Gdańsk’ın noktasına çözüldü (eski ad = aynı yer); devletlerin ortasında değil',
+    ends.length === 2 &&
+      kmBetween(ends[0], VOLGOGRAD) < 25 &&
+      kmBetween(ends[1], GDANSK) < 25 &&
+      first.links[0].from.kind === 'city' &&
+      first.links[0].to.kind === 'city',
+    ends.map((e) => `${e.lon.toFixed(2)}, ${e.lat.toFixed(2)}`).join(' → '),
+  );
+  const s1 = await mapState(page);
+  check(
+    '1. adım: yalnızca kendi çizgisi (savaş, “Eski adlar”); uçları görünür alanda, hiçbir şey örtülmüyor; şehirler devlet olarak öne çıkarılmadı',
+    s1.links.join() === 'war' &&
+      s1.flags.includes('Eski adlar') &&
+      s1.outside === 0 &&
+      s1.covered === 0 &&
+      s1.ids.length === 0,
+    `${s1.ids.join('+') || '—'} · ${s1.flags.join(', ')}`,
+  );
+
+  // --- step 2: four routes, each in its own look
+  await showStep(page, 2);
+  await settle(page, 600);
+  const routes = await page.evaluate(() =>
+    [...document.querySelectorAll('.ai-layer .ai-route')].map((g) => {
+      const line = g.querySelector('path.line');
+      const head = g.querySelector('path.head');
+      const cs = getComputedStyle(line);
+      const hs = getComputedStyle(head);
+      return {
+        type: g.dataset.type,
+        dash: cs.strokeDasharray,
+        width: parseFloat(cs.strokeWidth),
+        head: head.getAttribute('d'),
+        headFill: hs.fill,
+        stops: g.querySelectorAll('circle.stop').length,
+        animated: g.classList.contains('is-animated'),
+        length: line.getTotalLength(),
+      };
+    }),
+  );
+  const looks = new Set(routes.map((r) => `${r.dash}|${r.width}|${r.head}|${r.headFill}`));
+  check(
+    '2. adım: dört yol var (ilerleyiş, geri çekilme, göç, ticaret); her türün çizgi deseni, kalınlığı ve ok ucu ötekilerden farklı — aynı tür her zaman aynı görünür',
+    routes.map((r) => r.type).join() === 'advance,retreat,migration,trade' &&
+      looks.size === 4 &&
+      routes[0].dash === 'none' &&
+      routes.slice(1).every((r) => r.dash !== 'none') &&
+      routes.every((r) => r.length > 40),
+    routes.map((r) => `${r.type}: ${r.dash}`).join(' · '),
+  );
+  check(
+    'Yolların durak sayısı verilen yerlerden: 4 duraklı ilerleyiş 3 ara nokta + ok, 3 duraklı üç yol 2 ara nokta + ok',
+    routes.map((r) => r.stops).join() === '3,2,2,2',
+    routes.map((r) => r.stops).join(),
+  );
+  // the arrow is at the LAST stop and points the way the route goes: the head sits on Moscow, not on Brest-Litovsk
+  const heads = await page.evaluate(() => {
+    const m = window.__ayni.map;
+    const box = document.querySelector('#map').getBoundingClientRect();
+    const g = document.querySelector('.ai-layer .ai-route[data-type="advance"]');
+    const head = g.querySelector('path.head');
+    const tf = head.getAttribute('transform') ?? '';
+    const [, x, y, a] = /translate\(([-\d.]+)[ ,]+([-\d.]+)\)\s*rotate\(([-\d.]+)\)/.exec(tf) ?? [];
+    const ll = m.unproject([Number(x), Number(y)]);
+    return { lon: ll.lng, lat: ll.lat, angle: Number(a), tf, box: box.width };
+  });
+  const MOSCOW = { lon: 37.62, lat: 55.75 };
+  check(
+    'İlerleyişin oku son duraktadır (Moskova) ve yolun geldiği yönü gösterir: doğuya (sağa)',
+    kmBetween(heads, MOSCOW) < 30 && Math.abs(heads.angle) < 80,
+    `ok ${heads.lon.toFixed(2)}, ${heads.lat.toFixed(2)} · açı ${heads.angle.toFixed(0)}°`,
+  );
+  const flags = await page.evaluate(() =>
+    [...document.querySelectorAll('.ai-layer .ai-flag.is-route')].filter((e) => !e.hidden).map((e) => e.textContent),
+  );
+  check(
+    'Yolların etiketleri görünür (İlerleyiş, Geri çekilme, Göç, Ticaret yolu)',
+    ['İlerleyiş', 'Geri çekilme', 'Göç', 'Ticaret yolu'].every((t) => flags.includes(t)),
+    flags.join(' | '),
+  );
+  const lap = await overlapReport(page);
+  check(
+    '2. adım: hiçbir etiket başka bir etiketi ya da işaretçiyi örtmüyor, harita dışına taşmıyor',
+    lap.clash.length === 0 && lap.out.length === 0 && lap.underControl.length === 0,
+    [...lap.clash, ...lap.out, ...lap.underControl].join(' | '),
+  );
+  const s2 = await mapState(page);
+  check(
+    '2. adım: kamera yolların her durağını altyazının ve soru kutusunun üstündeki görünür alana sığdırdı',
+    s2.targets >= 11 && s2.outside === 0 && s2.belowFoot === 0 && s2.covered === 0,
+    `${s2.targets} nokta · dışarıda ${s2.outside} · dipte ${s2.belowFoot} · örtülen ${s2.covered}`,
+  );
+  // “hareketi azalt” is the default of this suite: an animated route is simply there, with nothing running
+  const calm = await page.evaluate(() => {
+    const reveal = document.querySelector('.ai-layer .ai-route.is-animated .reveal');
+    return {
+      running: reveal ? reveal.getAnimations().length : -1,
+      offset: reveal ? getComputedStyle(reveal).strokeDashoffset : null,
+    };
+  });
+  check(
+    '“Hareketi azalt” isteyen okurda canlandırılması istenen yol çizilerek belirmez: hiçbir animasyon çalışmıyor, yol baştan sona orada',
+    calm.running === 0 && parseFloat(calm.offset) === 0,
+    JSON.stringify(calm),
+  );
+
+  // --- step 3: the sides of a conflict, as blocs
+  await showStep(page, 3);
+  await settle(page, 800);
+  const legend = await page.evaluate(() => ({
+    names: [...document.querySelectorAll('[data-testid=watch-sides] li span')].map((e) => e.textContent.trim()),
+    swatches: [...document.querySelectorAll('[data-testid=watch-sides] .watch-side-swatch')].map(
+      (e) => getComputedStyle(e).backgroundColor,
+    ),
+    tokens: [0, 1].map((i) => {
+      const probe = document.createElement('i');
+      probe.style.backgroundColor = `var(--side-${i})`;
+      document.body.appendChild(probe);
+      const c = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return c;
+    }),
+    inCaption: !!document.querySelector('[data-testid=watch] [data-testid=watch-sides]'),
+  }));
+  check(
+    '3. adım: tarafların adları anlatım kutusunda, haritanın boyadığı renklerle (Mihver, Müttefikler)',
+    legend.names.join() === 'Mihver,Müttefikler' &&
+      legend.inCaption &&
+      legend.swatches.join() === legend.tokens.join() &&
+      new Set(legend.swatches).size === 2,
+    `${legend.names.join(' / ')} · ${legend.swatches.join(' / ')}`,
+  );
+  const spot = await spotlight(page);
+  const sampled = await sampleMap(page, spot.ids);
+  check(
+    '3. adım, ekran görüntüsünden: her tarafın devletleri TEK renkte (taraf başına bir blok), iki taraf birbirinden belirgin ayrışıyor; öne çıkan her örnek tarafının renginde',
+    sampled.nLit >= 15 && sampled.litOff / sampled.nLit < 0.05,
+    `${sampled.nLit} öne çıkan örnek, ${sampled.litOff} sapma`,
+  );
+  const blocs = await page.evaluate(() => {
+    const m = window.__ayni.map;
+    const paint = m.getPaintProperty('ai-fill', 'fill-color');
+    // ['match', ['get','id'], [ids…], colour, [ids…], colour, fallback]
+    const pairs = [];
+    for (let i = 2; i + 1 < paint.length; i += 2) pairs.push([paint[i], paint[i + 1]]);
+    return { head: [paint[0], paint[1]?.join?.()], pairs };
+  });
+  check(
+    'Taraf boyaması haritanın kendisinde: kimliğe göre eşleme, her taraf için bir renk (ikisi farklı); taraf yokken her devlet kendi canlı rengine döner',
+    blocs.head[0] === 'match' &&
+      blocs.head[1] === 'get,id' &&
+      blocs.pairs.length === 2 &&
+      blocs.pairs[0][1] !== blocs.pairs[1][1] &&
+      blocs.pairs[0][0].includes('nazi-germany') &&
+      blocs.pairs[1][0].includes('union-of-soviet-socialist-republics'),
+    JSON.stringify(blocs.pairs.map((p) => [p[0].length, p[1]])),
+  );
+  await showStep(page, 1);
+  await settle(page, 600);
+  const back = await page.evaluate(() => {
+    const paint = window.__ayni.map.getPaintProperty('ai-fill', 'fill-color');
+    return { side: paint[0] === 'match' && paint[1][0] === 'get' && paint[1][1] === 'id', legend: !!document.querySelector('[data-testid=watch-sides]') };
+  });
+  check(
+    'Taraf bildirmeyen 1. adıma dönünce boyama ve taraf kutusu gider (her adım yalnızca kendi çizimini gösterir)',
+    !back.legend,
+    JSON.stringify(back),
+  );
+  await page.context().close();
+});
+
+await guard(async () => {
+  // the same route, with the system's reduced-motion preference off: it draws itself in along its path
+  const page = await open(AT_HAMBURG, { init: FAKE_RUNTIME, initArg: { shapes: ['places'] }, animated: true });
+  await page.fill('[data-testid=chat-input]', 'Yolları göster');
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('[data-testid=watch-caption]', { timeout: 20000 });
+  await finalStatus(page);
+  await cameraRests(page, 12000);
+  await page.click('[data-testid=ruler-step][data-n="2"]');
+  await page.waitForFunction(() => !!document.querySelector('.ai-layer .ai-route.is-animated'), null, { timeout: 8000 });
+  const during = await page.evaluate(() => {
+    const reveal = document.querySelector('.ai-layer .ai-route.is-animated .reveal');
+    const a = reveal.getAnimations();
+    return { running: a.length, name: a[0]?.animationName ?? '', offset: parseFloat(getComputedStyle(reveal).strokeDashoffset) };
+  });
+  check(
+    'Hareket serbestken canlandırılması istenen yol çizilerek belirir: animasyon çalışıyor (yol henüz tam değil), yalnızca ilerleyiş yolu canlandırılır',
+    during.running === 1 &&
+      during.name === 'ai-route-draw' &&
+      during.offset > 0 &&
+      (await page.evaluate(() => document.querySelectorAll('.ai-layer .ai-route.is-animated').length)) === 1,
+    JSON.stringify(during),
+  );
+  await cameraRests(page, 12000);
+  await page.waitForFunction(
+    () => document.querySelector('.ai-layer .ai-route.is-animated .reveal').getAnimations().length === 0,
+    null,
+    { timeout: 8000 },
+  );
+  const after = await page.evaluate(() => {
+    const reveal = document.querySelector('.ai-layer .ai-route.is-animated .reveal');
+    return parseFloat(getComputedStyle(reveal).strokeDashoffset);
+  });
+  check('Animasyon bitince yol baştan sona görünür (çizgi tam, ok uçta)', after === 0, `dashoffset ${after}`);
+  // and the arrow of a route that has finished drawing sits on its last stop
+  await page.context().close();
+});
+
+await guard(async () => {
+  // a one-step answer about the two sides: the scripted stand-in answers “Mihver ve Müttefikler kimdi?” with `sides`
+  const page = await open(AT_HAMBURG);
+  await ask(page, 'Mihver ve Müttefikler kimdi?');
+  await cameraRests(page, 12000);
+  await settle(page, 600);
+  const dr = await drawing(page);
+  const legend = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-testid=watch-sides] li span')].map((e) => e.textContent.trim()),
+  );
+  const state = await mapState(page);
+  check(
+    'Mihver ve Müttefikler sorusu: tek adımlı yanıt; iki taraf bildirildi (Mihver: Almanya, İtalya, Japonya · Müttefikler: Britanya, Sovyetler, ABD), kutuda iki taraf, 1942’nin sınırları',
+    dr.sides.length === 2 &&
+      dr.sides[0].polities.join() === 'nazi-germany,kingdom-of-italy,empire-of-japan' &&
+      dr.sides[1].polities.length === 3 &&
+      legend.join() === 'Mihver,Müttefikler' &&
+      state.year === '1942' &&
+      state.ids.length === 6,
+    `${legend.join(' / ')} · ${state.ids.join('+')}`,
+  );
+  const spot = await spotlight(page);
+  const sampled = await sampleMap(page, spot.ids);
+  check(
+    'Ekran görüntüsünden: iki bloğun devletleri iki renkte (örneklerin %95’i tarafının renginde), haritanın geri kalanı soluk',
+    sampled.nLit >= 15 && sampled.litOff / sampled.nLit < 0.05 && sampled.nRest >= 100 && sampled.restOff / sampled.nRest < 0.05,
+    `${sampled.nLit} öne çıkan (${sampled.litOff} sapma) · ${sampled.nRest} soluk (${sampled.restOff} sapma)`,
+  );
+  await page.context().close();
+});
+
 section('I. Genel');
 check('Hiçbir sayfada konsol ya da sayfa hatası yok', problems.length === 0, problems.slice(0, 3).join(' | '));
 

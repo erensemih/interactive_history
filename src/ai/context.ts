@@ -10,8 +10,10 @@ export interface ContextPlace {
   /** `placeId` of the clicked point. */
   id: string;
   point: PlacePoint;
-  /** Name shown for it: the polity holding it in the year shown, else its region. */
+  /** Name shown for it: the polity holding it in the year shown, else its region ("Polonya · Alman işgali" for an occupied land). */
   title: string;
+  /** Set when the border data draws the place as its occupier's land: the occupied land's name, the word for it, the polity that holds it. */
+  occupation: { name: string; label: string; holder: string } | null;
   holder: { id: string; name: string } | null;
   regions: string[];
   /** Entity ids (holders, their parents, regions) whose events belong to this place. */
@@ -70,6 +72,8 @@ export function contextFromView(vm: ViewModel, data: Pick<AppData, 'entities'>):
       id: p.id,
       point: p.point,
       title: p.title,
+      occupation:
+        p.occupation && p.holder ? { name: p.occupation.name, label: p.occupation.label, holder: p.holder.name } : null,
       holder: p.holder ? { id: p.holder.id, name: p.holder.name } : null,
       regions: p.regions.map((r) => r.name),
       lineage: [...p.resolution.lineage],

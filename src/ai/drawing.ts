@@ -1,23 +1,30 @@
 import type { HistoricalEvent, PlacePoint } from '../domain/types';
 import { eventKindOf, warSides } from './eventKinds';
-import { normalizeName, type Resolver } from './resolve';
+import { distanceKm, normalizeName, type Resolver } from './resolve';
 import {
   LIMITS,
   RELATION_WORD,
+  ROUTE_WORD,
   type Drawing,
   type FrameTarget,
   type Link,
   type MapAction,
   type Mark,
+  type PlaceRef,
   type ResolvedDrawing,
   type ResolvedEvent,
   type ResolvedLink,
+  type ResolvedRoute,
+  type ResolvedSide,
   type ResolvedWar,
+  type Route,
 } from './types';
 
 export const emptyDrawing = (): Drawing => ({
   highlights: [],
   links: [],
+  routes: [],
+  sides: [],
   marks: [],
   events: [],
 });
@@ -25,7 +32,11 @@ export const emptyDrawing = (): Drawing => ({
 /** The year of an event of the data (null for an id the data does not know). */
 export type EventYear = (id: string) => number | null;
 
-const linkKey = (l: Pick<Link, 'from' | 'to' | 'relation'>) => `${[l.from, l.to].sort().join('|')}|${l.relation}`;
+const refKey = (r: PlaceRef): string =>
+  r.kind === 'point' ? `p:${r.point.lon.toFixed(2)},${r.point.lat.toFixed(2)}` : `${r.kind}:${r.id}`;
+const linkKey = (l: Pick<Link, 'from' | 'to' | 'relation'>) =>
+  `${[refKey(l.from), refKey(l.to)].sort().join('|')}|${l.relation}`;
+const routeKey = (r: Pick<Route, 'via' | 'type'>) => `${r.type}|${r.via.map(refKey).join('>')}`;
 const markKey = (m: Mark) => `${m.point.lon.toFixed(1)},${m.point.lat.toFixed(1)}|${normalizeName(m.label)}`;
 
 /** The newest `max` entries: when a step asks for too much, the earlier requests give way. */
@@ -47,6 +58,26 @@ export function drawingOf(actions: readonly MapAction[], eventYearOf?: EventYear
       const at = d.links.findIndex((l) => linkKey(l) === linkKey(link));
       if (at >= 0) d.links[at] = link;
       else d.links.push(link);
+    } else if (a.kind === 'route') {
+      const route: Route = {
+        via: a.via,
+        type: a.type,
+        animate: a.animate,
+        ...(a.label ? { label: a.label } : {}),
+      };
+      const at = d.routes.findIndex((r) => routeKey(r) === routeKey(route));
+      if (at >= 0) d.routes[at] = route;
+      else d.routes.push(route);
+    } else if (a.kind === 'sides') {
+      // one conflict per step: the latest sides replace the earlier; a polity stands on one side only (the first it was named on)
+      const taken = new Set<string>();
+      d.sides = a.sides
+        .map((side) => ({
+          name: side.name,
+          polities: side.polities.filter((id) => !taken.has(id) && !!taken.add(id)).slice(0, LIMITS.sidePolities),
+        }))
+        .filter((side) => side.polities.length)
+        .slice(0, LIMITS.sides);
     } else if (a.kind === 'mark') {
       const mark: Mark = { point: a.point, label: a.label };
       if (!d.marks.some((m) => markKey(m) === markKey(mark))) d.marks.push(mark);
@@ -57,6 +88,7 @@ export function drawingOf(actions: readonly MapAction[], eventYearOf?: EventYear
   for (const a of actions) if (a.kind === 'set_year') d.year = a.year;
   d.highlights = newest(d.highlights, LIMITS.highlights);
   d.links = newest(d.links, LIMITS.links);
+  d.routes = newest(d.routes, LIMITS.routes);
   d.marks = newest(d.marks, LIMITS.marks);
   d.events = newest(d.events, LIMITS.events);
   if (d.year === undefined && eventYearOf) {
@@ -145,20 +177,31 @@ export class TurnPlan {
 
 /* ------------------------------------------------------------- how the app draws an event */
 
-/** The war line of an event for the year shown: the first side and the opposing one that have borders then, joined near the event. */
+/**
+ * The war line of an event for the year shown. It leaves each side from the capital of that side's first party that has
+ * one then (the data lists the parties in the order of their part in the event), or the middle of the part of its
+ * polity nearest the event where the table of capitals does not know one, and runs through the event's marker.
+ */
 function warOf(ev: HistoricalEvent, resolver: Resolver, year: number, point: PlacePoint): ResolvedWar | undefined {
   const sides = warSides(ev);
   if (!sides) return undefined;
-  const aId = sides.first.find((p) => resolver.rowAt(p, year));
-  const bId = sides.second.find((p) => p !== aId && resolver.rowAt(p, year));
-  if (!aId || !bId) return undefined;
-  // each end leaves from the part of its polity that is nearest the event, so the line does not start across the sea
-  const a = resolver.anchorToward(aId, year, point) ?? resolver.anchorAt(aId, year);
-  const b = resolver.anchorToward(bId, year, point) ?? resolver.anchorAt(bId, year);
-  return a && b ? { aId, bId, a, b } : undefined;
+  const leaving = (ids: string[], not?: string) => {
+    for (const id of ids) {
+      if (id === not) continue;
+      const at = resolver.placePoint({ kind: 'polity', id }, year, point);
+      if (at) return { id, at };
+    }
+    return null;
+  };
+  const a = leaving(sides.first);
+  const b = leaving(sides.second, a?.id);
+  return a && b ? { aId: a.id, bId: b.id, a: a.at, b: b.at } : undefined;
 }
 
 const pairKey = (a: string, b: string) => [a, b].sort().join('|');
+
+/** Two ends of a line closer than this are one place: there is nothing to draw between them. */
+const MIN_LINE_KM = 5;
 
 /**
  * The drawing for the year shown: polities become the places they are drawn at, events the markers (and, for a war,
@@ -185,24 +228,49 @@ export function resolveDrawing(drawing: Drawing, resolver: Resolver, year: numbe
   const drawnWars = new Set(events.flatMap((e) => (e.war ? [pairKey(e.war.aId, e.war.bId)] : [])));
   const links: ResolvedLink[] = [];
   for (const link of drawing.links) {
-    if (link.relation === 'war' && drawnWars.has(pairKey(link.from, link.to))) continue;
-    const mainA = resolver.anchorAt(link.from, year);
-    const mainB = resolver.anchorAt(link.to, year);
+    if (
+      link.relation === 'war' &&
+      link.from.kind === 'polity' &&
+      link.to.kind === 'polity' &&
+      drawnWars.has(pairKey(link.from.id, link.to.id))
+    )
+      continue;
+    const mainA = resolver.placePoint(link.from, year);
+    const mainB = resolver.placePoint(link.to, year);
     if (!mainA || !mainB) continue;
-    // each end leaves from the part of its polity that is nearest the other
-    const a = resolver.anchorToward(link.from, year, mainB) ?? mainA;
-    const b = resolver.anchorToward(link.to, year, mainA) ?? mainB;
+    // a polity without a capital in the table is joined from the part of it that is nearest the other end
+    const a = link.from.kind === 'polity' ? (resolver.placePoint(link.from, year, mainB) ?? mainA) : mainA;
+    const b = link.to.kind === 'polity' ? (resolver.placePoint(link.to, year, mainA) ?? mainB) : mainB;
+    if (distanceKm(a, b) < MIN_LINE_KM) continue;
     links.push({ ...link, a, b });
   }
-  // in the spotlight: what the model named, the parties of its events, the ends of its own lines
+  const routes: ResolvedRoute[] = [];
+  for (const route of drawing.routes) {
+    const points: PlacePoint[] = [];
+    for (const stop of route.via) {
+      const at = resolver.placePoint(stop, year);
+      const last = points[points.length - 1];
+      if (at && (!last || distanceKm(last, at) >= MIN_LINE_KM)) points.push(at);
+    }
+    if (points.length >= 2) routes.push({ ...route, points });
+  }
+  const sides: ResolvedSide[] = drawing.sides
+    .map((side, index) => ({
+      index,
+      name: side.name,
+      polities: side.polities.filter((id) => !!resolver.rowAt(id, year)),
+    }))
+    .filter((side) => side.polities.length);
+  // in the spotlight: what the model named, the sides, the parties of its events, the polities at the ends of its lines
   const spot: string[] = [];
   const light = (id: string) => {
     if (!spot.includes(id) && resolver.rowAt(id, year)) spot.push(id);
   };
   drawing.highlights.forEach(light);
+  for (const side of sides) side.polities.forEach(light);
   for (const e of events) e.parties.forEach(light);
-  for (const l of links) [l.from, l.to].forEach(light);
-  return { spotIds: spot, links, marks: drawing.marks, events };
+  for (const l of links) for (const end of [l.from, l.to]) if (end.kind === 'polity') light(end.id);
+  return { spotIds: spot, links, routes, sides, marks: drawing.marks, events };
 }
 
 /**
@@ -216,6 +284,7 @@ export function frameTargetOf(resolved: ResolvedDrawing, resolver: Resolver, yea
   });
   const points: PlacePoint[] = [];
   for (const l of resolved.links) points.push(l.a, l.b);
+  for (const r of resolved.routes) points.push(...r.points);
   for (const m of resolved.marks) points.push(m.point);
   for (const e of resolved.events) {
     points.push(e.point);
@@ -223,6 +292,14 @@ export function frameTargetOf(resolved: ResolvedDrawing, resolver: Resolver, yea
   }
   return boxes.length || points.length ? { boxes, points } : null;
 }
+
+/** A place in words for the model and for screen readers. */
+const refName = (ref: PlaceRef, nameOf: (id: string) => string): string =>
+  ref.kind === 'polity'
+    ? nameOf(ref.id)
+    : ref.kind === 'point'
+      ? (ref.name ?? `${ref.point.lat}, ${ref.point.lon}`)
+      : ref.name;
 
 /** The drawing in words, for the model ("what is on the map now") and for screen readers. */
 export function describeDrawing(
@@ -232,9 +309,15 @@ export function describeDrawing(
 ): string {
   const parts: string[] = [];
   if (drawing.highlights.length) parts.push(`öne çıkan: ${drawing.highlights.map(nameOf).join(', ')}`);
+  if (drawing.sides.length)
+    parts.push(`taraflar: ${drawing.sides.map((s) => `${s.name} (${s.polities.map(nameOf).join(', ')})`).join(' – ')}`);
   for (const l of drawing.links) {
     const label = l.label ? ` (${l.label})` : '';
-    parts.push(`${nameOf(l.from)} – ${nameOf(l.to)}: ${RELATION_WORD[l.relation]}${label}`);
+    parts.push(`${refName(l.from, nameOf)} – ${refName(l.to, nameOf)}: ${RELATION_WORD[l.relation]}${label}`);
+  }
+  for (const r of drawing.routes) {
+    const label = r.label ? ` (${r.label})` : '';
+    parts.push(`yol (${ROUTE_WORD[r.type]}): ${r.via.map((v) => refName(v, nameOf)).join(' → ')}${label}`);
   }
   if (drawing.events.length) parts.push(`olay: ${drawing.events.map(eventTitleOf).join(', ')}`);
   if (drawing.marks.length) parts.push(`işaretli: ${drawing.marks.map((m) => m.label).join(', ')}`);
@@ -244,4 +327,4 @@ export function describeDrawing(
 
 /** Does the step put nothing on the map? (A step with only a year has nothing to show or frame.) */
 export const isEmptyDrawing = (d: Drawing): boolean =>
-  !d.highlights.length && !d.links.length && !d.marks.length && !d.events.length;
+  !d.highlights.length && !d.links.length && !d.routes.length && !d.sides.length && !d.marks.length && !d.events.length;

@@ -1,0 +1,672 @@
+{
+  "meta": {
+    "title": "İkinci Dünya Savaşı düzeltmeleri",
+    "note": "Cliopatria'ya dokunulmaz: sınır dosyası (borders/cliopatria-1800-2000.json) olduğu gibi kalır; bu dosya, sayfa yüklenirken onun üstüne uygulanır (src/data/corrections.ts). Bilerek küçüktür ve bir doğruluk turu değildir: yalnızca savaşın anlatımını bozan iki boşluğu kapatır. Birincisi satırlardır: Nazi Almanyası 1945'te de çizilsin diye bir satır kopyalanır; Singapur ve Doğu Timor için Japon yamaları eklenir. İkincisi işgal adlarıdır: veri, işgal altındaki bir ülkeyi işgalcinin poligonuyla çizer (Varşova 1942'de 'Nazi Almanyası'dır); bu kayıtlar o toprağı, poligonu değiştirmeden, 'Polonya · Alman işgali' diye adlandırır. Her kaydın gerekçesi (note) ve kaynağı (source) kendi yanındadır.",
+    "sources": [
+      {
+        "name": "Seshat Cliopatria: düzeltilen sınır verisi",
+        "url": "https://github.com/Seshat-Global-History-Databank/cliopatria"
+      },
+      {
+        "name": "Natural Earth 1:10m admin-0: Singapur ve Doğu Timor yamalarının şekli",
+        "url": "https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/"
+      },
+      {
+        "name": "Vikipedi: kayıtların kaynak makaleleri",
+        "url": "https://en.wikipedia.org/"
+      }
+    ],
+    "knownGaps": []
+  },
+  "rows": [
+    {
+      "op": "copy",
+      "id": "nazi-germany",
+      "of": {
+        "id": "nazi-germany",
+        "year": 1938
+      },
+      "keep": [
+        [5.9, 46.3, 19.3, 55.1],
+        [18.6, 53.0, 22.9, 55.4]
+      ],
+      "from": 1945,
+      "to": 1945,
+      "note": "Cliopatria'da Nazi Almanyası'nın satırları 1944'te biter: 1945'te Berlin dahil bütün Almanya işgal bölgesi satırlarıyla çizilir (Berlin'de 'Fransa Dördüncü Cumhuriyeti', Münih'te 'Amerika Birleşik Devletleri') ve 1945 olayları 1944 sınırlarıyla gösterilirdi; oysa Almanya Mayıs 1945'e kadar savaştı. 1938 satırının şekli (Avusturya ve Südetler dahil çekirdek Reich ile Doğu Prusya, 626 625 km²) 1945 için kopyalandı: bölge satırlarının hepsinden küçük olduğu için nokta sorgusunda baskın çıkar, dosyada sonda olduğu için haritada onların üstüne çizilir. 1945'te kurtulmuş görünen ülkelerin satırları (Fransa, Belçika, Hollanda, Norveç, İtalya, Yunanistan, Yugoslavya…) daha küçük oldukları için bozulmaz; Prag, Varşova ve Danzig verinin kendi 1945 sahibinde (Sovyetler Birliği) kalır. Kopyada yalnızca Almanya'daki parçalar tutulur ('keep'): verinin Nazi Almanyası satırlarının hepsi Almanya'dan uzakta yüz kırk kadar başıbozuk ada ve yama taşır (Hebridler, Gelibolu, Balear Adaları, Ladoga adaları…); 1945'te bunlar Müttefik toprakların üstüne çıkardı.",
+      "source": "Veri analizi: Cliopatria 'Nazi Germany' satırları (1936–1944; 1938 satırı 626 625 km²); Nazi Germany (Vikipedi)"
+    },
+    {
+      "op": "add",
+      "id": "empire-of-japan",
+      "name": "Singapur",
+      "from": 1942,
+      "to": 1945,
+      "polygons": [
+        [
+          [
+            [103.65, 1.33],
+            [103.82, 1.27],
+            [104.0, 1.37],
+            [103.82, 1.45],
+            [103.71, 1.42],
+            [103.65, 1.33]
+          ]
+        ],
+        [
+          [
+            [103.99, 1.5],
+            [103.5, 1.5],
+            [103.5, 1.33],
+            [103.55, 1.33],
+            [103.69, 1.45],
+            [103.82, 1.48],
+            [103.99, 1.45],
+            [103.99, 1.5]
+          ]
+        ]
+      ],
+      "note": "Cliopatria'da İngiliz Sömürge İmparatorluğu'nun 1942–45 satırı Singapur adasını ve karşı kıyıdaki Johor şeridini (1,5°K'e kadar, Johor Bahru dahil) hâlâ içerir; Japonya'nın hiçbir satırından büyük olmadığı için orada baskın çıkar: Singapur 1942–45'te İngiliz çizilirdi. Japonya adayı 15 Şubat 1942'de aldı ve Ağustos 1945'e kadar elinde tuttu. Yama, Natural Earth'ün Singapur sınırı ile o Johor şeridinden türetildi ve haritanın kıyısına kırpıldı (scripts/pipeline/build_correction_shapes.py).",
+      "source": "Battle of Singapore; Japanese occupation of Singapore (Vikipedi); Natural Earth 1:10m admin-0"
+    },
+    {
+      "op": "add",
+      "id": "empire-of-japan",
+      "name": "Doğu Timor",
+      "from": 1942,
+      "to": 1944,
+      "polygons": [
+        [
+          [
+            [124.97, -9.6],
+            [124.98, -9.61],
+            [125.0, -9.57],
+            [125.21, -9.4],
+            [125.41, -9.28],
+            [125.89, -9.13],
+            [126.16, -9.0],
+            [126.49, -8.91],
+            [126.67, -8.78],
+            [126.92, -8.72],
+            [127.3, -8.42],
+            [127.21, -8.37],
+            [126.97, -8.32],
+            [126.62, -8.46],
+            [125.8, -8.49],
+            [125.38, -8.58],
+            [125.18, -8.65],
+            [125.03, -8.86],
+            [124.89, -8.97],
+            [124.76, -9.05],
+            [124.76, -9.06],
+            [124.76, -9.07],
+            [124.77, -9.08],
+            [124.77, -9.1],
+            [124.78, -9.11],
+            [124.78, -9.12],
+            [124.79, -9.13],
+            [124.8, -9.15],
+            [124.81, -9.16],
+            [124.81, -9.17],
+            [124.81, -9.18],
+            [124.81, -9.19],
+            [124.81, -9.22],
+            [124.8, -9.24],
+            [124.8, -9.25],
+            [124.81, -9.27],
+            [124.81, -9.3],
+            [124.81, -9.31],
+            [124.82, -9.32],
+            [124.82, -9.34],
+            [124.83, -9.36],
+            [124.84, -9.37],
+            [124.84, -9.38],
+            [124.85, -9.39],
+            [124.86, -9.41],
+            [124.87, -9.42],
+            [124.88, -9.43],
+            [124.89, -9.44],
+            [124.9, -9.46],
+            [124.91, -9.47],
+            [124.91, -9.51],
+            [124.92, -9.53],
+            [124.92, -9.54],
+            [124.93, -9.55],
+            [124.94, -9.57],
+            [124.94, -9.58],
+            [124.95, -9.59],
+            [124.97, -9.6]
+          ]
+        ],
+        [
+          [
+            [124.6, -9.17],
+            [124.6, -9.16],
+            [124.6, -9.15],
+            [124.58, -9.16],
+            [124.2, -9.26],
+            [123.98, -9.37],
+            [123.91, -9.43],
+            [123.93, -9.47],
+            [123.94, -9.49],
+            [123.95, -9.5],
+            [123.97, -9.51],
+            [123.99, -9.54],
+            [124.01, -9.55],
+            [124.02, -9.55],
+            [124.03, -9.56],
+            [124.05, -9.57],
+            [124.06, -9.57],
+            [124.1, -9.57],
+            [124.11, -9.58],
+            [124.13, -9.58],
+            [124.14, -9.59],
+            [124.15, -9.6],
+            [124.16, -9.62],
+            [124.17, -9.62],
+            [124.18, -9.63],
+            [124.2, -9.64],
+            [124.21, -9.64],
+            [124.23, -9.65],
+            [124.24, -9.65],
+            [124.26, -9.65],
+            [124.27, -9.65],
+            [124.29, -9.65],
+            [124.3, -9.65],
+            [124.31, -9.64],
+            [124.32, -9.64],
+            [124.33, -9.64],
+            [124.35, -9.63],
+            [124.36, -9.63],
+            [124.38, -9.62],
+            [124.39, -9.62],
+            [124.4, -9.61],
+            [124.41, -9.6],
+            [124.42, -9.59],
+            [124.43, -9.58],
+            [124.44, -9.57],
+            [124.45, -9.56],
+            [124.46, -9.55],
+            [124.47, -9.54],
+            [124.47, -9.52],
+            [124.48, -9.51],
+            [124.48, -9.5],
+            [124.48, -9.48],
+            [124.48, -9.47],
+            [124.48, -9.46],
+            [124.49, -9.46],
+            [124.5, -9.45],
+            [124.51, -9.44],
+            [124.52, -9.42],
+            [124.53, -9.41],
+            [124.54, -9.4],
+            [124.55, -9.39],
+            [124.56, -9.38],
+            [124.56, -9.36],
+            [124.57, -9.35],
+            [124.57, -9.34],
+            [124.58, -9.33],
+            [124.58, -9.31],
+            [124.58, -9.29],
+            [124.6, -9.24],
+            [124.6, -9.22],
+            [124.6, -9.21],
+            [124.6, -9.19],
+            [124.6, -9.17]
+          ]
+        ],
+        [
+          [
+            [125.51, -8.28],
+            [125.58, -8.31],
+            [125.65, -8.14],
+            [125.51, -8.28]
+          ]
+        ]
+      ],
+      "note": "Cliopatria Portekiz Timoru'nu 1944'e kadar Portekiz çizer ve Japon çizimini yalnızca 1945'te getirir; oysa Japonya adayı Şubat 1942'de işgal etti ve Ağustos 1945'e kadar elinde tuttu (1943–45 Japonya satırları bölgeyi kapsar ama daha küçük olan Portekiz satırı baskın çıkar). Yama, Natural Earth'ün Doğu Timor sınırından türetildi (0,15° genişletilmiş: verinin Portekiz çokgeni Batı Timor çizgisini bu kadar aşar) ve haritanın kıyısına kırpıldı (scripts/pipeline/build_correction_shapes.py).",
+      "source": "Battle of Timor; Portuguese Timor (Vikipedi); Natural Earth 1:10m admin-0"
+    }
+  ],
+  "occupierLabels": {
+    "nazi-germany": "Alman işgali",
+    "kingdom-of-italy": "İtalyan işgali",
+    "empire-of-japan": "Japon işgali",
+    "union-of-soviet-socialist-republics": "Sovyet işgali"
+  },
+  "occupations": [
+    {
+      "id": "litvanya-vilnius",
+      "name": "Litvanya",
+      "area": {
+        "id": "second-polish-republic",
+        "year": 1939
+      },
+      "box": [24.3, 54.2, 26.3, 55.1],
+      "occupiers": ["nazi-germany"],
+      "from": 1941,
+      "to": 1944,
+      "at": [25.28, 54.69],
+      "note": "Vilnius bölgesi Cliopatria'nın Litvanya satırında değil, Polonya satırındadır (Ekim 1939'da Litvanya'ya devredildi; veri bu devri göstermez, Vilnius 1939'da Polonya'dır). Alman işgali yıllarında Polonya'nın değil Litvanya'nın toprağı olarak adlandırılır.",
+      "source": "Vilnius Region; Reichskommissariat Ostland (Vikipedi)"
+    },
+    {
+      "id": "polonya",
+      "name": "Polonya",
+      "area": {
+        "id": "second-polish-republic",
+        "year": 1939
+      },
+      "box": [
+        [14.0, 48.0, 24.3, 56.0],
+        [24.3, 48.0, 29.0, 54.2],
+        [26.3, 54.2, 29.0, 56.0]
+      ],
+      "occupiers": ["nazi-germany"],
+      "from": 1939,
+      "to": 1945,
+      "at": [21.0, 52.2],
+      "note": "Cliopatria işgal altındaki Polonya'yı Nazi Almanyası'nın poligonuyla çizer: Varşova 1940–44'te 'Nazi Almanyası'dır; ayrı bir Genel Hükümet ya da Wartheland yoktur. Alman işgali Eylül 1939'da başladı; veri 1939'u hâlâ Polonya çizer. Savaş öncesi Polonya'nın şekli kullanılır, yani Reich'a katılan batı toprakları, Genel Hükümet ve Alman elindeki doğu (Lviv, Brest) birlikte 'Polonya'dır. 1940–41'de Sovyet elindeki doğu ayrı kayıttadır.",
+      "source": "Invasion of Poland; German occupation of Poland (Vikipedi)"
+    },
+    {
+      "id": "dogu-polonya",
+      "name": "Doğu Polonya",
+      "area": {
+        "id": "second-polish-republic",
+        "year": 1939
+      },
+      "box": [
+        [14.0, 48.0, 24.3, 56.0],
+        [24.3, 48.0, 29.0, 54.2],
+        [26.3, 54.2, 29.0, 56.0]
+      ],
+      "occupiers": ["union-of-soviet-socialist-republics"],
+      "from": 1939,
+      "to": 1941,
+      "at": [24.03, 49.84],
+      "note": "Sovyetler Birliği Polonya'nın doğusunu Eylül 1939'da işgal etti ve Haziran 1941'e kadar elinde tuttu; veri bu toprağı 1940–41'de Sovyet çizer (Lviv, Brest, Grodno). Yalnızca bu Sovyet işgali adlandırılır: 1944'te Sovyetler'in yeniden aldığı topraklar adlandırılmaz.",
+      "source": "Soviet invasion of Poland (Vikipedi)"
+    },
+    {
+      "id": "bohemya-moravya",
+      "name": "Bohemya ve Moravya",
+      "area": {
+        "id": "czechoslovakia",
+        "year": 1938
+      },
+      "box": [
+        [12.0, 48.55, 17.9, 51.1],
+        [17.9, 49.45, 18.9, 50.4]
+      ],
+      "occupiers": ["nazi-germany"],
+      "from": 1939,
+      "to": 1945,
+      "at": [15.3, 49.7],
+      "note": "Cliopatria Çek topraklarını Mart 1939'dan itibaren Nazi Almanyası'nın poligonuyla çizer (Prag 1939–44'te 'Nazi Almanyası'dır); ayrı bir Himaye yoktur. Alman ordusu 15 Mart 1939'da Çek topraklarını işgal etti. Yalnızca Çek toprakları adlandırılır (iki kutu): Alman müttefiki Slovakya, veride de Nazi Almanyası çizilse de, adlandırılmaz; Münih Anlaşması'yla 1938'de Almanya'ya bırakılan Südetler 1938 satırının dışında kaldığı için adlandırılmaz.",
+      "source": "Occupation of Czechoslovakia; Protectorate of Bohemia and Moravia (Vikipedi)"
+    },
+    {
+      "id": "norvec",
+      "name": "Norveç",
+      "area": {
+        "id": "kingdom-of-norway",
+        "year": 1939
+      },
+      "occupiers": ["nazi-germany"],
+      "from": 1940,
+      "to": 1945,
+      "at": [9.0, 62.0],
+      "note": "Alman ordusu 9 Nisan 1940'ta Norveç'i işgal etti. Veri bunu 1941'den başlayarak Nazi Almanyası çizer (1940'ta Norveç'in kendi satırı Alman satırından küçük olduğu için Norveç görünür); ana kara 1944'e kadar tümüyle Alman çizilir. Quisling'in kukla hükümeti ayrı çizilmez.",
+      "source": "German invasion of Norway; Occupation of Norway (Vikipedi)"
+    },
+    {
+      "id": "hollanda",
+      "name": "Hollanda",
+      "area": {
+        "id": "netherlands",
+        "year": 1939
+      },
+      "occupiers": ["nazi-germany"],
+      "from": 1940,
+      "to": 1945,
+      "at": [5.3, 52.2],
+      "note": "Alman ordusu 10 Mayıs 1940'ta Hollanda'yı işgal etti; veri 1940–44'te Hollanda'yı Nazi Almanyası çizer.",
+      "source": "Battle of the Netherlands; German occupation of the Netherlands (Vikipedi)"
+    },
+    {
+      "id": "belcika",
+      "name": "Belçika",
+      "area": {
+        "id": "kingdom-of-belgium",
+        "year": 1939
+      },
+      "occupiers": ["nazi-germany"],
+      "from": 1940,
+      "to": 1945,
+      "at": [4.7, 50.9],
+      "note": "Alman ordusu 10 Mayıs 1940'ta Belçika'yı işgal etti; veri 1940–44'te Belçika'yı Nazi Almanyası çizer.",
+      "source": "Battle of Belgium; German occupation of Belgium (Vikipedi)"
+    },
+    {
+      "id": "luksemburg",
+      "name": "Lüksemburg",
+      "area": {
+        "id": "luxembourg",
+        "year": 1939
+      },
+      "occupiers": ["nazi-germany"],
+      "from": 1940,
+      "to": 1945,
+      "at": [6.1, 49.75],
+      "note": "Alman ordusu 10 Mayıs 1940'ta Lüksemburg'u işgal etti; ülke 1942'de fiilen Reich'a katıldı (hiçbir devlet bu ilhakı tanımadı), bu yüzden 'işgal' sayılır. Veri 1940–44'te Lüksemburg'u Nazi Almanyası çizer.",
+      "source": "German occupation of Luxembourg in World War II (Vikipedi)"
+    },
+    {
+      "id": "danimarka",
+      "name": "Danimarka",
+      "area": {
+        "id": "denmark",
+        "year": 1939
+      },
+      "occupiers": ["nazi-germany"],
+      "from": 1940,
+      "to": 1945,
+      "at": [10.0, 56.2],
+      "note": "Alman ordusu 9 Nisan 1940'ta Danimarka'yı işgal etti (hükümet 1943'e kadar yerinde kaldı); veri 1940–44'te Danimarka'yı Nazi Almanyası çizer.",
+      "source": "German occupation of Denmark (Vikipedi)"
+    },
+    {
+      "id": "fransa",
+      "name": "Fransa",
+      "area": {
+        "id": "french-third-republic",
+        "year": 1939
+      },
+      "occupiers": ["nazi-germany", "kingdom-of-italy"],
+      "from": 1940,
+      "to": 1945,
+      "at": [2.35, 48.86],
+      "note": "Haziran 1940'tan sonra Fransa'nın kuzeyi ve Atlantik kıyısı Alman işgali altındaydı, güneyi Vichy yönetimindeydi; Kasım 1942'de Almanya ve İtalya güneyi de işgal etti. Veri kuzeyi 1940–44'te Nazi Almanyası, güneyi 1940–42'de 'Vichy Fransası' çizer (Vichy bölgesi adlandırılmaz); 1943'te güney de Alman çizilir ve İtalyan işgal bölgesi İtalya çizilir, ikisi de kendi adıyla adlandırılır. Alsace-Lorraine 1940'ta fiilen ilhak edildi (tanınmadı); o da burada 'Alman işgali'dir.",
+      "source": "Military history of France during World War II; German occupation of France (Vikipedi)"
+    },
+    {
+      "id": "yunanistan",
+      "name": "Yunanistan",
+      "area": {
+        "id": "greece",
+        "year": 1940
+      },
+      "occupiers": ["nazi-germany", "kingdom-of-italy"],
+      "from": 1941,
+      "to": 1945,
+      "at": [23.73, 37.98],
+      "note": "Mihver Nisan 1941'de Yunanistan'ı işgal etti ve Almanya, İtalya ve Bulgaristan arasında paylaştı. Veri 1941'i Alman, 1942–43'ü büyük ölçüde İtalyan (Atina dahil), 1944'ü yine Alman çizer; her biri kendi adıyla adlandırılır. Bulgar bölgesi (Doğu Makedonya ve Batı Trakya) adlandırılmaz.",
+      "source": "Axis occupation of Greece (Vikipedi)"
+    },
+    {
+      "id": "yugoslavya",
+      "name": "Yugoslavya",
+      "area": {
+        "id": "yugoslavia",
+        "year": 1940
+      },
+      "occupiers": ["nazi-germany", "kingdom-of-italy"],
+      "from": 1941,
+      "to": 1945,
+      "at": [20.46, 44.82],
+      "note": "Mihver Nisan 1941'de Yugoslavya'yı işgal edip parçaladı. Veri Sırbistan ile Slovenya'yı Nazi Almanyası, Karadağ, Kosova ve Adriyatik kıyısının bir bölümünü İtalya çizer; ikisi kendi adıyla adlandırılır. Hırvatistan Bağımsız Devleti (Mihver'in müttefiki kukla devlet) ile Macar ve Bulgar bölgeleri adlandırılmaz.",
+      "source": "Invasion of Yugoslavia; Axis occupation of Yugoslavia (Vikipedi)"
+    },
+    {
+      "id": "arnavutluk",
+      "name": "Arnavutluk",
+      "area": {
+        "id": "albania",
+        "year": 1938
+      },
+      "occupiers": ["kingdom-of-italy"],
+      "from": 1939,
+      "to": 1943,
+      "at": [19.82, 41.33],
+      "note": "İtalya 7 Nisan 1939'da Arnavutluk'u işgal etti ve Kral Zogu'yu devirerek ülkeyi İtalyan krallığına bağladı. Veri 1939–43'te Arnavutluk'u İtalya çizer; 1944'te Arnavutluk yine kendi satırıyla çizilir.",
+      "source": "Italian invasion of Albania (Vikipedi)"
+    },
+    {
+      "id": "estonya",
+      "name": "Estonya",
+      "area": {
+        "id": "estonia",
+        "year": 1939
+      },
+      "occupiers": ["nazi-germany"],
+      "from": 1941,
+      "to": 1944,
+      "at": [25.5, 58.7],
+      "note": "Baltık devletleri 1940'ta Sovyetler Birliği'ne katıldı; Alman ordusu 1941 yazında bu toprakları aldı ve veri 1942–44'ü Nazi Almanyası çizer. Yalnızca Alman yılları adlandırılır, 1940–41 Sovyet işgali bu katmanın kapsamı dışındadır.",
+      "source": "Reichskommissariat Ostland; German occupation of Estonia (Vikipedi)"
+    },
+    {
+      "id": "letonya",
+      "name": "Letonya",
+      "area": {
+        "id": "republic-of-latvia",
+        "year": 1939
+      },
+      "occupiers": ["nazi-germany"],
+      "from": 1941,
+      "to": 1944,
+      "at": [25.0, 56.9],
+      "note": "Baltık devletleri 1940'ta Sovyetler Birliği'ne katıldı; Alman ordusu 1941 yazında bu toprakları aldı ve veri 1942–44'ü Nazi Almanyası çizer. Yalnızca Alman yılları adlandırılır, 1940–41 Sovyet işgali bu katmanın kapsamı dışındadır.",
+      "source": "Reichskommissariat Ostland; German occupation of Latvia (Vikipedi)"
+    },
+    {
+      "id": "litvanya",
+      "name": "Litvanya",
+      "area": {
+        "id": "kingdom-of-lithuania",
+        "year": 1939
+      },
+      "occupiers": ["nazi-germany"],
+      "from": 1941,
+      "to": 1944,
+      "at": [23.9, 55.2],
+      "note": "Baltık devletleri 1940'ta Sovyetler Birliği'ne katıldı; Alman ordusu 1941 yazında bu toprakları aldı ve veri 1942–44'ü Nazi Almanyası çizer. Yalnızca Alman yılları adlandırılır, 1940–41 Sovyet işgali bu katmanın kapsamı dışındadır.",
+      "source": "Reichskommissariat Ostland; German occupation of Lithuania (Vikipedi)"
+    },
+    {
+      "id": "belarus",
+      "name": "Belarus",
+      "area": {
+        "id": "union-of-soviet-socialist-republics",
+        "year": 1940
+      },
+      "box": [
+        [23.1, 51.6, 27.0, 54.45],
+        [27.0, 51.6, 31.0, 56.2],
+        [31.0, 51.9, 32.8, 54.1]
+      ],
+      "occupiers": ["nazi-germany"],
+      "from": 1941,
+      "to": 1944,
+      "at": [27.57, 53.9],
+      "note": "Beyaz Rusya'da Alman işgali Haziran 1941'den Temmuz 1944'e sürdü (Minsk 1942–43'te 'Nazi Almanyası'dır). Haziran 1941'de başlayan Alman işgali Sovyet topraklarının batısını kapladı; veri Alman elindeki yerleri 1942–43'te Nazi Almanyası çizer (1944'te hepsi yeniden Sovyet çizilir). Sovyet cumhuriyetlerinin sınırları veride yoktur: alan, 1940 Sovyetler Birliği satırının kutularla kabaca kesilmiş halidir, sınır boylarında komşu adı çıkabilir.",
+      "source": "German occupation of Byelorussia (Vikipedi)"
+    },
+    {
+      "id": "ukrayna",
+      "name": "Ukrayna",
+      "area": {
+        "id": "union-of-soviet-socialist-republics",
+        "year": 1940
+      },
+      "box": [
+        [22.0, 46.1, 31.0, 51.55],
+        [31.0, 46.1, 34.5, 52.3],
+        [34.5, 46.1, 38.2, 50.4],
+        [34.5, 50.4, 35.5, 51.4],
+        [38.2, 47.5, 40.3, 50.0]
+      ],
+      "occupiers": ["nazi-germany"],
+      "from": 1941,
+      "to": 1944,
+      "at": [30.52, 50.45],
+      "note": "Ukrayna'da Alman işgali Haziran 1941'den 1944'e sürdü (Kiev 1942–43'te 'Nazi Almanyası'dır); Kırım 1940'ta Rusya Federasyonu'ndaydı ve bu yüzden 'Rusya'ya bırakılmıştır. Haziran 1941'de başlayan Alman işgali Sovyet topraklarının batısını kapladı; veri Alman elindeki yerleri 1942–43'te Nazi Almanyası çizer (1944'te hepsi yeniden Sovyet çizilir). Sovyet cumhuriyetlerinin sınırları veride yoktur: alan, 1940 Sovyetler Birliği satırının kutularla kabaca kesilmiş halidir, sınır boylarında komşu adı çıkabilir.",
+      "source": "Reichskommissariat Ukraine (Vikipedi)"
+    },
+    {
+      "id": "rusya",
+      "name": "Rusya",
+      "area": {
+        "id": "union-of-soviet-socialist-republics",
+        "year": 1940
+      },
+      "box": [
+        [27.0, 56.2, 36.5, 60.4],
+        [30.5, 50.4, 41.0, 56.2],
+        [32.0, 43.4, 48.0, 47.5],
+        [40.3, 47.5, 44.0, 50.4]
+      ],
+      "occupiers": ["nazi-germany"],
+      "from": 1941,
+      "to": 1944,
+      "at": [33.5, 54.3],
+      "note": "Rusya'nın batısı (Pskov, Smolensk, Bryansk, Orel, Kursk, Don ve Kuban bölgeleri, Kırım) 1941–44'te kısmen Alman işgali altındaydı. Haziran 1941'de başlayan Alman işgali Sovyet topraklarının batısını kapladı; veri Alman elindeki yerleri 1942–43'te Nazi Almanyası çizer (1944'te hepsi yeniden Sovyet çizilir). Sovyet cumhuriyetlerinin sınırları veride yoktur: alan, 1940 Sovyetler Birliği satırının kutularla kabaca kesilmiş halidir, sınır boylarında komşu adı çıkabilir.",
+      "source": "German occupation of Russia in World War II; Eastern Front (World War II) (Vikipedi)"
+    },
+    {
+      "id": "cin",
+      "name": "Çin",
+      "area": {
+        "id": "republic-of-china",
+        "year": 1937
+      },
+      "occupiers": ["empire-of-japan"],
+      "from": 1937,
+      "to": 1945,
+      "at": [116.4, 39.9],
+      "note": "Japonya Temmuz 1937'de Çin'e saldırdı. Veri Çin Cumhuriyeti'nin doğusunu 1938'den başlayarak Japonya çizer (Pekin 1938, Wuhan ve Guangzhou 1939, Changsha 1944). Japon çizilen yerler 'Çin · Japon işgali' diye adlandırılır. Mançukuo (1932'den beri Japonya'nın kukla devleti) ve Wang Jingwei rejimi ayrı çizilmez; Mançurya Çin Cumhuriyeti satırının dışında kaldığı için adlandırılmaz.",
+      "source": "Second Sino-Japanese War (Vikipedi)"
+    },
+    {
+      "id": "filipinler",
+      "name": "Filipinler",
+      "area": {
+        "id": "united-states-of-america",
+        "year": 1941
+      },
+      "box": [116.5, 4.5, 127.0, 21.5],
+      "occupiers": ["empire-of-japan"],
+      "from": 1941,
+      "to": 1945,
+      "at": [120.98, 14.6],
+      "note": "Japonya 8 Aralık 1941'de Filipinler'e saldırdı, Manila 2 Ocak 1942'de düştü. Veri adaları 1942–44'te Japonya, 1945'te yeniden Amerika Birleşik Devletleri çizer (Ocak–Şubat 1945'te Luzon'un geri alınması).",
+      "source": "Japanese occupation of the Philippines (Vikipedi)"
+    },
+    {
+      "id": "hollanda-dogu-hint-adalari",
+      "name": "Hollanda Doğu Hint Adaları",
+      "area": {
+        "id": "dutch-east-indies",
+        "year": 1941
+      },
+      "occupiers": ["empire-of-japan"],
+      "from": 1942,
+      "to": 1945,
+      "at": [110.0, -7.3],
+      "note": "Japonya adaları Aralık 1941–Mart 1942'de işgal etti. Veri Borneo ve Sulawesi'nin bazı kıyılarını 1942'de, bütün takımadayı 1943'ten itibaren Japonya çizer (Java Mart 1942'de düşmüştü, ama 1942'de Hollanda çizilir); Japon çizilen yerler 'Japon işgali' diye adlandırılır.",
+      "source": "Dutch East Indies campaign; Japanese occupation of the Dutch East Indies (Vikipedi)"
+    },
+    {
+      "id": "burma",
+      "name": "Burma",
+      "area": {
+        "id": "british-raj",
+        "year": 1942
+      },
+      "box": [
+        [94.0, 9.5, 101.5, 28.7],
+        [92.0, 15.5, 94.0, 28.7]
+      ],
+      "occupiers": ["empire-of-japan"],
+      "from": 1942,
+      "to": 1945,
+      "at": [96.0, 21.0],
+      "note": "Japonya Burma'yı 1942'de işgal etti (Rangoon 8 Mart, Mandalay 1 Mayıs) ve 1945'e kadar elinde tuttu. Veri Burma'yı 1942'de hâlâ İngiliz, 1943–44'te Japon, 1945'te yeniden İngiliz çizer. Alan, İngiliz Hindistanı satırının iki kutuyla (Andaman Adaları dışarıda) kesilmiş halidir.",
+      "source": "Japanese occupation of Burma (Vikipedi)"
+    },
+    {
+      "id": "singapur",
+      "name": "Singapur",
+      "area": {
+        "id": "british-colonial-empire",
+        "year": 1941
+      },
+      "box": [103.4, 1.1, 104.2, 1.6],
+      "occupiers": ["empire-of-japan"],
+      "from": 1942,
+      "to": 1945,
+      "at": [103.82, 1.35],
+      "note": "Japonya adayı 15 Şubat 1942'de aldı ve Ağustos 1945'e kadar elinde tuttu. Veri Singapur'u, bu katmandaki Singapur yaması sayesinde, 1942–45'te Japonya çizer ('Japon işgali' diye adlandırılır).",
+      "source": "Battle of Singapore; Japanese occupation of Singapore (Vikipedi)"
+    },
+    {
+      "id": "malaya",
+      "name": "Malaya",
+      "area": {
+        "id": "british-colonial-empire",
+        "year": 1941
+      },
+      "box": [99.5, 1.0, 104.7, 7.0],
+      "occupiers": ["empire-of-japan"],
+      "from": 1941,
+      "to": 1945,
+      "at": [101.69, 3.14],
+      "note": "Japonya Aralık 1941'de Malaya'ya çıktı ve yarımadayı Ocak–Şubat 1942'de aldı. Veri yarımadayı 1942'den itibaren Japonya çizer ve 'Japon işgali' diye adlandırılır.",
+      "source": "Malayan campaign; Japanese occupation of Malaya (Vikipedi)"
+    },
+    {
+      "id": "ingiliz-borneosu",
+      "name": "İngiliz Borneosu",
+      "area": {
+        "id": "british-colonial-empire",
+        "year": 1941
+      },
+      "box": [109.4, 0.8, 119.5, 7.2],
+      "occupiers": ["empire-of-japan"],
+      "from": 1941,
+      "to": 1945,
+      "at": [113.0, 3.0],
+      "note": "Japonya Aralık 1941–Mart 1942'de Brunei, Sarawak ve Kuzey Borneo'yu işgal etti. Veri bu toprakları 1942'den itibaren Japonya çizer ve 'Japon işgali' diye adlandırılır.",
+      "source": "Japanese occupation of British Borneo (Vikipedi)"
+    },
+    {
+      "id": "fransiz-cinhindisi",
+      "name": "Fransız Çinhindi'si",
+      "area": {
+        "id": "french-indochina",
+        "year": 1940
+      },
+      "occupiers": ["empire-of-japan"],
+      "from": 1940,
+      "to": 1945,
+      "at": [105.85, 21.03],
+      "note": "Japonya Eylül 1940'ta Vichy Fransası'yla yapılan bir anlaşmaya dayanarak Çinhindi'nin kuzeyine girdi, Temmuz 1941'de güneyine de yerleşti; Fransız (Vichy) yönetimi, 9 Mart 1945'teki Japon darbesine kadar sürdü. Veri yalnızca kuzeyi (Tonkin: Hanoi, Haiphong) 1941'den itibaren Japonya çizer, Annam, Kamboçya ve Laos'u Fransız çizer; etiket de yalnızca verinin Japon çizdiği yeri adlandırır. Gerçek durum Vichy ile ortak bir düzenlemeydi: 'işgal' sözcüğü burada askerî işgal anlamındadır.",
+      "source": "Japanese invasion of French Indochina; Japanese occupation of Vietnam (Vikipedi)"
+    },
+    {
+      "id": "dogu-timor",
+      "name": "Doğu Timor",
+      "area": {
+        "id": "estado-novo",
+        "year": 1941
+      },
+      "box": [124.0, -9.6, 127.4, -8.1],
+      "occupiers": ["empire-of-japan"],
+      "from": 1942,
+      "to": 1945,
+      "at": [125.6, -8.6],
+      "note": "Japonya Portekiz Timoru'nu Şubat 1942'de işgal etti ve Ağustos 1945'e kadar elinde tuttu. Veri adayı, bu katmandaki Doğu Timor yaması sayesinde, 1942–44'te de Japonya çizer ('Japon işgali' diye adlandırılır).",
+      "source": "Battle of Timor; Portuguese Timor (Vikipedi)"
+    }
+  ]
+}
