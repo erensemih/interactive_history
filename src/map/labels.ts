@@ -88,14 +88,18 @@ export class PolityLabels {
 
   setYear(year: number) {
     const out: Candidate[] = [];
+    const valid: BorderRow[] = [];
     for (const row of this.data.rows) {
-      if (row.from > year || row.to < year || !row.label) continue;
+      if (row.from > year || row.to < year) continue;
+      valid.push(row);
+      if (!row.label) continue;
       const ent = this.data.entities.get(row.id);
       if (!ent) continue;
       out.push({ row, name: ent.name });
     }
-    // Lands the border data draws as their occupier's are named as occupied, so Warsaw is not just "Nazi Almanyası".
-    const holder = (lon: number, lat: number) => primaryAt(rowsContaining(this.data.rows, lon, lat), year);
+    // Lands the border data draws as their occupier's are named as occupied, so Warsaw is not just "Nazi Almanyası". (Who
+    // holds a point is asked of the rows of this year only: the polygons of the other years are never looked at.)
+    const holder = (lon: number, lat: number) => primaryAt(rowsContaining(valid, lon, lat), year);
     for (const o of this.data.occupations.labels(year, holder)) {
       out.push({ row: occupationRow(o, year), name: o.name, lines: [o.name, `(${o.label})`], occupation: true });
     }
@@ -302,6 +306,9 @@ export class PolityLabels {
 
 const keyOf = (row: BorderRow) => `${row.id}@${row.from}`;
 
+/** The id of the stand-in row of an occupied land's name (see `occupationRow`): what a selection of the land is made of. */
+export const occupationKey = (landId: string) => `occupation:${landId}`;
+
 /**
  * A stand-in row for the name of an occupied land: it has no shape of its own (nothing is drawn for it), only the point
  * its name goes to and a size, so that the name is typeset and thinned like a polity's.
@@ -316,7 +323,7 @@ function occupationRow(o: OccupationLabel, year: number): BorderRow {
     o.lat + sideDeg / 2,
   ];
   return {
-    id: `occupation:${o.id}`,
+    id: occupationKey(o.id),
     from: year,
     to: year,
     area: o.area,

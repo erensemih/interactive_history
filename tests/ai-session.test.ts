@@ -72,12 +72,33 @@ describe('a narration', () => {
     expect(answer.plan.drawingAt(6).events).toEqual(['stalingrad-1942', 'el-alamein-1942']);
     expect(answer.plan.drawingAt(7).events).toEqual(['normandiya-1944', 'bagration-1944']);
     expect(answer.plan.drawingAt(8).events).toEqual(['berlin-muharebesi-1945', 'almanya-teslimi-1945']);
-    // the year of a step with events is theirs (the earliest), unless the step names one; and where the data has no
-    // border for a side of a war in that year (Cliopatria has no Nazi Germany in 1945) the nearest year that has one
-    // within three, here 1944, is the one shown
+    // the year of a step with events is theirs (the earliest), unless the step names one. (Cliopatria has no Nazi Germany in
+    // 1945; the correction layer carries its 1938 borders over, so the Battle of Berlin is drawn on the borders of 1945.)
     expect(answer.plan.numbers().map((n) => answer.plan.drawingAt(n).year)).toEqual([
-      1939, 1940, 1940, 1941, 1942, 1942, 1944, 1944,
+      1939, 1940, 1940, 1941, 1942, 1942, 1944, 1945,
     ]);
+    // the vocabulary beyond events: the Eastern Front has its two sides painted as blocs and the advance on Moscow as a
+    // directed route through cities (animated), the retreat of 1944 is a route of another type
+    const four = answer.plan.drawingAt(4);
+    expect(four.sides.map((side) => side.name)).toEqual(['Mihver ve ortakları', 'Sovyetler Birliği']);
+    expect(four.sides[0]!.polities).toEqual([
+      'nazi-germany',
+      'romania',
+      'republic-of-finland',
+      'hungary',
+      'kingdom-of-italy',
+    ]);
+    expect(four.routes).toHaveLength(1);
+    expect(four.routes[0]).toMatchObject({ type: 'advance', animate: true, label: 'Alman ilerleyişi' });
+    // (the model wrote "Brest-Litovsk", an old name; the gazetteer knows the town as Brest and the page calls it so)
+    expect(four.routes[0]!.via.map((v) => (v.kind === 'city' ? v.name : v.kind))).toEqual([
+      'Brest',
+      'Minsk',
+      'Smolensk',
+      'Moskova',
+    ]);
+    expect(answer.plan.drawingAt(7).routes).toMatchObject([{ type: 'retreat', animate: false }]);
+    for (const n of [1, 2, 3, 5, 6, 8]) expect(answer.plan.drawingAt(n).routes, `step ${n}`).toEqual([]);
     for (const n of answer.plan.numbers()) {
       // every step shows something and says what it needs by itself, and none of it is left to the step before
       const d = answer.plan.drawingAt(n);
@@ -92,7 +113,15 @@ describe('a narration', () => {
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     const req = provider.requests[0]!;
     expect(req.tier).toBe('quick');
-    expect(req.tools.map((t) => t.name)).toEqual(['step', 'show_event', 'highlight', 'sides', 'route', 'connect', 'mark']);
+    expect(req.tools.map((t) => t.name)).toEqual([
+      'step',
+      'show_event',
+      'highlight',
+      'sides',
+      'route',
+      'connect',
+      'mark',
+    ]);
     expect(req.turns[0]!.content.startsWith(INSTRUCTIONS_FILE)).toBe(true); // the owner's file, as it is, in every call
     expect(req.turns.at(-1)!.content).toContain(`İSTEK\n${NARRATION_REQUEST}`);
     expect(req.turns.at(-1)!.content).toContain('nazi-germany | Nazi Almanyası');
@@ -192,7 +221,11 @@ describe('a model that does not write quite what was asked', () => {
     ]);
     expect(answer.plan.drawingAt(1).highlights).toEqual(['nazi-germany', 'union-of-soviet-socialist-republics']);
     expect(answer.plan.drawingAt(2).links).toEqual([
-      { from: { kind: 'polity', id: 'nazi-germany' }, to: { kind: 'polity', id: 'kingdom-of-italy' }, relation: 'alliance' },
+      {
+        from: { kind: 'polity', id: 'nazi-germany' },
+        to: { kind: 'polity', id: 'kingdom-of-italy' },
+        relation: 'alliance',
+      },
     ]);
     expect(answer.plan.drawingAt(2).year).toBeUndefined();
   });
@@ -276,7 +309,12 @@ describe('a question', () => {
     expect(answer.plan.captionOf(1)!.length).toBeLessThan(parseAnswer(answer.text).sections[0]!.body.length); // a caption, not the text
     const d = answer.plan.drawingAt(1);
     expect(d.highlights).toEqual(['nazi-germany', 'kingdom-of-italy']);
-    expect(d.links[0]).toMatchObject({ relation: 'alliance' });
+    // the model gave two cities, not two polities: the line runs from Berlin to Rome
+    expect(d.links[0]).toMatchObject({
+      relation: 'alliance',
+      from: { kind: 'city', name: 'Berlin' },
+      to: { kind: 'city', name: 'Roma' },
+    });
     expect(d.events).toEqual(['uclu-pakt-1940']);
     expect(d.year).toBe(1939); // the step named it: the 1939 pact is not an event of the data
     expect(provider.requests[0]!.turns.at(-1)!.content).toContain(`İSTEK\n${AXIS_QUESTION}`);
@@ -351,7 +389,9 @@ describe('a question', () => {
       "[Haritada gösterdiklerim: 1. adım: öne çıkan: Nazi Almanyası; olay: Almanya'nın Polonya'yı işgali",
     );
     expect(turns[2]!.content).toContain('## 8. Berlin ve teslim');
-    expect(turns[2]!.content).toContain('4. adım: olay: Barbarossa Harekâtı, Leningrad Kuşatması');
+    expect(turns[2]!.content).toMatch(
+      /4\. adım: taraflar: Mihver ve ortakları \([^)]+\) – Sovyetler Birliği \([^)]+\); yol \(ilerleyiş\): Brest → Minsk → Smolensk → Moskova \(Alman ilerleyişi\); olay: Barbarossa Harekâtı, Leningrad Kuşatması/,
+    );
     expect(turns[4]!.content).toContain('öne çıkan: Nazi Almanyası, İtalya Krallığı'); // the second answer's own scene
     // and the next request, when the chat is not too long, loses nothing
     expect(provider.requests[1]!.turns[2]!.content).toBe(turns[2]!.content);

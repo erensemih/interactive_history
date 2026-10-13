@@ -294,7 +294,8 @@
   margin: 6px 0 0;
   padding: 0;
   display: flex;
-  flex-wrap: wrap;
+  /* one row, always: the box keeps its height from step to step (a long name is cut, the full list is in the title) */
+  flex-wrap: nowrap;
   gap: 4px 16px;
   font-family: var(--font-sans);
   font-size: 12.5px;
@@ -306,6 +307,19 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  min-width: 0;
+}
+
+.watch-sides li span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* a step with no sides, in an answer that has them elsewhere: the same row, empty */
+.watch-sides.is-empty {
+  visibility: hidden;
 }
 
 .watch-side-swatch {

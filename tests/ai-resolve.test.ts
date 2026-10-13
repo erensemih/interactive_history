@@ -235,7 +235,21 @@ describe('Resolver places (a few cities and capitals on the 1400–1600 data)', 
   });
 
   it('declines what is not a point, or is a point the map cannot show', () => {
-    for (const bad of ['Berlin', '', '52.23', '1e3, 5', '52,23; 21,01', null, undefined, 5, {}, [1], [1, 2, 3], '95, 100', '-70, 10'])
+    for (const bad of [
+      'Berlin',
+      '',
+      '52.23',
+      '1e3, 5',
+      '52,23; 21,01',
+      null,
+      undefined,
+      5,
+      {},
+      [1],
+      [1, 2, 3],
+      '95, 100',
+      '-70, 10',
+    ])
       expect(places.coordinates(bad), String(bad)).toBeNull();
   });
 
@@ -302,8 +316,12 @@ describe('Resolver places (a few cities and capitals on the 1400–1600 data)', 
     expect(places.samePlace(ist, { ...ist, name: 'Konstantiniyye' })).toBe(true);
     expect(places.samePlace(ist, { kind: 'city', id: 'edirne', name: 'Edirne' })).toBe(false);
     expect(places.samePlace(ist, { kind: 'polity', id: 'istanbul' })).toBe(false); // (an id of another kind is another thing)
-    expect(places.samePlace({ kind: 'point', point: IST }, { kind: 'point', point: { lon: 28.99, lat: 41.02 } })).toBe(true);
-    expect(places.samePlace({ kind: 'point', point: IST }, { kind: 'point', point: { lon: 29.5, lat: 41.02 } })).toBe(false);
+    expect(places.samePlace({ kind: 'point', point: IST }, { kind: 'point', point: { lon: 28.99, lat: 41.02 } })).toBe(
+      true,
+    );
+    expect(places.samePlace({ kind: 'point', point: IST }, { kind: 'point', point: { lon: 29.5, lat: 41.02 } })).toBe(
+      false,
+    );
     expect(places.samePlace({ kind: 'point', point: IST }, ist)).toBe(false);
   });
 
@@ -329,7 +347,17 @@ describe('Resolver.rowAt when the data has more than one row for a polity in a y
     label: [10, 10, 1],
     bbox: [0, 0, 20, 20],
     box: [0, 0, 20, 20],
-    polys: [[[[0, 0], [20, 0], [20, 20], [0, 20], [0, 0]]]],
+    polys: [
+      [
+        [
+          [0, 0],
+          [20, 0],
+          [20, 20],
+          [0, 20],
+          [0, 0],
+        ],
+      ],
+    ],
   });
 
   it('is the biggest row, so a small piece added for some years never takes the place of the polity itself', () => {

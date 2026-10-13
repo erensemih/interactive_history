@@ -8,7 +8,9 @@
  * The published data lives in public/data. Every other period is kept whole in data/<from>-<to>/ (the same files, the
  * same layout), outside the build: nothing in data/ reaches the app or the single-file page. Switching moves the
  * files, so each period exists exactly once; `npm run data:validate` and `npm run build` then work on the new one.
- * (public/data/schema stays: it belongs to the app, not to a period.)
+ * (public/data/schema stays: it belongs to the app, not to a period. So does places.json, the gazetteer: its cities are
+ * the world's, not an era's. capitals.json is a period's: who governed from where depends on the years. So is corrections/,
+ * the correction layer: it answers to one period's border file, and a period without it simply has none.)
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -18,7 +20,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = join(ROOT, 'public', 'data');
 const ARCHIVE = join(ROOT, 'data');
 /** What makes a period: everything but the app's own schema folder. */
-const PARTS = ['borders', 'events', 'geo', 'categories.json', 'entities.json'];
+const PARTS = ['borders', 'events', 'geo', 'categories.json', 'entities.json', 'capitals.json', 'corrections'];
 
 const rangeOf = (dir) => {
   const file = join(dir, 'borders', 'polities.json');

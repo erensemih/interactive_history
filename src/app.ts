@@ -513,7 +513,10 @@ export async function startApp(root: HTMLElement): Promise<void> {
     // The map's content: time only. The selected place only changes the highlight and the pin.
     mapView.setYear(vm.year);
     mapView.setEvents(vm.mapEvents, vm.year);
-    mapView.setSelectedPolities(vm.places.map((p) => p.resolution.row?.id).filter((id): id is string => !!id));
+    mapView.setSelectedPolities(
+      vm.places.map((p) => p.resolution.row?.id).filter((id): id is string => !!id),
+      vm.places.map((p) => p.occupation?.id).filter((id): id is string => !!id),
+    );
     mapView.setPlaces(state.places);
     const open = vm.selectedEvent;
     mapView.setSelectedEvent(open);

@@ -2,7 +2,7 @@ import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { styleMap } from 'lit-html/directives/style-map.js';
 import type { AppData } from '../data/load';
 import { styleFor } from '../domain/categories';
-import type { Entity, HistoricalEvent, SourceRef } from '../domain/types';
+import type { BorderRow, Entity, HistoricalEvent, SourceRef } from '../domain/types';
 import { selectionsOf, type PlaceView, type SelectionRef, type ViewModel } from '../state/derive';
 import { panelLayout } from '../state/panelLayout';
 import type { Store } from '../state/store';
@@ -198,6 +198,14 @@ export class InfoCard {
   private placeCard(place: PlaceView, vm: ViewModel): TemplateResult {
     const holder = place.holder;
     const row = place.resolution.row;
+    // The facts of the border data are the polity's own, not those of a small piece the correction layer added for some
+    // years (Singapore among the lands of Japan in 1943): the polity's biggest row of the year speaks for it.
+    const whole = row
+      ? this.data.rows.reduce<BorderRow>(
+          (best, r) => (r.id === row.id && r.from <= vm.year && vm.year <= r.to && r.area > best.area ? r : best),
+          row,
+        )
+      : null;
     const regions = place.regions;
     const lead = holder ?? regions[0] ?? null;
     const parents = (row?.up ?? []).map((id) => this.data.entities.get(id)).filter((e): e is Entity => !!e);
@@ -285,17 +293,17 @@ export class InfoCard {
                   : nothing
               }
               ${
-                row
+                whole
                   ? html`<dl class="facts-grid">
                       <div>
                         <dt>Sınır verisi dönemi</dt>
                         <dd>
-                          ${formatRange({ from: Math.max(row.from, this.data.extent.from), to: Math.min(row.to, this.data.extent.to) })}
+                          ${formatRange({ from: Math.max(whole.from, this.data.extent.from), to: Math.min(whole.to, this.data.extent.to) })}
                         </dd>
                       </div>
                       <div>
                         <dt>Yüzölçümü (veri kümesine göre)</dt>
-                        <dd>≈ ${formatArea(row.area)}</dd>
+                        <dd>≈ ${formatArea(whole.area)}</dd>
                       </div>
                     </dl>`
                   : nothing

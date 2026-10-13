@@ -10,6 +10,8 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateCorrections } from './validate-corrections.mjs';
+import { validateCapitals, validatePlaces } from './validate-places.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_ROOT = resolve(HERE, '..', 'public', 'data');
@@ -227,6 +229,18 @@ export function validateAll(root = DEFAULT_ROOT) {
     .filter(([id, e]) => e.kind === 'region' && !partyUse[id])
     .map(([id]) => id);
   if (unusedEntities.length) warnings.push(`hiçbir olayda kullanılmayan bölgeler: ${unusedEntities.join(', ')}`);
+
+  /* ---- the gazetteer, the table of capitals and the correction layer (optional files: an archived period has none) */
+  const places = validatePlaces(root, { entities, derived });
+  const capitals = validateCapitals(root, { entities, derived });
+  const corrections = validateCorrections(root, { entities, borders, range });
+  for (const part of [places, capitals, corrections]) {
+    errors.push(...part.errors);
+    warnings.push(...part.warnings);
+  }
+  stats.places = places.stats;
+  stats.capitals = capitals.stats;
+  stats.corrections = corrections.stats;
 
   return { errors, warnings, stats };
 }

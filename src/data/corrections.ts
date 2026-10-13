@@ -188,14 +188,16 @@ const applied = new WeakSet<object>();
 
 /**
  * Applies the row corrections to the border file as it was read, before the page builds its rows from it: rows are
- * added (`add`, `copy`) at the end of the file, so that they paint over the rows they correct. The rows that are already
- * in the file are not touched (a copy shares the encoded shape of its source). Returns what was applied, for the
- * console. A reference to a row or a polity that is not in the file throws: then the data is wrong.
+ * added (`add`, `copy`) where the file's own order puts them. The file lists its rows biggest first, so that the small
+ * ones paint on top and the smallest row holds a point; a new row goes before the first row that is smaller than it. So
+ * it paints over the bigger rows it corrects (the occupation zones, the British row at Singapore) and under the smaller
+ * rows it only touches at the border (Switzerland, Denmark), as the smallest-row rule of `primaryAt` also says. The rows
+ * that are already in the file are not touched (a copy shares the encoded shape of its source). Returns what was
+ * applied, for the console. A reference to a row or a polity that is not in the file throws: then the data is wrong.
  */
 export function applyRowCorrections(raw: BordersRaw, doc: CorrectionsDoc | null): string[] {
   const corrections = doc?.rows;
   if (!corrections?.length || applied.has(raw)) return [];
-  applied.add(raw);
 
   const encoded = raw.meta?.encoding === DELTA_ENCODING;
   const scale = raw.meta?.scale ?? 100;
@@ -259,6 +261,7 @@ export function applyRowCorrections(raw: BordersRaw, doc: CorrectionsDoc | null)
       let geometry: Geometry;
       try {
         polys = closedPolygons(c.polygons);
+        if (!polys.length) throw new Error('bir şekil en az bir çokgenden oluşmalı');
         geometry = geometryOf(polys);
         // what the file will hold is what the page draws: measure the shape after it went through the grid
         polys = polysOf(encoded ? decodeGeometry(geometry, scale) : geometry);
@@ -289,7 +292,12 @@ export function applyRowCorrections(raw: BordersRaw, doc: CorrectionsDoc | null)
     throw new Error(`${what}: bilinmeyen işlem "${(c as { op?: string }).op}"`);
   });
 
-  raw.features.push(...fresh);
+  for (const f of fresh) {
+    const at = raw.features.findIndex((o) => o.properties.area < f.properties.area);
+    if (at < 0) raw.features.push(f);
+    else raw.features.splice(at, 0, f);
+  }
+  applied.add(raw);
   return lines;
 }
 

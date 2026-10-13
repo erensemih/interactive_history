@@ -167,12 +167,45 @@ describe('World War II in the border data (Cliopatria)', () => {
     expect(holders(139.7, 35.7, [1938, 1944, 1945])).toEqual(['empire-of-japan', 'empire-of-japan', 'empire-of-japan']);
   });
 
-  it('what it does not show: no separate occupation, and the polygons of 1945–46 are the occupiers’ (a known simplification)', () => {
-    // Singapore stays British in the data through the Japanese occupation (1942–45)
-    expect(holders(103.82, 1.35, [1941, 1943])).toEqual(['british-colonial-empire', 'british-colonial-empire']);
-    // Munich is American in 1945–46, Vienna Soviet: the dataset draws the occupation zones as the occupiers' land
-    expect(holders(11.58, 48.14, [1945, 1946])).toEqual(['united-states-of-america', 'united-states-of-america']);
-    expect(holders(16.37, 48.21, [1945])).toEqual(['union-of-soviet-socialist-republics']);
+  it('what it still does not show: from 1946 the polygons are the occupiers’ zones, and in 1945 the liberated lands are the liberators’ (a known simplification)', () => {
+    // Munich is American in 1946, Vienna Soviet, Hamburg British, Berlin French: the dataset draws the occupation zones as
+    // the occupiers' land (1945 itself is Nazi Germany in the places the correction layer covers, see below)
+    expect(holders(11.58, 48.14, [1946])).toEqual(['united-states-of-america']);
+    expect(holders(16.37, 48.21, [1946])).toEqual(['union-of-soviet-socialist-republics']);
+    expect(holders(10.0, 53.55, [1946])).toEqual(['kingdom-of-great-britain']);
+    // and Warsaw and Prague are Soviet in 1945 (they were liberated by then)
+    expect(holders(21.01, 52.23, [1945])).toEqual(['union-of-soviet-socialist-republics']);
+  });
+});
+
+describe('World War II with the correction layer (public/data/corrections/ww2.json)', () => {
+  it('Nazi Germany is drawn in 1945 too: Berlin, Munich, Hamburg and Dresden are Nazi Germany then, as in 1944', () => {
+    for (const [lon, lat] of [
+      [13.4, 52.52], // Berlin
+      [11.58, 48.14], // Munich
+      [10.0, 53.55], // Hamburg
+      [13.74, 51.05], // Dresden
+    ] as const) {
+      expect(holders(lon, lat, [1944, 1945]), `${lon},${lat}`).toEqual(['nazi-germany', 'nazi-germany']);
+    }
+    // the correction adds one row and takes none away: Cliopatria's own rows of 1944 are still there
+    expect(data.rows.filter((r) => r.id === 'nazi-germany' && r.from <= 1944 && r.to >= 1944).length).toBeGreaterThan(
+      0,
+    );
+    expect(data.rows.filter((r) => r.id === 'nazi-germany' && r.from <= 1945 && r.to >= 1945).length).toBe(1);
+  });
+
+  it('Singapore is Japanese from 1942 to 1945 (the data has it British through the occupation)', () => {
+    expect(holders(103.82, 1.35, [1941, 1942, 1943, 1945, 1946])[0]).toBe('british-colonial-empire');
+    expect(holders(103.82, 1.35, [1942, 1943, 1944, 1945])).toEqual(Array(4).fill('empire-of-japan'));
+    expect(holders(103.82, 1.35, [1946])[0]).not.toBe('empire-of-japan');
+  });
+
+  it('the added pieces are small and unlabeled, so a polity keeps its own biggest row (and its own name on the map)', () => {
+    const japan1943 = data.rows.filter((r) => r.id === 'empire-of-japan' && r.from <= 1943 && r.to >= 1943);
+    expect(japan1943.length).toBeGreaterThanOrEqual(2);
+    const biggest = Math.max(...japan1943.map((r) => r.area));
+    for (const r of japan1943) if (r.area < biggest) expect(r.label, `${r.id} ${r.from}–${r.to}`).toBeNull();
   });
 });
 
@@ -180,9 +213,9 @@ describe('a place in Germany in 1942', () => {
   const window = { from: 1939, to: 1945 };
   const res = resolvePlace(data.rows, data.entities.values(), { lon: 13.4, lat: 52.52 }, 1942, window);
 
-  it('is Nazi Germany, and over the war years Germany, then (by the dataset) the occupiers', () => {
+  it('is Nazi Germany, and over all the war years Germany (1945 is the correction layer’s carry-over of the 1938 borders)', () => {
     expect(res.row?.id).toBe('nazi-germany');
-    expect(res.sequence[0]).toEqual({ id: 'nazi-germany', from: 1939, to: 1944 });
+    expect(res.sequence[0]).toEqual({ id: 'nazi-germany', from: 1939, to: 1945 });
     expect(res.lineage.has('nazi-germany')).toBe(true);
   });
 

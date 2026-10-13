@@ -8,6 +8,8 @@ Sources
       https://github.com/Seshat-Global-History-Databank/cliopatria
   * Natural Earth 1:50m land + lakes (public domain) - coastline mask
       https://github.com/nvkelso/natural-earth-vector
+  * Natural Earth 1:10m populated places (public domain) - the gazetteer (build_places.py)
+      https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-populated-places/
 """
 import pathlib
 import sys
@@ -19,7 +21,7 @@ CACHE = ROOT / ".cache"
 
 CLIOPATRIA_ZIP = "https://raw.githubusercontent.com/Seshat-Global-History-Databank/cliopatria/main/cliopatria.geojson.zip"
 NE_BASE = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson"
-NE_FILES = ["ne_50m_land.geojson", "ne_50m_lakes.geojson"]
+NE_FILES = ["ne_50m_land.geojson", "ne_50m_lakes.geojson", "ne_10m_populated_places.geojson"]
 
 
 def download(url: str, dest: pathlib.Path) -> None:

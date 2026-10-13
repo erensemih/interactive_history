@@ -153,6 +153,15 @@
     {"en": "Alamogordo", "cc": "US"},
     {"en": "Kitty Hawk", "cc": "US"},
     {"en": "Selma", "cc": "US"},
-    {"en": "Chernobyl", "cc": "UA"}
+    {"en": "Chernobyl", "cc": "UA"},
+    {"en": "York", "cc": "GB"},
+    {"en": "Cordoba", "cc": "ES"},
+    {"en": "Cartagena", "cc": "ES"},
+    {"en": "Toledo", "cc": "ES"},
+    {"en": "Salamanca", "cc": "ES"},
+    {"en": "Cadiz", "cc": "ES"},
+    {"en": "Potsdam", "cc": "DE"},
+    {"en": "Tobruk", "cc": "LY"},
+    {"en": "Baikonur", "cc": "KZ"}
   ]
 }

@@ -7,7 +7,7 @@ import { isLand, primaryAt, rowsContaining } from '../domain/geo';
 import { revealMove, type Rect } from '../domain/reveal';
 import type { HistoricalEvent, PlacePoint } from '../domain/types';
 import { AiDrawingLayer } from './aiLayer';
-import { PolityLabels } from './labels';
+import { occupationKey, PolityLabels } from './labels';
 import { EventMarkers, type MarkerStats, type Narrator } from './markers';
 import { PlacePins } from './pin';
 import { hatchImage, readTheme, stippleImage, type MapTheme } from './theme';
@@ -99,6 +99,7 @@ export class MapView {
   /** Border rows valid in the shown year: hit-testing a pointer position only looks at these. */
   private rowsNow: AppData['rows'] = [];
   private selectedIds: string[] = [];
+  private selectedLands: string[] = [];
   /** Polities in the AI's spotlight: lit solid and vivid while the rest of the map fades back. */
   private spotIds: string[] = [];
   /** The paint of the spotlight's fill: each polity in its own vivid hue, or in its side's colour. */
@@ -586,11 +587,20 @@ export class MapView {
     this.ensureWindow();
   }
 
-  /** The polities to highlight (those holding the selected places). */
-  setSelectedPolities(ids: string[]) {
-    if (ids.length === this.selectedIds.length && ids.every((id, i) => id === this.selectedIds[i])) return;
+  /**
+   * The polities to highlight (those holding the selected places), and the occupied lands the selected places lie in: the
+   * name of such a land ("Polonya (Alman işgali)") stays on the map like the selected polity's, pin or no pin beside it.
+   */
+  setSelectedPolities(ids: string[], lands: string[] = []) {
+    const same =
+      ids.length === this.selectedIds.length &&
+      ids.every((id, i) => id === this.selectedIds[i]) &&
+      lands.length === this.selectedLands.length &&
+      lands.every((id, i) => id === this.selectedLands[i]);
+    if (same) return;
     this.selectedIds = ids;
-    this.labels.setSelected(ids);
+    this.selectedLands = lands;
+    this.labels.setSelected([...ids, ...lands.map(occupationKey)]);
     this.applySelection();
     this.applyHover();
   }

@@ -72,7 +72,8 @@ SLUG_FOLD = {**FOLD, "ð": "d", "þ": "th", "ŋ": "ng", "ə": "e", "ʻ": "", "ʼ
 OTHER_LANGUAGES = ["NAME_DE", "NAME_FR", "NAME_ES", "NAME_IT", "NAME_PT", "NAME_NL", "NAME_PL", "NAME_SV", "NAME_HU"]
 # English-name suffixes that are the source's disambiguation and not the name ("Kuqa County", "Qatif governorate").
 EN_SUFFIX = re.compile(r"\s+(County|governorate|Territory|District)\b.*$|^Campament of\s+", re.I)
-TR_SUFFIX = re.compile(r"\s+(İlçesi|Şehri)$")
+# The Turkish names the source builds from them: "Linxia City" -> "Linxia Şehri", "Kuqa County" -> "Kuçar İlçesi".
+TR_CITY, TR_COUNTY = re.compile(r"\s+Şehri$"), re.compile(r"\s+İlçesi$")
 
 
 def normalize(text: str) -> str:
@@ -165,6 +166,7 @@ def load_source() -> list:
                 "capital_class": clean(p["FEATURECLA"]).startswith(("Admin-0 capital", "Admin-0 region capital")),
                 "alt": [],
                 "key": False,
+                "drop_alt": set(),
             }
         )
     return records
@@ -187,27 +189,19 @@ def related(english: str, evidence: list) -> bool:
     return False
 
 
-def choose_names(rec: dict, owners: dict) -> None:
-    """tr and en of a source record; a wrong English name is replaced by the place's own name.
-
-    The English name is wrong when it has nothing to do with the place's own names, or when it is the own name of a
-    bigger place far away and only vaguely like this one's ("Pyongyang" for the town of Pyongsan, "Niamey" for Maradi)."""
-    primary = [rec["name"], rec["ascii"], *rec["par"], *rec["alts"], rec["tr_raw"]]
-    evidence = [*primary, *rec["others"]]
+def choose_names(rec: dict) -> None:
+    """tr and en of a source record; an English name that has nothing to do with the place is replaced by its own name."""
+    evidence = [rec["name"], rec["ascii"], *rec["par"], *rec["alts"], rec["tr_raw"], *rec["others"]]
     en = EN_SUFFIX.sub("", rec["en_raw"]).strip() if rec["en_raw"] else ""
-    wrong = not en or not related(en, evidence)
-    if not wrong:
-        key = normalize(en)
-        borrowed = any(
-            o is not rec and o["pop"] >= rec["pop"] and distance_km(o["lon"], o["lat"], rec["lon"], rec["lat"]) > 40
-            for o in owners.get(key, [])
-        )
-        if borrowed and key not in {normalize(p) for p in primary}:
-            wrong = not any(SequenceMatcher(None, key, normalize(p)).ratio() >= 0.9 for p in primary if p)
-    rec["en_wrong"] = rec["en_raw"] if wrong else ""
-    if wrong:
+    rec["en_wrong"] = ""
+    if not en or not related(en, evidence):
+        rec["en_wrong"] = rec["en_raw"]
         en = rec["name"] or rec["ascii"] or en
-    tr = TR_SUFFIX.sub("", rec["tr_raw"]).strip() if rec["tr_raw"] else ""
+    tr = rec["tr_raw"]
+    if re.search(r"\sCity$", rec["en_raw"]):
+        tr = TR_CITY.sub("", tr)
+    if re.search(r"\sCounty$", rec["en_raw"]):
+        tr = TR_COUNTY.sub("", tr)
     rec["en"] = en
     rec["tr"] = (tr or en).replace("ș", "ş").replace("Ș", "Ş")  # Romanian comma-below s is Turkish cedilla s here
 
@@ -230,16 +224,17 @@ def apply_fixes(records: list, fixes: list) -> None:
             for r in records
             if r["name"] == fix["ne"]
             and r["cc"] == fix["cc"]
-            and ("near" not in fix or distance_km(r["lon"], r["lat"], *fix["near"]) < 60)
+            and ("near" not in fix or distance_km(r["lon"], r["lat"], *fix["near"]) < 2)
         ]
         if len(hits) != 1:
-            fail(f"places-aliases.json fixes: \"{fix['ne']}\" ({fix['cc']}) {len(hits)} kayıtla eşleşti (1 olmalı; \"near\" ekle)")
+            fail(f"places-aliases.json fixes: \"{fix['ne']}\" ({fix['cc']}) {len(hits)} kayıtla eşleşti (1 olmalı; 2 km içinde bir \"near\" ver)")
         rec = hits[0]
         for field in ("en", "tr", "cc", "pop"):
             if field in fix:
                 rec[field] = fix[field]
         if "cap" in fix:
             rec["cap"] = bool(fix["cap"])
+        rec["drop_alt"] = {normalize(t) for t in fix.get("drop_alt", [])}
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -293,7 +288,7 @@ def collect_alt(rec: dict, drop_keys: set, mains: dict) -> None:
     """Every other spelling of the source: its own name, the bracketed and the alternative names, the ASCII name.
     Junk (places-aliases.json "drop") and names that are another place's own name in the same country (the source
     mixing two cities up: "Teresina" for Timon) are left out."""
-    seen = {normalize(rec["tr"]), normalize(rec["en"]), *drop_keys}
+    seen = {normalize(rec["tr"]), normalize(rec["en"]), *drop_keys, *rec["drop_alt"]}
     rec["alt"] = []
     for text in (rec["name"], *rec["par"], *rec["alts"], rec["ascii"]):
         if "?" in text or "�" in text:
@@ -322,12 +317,8 @@ def build():
     warnings = []
 
     records = load_source()
-    owners = defaultdict(list)  # a name -> the records whose own name it is
     for rec in records:
-        for text in {rec["name"], rec["ascii"]}:
-            owners[normalize(text)].append(rec)
-    for rec in records:
-        choose_names(rec, owners)
+        choose_names(rec)
     moved = apply_countries(records, config.get("countries", []))
     apply_fixes(records, config.get("fixes", []))
 
@@ -392,14 +383,19 @@ def build():
     for rec in selected:
         collect_alt(rec, drop_keys, mains)
 
+    extra_mains = {normalize(p[f]): p["id"] for p in extra_places for f in ("en", "tr")}
     alias_names = 0
     for entry, rec in zip(alias_entries, targets):
         seen = {normalize(rec["tr"]), normalize(rec["en"]), *(normalize(a) for a in rec["alt"])}
         for name in entry["alt"]:
             if add_alt(rec["alt"], clean(name), seen):
                 alias_names += 1
-            for other in mains.get(normalize(name), []):
-                if other is not rec:
+            if normalize(name) in extra_mains:
+                warnings.append(f"ad çakışması: \"{name}\" -> {rec['id']}, ama {extra_mains[normalize(name)]} (places-extra.json) yerinin kendi adı")
+            # a namesake that is not on the lists loses to this place on the page; one that is on them wins as the
+            # place's own name, and the maintainer should know
+            for other in {id(o): o for o in mains.get(normalize(name), [])}.values():
+                if other is not rec and other["key"]:
                     warnings.append(f"ad çakışması: \"{name}\" -> {rec['id']}, ama {other['id']} ({other['cc']}) yerinin kendi adı")
 
     places = []
@@ -529,7 +525,7 @@ def main() -> int:
     out.write_text(text, encoding="utf8")
     print(
         f"{len(doc['places'])} yer ({report['selected']} Natural Earth + {report['extra']} elle eklenen; "
-        f"{report['include']} küçük yer alındı, {report['targets']} yer için {report['alias_names']} ad eklendi, "
+        f"{report['include']} yer listeyle alındı, {report['targets']} yer için {report['alias_names']} ad eklendi, "
         f"{report['capital_ids']} başkent kimliği, {report['moved']} yerin ülke kodu düzeltildi) "
         f"-> {out.relative_to(ROOT) if out.is_relative_to(ROOT) else out}  {len(text.encode('utf8')) / 1024:.0f} KB"
     )

@@ -17,6 +17,12 @@ export interface PlaceRecord {
   cc: string;
   /** 1 for the capital of a country today. */
   cap?: 1;
+  /**
+   * 1 for a place the data itself cares about: a capital of the capitals table, a place a historical name points to
+   * ("Königsberg"), a place of the war. Where a name is shared this is the namesake a narrator of 1800–2000 means
+   * (Salamanca in Spain before the bigger one in Mexico).
+   */
+  key?: 1;
   /** Other names that mean the same place: local spellings and historical names ("Danzig", "Stalingrad", "Peking"). */
   alt: string[];
 }
@@ -29,7 +35,8 @@ export interface PlacesDoc {
 /**
  * The gazetteer: a few thousand places the model may name as the end of a line or a stop of a route. A name is found
  * by its Turkish or English name or by any alternative name, whatever the case, accents or punctuation; where two
- * places share a name the better-known one (a capital, then the bigger one) comes first.
+ * places share a name the better-known one comes first: a place of the data's own lists (`key`), a place whose own name
+ * it is, a capital, then the bigger one.
  */
 export class PlaceIndex {
   private readonly ids = new Map<string, PlaceRecord>();
@@ -58,13 +65,17 @@ export class PlaceIndex {
     return this.ids.get(id);
   }
 
-  /** Every place that goes by `text`, the best known first: names before alternative names, capitals, then the bigger. */
+  /**
+   * Every place that goes by `text`, the best known first: places of the data's own lists, names before alternative
+   * names, capitals, then the bigger.
+   */
   find(text: string): PlaceRecord[] {
     const key = normalizeName(text);
     if (!key) return [];
     return [...(this.names.get(key) ?? [])]
       .sort(
         (a, b) =>
+          (b.record.key ?? 0) - (a.record.key ?? 0) ||
           Number(b.main) - Number(a.main) ||
           (b.record.cap ?? 0) - (a.record.cap ?? 0) ||
           b.record.pop - a.record.pop ||

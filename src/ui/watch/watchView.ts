@@ -212,10 +212,20 @@ export class WatchView {
     </section>`;
   }
 
-  /** The key of the sides the step shows: each side's name in the colour the map paints it. */
-  private sidesKey(item: AssistantItem, n: number): TemplateResult | typeof nothing {
+  /**
+   * The key of the sides the step shows: each side's name in the colour the map paints it. A step that has none, in an answer
+   * that has sides in another step, keeps the row (empty): the box must keep its height from step to step, because the camera
+   * brings a step into view above it and the foot of the screen must not move under it.
+   */
+  private sidesKey(item: AssistantItem, n: number, reserve: boolean): TemplateResult | typeof nothing {
     const sides = item.plan.drawingAt(n).sides;
-    if (!sides.length) return nothing;
+    if (!sides.length) {
+      return reserve
+        ? html`<ul class="watch-sides is-empty" aria-hidden="true">
+            <li><i class="watch-side-swatch"></i><span>&nbsp;</span></li>
+          </ul>`
+        : nothing;
+    }
     const { resolver } = this.deps.session;
     return html`<ul class="watch-sides" data-testid="watch-sides" aria-label="Taraflar">
       ${sides.map(
@@ -352,7 +362,11 @@ export class WatchView {
       <p class="watch-caption" data-testid="watch-caption" aria-live="polite" aria-atomic="true">
         ${inline(withoutOpenReference(step.caption), this.known)}
       </p>
-      ${this.sidesKey(item, step.n)}
+      ${this.sidesKey(
+        item,
+        step.n,
+        item.plan.numbers().some((k) => item.plan.drawingAt(k).sides.length > 0),
+      )}
       ${
         several
           ? nothing

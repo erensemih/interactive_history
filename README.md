@@ -378,13 +378,18 @@ public/data/                          yayındaki dönem (şu anda 1800–2000)
   borders/cliopatria-1800-2000.json   sınırlar (üretilmiş; elle düzenlenmez; sıkıştırılmış tamsayı biçimi, aşağıya bakın)
   borders/polities.json               devlet başına türetilmiş bilgiler (Wikipedia/Wikidata, ton, dönem)
   geo/land.json                       kıyı çizgisi / kara (Natural Earth, üretilmiş)
+  places.json                         ŞEHİR GÖSTERGELİĞİ (Natural Earth "populated places", üretilmiş; döneme bağlı değil): çizgi uçları ve rota durakları, tarihsel adlarıyla
+  capitals.json                       devletlerin YIL YIL BAŞKENTLERİ (elle yazılır; dönemin dosyası)
   entities.json                       DEVLET VE BÖLGE ADLARI + ÖZETLER (Türkçe, elle yazılır)
   categories.json                     olay kategorileri (savaş, siyaset, ekonomi ve teknoloji, toplum ve insan hakları, bilim-sanat-kültür, afet)
   events/index.json                   hangi olay dosyalarının yükleneceği ve uygulamanın hangi aralıkla açılacağı (`open`: 1939–1945)
   events/*.json                       OLAYLAR (Türkçe, elle yazılır): global.json (iki yüzyılın dönüm noktaları), ww2.json (savaş kümesi)
+  corrections/ww2.json                DÜZELTME KATMANI (elle yazılır, belgeli): sınır dosyasının üstüne yüklenirken uygulanır; Cliopatria'ya dokunulmaz ("Düzeltme katmanı")
   schema/events.schema.json           olay dosyası için JSON şeması (editörde otomatik tamamlama; isteğe bağlı `versus`: savaşta karşı saf)
 data/<başlangıç>-<bitiş>/             YAYIN DIŞI dönemler: aynı dosyalar, aynı düzen (şu anda 1400-1600); bkz. data/README.md
 scripts/pipeline/periods/*.json       bir dönemin kendi kuralları (aynı devleti iki adla anan kayıtların birleştirilmesi)
+scripts/pipeline/build_places.py      şehir göstergeliğini Natural Earth'ten üretir (+ places-extra.json, places-aliases.json: elle tutulan listeler)
+scripts/pipeline/build_correction_shapes.py   düzeltme katmanındaki yamaların şekillerini Natural Earth'ten türetir
 ```
 
 **Dönemler.** Yayındaki dönem her zaman `public/data`'dadır; ötekiler `data/` altında **tam** durur (sınırlar, devlet kayıtları, olaylar,
@@ -421,6 +426,160 @@ kenarına yaklaşınca pencere kayar ve o sırada başlıkta "· yükleniyor…"
 elindeki en yakın yılı kullanır). Böylece açılış yaklaşık 7 sn'de biter (yazılım GL'li başsız Chromium'da; bütün satırları haritaya
 tek seferde veren ilk denemede 25 sn) ve sayfanın JS belleği ~450 MB yerine açılışta ~55 MB'tır; bütün yıllar gezilince çözülen
 satırlar bellekte kaldığı için en çok ~140 MB'a çıkar (ölçüm: 4 yıllık adımlarla 1800–2000).
+
+### Düzeltme katmanı (İkinci Dünya Savaşı)
+
+**Cliopatria'ya dokunulmaz.** Sınır dosyası üretildiği gibi kalır; ona yazan hiçbir betik ya da yükleyici yoktur. Savaşın anlatımını
+bozan birkaç boşluk, ayrı, küçük ve belgeli bir dosyayla (`public/data/corrections/ww2.json`) sayfa yüklenirken verinin **üstüne**
+uygulanır. Katman bilerek küçüktür ve bir doğruluk turu değildir: her kaydın `note` (neden) ve `source` (Vikipedi makalesi ya da veri
+analizi) alanı vardır, dosyanın `meta.knownGaps` listesi de neyi **düzeltmediğini** söyler. Üç boşluğu kapatır:
+
+1. *Nazi Almanyası 1945'te yoktur:* satırları 1944'te biter; 1945'te Berlin, Münih ve Viyana işgal bölgesi satırlarıyla çizilir.
+2. *Japon işgalleri kısmen eksiktir:* Singapur 1942–45'te İngiliz, Doğu Timor 1944'e kadar Portekiz çizilir.
+3. *İşgal altındaki ülke işgalcinin toprağı gibi çizilir* (Varşova 1942'de "Nazi Almanyası"dır); sayfa onu "Polonya · Alman işgali" diye
+   adlandırmalıdır, poligon değişmeden.
+
+**Nasıl uygulanır.** `assembleData` (`src/data/load.ts`) sınır dosyasını okuyunca `applyRowCorrections` çağırır (`src/data/corrections.ts`),
+sonra satırları kurar. İki işlem vardır: `copy` bir satırın şeklini yeni yıllara kopyalar (kodlanmış şekli paylaşır; isteğe bağlı `keep`
+kutuları, kopyada Almanya dışı parçaları atar) ve `add` kendi şekli olan bir satır ekler (şekil `encodeGeometry` ile dosyanın sıkıştırılmış
+biçimine çevrilir; `area`, `box`, `bbox` hesaplanır, `label` boştur: yama ikinci bir ad almaz). Yeni satırlar dosyanın kendi sırasına
+(büyükten küçüğe; küçük olan üstüne çizilir, noktayı en küçük satır tutar) yerleştirilir: düzelttikleri daha büyük satırların (işgal bölgeleri,
+İngiliz satırı) üstüne, kıyıda yalnızca değdikleri daha küçük satırların (İsviçre, Danimarka) altına çizilir; dosyadaki satırlara dokunulmaz. Dosyada olmayan bir devlete ya da satıra başvuru hata
+fırlatır. İşgal adlarını `OccupationIndex` taşır ve kaydın **kendi şekli yoktur**: bir `occupations` kaydı savaş öncesi satırı (`area`:
+`{ id, year }`, gerekirse `box` kutularıyla daraltılmış) gösterir; bir noktada ve yılda şu üçü birlikte doğruysa işgal geçerlidir:
+yıl `from`–`to` içindedir, o yıl noktayı tutan satır (en küçük alanlı) kaydın `occupiers` listesindendir ve nokta o savaş öncesi
+satırın şeklinin (ve kutuların) içindedir; dosyada ilk eşleşen kayıt kazanır, sözcüğü `occupierLabels` verir ("Alman işgali"). Sayfa bunu yer
+başlığında ("Polonya · Alman işgali"), bilgi kartında, model için yer bağlamında ve haritada bir ad etiketi olarak gösterir (etiket
+noktası `at` o yıl bir işgalcinin elindeyse; etiketin boyutu daraltılmış alanın boyutudur). Yamaların şekli elle çizilmez:
+`python3 -I scripts/pipeline/build_correction_shapes.py` onları Natural Earth 1:10m ülke sınırlarından türetir ve haritanın kıyısına
+kırpar (`--check` dosyanın kaynaklarla uyumunu denetler). `npm run data:validate` katmanı da denetler (`scripts/validate-corrections.mjs`:
+başvurular, şekiller, kimlikler, `note`/`source`, etiket noktasının alanın içinde olması ve her kaydın o noktada en az bir yılda gerçekten
+uygulanması); `tests/corrections.test.ts` işleyişi ve verideki sonuçları sayıyla korur. Katman bir dönemin dosyasıdır: dönem
+değişince `corrections/` klasörü de onunla taşınır, katmanı olmayan bir dönem (1400–1600) katmansız açılır.
+
+**Satır düzeltmeleri**
+
+| Düzeltme | Yıllar | Neden |
+|---|---|---|
+| `copy`: Nazi Almanyası'nın 1938 satırı (Avusturya ve Südetler dahil Reich ile Doğu Prusya) kopyalanır | 1945 | 1945'te Berlin "Fransa Dördüncü Cumhuriyeti", Münih "Amerika Birleşik Devletleri", Viyana "Sovyetler Birliği" çizilirdi. Kopya bölge satırlarından küçük olduğu için baskındır, onlardan sonra geldiği için üstlerine çizilir; kurtulmuş görünen ülkeler (Fransa, Belçika, Hollanda, Norveç, İtalya, Yunanistan, Yugoslavya) kopyanın şeklinin dışında kalır; Prag, Varşova, Danzig verinin kendi sahibinde (Sovyetler Birliği) kalır. `keep`: verinin Nazi Almanyası satırlarının hepsi Almanya'dan uzakta ~150 başıbozuk ada ve yama taşır (Hebridler, Gelibolu, Derbent, Ladoga adaları…); kopya bunları taşımaz. |
+| `add` (Japonya): **Singapur** yaması, Johor kıyısıyla | 1942–45 | İngiliz satırı Japon satırlarından küçüktür, bu yüzden Singapur adasında ve karşı kıyıda (Johor Bahru) baskındı. Şekil: Natural Earth Singapur + Johor şeridi. |
+| `add` (Japonya): **Doğu Timor** yaması | 1942–44 | Veri Portekiz Timoru'nu 1944'e kadar Portekiz çizer, Japon çizimi 1945'te gelir. Şekil: Natural Earth Doğu Timor. |
+
+**İşgal adları** (yıllar: etiket noktasında, verinin o ülkeyi işgalcinin poligonuyla çizdiği yıllar)
+
+| Ad | İşgalci | Yıllar | Neden ve kaynak |
+|---|---|---|---|
+| Polonya | Almanya | 1940–44 | Varşova "Nazi Almanyası"dır; savaş öncesi şekil. *Invasion of Poland*. Vilnius bölgesi ayrıdır (Litvanya). |
+| Doğu Polonya | Sovyetler | 1940–41 | Eylül 1939 Sovyet işgali. *Soviet invasion of Poland*. |
+| Bohemya ve Moravya | Almanya | 1939–44 | Mart 1939 işgali; iki kutu Slovakya'yı ve Südetler'i dışarıda bırakır. *Occupation of Czechoslovakia*. |
+| Norveç · Hollanda · Belçika · Lüksemburg · Danimarka | Almanya | 1941–44 (Norveç) · 1940–44 | Veri hepsini Nazi Almanyası çizer (1940'ta Norveç satırı daha küçük olduğu için Norveç görünür). *German invasion of Norway*, *Battle of the Netherlands*, *Battle of Belgium*… |
+| Fransa | Almanya, İtalya | 1940–44 | Kuzey ve Atlantik kıyısı 1940'tan, güney 1943'ten (veri); Vichy bölgesi adlandırılmaz; Menton gibi İtalyan bölgesi "İtalyan işgali". *German occupation of France*. |
+| Yunanistan | Almanya, İtalya | 1941–44 | Atina 1942–43'te İtalyan çizilir. Bulgar bölgesi adlandırılmaz. *Axis occupation of Greece*. |
+| Yugoslavya | Almanya, İtalya | 1941–44 | Sırbistan ve Slovenya Alman, Karadağ ve Kosova İtalyan; Hırvatistan Bağımsız Devleti (müttefik kukla devlet) adlandırılmaz. *Axis occupation of Yugoslavia*. |
+| Arnavutluk | İtalya | 1939–43 | Nisan 1939 işgali. *Italian invasion of Albania*. |
+| Estonya · Letonya · Litvanya (Vilnius bölgesi dahil) | Almanya | 1942–44 | Yalnızca Alman yılları; 1940 Sovyet işgali adlandırılmaz. *Reichskommissariat Ostland*. |
+| Belarus · Ukrayna · Rusya | Almanya | 1942–43 | 1940 Sovyetler Birliği satırının kutularla kabaca kesilmiş hali (sınır boyunda komşu adı çıkabilir). *Reichskommissariat Ukraine*, *Eastern Front*. |
+| Çin | Japonya | 1938–45 | Çin Cumhuriyeti'nin 1937 şeklinin Japon çizilen kısmı; Mançurya (Mançukuo) bu satırın dışındadır. *Second Sino-Japanese War*. |
+| Filipinler | Japonya | 1942–44 | 1945'te ABD çizilir. *Japanese occupation of the Philippines*. |
+| Hollanda Doğu Hint Adaları | Japonya | 1943–45 | Veri 1942'de hâlâ Hollanda çizer. *Dutch East Indies campaign*. |
+| Burma | Japonya | 1943–44 | Veri 1942'de hâlâ İngiliz çizer; Andaman Adaları dışarıdadır. *Japanese occupation of Burma*. |
+| Singapur · Malaya · İngiliz Borneosu · Hong Kong | Japonya | 1942–45 | Singapur için yamaya dayanır; Hong Kong'un satırı veride vardır (İngiliz, 1942–45'te Japon). *Battle of Singapore*, *Malayan campaign*, *Battle of Hong Kong*. |
+| Fransız Çinhindi'si | Japonya | 1941–45 | Yalnızca verinin Japon çizdiği kuzey (Tonkin: Hanoi, Haiphong); Vichy ile ortak düzenleme, Fransız yönetimi Mart 1945'e kadar sürdü. *Japanese invasion of French Indochina*. |
+| Doğu Timor | Japonya | 1942–45 | Yamaya dayanır. *Battle of Timor*. |
+
+**Bu katman neyi düzeltmez** (dosyada `meta.knownGaps`): Burma, Java ve Sumatra 1942'de hâlâ İngiliz ve Hollanda çizilir (Mart–Mayıs 1942'de
+düştüler; 1942 anlık görüntüsü yıl başındaki durumu gösterir gibidir); Yeni Gine (141°D'nin doğusu hiç taranmadı), Andaman Adaları ve Guam
+Japon çizilir ama adlandırılmaz; Mançurya, Slovakya, Macaristan'ın ve Bulgaristan'ın ilhak ettiği yerler, Danzig, Südetler ve
+Avusturya adlandırılmaz; Macaristan (1944), Kuzey İtalya (1944; Roma ve Napoli o yıl satırsızdır) ve Libya ile Tunus'taki Mihver
+elleri (1941–43) Nazi Almanyası çizilir ama listede yoktur; Baltık'ın 1940 Sovyet işgali adlandırılmaz; 1946'dan sonra işgal bölgeleri hâlâ
+işgalcinin toprağı gibi çizilir; kukla devletler (Mançukuo, Vichy dışında Quisling, Hırvatistan) ayrı çizilmez.
+
+### Yer göstergeliği (`places.json`)
+
+**Ne işe yarar.** Yapay zekânın çizdiği çizgilerin uçları ve rotaların durakları *yerdir*: verideki bir olay, bu göstergelikteki bir şehir,
+bir koordinat ya da (yalnızca devlet söylenmişse) o devletin o yıldaki başkenti. `public/data/places.json` şehirlerin listesidir; `PlaceIndex`
+(`src/data/places.ts`) bir yeri Türkçe adıyla, İngilizce adıyla ya da herhangi bir alternatif adıyla bulur (büyük/küçük harf, aksan ve
+noktalama önemsizdir: "Köln" = "KOLN"; "İstanbul" = "Istanbul" = "Constantinople"). Dosya döneme bağlı değildir: `npm run data:period` ona
+dokunmaz.
+
+**Kaynak ve seçim.** Natural Earth *Populated places* 1:10m (kamu malı; atıf: "Made with Natural Earth."). 7.342 noktadan şunlar alındı: tüm
+ulusal başkentler, nüfusu 100.000 ve üzeri olan yerler, ve elle tutulan listelerde (olaylar, başkent tablosu, tarihsel adlar) geçen yerler;
+sonuç **3.285 yer, 378 KB** (gzip ~97 KB). Her satırda bir yer vardır, kimliğe göre sıralıdır ve dosyada tarih damgası yoktur (aynı girdi aynı
+dosyayı verir):
+
+```json
+{"id":"gdansk","tr":"Gdańsk","en":"Gdańsk","lon":18.64,"lat":54.36,"pop":740000,"cc":"PL","key":1,"alt":["Danzig"]}
+```
+
+`id` İngilizce adın slug'ıdır; aynı adı paylaşan yerlerde en kalabalık olan düz slug'ı korur, ötekiler `-<ülke>` alır (`london`, `london-ca`).
+`tr` kaynağın Türkçe adıdır (Şikago, Barselona, Kazablanka gibi Vikipedi'nin Türkçe yazılışları dahil), `pop` kaynağın en büyük nüfus değeridir
+(kişi; kent ve çevresi), `cc` bugünkü ülkenin ISO kodudur, `cap: 1` ulusal başkenttir. `alt`: yerel yazılışlar ve tarihsel/alternatif adlar. `key: 1`
+elle tutulan listelerde geçen yeri (618 yer) işaretler: iki yer aynı adı paylaşınca sayfa önce dönemin anlatıcısının kastedeni verir (Salamanca
+deyince Meksika'daki değil İspanya'daki; "St. Petersburg" deyince Florida'daki değil Rusya'daki); sıra `key`, kendi adı olan, başkent, nüfus.
+
+**Elle tutulan listeler** (`scripts/pipeline/`):
+
+- `places-extra.json`: Natural Earth'te **olmayan 117 yer** (Sedan, Dunkirk, Pearl Harbor, Treblinka, Wannsee…; Aachen ve Ruhr kentleri gibi
+  100.000'i aşan ama kaynakta eksik kentler de) ve kaynakta olup 100.000'in altında kalan, savaşın ihtiyaç duyduğu 43 yer (`include`: Narvik,
+  El Alamein, Yalta…). Koordinatlar elle girildi ve ~1 km içinde olmalıdır; emin olunmayan yer eklenmedi. Olay noktalarıyla örtüşenlerin çoğu olayın
+  noktasını kullanır (`tests/places.test.ts` aynı yerin göstergelikte ve olayda birbirinden uzak olmadığını sayar).
+- `places-aliases.json`: **266 yere ~460 tarihsel ve alternatif ad** (Stalingrad, Danzig, Königsberg, Peking, Selanik, Konstantiniyye, Saigon…).
+  Her giriş hedefini İngilizce ad + ülke koduyla verir; hedef yoksa ya da iki yere uyuyorsa derleme durur, ve `tests/places.test.ts` her adın
+  hedefine gerçekten ulaştığını sınar. Aynı dosyada: `drop` (kaynağın bozuk yazılışları: "Th nh Pho Ho Chy Minh"), `countries` (Kırım'ın ülke kodu
+  `UA` olur; kaynak `RU` yazar) ve `fixes` (kaynağın tek tek hataları).
+
+**Kaynağın hataları.** Natural Earth'te 15 yerin İngilizce adı yerle ilgisizdir ya da başka bir yerin adıdır ("Pochinki" Cuttack'ın, "Saudi Arabia"
+Ha'il'in adı olarak yazılmış); bunlar yerin kendi adıyla değiştirilir. Birkaç yer komşusunun nüfusunu taşır (Mazatán, Mazatlán'ın 500.000'ini), birkaçı aynı kentin
+ikinci kaydıdır (Adapazarı, Bandar Lampung), birkaçının adı başka şehrinkidir (Pyongsan, Maradi). `fixes` bunları tek tek düzeltir (gerekçe
+kaydın `why` alanındadır). `python3 -I scripts/pipeline/build_places.py --audit` yeni bir kaynak dosyadan sonra bakılacakları listeler.
+
+**Yeniden üretmek** (yalnızca standart kütüphane gerekir):
+
+```bash
+python3 -I scripts/pipeline/fetch_sources.py     # Natural Earth populated places (19 MB) dahil → .cache/
+python3 -I scripts/pipeline/build_places.py      # → public/data/places.json (--check: dosya güncel mi)
+```
+
+**Sınırlar.** Natural Earth eksiksiz değildir (Aachen, Częstochowa, Toruń, Bochum, ama Padova, Brescia, Derby, Breda, Girona da yoktur;
+`places-extra.json` yalnızca savaşın ve olayların gerektirdiklerini tamamlar). `pop` kentin sınırını değil kaynağın çevre kentlerle birlikte verdiği sayıyı taşır; `cc` bugünkü ülkedir (Danzig `PL`);
+tarihsel adlar savaş çağına ve Doğu Avrupa'ya yöneliktir ve eksiksiz değildir. İkisi de listelerde olmayan iki yer aynı adı paylaşırsa sıra kendi
+adı olan, başkent, nüfus sırasıdır. `scripts/validate-places.mjs` dosyayı denetler (tek başına da koşar; `validate-data.mjs` işlevlerini çağırır); `tests/places.test.ts` içeriği sayıyla korur.
+
+### Başkentler (`capitals.json`)
+
+**Ne işe yarar.** Bir çizgi ya da rota bir *devletten* başlıyorsa, haritadaki etiket noktası (devletin en büyük parçasının ortası: Normandiya
+çizgisi bu yüzden Grönland'dan çıkıyordu) yerine devletin **o yıldaki başkenti** kullanılır. `public/data/capitals.json` bunu yıl yıl söyler;
+`CapitalIndex.at(devlet, yıl)` (`src/data/capitals.ts`) bir yer döndürür, tabloda yoksa `null` (uygulama etiket noktasına döner).
+
+```json
+"british-raj": [
+  {"from": 1859, "to": 1911, "place": "kolkata", "note": "Dönemin adı: Calcutta."},
+  {"from": 1912, "to": 1930, "place": "delhi", "note": "Başkent 1911'de Delhi'ye taşındı; Yeni Delhi inşa ediliyordu."},
+  {"from": 1931, "to": 1947, "place": "new-delhi", "note": "Yeni Delhi Şubat 1931'de açıldı."}
+]
+```
+
+**Kurallar.** Anahtar, `entities.json`'daki devletin kimliğidir (takma ad değil asıl kimlik). Yıllar kapsayıcıdır; devletin **çizildiği yılların**
+içinde kalır (`borders/polities.json` ve düzeltme katmanının eklediği satırlar: Nazi Almanyası 1945'e kadar), aradaki işgal boşlukları dahil;
+bir devletin aralıkları çakışmaz ve başkent değiştiyse birden çok aralık vardır. `place` göstergelikteki bir kimliktir (derleme başkent
+yerlerini göstergeliğe kendiliğinden alır; hepsi `key` yerdir). Anayasal başkent ile hükümetin oturduğu şehir ayrıysa **anayasal başkent** yazılır
+ve `note` söyler (Hollanda: Amsterdam, hükümet Lahey'de; Bolivya: Sucre, hükümet La Paz'da); savaş dönemi ve geçici başkentler de `note` taşır
+(Çin Cumhuriyeti 1938–45 Chongqing; Vichy Fransası Vichy; İspanya Cumhuriyeti Madrid → Valensiya → Barselona; Özgür Fransa Londra → Cezayir).
+
+**Kapsam.** **418 devlet, 467 aralık, 293 yer** (48 KB, gzip ~10 KB): olaylarda `parties`/`versus` olarak geçen 49 devletin hepsi, savaşın
+bütün devletleri (Almanya'nın bütün biçimleri, Rusya/SSCB, Britanya ve imparatorluk kayıtları, Fransa'nın bütün biçimleri, İtalya, Japonya,
+Çin'in üç dönemi, Osmanlı/Türkiye, Orta Avrupa ve Balkanlar, İskandinavya, Benelüks, İspanya'nın iki tarafı, ABD, Latin Amerika, Orta Doğu,
+Afrika ve Asya'nın bağımsız devletleri) ve 19. yüzyılın başlıca devletleri. Tabloda olmayan 131 devlet (kısa ömürlü ayaklanma devletleri,
+küçük sultanlıklar, "Alman Afrikası" ve "İtalyan Afrikası" gibi sömürge kümeleri, Hollanda Antilleri) başkentsizdir; olaylarda geçen "İngiliz
+Afrikası" ve "Fransız Afrikası" için ülkenin anavatanındaki başkent (Londra, Paris) yazıldı ve `note` söyler. Emin olunmayan aralıklar boş bırakıldı:
+Sırbistan 1916–17, Honduras 1840–79, Etiyopya 1800–99 gibi.
+
+**Kaynak ve güvenilirlik.** Elle derlendi (genel başvuru bilgisi, Vikipedi başlıkları anılır); geliştirme ortamından Vikipedi'ye erişilemediğinden
+aralıklar makalelerle tek tek **karşılaştırılmadı**. Yıl duyarlığı yıldır: bir başkent yılın ortasında değiştiyse aralık, yılın çoğunda
+geçerli olanı yazar ve `note` değişikliği söyler. Devlet o yıl çizilmiyorsa tablo `null` verir (İkinci Polonya Cumhuriyeti 1940–45'te, Fransa 3.
+Cumhuriyeti 1940'ta, Özgür Fransa 1945'te, Prusya 1871'de…: olaylarda 18 taraf-yıl çifti); çağıran yılı devletin çizildiği ilk/son yıla sıkıştırabilir.
+`scripts/validate-places.mjs` yer ve devlet kimliklerini, çakışmayı, yıl sınırlarını ve olay taraflarının kapsamını denetler;
+`tests/capitals.test.ts` verideki sonuçları sayıyla korur. Tablo bir dönemin dosyasıdır: `npm run data:period` onu dönemle birlikte taşır.
 
 ### Olay eklemek (kod değişikliği gerekmez)
 
@@ -467,16 +626,23 @@ kaynak yokluğu, Türkçe ad eksikliği…).
 - Sınırlar yaklaşıktır (veri setinin kendi uyarısı: bir yorumun yalnızca bir sürümü). Panelde, çizilen sınırın hangi
   kayıt dönemine ait olduğu (ör. "1939–1944") gösterilir.
 - **İkinci Dünya Savaşı'nı ne kadar gösterir** (1939–1945'in sınırlarını Cliopatria'ya karşı denetledim; `tests/period-1800-2000.test.ts`
-  bunları sayıyla korur). *Gösterdikleri:* yıllık anlık görüntüler: ilhaklar ve işgaller yıl yıl gelir (Çekoslovakya 1939'da, Polonya'nın
-  batısı ve Varşova 1940'ta, Baltık devletleri 1940'ta Sovyetler'e ve 1942'de Almanya'ya geçer), Fransa 1940'ta kuzeyde Alman, güneyde
-  Vichy olur (1942 anlık görüntüsünde de; 1944'te tamamı Alman çizilir), Yunanistan 1940'ta Yunan, 1942'de İtalyan, 1944'te Alman görünür, Pasifik'te Filipinler ve
-  Hollanda Doğu Hint Adaları Japonya'ya geçer, 1945–46'da işgal bölgeleri görünür. *Göstermedikleri:* **işgal ile ilhak ayrımı yoktur**
-  (işgal altındaki bir ülke, işgalcinin poligonuyla çizilir: Varşova "Nazi Almanyası"dır, ayrı bir Genel Hükümet ya da kukla devlet
-  yoktur); bazı işgaller hiç yoktur (Singapur 1942–45'te İngiliz çizilir); 1945–46'da işgal bölgeleri işgalcinin kendi topraklarıymış
-  gibi çizilir (1945'te Münih "Amerika Birleşik Devletleri", Viyana "Sovyetler Birliği"); Nazi Almanyası'nın satırları 1944'te biter
-  (1945 olayları 1944 sınırlarıyla gösterilir); Berlin'in bir bölümü 1946–1990'da Fransa'ya ait küçük bir parça olarak (Fransız
-  sektörü) çizilir. Bunların hiçbiri uygulamayı engellemez, ama okurun yorumunda bilinmelidir: işgali ve kukla
-  rejimleri harita değil metin anlatır (komut dosyalı yanıtlar bunu yapar; gerçek bir modelde ilk kullanımda gözle bakılmalıdır).
+  ve `tests/corrections.test.ts` bunları sayıyla korur). *Cliopatria'nın gösterdikleri:* yıllık anlık görüntüler: ilhaklar ve işgaller yıl
+  yıl gelir (Çekoslovakya 1939'da, Polonya'nın batısı ve Varşova 1940'ta, Baltık devletleri 1940'ta Sovyetler'e ve 1942'de Almanya'ya geçer),
+  Fransa 1940'ta kuzeyde Alman, güneyde Vichy olur (1942 anlık görüntüsünde de; 1943'te tamamı Alman çizilir), Yunanistan 1940'ta Yunan,
+  1942'de İtalyan, 1944'te Alman görünür, Pasifik'te Filipinler ve Hollanda Doğu Hint Adaları Japonya'ya geçer, 1946'da işgal bölgeleri
+  görünür. *Cliopatria'nın göstermedikleri:* **işgal ile ilhak ayrımı yoktur** (işgal altındaki bir ülke, işgalcinin poligonuyla çizilir:
+  Varşova "Nazi Almanyası"dır, ayrı bir Genel Hükümet ya da kukla devlet yoktur); bazı işgaller eksiktir (Singapur 1942–45'te İngiliz, Doğu
+  Timor 1944'e kadar Portekiz çizilir); Nazi Almanyası'nın satırları 1944'te biter (1945'te Berlin Fransız, Münih Amerikan, Viyana Sovyet bölgesi
+  çizilir ve 1945 olayları 1944 sınırlarıyla gösterilirdi); 1946'dan sonra işgal bölgeleri işgalcinin kendi topraklarıymış gibi çizilir (Münih
+  "Amerika Birleşik Devletleri", Viyana "Sovyetler Birliği"); Berlin'in bir bölümü 1946–1990'da Fransa'ya ait küçük bir parça olarak
+  (Fransız sektörü) çizilir. *Düzeltme katmanı bunlardan şunları kapatır* ("Düzeltme katmanı" bölümü; Cliopatria'ya dokunulmadan): Nazi
+  Almanyası 1945'te de çizilir (Berlin, Münih, Hamburg, Viyana, Königsberg, Breslau…), Singapur 1942–45'te ve Doğu Timor 1942–44'te Japon
+  çizilir, işgal altındaki ülkeler "Polonya · Alman işgali" gibi adlandırılır (yer başlığında, bilgi kartında ve haritadaki etikette; poligon
+  yine işgalcinin kalır). *Kalanlar:* Burma, Java ve Sumatra 1942'de hâlâ İngiliz ve Hollanda çizilir; 1946'dan sonraki bölgeler, kukla
+  devletler ve ilhaklar (Südetler, Avusturya, Danzig) adlandırılmaz; Mançurya, Slovakya, Macaristan (1944) ve Kuzey İtalya (1944) listede
+  yoktur (tam liste: dosyanın `meta.knownGaps` alanı). Bunların hiçbiri uygulamayı engellemez, ama okurun yorumunda bilinmelidir: kukla
+  rejimleri ve ilhak ile işgal ayrımını harita değil metin anlatır (komut dosyalı yanıtlar bunu yapar; gerçek bir modelde ilk kullanımda
+  gözle bakılmalıdır).
 - **Olaylar oyuncak bir kümedir** (74 olay): iki yüzyılın birkaç dönüm noktası (Haiti bağımsızlığı, Waterloo, 1848, Amerikan İç Savaşı,
   Saraybosna, Ekim Devrimi, 1929 çöküşü, Hindistan'ın bölünmesi, Sputnik, Berlin Duvarı, Çernobil, Sovyetlerin dağılması, Ruanda …)
   ve savaş için yoğun bir küme (Spanyol İç Savaşı'ndan Japonya'nın teslimine, 54 olay; her yıl için birkaç tane, ayrıca Holokost,
@@ -498,9 +664,11 @@ kaynak yokluğu, Türkçe ad eksikliği…).
 
 ```
 src/
-  domain/   saf mantık (arayüzsüz, testli): time, geo, events, lanes, categories, placement, reveal, camera
+  domain/   saf mantık (arayüzsüz, testli): time, geo, events, lanes, categories, placement, reveal, camera, names (adların anahtarı)
   data/     veri yükleyici (`loadData`) ve saf birleştirme (`assembleData`); sınırlar için `borderCodec` (tamsayı fark biçimi),
-            `borderStore` (satırları tembel çözen, yıl penceresini veren depo) ve `gzip` (tek dosya sürümündeki sıkıştırılmış bloklar)
+            `borderStore` (satırları tembel çözen, yıl penceresini veren depo) ve `gzip` (tek dosya sürümündeki sıkıştırılmış bloklar);
+            `places` (şehir göstergeliği), `capitals` (devletin o yılki başkenti), `corrections` (düzeltme katmanı: satır düzeltmeleri
+            ve işgal adları)
   state/    store (durum + eylemler), derive (görünüm modeli), url (adres çubuğu), panelLayout
   map/      MapLibre görünümü, DOM etiketleri, işaretçiler, yer noktası, yapay zekâ çizim katmanı (aiLayer, flags)
   ui/       cetvel (adım noktalarıyla), zaman çizelgesi, bilgi kartı (infoCard), harita üstü öğeler, ipucu kutusu,
@@ -510,9 +678,9 @@ src/
 instructions/okuma-arkadasi.txt   modelin yönergeleri (düz metin; sahibi düzenler, derlemede uygulamaya gömülür)
 ```
 
-`src/ai/`: `resolve` (modelin yazdıklarını verideki devletlere, olaylara, noktalara çözer; devletlerin ana parçalarının kutusu),
-`tools` (beş sayfa işlevi), `eventKinds` (bir olayın türüne göre nasıl çizileceği: savaş mı, değil mi; savaşın iki safı), `drawing` (her adımın
-**kendi** çizimi: `TurnPlan`, `drawingOf`; spot ışığındaki devletler, savaş çizgisi, kamera hedefi `frameTargetOf`), `outline` (bir anlatımın
+`src/ai/`: `resolve` (modelin yazdıklarını verideki devletlere, olaylara, şehirlere, noktalara çözer: `placeRef`, `placePoint`; devletlerin ana parçalarının kutusu),
+`tools` (yedi sayfa işlevi), `eventKinds` (bir olayın türüne göre nasıl çizileceği: savaş mı, değil mi; savaşın iki safı), `drawing` (her adımın
+**kendi** çizimi: `TurnPlan`, `drawingOf`; spot ışığındaki devletler, taraflar, yollar, çizgiler ve savaş çizgisi, kamera hedefi `frameTargetOf`), `outline` (bir anlatımın
 veriden çıkan deterministik iskeleti), `steps`
 (metni adımlara ayırır), `narration` (bir yanıtın adımları: plan + metin birleşimi, altyazı, adımlı mı tek parça mı), `presentation`
 (İzle / Oku görünümü, okuyucu kipi, otomatik oynatma ve hız; adım gezintisi; başsız ve testli), `activeStep` (okuma çizgisi), `context`,
@@ -523,9 +691,13 @@ veriden çıkan deterministik iskeleti), `steps`
 - Durumda **harita kamerası yoktur**; harita görünümünü yalnızca kullanıcının kendi eylemleri değiştirir: sürükleme,
   tekerlek, çimdik, `+/−` düğmeleri, klavye. **Tek istisna `MapView.revealEvent`'tir:** kullanıcı görünüm dışındaki bir
   olayı çizelgeden, listeden ya da bir bağlantıdan açarsa harita, olay (ve kenar boşluğu) görünene kadar yalnızca uzaklaşır
-  (`easeTo`, 0,9–2,6 sn, yumuşak giriş-çıkış). Dünyanın kenar sınırı uzaklaşmayı tek başına yetirmezse ya da olay en uzak
-  görünümde bile sığmazsa `fitBounds` ile eski görünümü ve olayı kapsayan en küçük görünüme gidilir. Zaten görünen olay
-  için (ör. kendi işaretçisine tıklamak) hiçbir şey yapılmaz. "Hareketi azalt" tercihinde MapLibre görünümü animasyonsuz değiştirir.
+  (`easeTo`, 0,9–2,6 sn, yumuşak giriş-çıkış). Uzaklaşmak yetmezse (harita en geniş görünümüne, ya da sınırlarının görünümü
+  doldurduğu yakınlaşmaya geldi ve olay hâlâ kenar boşluğunda ya da bir denetimin altındaysa; tam ekran Oku'nun köşe haritası bunun
+  tipik yeridir) harita o en geniş görünüme gider ve merkezi olayı güvenli alana sokan **en kısa yoldan** kaydırır (`revealMove`,
+  `panToRevealAll`: `src/domain/reveal.ts`); sınırların dışına çıkılmaz ve sonuç idempotenttir: aynı olayı yeniden açmak haritayı
+  bir daha oynatmaz. (Eskiden bu durumda `fitBounds` kullanılırdı ve olaydan bağımsız bir kayma yapıp her tıklamada haritayı
+  doğuya kaydırırdı; El Alamein köşe haritasında hiç görünmezdi.) Zaten görünen olay için (ör. kendi işaretçisine tıklamak)
+  hiçbir şey yapılmaz. "Hareketi azalt" tercihinde MapLibre görünümü animasyonsuz değiştirir.
   Çift tıklamayla yakınlaştırma ve klavyeyle döndürme kapalıdır.
 - `ViewModel.mapEvents` yalnızca zaman aralığından hesaplanır, işaretçileri seçen `placeMarkers` saf bir işlevdir
   (aynı olaylar + kamera → aynı işaretçiler). **Haritada tek anlatıcı vardır** (`Narrator = 'ai' | 'place'`, `EventMarkers.setNarrator`):
@@ -564,14 +736,16 @@ koşulur.** Görsel inceleme her yayından sonra elle yapılır; bu yüzden beti
 
 | Komut | Ne koşar | Ölçülen süre |
 |---|---|---|
-| `npm run smoke` | tsc, birim (404 test), veri doğrulama, derleme, hızlı e2e: base bölüm 0–3 (39 denetim) + AI A, B (iki tek adımlı yanıt), G (gerçek `sample` bağdaştırıcısı), H (telefon) senaryoları (125 denetim) | **3 dk 1 sn** (e2e kısmı 2 dk 28 sn) |
+| `npm run smoke` | tsc, birim (596 test), veri doğrulama, derleme, hızlı e2e: base bölüm 0–3 (39 denetim) + AI A, B (iki tek adımlı yanıt), G (gerçek `sample` bağdaştırıcısı), H (telefon) senaryoları (127 denetim) | **2 dk 4 sn** (e2e kısmı ≈ 1 dk 40 sn) |
 | `E2E_ONLY=7,9 node scripts/verify-e2e.mjs` | yalnızca bu base bölümleri (0–6 tek bloktur: biri istenirse hepsi koşar) | bölüm süreleri aşağıda |
 | `E2E_ONLY=A3,K node scripts/verify-ai-e2e.mjs` | yalnızca bu AI grupları (harfler raporun başlıklarındaki gibi) | grup süreleri aşağıda |
-| `npm run full` | smoke'un ön adımları + tam base e2e (154 denetim) + tam AI e2e (437 denetim) | **31 dk 2 sn** (base 5 dk 34 sn, AI 24 dk 51 sn) |
+| `npm run full` | smoke'un ön adımları + tam base e2e + tam AI e2e | önceki turda **31 dk 2 sn** (154 + 437 denetim; base 5 dk 34 sn, AI 24 dk 51 sn); yer/yol/taraf turunda koşulmadı, denetim sayısı o günden beri büyüdü |
 
-Tek koşuda ölçülen süreler (sn, hareket azaltılmış kip): base e2e 0–6 bloğu 58 (yalnız 0–3: 9) · 7: 96 · 8: 34 · 9: 53 · 10: 42 ·
-11: 43; AI e2e L 29 · S 37 · A 56 · V 120 · W 57 · A2 24 · A3 87 · A4 30 · B 44 · C 9 · C2 16 · D 14 · J 65 · K 133 · P 269 · R 79 ·
-T 80 · F 106 · E 97 · G 83 · H 54. (Öncesi, animasyonlu kamerayla: base ≈9 dk, AI ≈30 dk, birlikte ≈40 dk.)
+Tek koşuda ölçülen süreler (sn, hareket azaltılmış kip): base e2e 0–6 bloğu 36 (yalnız 0–3: 6) · 7: 96 · 8: 34 · 9: 53 · 10: 42 ·
+11: 24 · 12: 57; AI e2e L 17 · S 23 · A 33 · V 120 · W 43 · A2 24 · A3 87 · A4 30 · B 19 · C 9 · C2 16 · D 14 · J 65 · K 83 ·
+P 269 · R 79 · T 80 · F 106 · E 97 · G 14 · H 21 · Y 42. (Süreler farklı günlerde, farklı yükte ölçüldü; en son yer/yol/taraf
+turunda yeniden ölçülenler: 0–6, 11, 12, L, S, A, W, B, K, G, H, Y.) (Öncesi, animasyonlu kamerayla: base ≈9 dk, AI ≈30 dk,
+birlikte ≈40 dk.)
 
 Testler varsayılan olarak **"hareketi azalt" kipinde** koşar: her sayfa `reducedMotion: 'reduce'` ile açılır, kamera anında gider
 (MapLibre süreyi 0'a çeker; panel kayması ve kaydırma da bu tercihe uyar). Animasyonun kendisini sınayan kontroller animasyonlu
@@ -614,7 +788,16 @@ kaybolmadığı, cetvelde uca tıklamanın pencereyi küçültmediği, ekran oku
 yakınlaştırdığı, telefon genişliğinde taşma olmadığı, dokunuşun olayı açıp adını gösterdiği (ve ekranda ipucu bırakmadığı) ve
 "hareketi azalt" tercihinde görünümün animasyonsuz değiştiği denetlenir.
 
-Son tam koşu: **154 / 154 denetim geçti** (hareket azaltılmış kip, 5 dk 34 sn).
+7. **Düzeltme katmanı (bölüm 12).** İşgal altındaki ülke işgal olarak adlanır: Varşova 1942'de başlıkta ve kartta "Polonya · Alman işgali",
+   kartta işgal notu ("bu bir işgaldir, bir devlet değişikliği değil"), haritada Polonya'nın üstünde adı ve altında "(Alman işgali)" (poligon
+   yine Nazi Almanyası'nın, vurgulanan çerçeve de); Almanya'nın kendisi (Hamburg) işgal değildir; işgalcinin sözcüğü yılın sahibini izler
+   (Atina 1942'de "İtalyan", 1944'te "Alman işgali"); Paris 1942'de "Fransa · Alman işgali", 1939'da yalnızca Fransa; **Berlin 1945'te
+   hâlâ Nazi Almanyası** (sınır yılı 1945, haritada en üstte çizilen devlet o); Singapur 1943'te "Singapur · Japon işgali", 1941'de ve
+   1946'da İngiliz.
+
+Son tam koşu (önceki tur): **154 / 154 denetim geçti** (hareket azaltılmış kip, 5 dk 34 sn). Yer/yol/taraf turunda tam takım
+koşulmadı (kural gereği): son ağaçta `npm run smoke` (596 birim testi, base 39 + AI 127 denetim) ve değişikliği kapsayan gruplar
+geçti: base 0–6, 11, 12 (87 denetim) ve AI L, S, K, Y (57), W (31).
 
 ### Okuma arkadaşı ve temiz harita: `npm run e2e:ai`
 
@@ -648,8 +831,12 @@ sayfadan sayılır, betikte sabit sayı yoktur.
    yazılıyor…"). Her adımda yalnızca o adımın istediği çizilir: modelin `highlight`'ı ve olayların tarafları öne çıkar (spot ışığı: örtü
    > 0,5, öne çıkanlar dolgun, öteki adlar soluk, tarama yok); olay **türüne göre** çizilir (savaşta işaret ile iki taraf arasındaki
    çizgi tek birimdir); olay işaretlerinin yanında **ad kutusu yok**. **Bir savaş olayı doğru görünür:** 4. adımda Barbarossa'nın işareti,
-   çizgisi, Almanya ve Sovyetler Birliği öne çıkmış, sınır yılı 1941; 6. adımda Stalingrad ve El Alamein; 8. adımda Berlin 1945, 1944
-   sınırlarıyla (veri setinde Nazi Almanyası'nın satırları 1944'te biter). Kamera adımın **adlandırdığı her şeyi** (olaylar, işaretler,
+   çizgisi, Almanya ve Sovyetler Birliği öne çıkmış, sınır yılı 1941; **4. adımda ayrıca iki taraf** (Mihver ve ortakları: Almanya, Romanya,
+   Finlandiya, Macaristan, İtalya; Sovyetler Birliği) iki ayrı blok renginde boyanır, taraf adları renkleriyle anlatım kutusunda durur ve
+   Brest'ten Moskova'ya **canlandırılan bir ilerleyiş yolu** (kıvrımlı, uçta oklu) çizilir; 6. adımda Stalingrad ve El Alamein; 7. adımda
+   Normandiya çizgisi **Londra'dan** başlar (Grönland'dan değil), ayrıca bir geri çekilme yolu (kesikli, açık oklu) vardır; 8. adımda Berlin
+   1945, **1945 sınırlarıyla** (veri setinde Nazi Almanyası'nın satırları 1944'te biter; düzeltme katmanı 1938 sınırlarını 1945'e taşır).
+   Her savaş çizgisi taraflarının başkentinden çıkar. Kamera adımın **adlandırdığı her şeyi** (olaylar, işaretler,
    çizgi uçları) altyazının ve soru kutusunun **üstündeki** görünür alana sığdırır; dünyayı kaplayan devletlerin (180°D'ye uzanan
    Sovyetler, Grönland'lı ABD, sömürgeli Britanya) kutusu en küçük yakınlaştırmada ve haritanın sınırında tümüyle sığmaz: en geniş
    görünümde öne çıkan her devletin kutusunun ≥ %75'i görünür. Altyazı her adımda aynı yerde ve modelin `step` çağrısındaki altyazıdır;
@@ -707,14 +894,15 @@ sayfadan sayılır, betikte sabit sayı yoktur.
     tek adımlı düz metin yanıtı (en uzun tek adımlı metin) için.
 14. **K. Etiketler örtüşmez:** 8 adım × 3 kamera (çerçeve, yakınlaştırılmış, uzaklaştırılmış) × 2 ekran boyunda ne bir etiket bir etiketi, ne
     bir işaretçiyi, ne yer noktasını, ne bir devlet adını, ne haritanın kontrollerini örter (sayfada ölçülür; dört yüz elli kadar etiket
-    benzeri öğe sayılır); ek olarak yapay zekânın kendi `mark` ve `connect` etiketleri için kalabalık bir adım ve Çelik Pakt yanıtı.
+    benzeri öğe sayılır); ek olarak yapay zekânın kendi `mark` etiketi ve yolunun etiketi için kalabalık bir adım (üç olay, üç savaş çizgisi, ilerleyiş yolu) ve
+    Çelik Pakt yanıtı (Berlin–Roma çizgisi).
 15. **E. Durdurma, hatalar, ayarlar:** Durdur (adımlar ve yazılan kısım kalır; tek adımlı yanıtta altyazı, "Devamını oku" ve "Durduruldu ·
     Yeniden dene" kalır), hata ekranları ve "Yeniden dene" (tek istek), `not_granted`, kalıcı hata (`sampling_disabled`: izin düğmesi ve
     yeniden deneme yok), hız ayarı (soru kutusunun üstündeki menü: Hızlı / Dengeli / Derin, tarayıcıda saklanır; saklanamazsa bozulmaz),
     **"Sohbeti temizle" her zaman görünür** (ayar menüsü kapalıyken de), yazışma varken etkin; basınca yazışmayı, yanıtı ve çizimi siler
     (yanıt sürerken de).
 16. **G. Gerçek `sample` bağdaştırıcısı**, tarayıcıda sahte bir artifact çalışma zamanıyla: **ilk tur, yönerge dosyasıyla birebir
-    başlar**; beş araç (`step`, `show_event`, `highlight`, `connect`, `mark`) ve `step` aracının numara + başlık + altyazı (+ isteğe bağlı
+    başlar**; yedi araç, önem sırasıyla (`step`, `show_event`, `highlight`, `sides`, `route`, `connect`, `mark`) ve `step` aracının numara + başlık + altyazı (+ isteğe bağlı
     yıl) istemesi; sayfa notlarında "her cevap bir adımdır (n:1)"; `cache` gönderilmemesi; **konuşmanın tamamının her çağrıyla gitmesi**
     (önceki soru, önceki yanıtın tam metni ve o yanıtın haritada ne gösterdiği; tek adımlı yanıt "1. adım:" olmadan), "Sohbeti temizle"den
     sonra hiçbir şeyin gitmemesi; `modelTier`; metin tutulurken (yalnızca plan geldiğinde) İzle'nin başlaması (tek adımlı yanıtta
@@ -725,8 +913,17 @@ sayfadan sayılır, betikte sabit sayı yoktur.
     satırda ve kutudan taşmadan, düğmeler ≥ 30 px), yakınlaştırma düğmeleri ve sayaç bu sütunun üstünde; metin tam ekran, küçük harita
     başlığın altında ve adım korunur; tek adımlı yanıtta altyazı ve görünür "Devamını oku", adım denetimi yok; hata ve izin kutuları
     ekranın içinde; Harita takibi sorusu telefonda küçük kalır.
+18. **Y. Yerler, yollar ve taraflar** (sahte çalışma zamanıyla; model yerleri adlarıyla söyler): `connect`in uçları **yerdir** ("Stalingrad" ve
+    "Danzig" eski adlardır; çizgi bugünkü Volgograd'ın ve Gdańsk'ın noktalarında başlar ve biter, devletlerin ortasında değil); dört yol
+    türünün (ilerleyiş, geri çekilme, göç, ticaret yolu) çizgi deseni, kalınlığı ve ok ucu birbirinden farklıdır, ok **son duraktadır** ve
+    yolun gittiği yönü gösterir, etiketler örtüşmez, kamera her durağı sığdırır; **canlandırılması istenen yol** "hareketi azalt"ta hiç
+    canlanmaz ve baştan sona görünür, hareket serbestken çizilerek belirir (animasyon yarıda durdurulup ekran görüntüsünde çizginin
+    yalnızca başı göründüğü, bitince hepsi göründüğü ölçülür: maske yolu kapatmaz); **taraflar** tek blok olarak iki renkte boyanır (ekran
+    görüntüsünden: öne çıkan örneklerin %95'inden fazlası tarafının renginde), adları renkleriyle anlatım kutusundadır ve taraf bildirmeyen
+    adıma dönünce boyama ve kutu gider; "Mihver ve Müttefikler kimdi?" sorusu tek adımlı bir yanıtla bu iki bloğu gösterir.
 
-Son tam koşu: **437 / 437 denetim geçti** (hareket azaltılmış kip, 24 dk 51 sn).
+Bu turda (yedi araç, yerler, düzeltme katmanı) tam takım koşulmadı; doğrulama kuralı gereği smoke ve değişikliği kapsayan gruplar
+koşuldu (aşağıda). Son tam koşu (önceki tur): **437 / 437 denetim geçti** (hareket azaltılmış kip, 24 dk 51 sn).
 
 **Neyi sınamıyor:** gerçek bir modelin istemi ne kadar iyi izlediğini. Gerçek `sample` bu ortamdan çağrılamaz; model çıktısı biçimine
 karşı bağışlayıcı okunur (yukarıya bakın) ama ilk gerçek kullanımda gözle bakılmalıdır.
@@ -738,25 +935,30 @@ karşı bağışlayıcı okunur (yukarıya bakın) ama ilk gerçek kullanımda g
   haritanın doğu sınırı 179,9°D olduğu için yan okuyucu panelin altında kalan en doğudaki içerik (Japonya, Çukotka) kameradan
   kaçamaz; dünyayı kaplayan devletler (180°D'ye uzanan Sovyetler, Grönland'lı ABD, sömürgeli Britanya) en küçük yakınlaştırmada
   tümüyle sığmaz (kamera adın andığı olayları, işaretleri ve çizgi uçlarını garanti eder; öne çıkan devletin kutusunun en az %75'ini
-  gösterir); savaş çizgisi devletin olaya **en yakın** ana parçasından çıkar, bu yüzden 1944'te ABD satırı Grönland'ı içerdiği için
-  Normandiya çizgisi Grönland'dan başlar, Fransa'nın 1940'ta satırı olmadığı için Fransa Muharebesi'nin çizgisi Almanya ile Britanya'yı
-  bağlar; yer noktası bazen bir olay işaretinin yıl yazısına biner (Hamburg ve Dover), cetveldeki "1950" yazısı adım noktalarının
-  sütununa ~3 px değer; haritaya hiçbir şey çizmeyen (düz metin) bir yanıt, yer seçili değilken dünya olaylarını yanıt kapanana kadar
-  haritadan çeker (tek anlatıcı kuralı) ve daha önce çizilmiş bir sahnenin üstüne gelirse o sahneyi olduğu gibi bırakır; tam ekran
-  okumanın köşedeki küçük haritasında (~340×230 px) uzak bir olay (ör. El Alamein) en düşük yakınlaştırmada görünümün birkaç piksel
-  dışında kalabilir ve her bağlantı ya da çizelge tıklaması merkezi biraz doğuya kaydırır (animasyonlu ve hareketi azalt
-  kiplerinde aynıdır; işaretçinin "görünür" sayılması bu birkaç piksele bağlıdır, e2e bu yüzden iki yolu karşılaştırırken
-  kameraya bağlı alanları çıkarır).
+  gösterir); savaş çizgisi her safın ilk sayılan tarafının **başkentinden** çıkar, bu yüzden uzak bir savaşta (Pasifik) çizgi iki
+  başkent arasındaki yarım küreyi kaplar ve kamera iki ucu da sığdırmak için uzaklaşır; Fransa'nın 1940'ta satırı olmadığı için Fransa
+  Muharebesi'nin çizgisi Almanya ile Britanya'yı bağlar; yer noktası bazen bir olay işaretinin yıl yazısına biner (Hamburg ve Dover),
+  cetveldeki "1950" yazısı adım noktalarının sütununa ~3 px değer; haritaya hiçbir şey çizmeyen (düz metin) bir yanıt, yer seçili
+  değilken dünya olaylarını yanıt kapanana kadar haritadan çeker (tek anlatıcı kuralı) ve daha önce çizilmiş bir sahnenin üstüne
+  gelirse o sahneyi olduğu gibi bırakır.
 - Okuma arkadaşı: gerçek model çıktısı bu ortamda sınanamadı (yukarıya bakın). Yönerge dosyasını düzenlemek uygulamayı yeniden
   derlemeyi ve yeniden yayınlamayı gerektirir (dosya derlemede gömülür). Otomatik oynatma süreleri (2,2 sn + sözcük başına
   0,36 sn; hızlar 0,65 / 1 / 1,8) ve ilerleme çubuğunda yan yana düşen noktaların kaydırılması (en çok 26 px) ilk sürümün varsayılanlarıdır
-  (`src/ai/presentation.ts` ve `src/ui/ruler.ts` başındaki sabitler); gerçek kullanımda ayarlanması gerekebilir. Bir bağlantının uç noktası devletin etiket noktasıdır
-  (çok parçalı devletlerde, karşı uca en yakın büyük parçanın ortası); tek parça ve çok büyük devletlerde (1517 sonrası Osmanlı) bu
-  nokta sınırdan uzakta olabilir ve çizginin ucundaki küçük daire devletin adının üstüne gelebilir (etiketlerin değil, yalnızca
-  çizgi ucunun örttüğü tek şey budur). Yüklenmiş belge kaynağı henüz yok.
-- Görünüm dışındaki bir olayı açınca harita yalnızca uzaklaşır; ancak dünyanın kenar sınırı (`maxBounds`) çok büyük uzaklaşmalarda
-  merkezi de kaydırır (ör. Çin'den Macaristan'a: merkez 112°D'den 75°D'ya kayar). Bu hâlâ tek, sürekli ve yumuşak bir harekettir;
-  önceki görünüm yeni görünümün içinde kalır.
+  (`src/ai/presentation.ts` ve `src/ui/ruler.ts` başındaki sabitler); gerçek kullanımda ayarlanması gerekebilir. Yüklenmiş belge
+  kaynağı henüz yok.
+- **Yerler, yollar, taraflar (bu turun sınırları).** Başkent tablosu elle derlendi ve makalelerle tek tek karşılaştırılamadı; 131 devletin
+  başkenti yoktur (o zaman çizgi, devletin en büyük parçasının ortasından çıkar). Yolların en çok 8 durağı, bir çatışmanın en çok 3 tarafı
+  vardır; taraf kutusu yalnızca İzle'dedir (Oku'da yoktur). Tarafların renkleri sabit üç renktir (şarap kırmızısı, kehribar, yeşil). Bir
+  şehir adı birden çok yere uyuyorsa en tanınmış olan seçilir ("Salamanca" İspanya'dakidir); göstergelik ~3.300 yerdir, Natural Earth'te
+  olmayan küçük bir yer tanınmaz ve atlanır. İşgal adları "doğruluk turu" değildir: bazı ifadeler tartışmaya açıktır (Çin ve Çinhindi'si
+  için "Japon işgali" kukla yönetimleri de kapsar; Lüksemburg ve Alsace-Lorraine fiilen ilhak edilmişti; Arnavutluk'un 1939'daki
+  şahsi birliği bir işgal olarak adlandırılır; Zadar ve Rijeka "İtalyan işgali"dir) ve bazı işgaller **adlandırılmaz** (Macaristan 1944,
+  Kuzey İtalya 1943–45, Libya ve Tunus'taki Mihver elleri, Mançurya, Slovakya, Hırvatistan Bağımsız Devleti, Baltık'ın 1940 Sovyet işgali;
+  tam liste `corrections/ww2.json` içindeki `meta.knownGaps`). 1942 anlık görüntüsünde Burma, Java ve Sumatra hâlâ İngiliz ve Hollanda
+  çizilir (veri yıl başındaki durumu gösterir gibidir); 1945'te Varşova ve Prag verinin kendi sahibinde (Sovyetler Birliği) kalır, 1946'dan
+  sonraki işgal bölgeleri işgalcinin toprağı olarak çizilmeye devam eder.
+- Görünüm dışındaki bir olayı açınca harita yalnızca uzaklaşır; uzaklaşmak yetmezse (en geniş görünüm) merkezi olayı güvenli alana sokan
+  en kısa yoldan kaydırır, sınırların dışına çıkmaz ve aynı olayı yeniden açmak haritayı bir daha oynatmaz (yukarıya bakın).
 - Renk-körlüğü payı dardır: protan/deutan simülasyonunda iki kategori rengi arasındaki en küçük ΔE 7,7'dir (6–8 "uyarı" bandı).
   Renkler tek başına taşıyıcı değildir (lejant, ipucu ve kart kategoriyi sözle de söyler) ama bir olayın türünü yalnızca
   noktanın renginden okuyan renk-körü bir kullanıcı zeytin sarısı ile turuncuyu karıştırabilir.

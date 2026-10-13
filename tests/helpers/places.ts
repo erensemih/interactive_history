@@ -22,7 +22,11 @@ export const miniPlaces = (): PlaceIndex =>
   new PlaceIndex({
     meta: { source: { name: 'test', url: 'https://example.org', license: 'test' } },
     places: [
-      place('istanbul', 'İstanbul', 'Istanbul', 28.98, 41.01, 15_000_000, ['Konstantiniyye', 'Constantinople', 'Konstantinopolis']),
+      place('istanbul', 'İstanbul', 'Istanbul', 28.98, 41.01, 15_000_000, [
+        'Konstantiniyye',
+        'Constantinople',
+        'Konstantinopolis',
+      ]),
       place('edirne', 'Edirne', 'Edirne', 26.56, 41.68, 170_000, ['Adrianople', 'Edrine']),
       place('paris', 'Paris', 'Paris', 2.35, 48.86, 10_000_000, [], 1),
       place('tabriz', 'Tebriz', 'Tabriz', 46.3, 38.08, 1_500_000, ['Tavriz']),
@@ -53,7 +57,9 @@ export const miniCapitals = (places: PlaceIndex): CapitalIndex => {
 };
 
 /** Resolver data with the mini gazetteer and capitals added to the data of a period. */
-export const withMiniPlaces = <T extends ResolveData>(data: T): T & Required<Pick<ResolveData, 'places' | 'capitals'>> => {
+export const withMiniPlaces = <T extends ResolveData>(
+  data: T,
+): T & Required<Pick<ResolveData, 'places' | 'capitals'>> => {
   const places = miniPlaces();
   return { ...data, places, capitals: miniCapitals(places) };
 };

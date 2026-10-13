@@ -20,6 +20,18 @@ Dosyalar taşınır (kopyalanmaz): her dönem tek bir yerdedir. Arşivdeki döne
 (`tests/helpers/shipped.ts` → `archivedData('1400-1600')`; `tests/data.test.ts` arşivi de doğrular), yani arşiv bozulursa
 test kırılır.
 
+**Düzeltme katmanı bir dönemin parçasıdır.** `public/data/corrections/ww2.json` (Cliopatria'ya dokunmadan, sınır dosyasının üstüne
+yüklenirken uygulanan küçük ve belgeli düzeltmeler; README.md'de "Düzeltme katmanı") yayındaki dönemin dosyasıdır: `data:period` onu
+dönemle birlikte `data/<dönem>/corrections/` altına taşır ve geri getirir. Katmanı olmayan bir dönem (1400–1600) katmansız açılır;
+katman isteğe bağlıdır, yoksa uygulama ve doğrulayıcı onu atlar.
+
+**Yer göstergeliği döneme bağlı değildir, başkent tablosu bağlıdır.** `public/data/places.json` (Natural Earth'ten
+türetilmiş şehir listesi; README.md'de "Yer göstergeliği") dünyanın şehirlerini taşır ve bir dönemin parçası değildir:
+`data:period` ona dokunmaz, hangi dönem yayında olursa olsun `public/data/` içinde kalır. `public/data/capitals.json`
+(devletlerin yıl yıl başkentleri; "Başkentler") ise dönemin devlet kimliklerine ve yıllarına bağlıdır: `data:period` onu
+dönemle birlikte `data/<dönem>/capitals.json` altına taşır ve geri getirir. İkisi de isteğe bağlıdır; arşivdeki 1400–1600'ün
+başkent tablosu yoktur, yani o dönemde bir devletten çizgi başlarken uygulama etiket noktasına döner.
+
 ## Bir dönemi yeniden üretmek (Python)
 
 Sınır hattı döneme göre parametriktir; sonuç doğrudan arşiv klasörüne yazılabilir:
@@ -34,3 +46,16 @@ Varsayılan biçim (`--format delta`) 1800–2000 içindir: halkalar 0,01° adı
 (yaklaşık yarı boyut; gzip ile ~4× daha küçük) ve yükleyici (`src/data/borderCodec.ts`) bunları GeoJSON'a çevirir.
 Bir dönemin kendi kuralları (aynı devleti iki adla anan kayıtların birleştirilmesi) `scripts/pipeline/periods/<başlangıç>-<bitiş>.json`
 dosyasındadır; dosya yoksa kayıtlar olduğu gibi kalır.
+
+## Yer göstergeliğini yeniden üretmek (Python)
+
+Göstergelik döneme bağlı olmadığından her zaman `public/data/places.json`'a yazılır (yalnızca standart kütüphane gerekir):
+
+```bash
+python3 -I scripts/pipeline/fetch_sources.py && python3 -I scripts/pipeline/build_places.py
+python3 -I scripts/pipeline/build_places.py --check    # dosya girdilerle güncel mi
+```
+
+Girdiler: `.cache/natural-earth/ne_10m_populated_places.geojson` (kamu malı), elle tutulan `scripts/pipeline/places-extra.json`
+(kaynakta olmayan ve küçük kalan savaş yerleri) ve `places-aliases.json` (tarihsel adlar ve kaynak düzeltmeleri) ile
+`public/data/capitals.json` (başkent yerleri göstergeliğe kendiliğinden alınır). Başkent tablosu elle yazılır; üreten bir betiği yoktur.

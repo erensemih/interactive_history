@@ -571,7 +571,11 @@ describe('resolveDrawing with places (a few cities and capitals on the 1400–16
   it('the polities of the sides are in the spotlight, after the ones the model highlighted, and are framed', () => {
     const drawing = drawingOf([
       hl(1, 'kingdom-of-france'),
-      sides(1, { name: 'A', polities: ['ottoman-empire'] }, { name: 'B', polities: ['safavid-dynasty', 'kingdom-of-france'] }),
+      sides(
+        1,
+        { name: 'A', polities: ['ottoman-empire'] },
+        { name: 'B', polities: ['safavid-dynasty', 'kingdom-of-france'] },
+      ),
       route(1, [EDI, VIE]),
     ]);
     const r = resolveDrawing(drawing, resolver, 1520);

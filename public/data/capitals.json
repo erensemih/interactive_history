@@ -1,0 +1,1314 @@
+{
+  "meta": {
+    "note": "Elle derlenmiş bir tablo: devletlerin hangi şehirden yönetildiği, yıl yıl. Yalnızca olaylarda geçen devletler ve savaş çağının önemli devletleri için vardır; tabloda olmayan devletin başkenti yoktur ve uygulama onun yerine haritadaki etiket noktasını kullanır. Yıllar kapsayıcıdır ve devletin sınır verisindeki yıllarının içindedir (aradaki işgal boşlukları dahil). Başkent, anayasal başkenttir; hükümetin başka bir şehirden çalıştığı (Lahey, La Paz, Vichy...), savaş dönemi ya da geçici başkentler `note` ile belirtilir. Emin olunmayan aralıklar boş bırakılmıştır.",
+    "sources": [
+      "Genel başvuru bilgisi (ders kitapları ve atlaslar); Vikipedi makaleleri: \"List of national capitals\", \"List of historical capitals\", \"Capital city\", \"Seat of government\", \"Provisional capital\", \"List of capitals of the Republic of China\", \"Brasília\", \"Canberra\", \"New Delhi\", \"Kolkata\", \"Vichy France\", \"Free France\", \"Second Spanish Republic\", \"Nationalist Spain\"",
+      "Doğrulama: Vikipedi'ye geliştirme ortamından erişilemediği için (bağlantı reddedildi) makale başlıkları belleğe dayanır; aralıklar tek tek kaynakla sınanmadı. Emin olunmayan aralıklar bu yüzden eklenmedi."
+    ]
+  },
+  "capitals": {
+    "afghanistan": [
+      {"from": 1979, "to": 2000, "place": "kabul"}
+    ],
+    "albania": [
+      {"from": 1920, "to": 1945, "place": "tirana"}
+    ],
+    "antigua-and-barbuda": [
+      {"from": 1967, "to": 2000, "place": "saint-john-s"}
+    ],
+    "arab-republic-of-egypt": [
+      {"from": 1973, "to": 2000, "place": "cairo"}
+    ],
+    "arab-socialist-ba-ath-party": [
+      {"from": 1967, "to": 1972, "place": "damascus"}
+    ],
+    "argentine-confederation": [
+      {"from": 1834, "to": 1852, "place": "buenos-aires"},
+      {"from": 1854, "to": 1860, "place": "parana", "note": "Konfederasyon başkenti; Buenos Aires ayrı bir devletti."},
+      {"from": 1861, "to": 1929, "place": "buenos-aires"}
+    ],
+    "argentine-republic": [
+      {"from": 1930, "to": 2000, "place": "buenos-aires"}
+    ],
+    "armenia": [
+      {"from": 1918, "to": 1919, "place": "yerevan"}
+    ],
+    "ashanti-empire": [
+      {"from": 1800, "to": 1897, "place": "kumasi"}
+    ],
+    "austria-hungary": [
+      {"from": 1868, "to": 1918, "place": "vienna", "note": "İkili monarşi: Budapeşte Macar yarısının başkentiydi."}
+    ],
+    "austrian-empire": [
+      {"from": 1806, "to": 1867, "place": "vienna"}
+    ],
+    "azerbaijan-democratic-republic": [
+      {"from": 1918, "to": 1919, "place": "baku", "note": "Haziran-Eylül 1918'de hükümet Gence'deydi."}
+    ],
+    "ba-athist-syria": [
+      {"from": 1963, "to": 1966, "place": "damascus"}
+    ],
+    "bamana-empire": [
+      {"from": 1800, "to": 1821, "place": "segou"}
+    ],
+    "barbados": [
+      {"from": 1967, "to": 2000, "place": "bridgetown"}
+    ],
+    "belgian-congo": [
+      {"from": 1890, "to": 1922, "place": "boma"},
+      {"from": 1923, "to": 1962, "place": "kinshasa", "note": "Léopoldville; başkent 1923'te Boma'dan taşındı."}
+    ],
+    "belize": [
+      {"from": 1983, "to": 2000, "place": "belmopan"}
+    ],
+    "bessarabia": [
+      {"from": 1812, "to": 1813, "place": "chisinau"}
+    ],
+    "beylik-of-tunis": [
+      {"from": 1800, "to": 1884, "place": "tunis"}
+    ],
+    "bolivia": [
+      {"from": 1825, "to": 2000, "place": "sucre", "note": "Anayasal başkent; hükümet ve yasama 1899'dan beri La Paz'dadır."}
+    ],
+    "bosnia-and-herzegovina": [
+      {"from": 1992, "to": 2000, "place": "sarajevo"}
+    ],
+    "bourbon-kingdom-of-france": [
+      {"from": 1815, "to": 1847, "place": "paris"}
+    ],
+    "brazilian-republic": [
+      {"from": 1890, "to": 1959, "place": "rio-de-janeiro"},
+      {"from": 1960, "to": 1966, "place": "brasilia", "note": "21 Nisan 1960'ta açıldı."}
+    ],
+    "british-africa": [
+      {"from": 1885, "to": 1960, "place": "london", "note": "Sömürge yönetiminin merkezi (Sömürgeler Bakanlığı); her sömürgenin ayrı bir başkenti vardı."}
+    ],
+    "british-cape-colony": [
+      {"from": 1800, "to": 1884, "place": "cape-town"}
+    ],
+    "british-ceylon": [
+      {"from": 1800, "to": 1814, "place": "colombo"}
+    ],
+    "british-colonial-empire": [
+      {"from": 1800, "to": 1999, "place": "london"}
+    ],
+    "british-empire": [
+      {"from": 1800, "to": 1858, "place": "london"}
+    ],
+    "british-gold-coast": [
+      {"from": 1873, "to": 1876, "place": "cape-coast"},
+      {"from": 1877, "to": 1960, "place": "accra", "note": "Hükümet merkezi 1877'de Cape Coast'tan Accra'ya taşındı."}
+    ],
+    "british-raj": [
+      {"from": 1859, "to": 1911, "place": "kolkata", "note": "Dönemin adı: Calcutta."},
+      {"from": 1912, "to": 1930, "place": "delhi", "note": "Başkent 1911'de Delhi'ye taşındı; Yeni Delhi inşa ediliyordu."},
+      {"from": 1931, "to": 1947, "place": "new-delhi", "note": "Yeni Delhi Şubat 1931'de açıldı."}
+    ],
+    "bulgaria": [
+      {"from": 1880, "to": 1947, "place": "sofia"}
+    ],
+    "burkina-faso": [
+      {"from": 1961, "to": 2000, "place": "ouagadougou"}
+    ],
+    "burma": [
+      {"from": 1860, "to": 1885, "place": "mandalay", "note": "Konbaung krallığının son başkenti; İngilizler Kasım 1885'te aldı."},
+      {"from": 1886, "to": 1989, "place": "yangon", "note": "Dönemin adı: Rangoon."}
+    ],
+    "canada": [
+      {"from": 1932, "to": 2000, "place": "ottawa"}
+    ],
+    "central-african-republic": [
+      {"from": 1961, "to": 2000, "place": "bangui"}
+    ],
+    "centralist-mexico": [
+      {"from": 1836, "to": 1847, "place": "mexico-city"}
+    ],
+    "chechen-republic": [
+      {"from": 1992, "to": 2000, "place": "grozny"}
+    ],
+    "chiangmai": [
+      {"from": 1800, "to": 1884, "place": "chiang-mai"}
+    ],
+    "commonwealth-of-australia": [
+      {"from": 1905, "to": 1926, "place": "melbourne", "note": "Geçici hükümet merkezi; Parlamento 1927'de Canberra'ya taşındı."},
+      {"from": 1927, "to": 2000, "place": "canberra"}
+    ],
+    "commonwealth-of-dominica": [
+      {"from": 1979, "to": 2000, "place": "roseau"}
+    ],
+    "commonwealth-of-the-bahamas": [
+      {"from": 1973, "to": 2000, "place": "nassau"}
+    ],
+    "communist-cuba": [
+      {"from": 1960, "to": 2000, "place": "havana"}
+    ],
+    "communist-laos": [
+      {"from": 1976, "to": 2000, "place": "vientiane"}
+    ],
+    "communist-party-of-china": [
+      {"from": 1937, "to": 1946, "place": "yan-an", "note": "Komünist Parti'nin merkezi Ocak 1937'den Mart 1947'ye Yan'an'dı."}
+    ],
+    "confederate-states-of-america": [
+      {"from": 1861, "to": 1861, "place": "montgomery", "note": "Mayıs 1861'de Richmond'a taşındı."},
+      {"from": 1862, "to": 1865, "place": "richmond", "note": "Nisan 1865'in son günlerinde hükümet Danville'e kaçtı."}
+    ],
+    "cretan-state": [
+      {"from": 1898, "to": 1907, "place": "chania"}
+    ],
+    "cundinamarca": [
+      {"from": 1814, "to": 1814, "place": "bogota"}
+    ],
+    "czech-republic": [
+      {"from": 1992, "to": 2000, "place": "prague"}
+    ],
+    "czechoslovakia": [
+      {"from": 1919, "to": 1991, "place": "prague", "note": "1939-45'te işgal altındaydı; sürgündeki hükümet 1940-45 arası Londra'da oturdu."}
+    ],
+    "dai-viet": [
+      {"from": 1802, "to": 1833, "place": "hue"}
+    ],
+    "democratic-people-s-republic-of-korea": [
+      {"from": 1948, "to": 2000, "place": "pyongyang"}
+    ],
+    "democratic-republic-of-the-congo": [
+      {"from": 1960, "to": 2000, "place": "kinshasa"}
+    ],
+    "democratic-republic-of-vietnam": [
+      {"from": 1956, "to": 1975, "place": "hanoi"}
+    ],
+    "denmark": [
+      {"from": 1800, "to": 2000, "place": "copenhagen"}
+    ],
+    "dominican-republic": [
+      {"from": 1846, "to": 2000, "place": "santo-domingo", "note": "1936-61 arasında Ciudad Trujillo adını taşıdı."}
+    ],
+    "duchy-of-bavaria": [
+      {"from": 1800, "to": 1805, "place": "munich"}
+    ],
+    "duchy-of-brunswick": [
+      {"from": 1814, "to": 1870, "place": "brunswick"}
+    ],
+    "duchy-of-modena-and-reggio": [
+      {"from": 1815, "to": 1859, "place": "modena"}
+    ],
+    "duchy-of-nassau": [
+      {"from": 1806, "to": 1865, "place": "wiesbaden"}
+    ],
+    "duchy-of-oldenburg": [
+      {"from": 1806, "to": 1870, "place": "oldenburg"}
+    ],
+    "duchy-of-parma-and-piacenza": [
+      {"from": 1815, "to": 1859, "place": "parma"}
+    ],
+    "duchy-of-warsaw": [
+      {"from": 1809, "to": 1813, "place": "warsaw"}
+    ],
+    "durrani-empire": [
+      {"from": 1800, "to": 1826, "place": "kabul"}
+    ],
+    "dutch-east-indies": [
+      {"from": 1800, "to": 1949, "place": "jakarta", "note": "Dönemin adı: Batavia."}
+    ],
+    "east-turkestan-republic": [
+      {"from": 1945, "to": 1949, "place": "yining-city", "note": "Dönemin adı: Gulca (Yining)."}
+    ],
+    "eire": [
+      {"from": 1938, "to": 2000, "place": "dublin"}
+    ],
+    "electorate-of-baden": [
+      {"from": 1803, "to": 1805, "place": "karlsruhe"}
+    ],
+    "electorate-of-hanover": [
+      {"from": 1800, "to": 1802, "place": "hanover"}
+    ],
+    "electorate-of-hesse": [
+      {"from": 1803, "to": 1867, "place": "kassel"}
+    ],
+    "electorate-of-salzburg": [
+      {"from": 1803, "to": 1805, "place": "salzburg"}
+    ],
+    "electorate-of-saxony": [
+      {"from": 1800, "to": 1805, "place": "dresden"}
+    ],
+    "electorate-of-wurttemberg": [
+      {"from": 1803, "to": 1805, "place": "stuttgart"}
+    ],
+    "emirate-of-afghanistan": [
+      {"from": 1828, "to": 1925, "place": "kabul"}
+    ],
+    "emirate-of-bukhara": [
+      {"from": 1800, "to": 1919, "place": "bukhara"}
+    ],
+    "emirate-of-jabal-shammar": [
+      {"from": 1825, "to": 1921, "place": "hail"}
+    ],
+    "emirate-of-nejd": [
+      {"from": 1824, "to": 1890, "place": "riyadh"},
+      {"from": 1902, "to": 1925, "place": "riyadh", "note": "1891-1901 arasında Riyad Raşidîlerin (Hail) elindeydi."}
+    ],
+    "empire-of-brazil": [
+      {"from": 1822, "to": 1889, "place": "rio-de-janeiro"}
+    ],
+    "empire-of-china": [
+      {"from": 1916, "to": 1916, "place": "beijing"}
+    ],
+    "empire-of-haiti": [
+      {"from": 1806, "to": 1915, "place": "port-au-prince", "note": "1807-20 arasında kuzeyde ayrı bir Haiti Devleti/Krallığı (Cap-Haïtien) vardı."}
+    ],
+    "empire-of-japan": [
+      {"from": 1868, "to": 1945, "place": "tokyo"}
+    ],
+    "equatorial-guinea": [
+      {"from": 1969, "to": 2000, "place": "malabo"}
+    ],
+    "estado-novo": [
+      {"from": 1926, "to": 2000, "place": "lisbon"}
+    ],
+    "estonia": [
+      {"from": 1919, "to": 1939, "place": "tallinn"}
+    ],
+    "eswatini": [
+      {"from": 1969, "to": 2000, "place": "mbabane", "note": "İdari başkent; kraliyet ve yasama başkenti Lobamba."}
+    ],
+    "ethiopia": [
+      {"from": 1942, "to": 2000, "place": "addis-ababa"}
+    ],
+    "ethiopian-empire": [
+      {"from": 1900, "to": 1935, "place": "addis-ababa"}
+    ],
+    "federal-republic-of-germany": [
+      {"from": 1950, "to": 1990, "place": "bonn", "note": "Geçici başkent ve hükümet merkezi."}
+    ],
+    "federal-republic-of-nigeria": [
+      {"from": 1961, "to": 1990, "place": "lagos"},
+      {"from": 1991, "to": 2000, "place": "abuja", "note": "Başkent Aralık 1991'de Lagos'tan taşındı."}
+    ],
+    "federal-republic-of-somalia": [
+      {"from": 1960, "to": 2000, "place": "mogadishu"}
+    ],
+    "federated-republic-of-brazil": [
+      {"from": 1967, "to": 1986, "place": "brasilia"}
+    ],
+    "federated-republic-of-germany": [
+      {"from": 1991, "to": 2000, "place": "berlin", "note": "Başkent Berlin; hükümet ve meclis 1999'a kadar Bonn'da çalıştı."}
+    ],
+    "federated-republic-of-mexico": [
+      {"from": 1824, "to": 1865, "place": "mexico-city"}
+    ],
+    "federation-of-malaya": [
+      {"from": 1958, "to": 1962, "place": "kuala-lumpur"}
+    ],
+    "first-french-empire": [
+      {"from": 1805, "to": 1814, "place": "paris"}
+    ],
+    "first-mexican-empire": [
+      {"from": 1822, "to": 1823, "place": "mexico-city"}
+    ],
+    "first-spanish-republic": [
+      {"from": 1873, "to": 1876, "place": "madrid"}
+    ],
+    "former-yugoslav-republic-of-macedonia": [
+      {"from": 1992, "to": 2000, "place": "skopje"}
+    ],
+    "francoist-spain": [
+      {"from": 1939, "to": 1975, "place": "madrid"}
+    ],
+    "free-city-of-bremen": [
+      {"from": 1806, "to": 1870, "place": "bremen"}
+    ],
+    "free-city-of-danzig": [
+      {"from": 1809, "to": 1811, "place": "gdansk"},
+      {"from": 1919, "to": 1939, "place": "gdansk"}
+    ],
+    "free-city-of-frankfurt": [
+      {"from": 1820, "to": 1865, "place": "frankfurt"}
+    ],
+    "free-city-of-hamburg": [
+      {"from": 1814, "to": 1870, "place": "hamburg"}
+    ],
+    "free-city-of-krakow": [
+      {"from": 1815, "to": 1845, "place": "krakow"}
+    ],
+    "free-city-of-lubeck": [
+      {"from": 1806, "to": 1870, "place": "lubeck"}
+    ],
+    "free-french": [
+      {"from": 1940, "to": 1942, "place": "london", "note": "Özgür Fransa'nın karargâhı; Brazzaville de 'Özgür Fransa'nın başkenti' sayıldı."},
+      {"from": 1943, "to": 1944, "place": "algiers", "note": "Ulusal Kurtuluş Komitesi Mayıs 1943'te Cezayir'e geçti; hükümet Ağustos 1944'te Paris'e döndü."}
+    ],
+    "free-orange-state": [
+      {"from": 1856, "to": 1899, "place": "bloemfontein"}
+    ],
+    "french-africa": [
+      {"from": 1846, "to": 1957, "place": "paris", "note": "Sömürge yönetiminin merkezi; Fransız Batı Afrikası'nın başkenti Dakar, Ekvator Afrikası'nınki Brazzaville'di."}
+    ],
+    "french-algeria": [
+      {"from": 1830, "to": 1847, "place": "algiers"}
+    ],
+    "french-consulate": [
+      {"from": 1800, "to": 1804, "place": "paris"}
+    ],
+    "french-fifth-republic": [
+      {"from": 1958, "to": 2000, "place": "paris"}
+    ],
+    "french-fourth-republic": [
+      {"from": 1945, "to": 1957, "place": "paris"}
+    ],
+    "french-india": [
+      {"from": 1800, "to": 1847, "place": "pondicherry"}
+    ],
+    "french-louisiana": [
+      {"from": 1800, "to": 1804, "place": "new-orleans"}
+    ],
+    "french-mandate-for-syria-and-lebanon": [
+      {"from": 1920, "to": 1945, "place": "beirut", "note": "Yüksek Komiserlik Beyrut'taydı."}
+    ],
+    "french-second-republic": [
+      {"from": 1848, "to": 1852, "place": "paris"}
+    ],
+    "french-third-republic": [
+      {"from": 1871, "to": 1939, "place": "paris", "note": "1871-79'da hükümet ve meclis Versay'daydı."}
+    ],
+    "funj-sultanate": [
+      {"from": 1800, "to": 1821, "place": "sennar"}
+    ],
+    "gabon": [
+      {"from": 1961, "to": 2000, "place": "libreville"}
+    ],
+    "georgia": [
+      {"from": 1918, "to": 2000, "place": "tbilisi"}
+    ],
+    "german-confederation": [
+      {"from": 1815, "to": 1867, "place": "frankfurt", "note": "Federal Diyet (Bundestag) Frankfurt am Main'de toplanırdı."}
+    ],
+    "german-democratic-republic": [
+      {"from": 1949, "to": 1990, "place": "berlin", "note": "Doğu Berlin (Berlin'in Sovyet sektörü)."}
+    ],
+    "german-empire": [
+      {"from": 1871, "to": 1919, "place": "berlin"}
+    ],
+    "ghana": [
+      {"from": 1958, "to": 2000, "place": "accra"}
+    ],
+    "gran-colombia": [
+      {"from": 1822, "to": 1833, "place": "bogota"}
+    ],
+    "granadine-confederation": [
+      {"from": 1859, "to": 1862, "place": "bogota"}
+    ],
+    "grand-duchy-of-baden": [
+      {"from": 1806, "to": 1870, "place": "karlsruhe"}
+    ],
+    "grand-duchy-of-berg": [
+      {"from": 1806, "to": 1827, "place": "dusseldorf"}
+    ],
+    "grand-duchy-of-hesse": [
+      {"from": 1806, "to": 1870, "place": "darmstadt"}
+    ],
+    "grand-duchy-of-saxe-weimar-eisenach": [
+      {"from": 1806, "to": 1870, "place": "weimar"}
+    ],
+    "grand-duchy-of-tuscany": [
+      {"from": 1800, "to": 1848, "place": "florence"}
+    ],
+    "grand-duchy-of-wurzburg": [
+      {"from": 1806, "to": 1814, "place": "wurzburg"}
+    ],
+    "great-mongol-state": [
+      {"from": 1912, "to": 1925, "place": "ulaanbaatar", "note": "Dönemin adı: Urga (Niislel Khüree)."}
+    ],
+    "greece": [
+      {"from": 1834, "to": 2000, "place": "athens"}
+    ],
+    "greek-junta": [
+      {"from": 1967, "to": 1975, "place": "athens"}
+    ],
+    "greenland": [
+      {"from": 1800, "to": 1940, "place": "nuuk", "note": "Dönemin adı: Godthåb."}
+    ],
+    "grenada": [
+      {"from": 1976, "to": 2000, "place": "st-george-s"}
+    ],
+    "guatemala": [
+      {"from": 1840, "to": 2000, "place": "guatemala-city"}
+    ],
+    "guinea": [
+      {"from": 1960, "to": 2000, "place": "conakry"}
+    ],
+    "guyana": [
+      {"from": 1967, "to": 2000, "place": "georgetown"}
+    ],
+    "habsburg-monarchy": [
+      {"from": 1800, "to": 1805, "place": "vienna"}
+    ],
+    "haiti": [
+      {"from": 1800, "to": 1802, "place": "port-au-prince", "note": "Toussaint Louverture dönemi; kentin o zamanki adı Port-Républicain."}
+    ],
+    "helvetic-republic": [
+      {"from": 1800, "to": 1801, "place": "bern"}
+    ],
+    "holy-roman-empire": [
+      {"from": 1800, "to": 1806, "place": "vienna", "note": "Resmî bir başkenti yoktu; imparatorun oturduğu şehir. Daimî Diyet Regensburg'da toplanırdı."}
+    ],
+    "honduras": [
+      {"from": 1880, "to": 2000, "place": "tegucigalpa"}
+    ],
+    "hungarian-people-s-republic": [
+      {"from": 1950, "to": 1989, "place": "budapest"}
+    ],
+    "hungary": [
+      {"from": 1919, "to": 2000, "place": "budapest"}
+    ],
+    "hyderabad-state": [
+      {"from": 1947, "to": 1947, "place": "hyderabad"}
+    ],
+    "independent-state-of-croatia": [
+      {"from": 1941, "to": 1944, "place": "zagreb"}
+    ],
+    "iraqi-republic": [
+      {"from": 1960, "to": 2000, "place": "baghdad"}
+    ],
+    "irish-free-state": [
+      {"from": 1922, "to": 1937, "place": "dublin"}
+    ],
+    "islamic-republic-of-iran": [
+      {"from": 1979, "to": 2000, "place": "tehran"}
+    ],
+    "islamic-republic-of-pakistan": [
+      {"from": 1947, "to": 1958, "place": "karachi"},
+      {"from": 1959, "to": 1966, "place": "rawalpindi", "note": "Geçici başkent; Islamabad inşa ediliyordu."},
+      {"from": 1967, "to": 2000, "place": "islamabad"}
+    ],
+    "italian-republic": [
+      {"from": 1803, "to": 1813, "place": "milan"}
+    ],
+    "jamaica": [
+      {"from": 1963, "to": 2000, "place": "kingston"}
+    ],
+    "japan": [
+      {"from": 1953, "to": 2000, "place": "tokyo"}
+    ],
+    "joseon": [
+      {"from": 1800, "to": 1897, "place": "seoul", "note": "Dönemin adı: Hanseong (Hanyang)."}
+    ],
+    "karamanli-dynasty": [
+      {"from": 1800, "to": 1839, "place": "tripoli"}
+    ],
+    "kazakhstan": [
+      {"from": 1992, "to": 1996, "place": "almaty"},
+      {"from": 1997, "to": 2000, "place": "astana", "note": "Başkent Aralık 1997'de Akmola'ya (1998'de Astana) taşındı."}
+    ],
+    "kelantan": [
+      {"from": 1850, "to": 1904, "place": "kota-bharu"}
+    ],
+    "khanate-of-khiva": [
+      {"from": 1800, "to": 1919, "place": "khiva"}
+    ],
+    "khanate-of-kokand": [
+      {"from": 1800, "to": 1876, "place": "kokand"}
+    ],
+    "khedivate-of-egypt": [
+      {"from": 1866, "to": 1884, "place": "cairo"}
+    ],
+    "khmer-rouge": [
+      {"from": 1976, "to": 1978, "place": "phnom-penh", "note": "Kent 1975'te boşaltılmıştı; hükümet resmen Phnom Penh'teydi."}
+    ],
+    "kingdom-of-afghanistan": [
+      {"from": 1926, "to": 1972, "place": "kabul"}
+    ],
+    "kingdom-of-bahrain": [
+      {"from": 1973, "to": 2000, "place": "manama"}
+    ],
+    "kingdom-of-bavaria": [
+      {"from": 1806, "to": 1870, "place": "munich"}
+    ],
+    "kingdom-of-belgium": [
+      {"from": 1830, "to": 2000, "place": "brussels"}
+    ],
+    "kingdom-of-bhutan": [
+      {"from": 1961, "to": 2000, "place": "thimphu"}
+    ],
+    "kingdom-of-cambodia": [
+      {"from": 1956, "to": 2000, "place": "phnom-penh"}
+    ],
+    "kingdom-of-egypt": [
+      {"from": 1922, "to": 1952, "place": "cairo"}
+    ],
+    "kingdom-of-etruria": [
+      {"from": 1803, "to": 1806, "place": "florence"}
+    ],
+    "kingdom-of-france": [
+      {"from": 1800, "to": 1814, "place": "paris"}
+    ],
+    "kingdom-of-georgia": [
+      {"from": 1800, "to": 1802, "place": "tbilisi"}
+    ],
+    "kingdom-of-great-britain": [
+      {"from": 1800, "to": 2000, "place": "london"}
+    ],
+    "kingdom-of-hanover": [
+      {"from": 1803, "to": 1865, "place": "hanover"}
+    ],
+    "kingdom-of-hawai-i": [
+      {"from": 1845, "to": 1894, "place": "honolulu"}
+    ],
+    "kingdom-of-hejaz": [
+      {"from": 1916, "to": 1925, "place": "mecca"}
+    ],
+    "kingdom-of-iceland": [
+      {"from": 1918, "to": 1939, "place": "reykjavik"}
+    ],
+    "kingdom-of-imereti": [
+      {"from": 1800, "to": 1810, "place": "kutaisi"}
+    ],
+    "kingdom-of-iraq": [
+      {"from": 1932, "to": 1957, "place": "baghdad"}
+    ],
+    "kingdom-of-italy": [
+      {"from": 1862, "to": 1864, "place": "turin", "note": "İlk başkent."},
+      {"from": 1865, "to": 1870, "place": "florence", "note": "Geçici başkent."},
+      {"from": 1871, "to": 1946, "place": "rome", "note": "Eylül 1943'ten itibaren kral ve hükümet Brindisi'ye çekildi (Salerno'ya 1944'te); Roma'ya Haziran 1944'te dönüldü."}
+    ],
+    "kingdom-of-jordan": [
+      {"from": 1947, "to": 2000, "place": "amman"}
+    ],
+    "kingdom-of-laos": [
+      {"from": 1956, "to": 1975, "place": "vientiane", "note": "İdari başkent; kraliyet başkenti Luang Prabang."}
+    ],
+    "kingdom-of-libya": [
+      {"from": 1953, "to": 1968, "place": "tripoli", "note": "Tripoli ve Bingazi ortak başkentti."}
+    ],
+    "kingdom-of-lithuania": [
+      {"from": 1919, "to": 1939, "place": "kaunas", "note": "Geçici başkent; hukuken başkent Vilnius idi ama 1920-39 arası Polonya'daydı."}
+    ],
+    "kingdom-of-luang-phrabang": [
+      {"from": 1800, "to": 1894, "place": "luang-prabang"}
+    ],
+    "kingdom-of-naples-napoleonic": [
+      {"from": 1800, "to": 1814, "place": "naples"}
+    ],
+    "kingdom-of-norway": [
+      {"from": 1814, "to": 2000, "place": "oslo", "note": "1925'e kadar Christiania (Kristiania) adını taşıdı."}
+    ],
+    "kingdom-of-portugal": [
+      {"from": 1800, "to": 1807, "place": "lisbon"},
+      {"from": 1808, "to": 1820, "place": "rio-de-janeiro", "note": "Saray Napolyon istilası üzerine Brezilya'ya taşındı; 1821'de Lizbon'a dönüldü."},
+      {"from": 1821, "to": 1911, "place": "lisbon"}
+    ],
+    "kingdom-of-prussia": [
+      {"from": 1800, "to": 1805, "place": "berlin"},
+      {"from": 1806, "to": 1809, "place": "kaliningrad", "note": "Jena'dan sonra saray Königsberg'e (1807'de Memel'e) çekildi; Aralık 1809'da Berlin'e dönüldü."},
+      {"from": 1810, "to": 1863, "place": "berlin"}
+    ],
+    "kingdom-of-sarawak": [
+      {"from": 1842, "to": 1946, "place": "kuching"}
+    ],
+    "kingdom-of-sardinia": [
+      {"from": 1806, "to": 1814, "place": "cagliari", "note": "Piyemonte Fransız elindeyken saray Sardinya'ya çekilmişti."},
+      {"from": 1815, "to": 1861, "place": "turin"}
+    ],
+    "kingdom-of-saudi-arabia": [
+      {"from": 1936, "to": 2000, "place": "riyadh"}
+    ],
+    "kingdom-of-saxony": [
+      {"from": 1806, "to": 1870, "place": "dresden"}
+    ],
+    "kingdom-of-spain": [
+      {"from": 1800, "to": 2000, "place": "madrid"}
+    ],
+    "kingdom-of-sweden": [
+      {"from": 1905, "to": 2000, "place": "stockholm"}
+    ],
+    "kingdom-of-thailand": [
+      {"from": 1932, "to": 2000, "place": "bangkok"}
+    ],
+    "kingdom-of-the-two-sicilies": [
+      {"from": 1815, "to": 1860, "place": "naples"}
+    ],
+    "kingdom-of-westphalia": [
+      {"from": 1809, "to": 1813, "place": "kassel"}
+    ],
+    "kingdom-of-wurttemberg": [
+      {"from": 1806, "to": 1870, "place": "stuttgart"}
+    ],
+    "korean-empire": [
+      {"from": 1898, "to": 1910, "place": "seoul"}
+    ],
+    "kosovo": [
+      {"from": 2000, "to": 2000, "place": "pristina"}
+    ],
+    "kuomintang": [
+      {"from": 1917, "to": 1926, "place": "guangzhou"}
+    ],
+    "kuwait": [
+      {"from": 1800, "to": 2000, "place": "kuwait-city"}
+    ],
+    "kyrgyzstan": [
+      {"from": 1992, "to": 2000, "place": "bishkek"}
+    ],
+    "lebanon": [
+      {"from": 1944, "to": 2000, "place": "beirut"}
+    ],
+    "lesotho": [
+      {"from": 1967, "to": 2000, "place": "maseru"}
+    ],
+    "libyan-arab-republic": [
+      {"from": 1969, "to": 2000, "place": "tripoli"}
+    ],
+    "ligurian-republic": [
+      {"from": 1803, "to": 1814, "place": "genoa"}
+    ],
+    "los-altos": [
+      {"from": 1840, "to": 1841, "place": "quetzaltenango"}
+    ],
+    "luxembourg": [
+      {"from": 1890, "to": 2000, "place": "luxembourg"}
+    ],
+    "madagascar": [
+      {"from": 1960, "to": 2000, "place": "antananarivo"}
+    ],
+    "mahdist-state": [
+      {"from": 1890, "to": 1899, "place": "omdurman"}
+    ],
+    "malawi": [
+      {"from": 1967, "to": 1974, "place": "zomba"},
+      {"from": 1975, "to": 2000, "place": "lilongwe"}
+    ],
+    "malaysia": [
+      {"from": 1963, "to": 2000, "place": "kuala-lumpur", "note": "Hükümet merkezi 1999'dan başlayarak Putrajaya'ya taşındı."}
+    ],
+    "mali-federation": [
+      {"from": 1960, "to": 2000, "place": "bamako"}
+    ],
+    "malta": [
+      {"from": 1967, "to": 2000, "place": "valletta"}
+    ],
+    "mauritania": [
+      {"from": 1961, "to": 2000, "place": "nouakchott"}
+    ],
+    "mauritius": [
+      {"from": 1969, "to": 2000, "place": "port-louis"}
+    ],
+    "merina-kingdom": [
+      {"from": 1800, "to": 1897, "place": "antananarivo"}
+    ],
+    "mexico": [
+      {"from": 1868, "to": 2000, "place": "mexico-city"}
+    ],
+    "monaco": [
+      {"from": 1814, "to": 2000, "place": "monaco"}
+    ],
+    "mongolia": [
+      {"from": 1992, "to": 2000, "place": "ulaanbaatar"}
+    ],
+    "mongolian-people-s-republic": [
+      {"from": 1926, "to": 1991, "place": "ulaanbaatar"}
+    ],
+    "montenegro": [
+      {"from": 1853, "to": 1915, "place": "cetinje"}
+    ],
+    "morocco": [
+      {"from": 1912, "to": 2000, "place": "rabat", "note": "Protektora döneminde (1912-56) Fransız yönetimi Rabat'tan çalıştı."}
+    ],
+    "mozambique": [
+      {"from": 1976, "to": 2000, "place": "maputo"}
+    ],
+    "mughal-empire": [
+      {"from": 1800, "to": 1858, "place": "delhi"}
+    ],
+    "muhammad-ali-dynasty": [
+      {"from": 1805, "to": 1865, "place": "cairo"}
+    ],
+    "namibia": [
+      {"from": 1990, "to": 2000, "place": "windhoek"}
+    ],
+    "natalia-republic": [
+      {"from": 1840, "to": 1910, "place": "pietermaritzburg"}
+    ],
+    "nawab-of-awadh": [
+      {"from": 1800, "to": 1802, "place": "lucknow"}
+    ],
+    "nazi-germany": [
+      {"from": 1936, "to": 1945, "place": "berlin", "note": "Cliopatria'nın satırları 1944'te biter; 1945 satırı düzeltme katmanından (corrections/ww2.json) gelir."}
+    ],
+    "nepal": [
+      {"from": 1800, "to": 2000, "place": "kathmandu"}
+    ],
+    "netherlands": [
+      {"from": 1815, "to": 2000, "place": "amsterdam", "note": "Anayasal başkent; hükümet ve parlamento Lahey'de oturur."}
+    ],
+    "new-zealand": [
+      {"from": 1948, "to": 2000, "place": "wellington"}
+    ],
+    "nguyen-dynasty": [
+      {"from": 1802, "to": 1884, "place": "hue"}
+    ],
+    "north-german-confederation": [
+      {"from": 1868, "to": 1870, "place": "berlin"}
+    ],
+    "north-yemen": [
+      {"from": 1919, "to": 1989, "place": "sanaa", "note": "1948-62'de İmam Ahmed Taiz'de oturdu."}
+    ],
+    "oriental-republic-of-uruguay": [
+      {"from": 1828, "to": 2000, "place": "montevideo"}
+    ],
+    "ottoman-empire": [
+      {"from": 1800, "to": 1923, "place": "istanbul", "note": "Osmanlıca adı: Konstantiniyye (Dersaadet)."}
+    ],
+    "ottoman-tripolitania": [
+      {"from": 1840, "to": 1911, "place": "tripoli"}
+    ],
+    "pahlavi-dynasty": [
+      {"from": 1924, "to": 1978, "place": "tehran"}
+    ],
+    "panthay-rebellion": [
+      {"from": 1856, "to": 1872, "place": "dali"}
+    ],
+    "papal-states": [
+      {"from": 1800, "to": 1870, "place": "rome"}
+    ],
+    "papua-new-guinea": [
+      {"from": 1946, "to": 2000, "place": "port-moresby"}
+    ],
+    "paraguay": [
+      {"from": 1811, "to": 2000, "place": "asuncion"}
+    ],
+    "people-s-democratic-republic-of-algeria": [
+      {"from": 1963, "to": 2000, "place": "algiers"}
+    ],
+    "people-s-democratic-republic-of-yemen": [
+      {"from": 1969, "to": 1989, "place": "aden"}
+    ],
+    "people-s-republic-of-angola": [
+      {"from": 1976, "to": 2000, "place": "luanda"}
+    ],
+    "people-s-republic-of-bangladesh": [
+      {"from": 1973, "to": 2000, "place": "dhaka"}
+    ],
+    "people-s-republic-of-bulgaria": [
+      {"from": 1948, "to": 1990, "place": "sofia"}
+    ],
+    "people-s-republic-of-china": [
+      {"from": 1950, "to": 2000, "place": "beijing"}
+    ],
+    "people-s-republic-of-kampuchea": [
+      {"from": 1979, "to": 1995, "place": "phnom-penh"}
+    ],
+    "people-s-republic-of-zanzibar": [
+      {"from": 1856, "to": 1889, "place": "zanzibar-city", "note": "Zanzibar Sultanlığı'nın merkezi (Stone Town)."}
+    ],
+    "people-s-socialist-republic-of-albania": [
+      {"from": 1946, "to": 1990, "place": "tirana"}
+    ],
+    "portugal": [
+      {"from": 1976, "to": 2000, "place": "lisbon"}
+    ],
+    "portuguese-empire": [
+      {"from": 1800, "to": 1807, "place": "lisbon"},
+      {"from": 1808, "to": 1820, "place": "rio-de-janeiro", "note": "Saray Brezilya'dayken."},
+      {"from": 1821, "to": 1823, "place": "lisbon"}
+    ],
+    "portuguese-republic": [
+      {"from": 1911, "to": 1925, "place": "lisbon"}
+    ],
+    "principality-of-andorra": [
+      {"from": 1815, "to": 2000, "place": "andorra-la-vella"}
+    ],
+    "principality-of-liechtenstein": [
+      {"from": 1800, "to": 1814, "place": "vaduz"}
+    ],
+    "principality-of-moldavia": [
+      {"from": 1800, "to": 1858, "place": "iasi"}
+    ],
+    "principality-of-regensberg": [
+      {"from": 1806, "to": 1813, "place": "regensburg"}
+    ],
+    "principality-of-wallachia": [
+      {"from": 1800, "to": 1858, "place": "bucharest"}
+    ],
+    "provisional-priamurye-government": [
+      {"from": 1922, "to": 1923, "place": "vladivostok"}
+    ],
+    "qajar-dynasty": [
+      {"from": 1800, "to": 1923, "place": "tehran"}
+    ],
+    "qatar-protectorate": [
+      {"from": 1947, "to": 1955, "place": "doha"}
+    ],
+    "qing-dynasty": [
+      {"from": 1800, "to": 1900, "place": "beijing"},
+      {"from": 1901, "to": 1901, "place": "xi-an", "note": "Boksör olayları sırasında saray Ekim 1900-Ocak 1902'de Xi'an'da sürgündeydi."},
+      {"from": 1902, "to": 1911, "place": "beijing"}
+    ],
+    "rattanakosin-kingdom": [
+      {"from": 1800, "to": 1931, "place": "bangkok"}
+    ],
+    "regency-of-algiers": [
+      {"from": 1800, "to": 1829, "place": "algiers"}
+    ],
+    "republic-of-afghanistan": [
+      {"from": 1973, "to": 1978, "place": "kabul"}
+    ],
+    "republic-of-albania": [
+      {"from": 1991, "to": 2000, "place": "tirana"}
+    ],
+    "republic-of-armenia": [
+      {"from": 1992, "to": 2000, "place": "yerevan"}
+    ],
+    "republic-of-austria": [
+      {"from": 1919, "to": 1937, "place": "vienna"}
+    ],
+    "republic-of-azerbaijan": [
+      {"from": 1992, "to": 2000, "place": "baku"}
+    ],
+    "republic-of-belarus": [
+      {"from": 1992, "to": 2000, "place": "minsk"}
+    ],
+    "republic-of-benin": [
+      {"from": 1961, "to": 2000, "place": "porto-novo", "note": "Resmî başkent; hükümet Cotonou'da oturur."}
+    ],
+    "republic-of-botswana": [
+      {"from": 1967, "to": 2000, "place": "gaborone"}
+    ],
+    "republic-of-brazil": [
+      {"from": 1987, "to": 2000, "place": "brasilia"}
+    ],
+    "republic-of-bulgaria": [
+      {"from": 1991, "to": 2000, "place": "sofia"}
+    ],
+    "republic-of-burundi": [
+      {"from": 1963, "to": 2000, "place": "bujumbura"}
+    ],
+    "republic-of-cabo-verde": [
+      {"from": 1976, "to": 2000, "place": "praia"}
+    ],
+    "republic-of-cameroon": [
+      {"from": 1960, "to": 2000, "place": "yaounde"}
+    ],
+    "republic-of-chad": [
+      {"from": 1961, "to": 2000, "place": "n-djamena"}
+    ],
+    "republic-of-chile": [
+      {"from": 1812, "to": 2000, "place": "santiago"}
+    ],
+    "republic-of-china": [
+      {"from": 1912, "to": 1927, "place": "beijing", "note": "Pekin hükümeti; Ocak-Nisan 1912'de geçici hükümet Nanjing'deydi."},
+      {"from": 1928, "to": 1937, "place": "nanjing", "note": "Ulusal Hükümet Nanjing'de; Aralık 1937'de kent düşünce hükümet çekildi."},
+      {"from": 1938, "to": 1945, "place": "chongqing", "note": "Savaş dönemi başkenti: hükümet Kasım 1937'de Chongqing'i başkent ilan etti; 1938'in bir bölümünde Wuhan'dan da yönetildi."},
+      {"from": 1946, "to": 1948, "place": "nanjing", "note": "Hükümet 1946'da Nanjing'e döndü."},
+      {"from": 1949, "to": 1949, "place": "guangzhou", "note": "Geçici başkent: 1949'da hükümet sırasıyla Guangzhou, Chongqing, Chengdu ve Aralık'ta Taipei'ye taşındı."},
+      {"from": 1950, "to": 2000, "place": "taipei", "note": "Hükümet merkezi; hukuken başkent Nanjing sayılır."}
+    ],
+    "republic-of-colombia": [
+      {"from": 1866, "to": 2000, "place": "bogota"}
+    ],
+    "republic-of-costa-rica": [
+      {"from": 1840, "to": 2000, "place": "san-jose-cr"}
+    ],
+    "republic-of-cote-d-ivoire": [
+      {"from": 1961, "to": 1982, "place": "abidjan"},
+      {"from": 1983, "to": 2000, "place": "yamoussoukro", "note": "Resmî başkent 1983'ten beri; hükümet Abidjan'da çalışır."}
+    ],
+    "republic-of-croatia": [
+      {"from": 1992, "to": 2000, "place": "zagreb"}
+    ],
+    "republic-of-cuba": [
+      {"from": 1905, "to": 1959, "place": "havana"}
+    ],
+    "republic-of-cyprus": [
+      {"from": 1961, "to": 2000, "place": "nicosia"}
+    ],
+    "republic-of-djibouti": [
+      {"from": 1979, "to": 2000, "place": "djibouti"}
+    ],
+    "republic-of-ecuador": [
+      {"from": 1834, "to": 2000, "place": "quito"}
+    ],
+    "republic-of-egypt": [
+      {"from": 1953, "to": 1957, "place": "cairo"}
+    ],
+    "republic-of-el-salvador": [
+      {"from": 1860, "to": 2000, "place": "san-salvador"}
+    ],
+    "republic-of-estonia": [
+      {"from": 1992, "to": 2000, "place": "tallinn"}
+    ],
+    "republic-of-fiji": [
+      {"from": 1973, "to": 2000, "place": "suva"}
+    ],
+    "republic-of-finland": [
+      {"from": 1918, "to": 2000, "place": "helsinki"}
+    ],
+    "republic-of-guinea-bissau": [
+      {"from": 1973, "to": 2000, "place": "bissau"}
+    ],
+    "republic-of-haiti": [
+      {"from": 1936, "to": 2000, "place": "port-au-prince"}
+    ],
+    "republic-of-hawai-i": [
+      {"from": 1895, "to": 1897, "place": "honolulu"}
+    ],
+    "republic-of-iceland": [
+      {"from": 1946, "to": 2000, "place": "reykjavik"}
+    ],
+    "republic-of-india": [
+      {"from": 1947, "to": 2000, "place": "new-delhi"}
+    ],
+    "republic-of-indonesia": [
+      {"from": 1946, "to": 1949, "place": "yogyakarta", "note": "Bağımsızlık savaşı sırasında cumhuriyetin başkenti; Aralık 1949'da Cakarta'ya dönüldü."},
+      {"from": 1950, "to": 2000, "place": "jakarta"}
+    ],
+    "republic-of-italy": [
+      {"from": 1946, "to": 2000, "place": "rome"}
+    ],
+    "republic-of-kenya": [
+      {"from": 1963, "to": 2000, "place": "nairobi"}
+    ],
+    "republic-of-korea": [
+      {"from": 1948, "to": 2000, "place": "seoul"}
+    ],
+    "republic-of-latvia": [
+      {"from": 1920, "to": 2000, "place": "riga"}
+    ],
+    "republic-of-liberia": [
+      {"from": 1848, "to": 2000, "place": "monrovia"}
+    ],
+    "republic-of-lithuania": [
+      {"from": 1990, "to": 2000, "place": "vilnius"}
+    ],
+    "republic-of-moldova": [
+      {"from": 1992, "to": 2000, "place": "chisinau"}
+    ],
+    "republic-of-new-granada": [
+      {"from": 1834, "to": 1858, "place": "bogota"}
+    ],
+    "republic-of-nicaragua": [
+      {"from": 1858, "to": 2000, "place": "managua"}
+    ],
+    "republic-of-panama": [
+      {"from": 1905, "to": 2000, "place": "panama-city"}
+    ],
+    "republic-of-peru": [
+      {"from": 1822, "to": 2000, "place": "lima"}
+    ],
+    "republic-of-poland": [
+      {"from": 1953, "to": 2000, "place": "warsaw"}
+    ],
+    "republic-of-ragusa": [
+      {"from": 1800, "to": 1808, "place": "dubrovnik"}
+    ],
+    "republic-of-rwanda": [
+      {"from": 1963, "to": 2000, "place": "kigali"}
+    ],
+    "republic-of-senegal": [
+      {"from": 1961, "to": 2000, "place": "dakar"}
+    ],
+    "republic-of-singapore": [
+      {"from": 1967, "to": 2000, "place": "singapore"}
+    ],
+    "republic-of-slovenia": [
+      {"from": 1992, "to": 2000, "place": "ljubljana"}
+    ],
+    "republic-of-sudan": [
+      {"from": 1956, "to": 2000, "place": "khartoum"}
+    ],
+    "republic-of-suriname": [
+      {"from": 1976, "to": 2000, "place": "paramaribo"}
+    ],
+    "republic-of-syria": [
+      {"from": 1961, "to": 1962, "place": "damascus"}
+    ],
+    "republic-of-tajikistan": [
+      {"from": 1992, "to": 2000, "place": "dushanbe"}
+    ],
+    "republic-of-the-congo": [
+      {"from": 1961, "to": 2000, "place": "brazzaville"}
+    ],
+    "republic-of-the-gambia": [
+      {"from": 1967, "to": 2000, "place": "banjul"}
+    ],
+    "republic-of-the-niger": [
+      {"from": 1961, "to": 2000, "place": "niamey"}
+    ],
+    "republic-of-the-philippines": [
+      {"from": 1947, "to": 1947, "place": "manila"},
+      {"from": 1948, "to": 1975, "place": "quezon-city", "note": "1948-76 arasında resmî başkent Quezon City'ydi."},
+      {"from": 1976, "to": 2000, "place": "manila"}
+    ],
+    "republic-of-trinidad-and-tobago": [
+      {"from": 1963, "to": 2000, "place": "port-of-spain"}
+    ],
+    "republic-of-tunisia": [
+      {"from": 1956, "to": 2000, "place": "tunis"}
+    ],
+    "republic-of-turkey": [
+      {"from": 1924, "to": 2000, "place": "ankara"}
+    ],
+    "republic-of-uganda": [
+      {"from": 1963, "to": 2000, "place": "kampala"}
+    ],
+    "republic-of-uzbekistan": [
+      {"from": 1992, "to": 2000, "place": "tashkent"}
+    ],
+    "republic-of-vietnam": [
+      {"from": 1956, "to": 1975, "place": "ho-chi-minh-city", "note": "Dönemin adı: Saygon."}
+    ],
+    "republic-of-yemen": [
+      {"from": 1990, "to": 2000, "place": "sanaa"}
+    ],
+    "republic-of-zimbabwe": [
+      {"from": 1983, "to": 2000, "place": "harare"}
+    ],
+    "rhodesia": [
+      {"from": 1967, "to": 1978, "place": "harare", "note": "Dönemin adı: Salisbury."}
+    ],
+    "rio-de-la-plata": [
+      {"from": 1811, "to": 1833, "place": "buenos-aires"}
+    ],
+    "romania": [
+      {"from": 1862, "to": 1916, "place": "bucharest"},
+      {"from": 1917, "to": 1918, "place": "iasi", "note": "Bükreş Aralık 1916'da düştü; hükümet Kasım 1918'e kadar Iași'deydi."},
+      {"from": 1919, "to": 2000, "place": "bucharest"}
+    ],
+    "russian-empire": [
+      {"from": 1800, "to": 1916, "place": "saint-petersburg", "note": "1914'te adı Petrograd oldu; Moskova taç giyme şehriydi."}
+    ],
+    "russian-federation": [
+      {"from": 1992, "to": 2000, "place": "moscow"}
+    ],
+    "russian-republic": [
+      {"from": 1917, "to": 1917, "place": "saint-petersburg", "note": "Petrograd."},
+      {"from": 1918, "to": 1919, "place": "moscow", "note": "Hükümet Mart 1918'de Petrograd'dan Moskova'ya taşındı."}
+    ],
+    "saint-kitts": [
+      {"from": 1967, "to": 2000, "place": "basseterre"}
+    ],
+    "saint-lucia": [
+      {"from": 1979, "to": 2000, "place": "castries"}
+    ],
+    "saint-vincent": [
+      {"from": 1969, "to": 2000, "place": "kingstown"}
+    ],
+    "sao-tome-and-principe": [
+      {"from": 1976, "to": 2000, "place": "sao-tome"}
+    ],
+    "second-french-empire": [
+      {"from": 1853, "to": 1870, "place": "paris"}
+    ],
+    "second-mexican-empire": [
+      {"from": 1865, "to": 1867, "place": "mexico-city"}
+    ],
+    "second-polish-republic": [
+      {"from": 1919, "to": 1939, "place": "warsaw"}
+    ],
+    "second-republic-of-austria": [
+      {"from": 1946, "to": 2000, "place": "vienna"}
+    ],
+    "second-spanish-republic": [
+      {"from": 1932, "to": 1936, "place": "madrid", "note": "Kasım 1936'da hükümet Valensiya'ya çekildi."},
+      {"from": 1937, "to": 1937, "place": "valencia-es", "note": "Kasım 1936'dan Ekim 1937'ye hükümet merkezi."},
+      {"from": 1938, "to": 1938, "place": "barcelona", "note": "Ekim 1937'den Ocak 1939'a hükümet merkezi."}
+    ],
+    "second-syrian-republic": [
+      {"from": 1946, "to": 1957, "place": "damascus"}
+    ],
+    "septinsular-republic": [
+      {"from": 1800, "to": 1819, "place": "corfu"}
+    ],
+    "serbia": [
+      {"from": 1818, "to": 1840, "place": "kragujevac"},
+      {"from": 1841, "to": 1914, "place": "belgrade"},
+      {"from": 1915, "to": 1915, "place": "nis", "note": "1914 sonbaharından Kasım 1915'e savaş dönemi başkenti."},
+      {"from": 1918, "to": 1918, "place": "belgrade"}
+    ],
+    "serbia-montenegro": [
+      {"from": 1992, "to": 2000, "place": "belgrade"}
+    ],
+    "seychelles": [
+      {"from": 1976, "to": 2000, "place": "victoria-sc"}
+    ],
+    "sierra-leone": [
+      {"from": 1961, "to": 2000, "place": "freetown"}
+    ],
+    "sikh-empire": [
+      {"from": 1800, "to": 1848, "place": "lahore"}
+    ],
+    "slovakia": [
+      {"from": 1992, "to": 2000, "place": "bratislava"}
+    ],
+    "socialist-federal-republic-of-yugoslavia": [
+      {"from": 1946, "to": 1991, "place": "belgrade"}
+    ],
+    "socialist-republic-of-romania": [
+      {"from": 1948, "to": 1989, "place": "bucharest"}
+    ],
+    "socialist-republic-of-vietnam": [
+      {"from": 1976, "to": 2000, "place": "hanoi"}
+    ],
+    "sokoto-caliphate": [
+      {"from": 1809, "to": 1904, "place": "sokoto"}
+    ],
+    "solomon-islands": [
+      {"from": 1979, "to": 2000, "place": "honiara"}
+    ],
+    "south-africa": [
+      {"from": 1932, "to": 2000, "place": "pretoria", "note": "Yürütme başkenti; yasama başkenti Cape Town, yargı başkenti Bloemfontein."}
+    ],
+    "south-african-republic": [
+      {"from": 1860, "to": 1899, "place": "pretoria"}
+    ],
+    "spanish-empire": [
+      {"from": 1800, "to": 1879, "place": "madrid"}
+    ],
+    "spanish-nationalists": [
+      {"from": 1936, "to": 1938, "place": "burgos", "note": "Franco'nun karargâhı 1936-37'de Salamanca'daydı; Burgos devlet yönetiminin merkeziydi."}
+    ],
+    "sri-lanka": [
+      {"from": 1948, "to": 2000, "place": "colombo", "note": "Yasama başkenti Sri Jayawardenepura Kotte (1982'den)."}
+    ],
+    "state-of-buenos-aires": [
+      {"from": 1853, "to": 1860, "place": "buenos-aires"}
+    ],
+    "state-of-eritrea": [
+      {"from": 1992, "to": 2000, "place": "asmara"}
+    ],
+    "state-of-israel": [
+      {"from": 1948, "to": 1948, "place": "tel-aviv", "note": "Geçici hükümet merkezi; Knesset Aralık 1949'da Kudüs'e taşındı."},
+      {"from": 1949, "to": 2000, "place": "jerusalem", "note": "İsrail'in ilan ettiği başkent; Kudüs'ün statüsü uluslararası alanda tartışmalıdır."}
+    ],
+    "state-of-kuwait": [
+      {"from": 1961, "to": 1989, "place": "kuwait-city"}
+    ],
+    "state-of-qatar": [
+      {"from": 1973, "to": 2000, "place": "doha"}
+    ],
+    "sultan-of-yogyakarta": [
+      {"from": 1800, "to": 1829, "place": "yogyakarta"}
+    ],
+    "sultanate-of-aceh": [
+      {"from": 1800, "to": 1959, "place": "banda-aceh"}
+    ],
+    "sultanate-of-brunei": [
+      {"from": 1800, "to": 2000, "place": "bandar-seri-begawan", "note": "1970'e kadar Brunei Town adını taşıdı."}
+    ],
+    "sultanate-of-darfur": [
+      {"from": 1800, "to": 1876, "place": "al-fashir"}
+    ],
+    "sultanate-of-kedah": [
+      {"from": 1800, "to": 1910, "place": "alor-setar"}
+    ],
+    "sultanate-of-malacca": [
+      {"from": 1800, "to": 1861, "place": "melaka-city"}
+    ],
+    "sultanate-of-muscat-and-oman": [
+      {"from": 1900, "to": 1946, "place": "muscat"}
+    ],
+    "sultanate-of-oman": [
+      {"from": 1800, "to": 2000, "place": "muscat"}
+    ],
+    "sultanate-of-zanzibar": [
+      {"from": 1963, "to": 1966, "place": "zanzibar-city"}
+    ],
+    "surakarta-sunanate": [
+      {"from": 1800, "to": 1829, "place": "surakarta"}
+    ],
+    "swedish-empire": [
+      {"from": 1800, "to": 1814, "place": "stockholm"}
+    ],
+    "swiss-confederation": [
+      {"from": 1815, "to": 2000, "place": "bern", "note": "Federal şehir; resmî bir başkent adı yoktur."}
+    ],
+    "syria": [
+      {"from": 1973, "to": 2000, "place": "damascus"}
+    ],
+    "taiping-heavenly-kingdom": [
+      {"from": 1853, "to": 1864, "place": "nanjing", "note": "Taiping'in başkent adı: Tianjing (Cennet Başkent)."}
+    ],
+    "taliban": [
+      {"from": 1996, "to": 2000, "place": "kabul", "note": "Kabul resmî başkent; Molla Ömer'in fiilî merkezi Kandahar'dı."}
+    ],
+    "talpur-dynasty": [
+      {"from": 1820, "to": 1894, "place": "hyderabad-pk", "note": "Sind Talpurlarının başkenti Haydarabad."}
+    ],
+    "tangier-international-zone": [
+      {"from": 1912, "to": 1957, "place": "tangier"}
+    ],
+    "tanzania": [
+      {"from": 1961, "to": 1995, "place": "dar-es-salaam", "note": "Dodoma 1973'te başkent ilan edildi ama devlet fiilen Dar es Salaam'dan yönetildi."},
+      {"from": 1996, "to": 2000, "place": "dodoma", "note": "Meclis 1996'da Dodoma'ya taşındı."}
+    ],
+    "tibet": [
+      {"from": 1912, "to": 1952, "place": "lhasa"}
+    ],
+    "togo": [
+      {"from": 1960, "to": 2000, "place": "lome"}
+    ],
+    "tokugawa-shogunate": [
+      {"from": 1800, "to": 1869, "place": "tokyo", "note": "Şogunluğun merkezi Edo'ydu; imparatorluk sarayı Kyoto'daydı."}
+    ],
+    "turkish-republic-of-northern-cyprus": [
+      {"from": 1976, "to": 2000, "place": "nicosia", "note": "Kuzey Lefkoşa."}
+    ],
+    "turkmenistan": [
+      {"from": 1992, "to": 2000, "place": "ashgabat"}
+    ],
+    "ukraine": [
+      {"from": 1992, "to": 2000, "place": "kyiv"}
+    ],
+    "union-of-myanmar": [
+      {"from": 1990, "to": 2000, "place": "yangon", "note": "Dönemin adı: Rangoon."}
+    ],
+    "union-of-soviet-socialist-republics": [
+      {"from": 1922, "to": 1991, "place": "moscow"}
+    ],
+    "unitary-state-of-brazil": [
+      {"from": 1932, "to": 1945, "place": "rio-de-janeiro"}
+    ],
+    "united-arab-emirates": [
+      {"from": 1973, "to": 2000, "place": "abu-dhabi"}
+    ],
+    "united-arab-republic": [
+      {"from": 1958, "to": 1972, "place": "cairo"}
+    ],
+    "united-kingdoms-of-sweden-and-norway": [
+      {"from": 1815, "to": 1904, "place": "stockholm", "note": "Norveç'in kendi başkenti Christiania idi."}
+    ],
+    "united-provinces-of-central-america": [
+      {"from": 1824, "to": 1833, "place": "guatemala-city"},
+      {"from": 1834, "to": 1839, "place": "san-salvador", "note": "Federal başkent 1834'te Guatemala'dan taşındı."}
+    ],
+    "united-states-of-america": [
+      {"from": 1800, "to": 2000, "place": "washington"}
+    ],
+    "united-states-of-colombia": [
+      {"from": 1863, "to": 1865, "place": "bogota"}
+    ],
+    "vanuatu": [
+      {"from": 1983, "to": 2000, "place": "port-vila"}
+    ],
+    "venezuela": [
+      {"from": 1834, "to": 2000, "place": "caracas"}
+    ],
+    "vichy-france": [
+      {"from": 1940, "to": 1943, "place": "vichy", "note": "Hükümet merkezi (fiilî başkent); Paris Alman işgalindeydi."}
+    ],
+    "vientiane": [
+      {"from": 1800, "to": 1827, "place": "vientiane"}
+    ],
+    "weimar-republic": [
+      {"from": 1920, "to": 1935, "place": "berlin", "note": "Ulusal Meclis 1919'da Weimar'da toplanmıştı; hükümet Berlin'de oturdu."}
+    ],
+    "yugoslavia": [
+      {"from": 1919, "to": 1945, "place": "belgrade", "note": "Sürgündeki hükümet 1941-45'te Londra'da (ve Kahire'de) oturdu."}
+    ],
+    "zaire": [
+      {"from": 1973, "to": 1995, "place": "kinshasa"}
+    ],
+    "zambia": [
+      {"from": 1967, "to": 2000, "place": "lusaka"}
+    ],
+    "zimbabwe-rhodesia": [
+      {"from": 1979, "to": 1982, "place": "harare", "note": "Dönemin adı: Salisbury."}
+    ]
+  }
+}

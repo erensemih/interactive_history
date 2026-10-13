@@ -235,9 +235,12 @@ describe('the map tools', () => {
 
   it('a route stop is a city by any of its names, an event, a point or a polity (its capital); a route needs two', () => {
     const { plan, tool } = setup();
-    expect(tool('route').execute({ via: ['Constantinople', 'mohac-1526', '48.2, 16.4', 'kingdom-of-france'], type: 'migration' })).toBe(
-      'tamam',
-    );
+    expect(
+      tool('route').execute({
+        via: ['Constantinople', 'mohac-1526', '48.2, 16.4', 'kingdom-of-france'],
+        type: 'migration',
+      }),
+    ).toBe('tamam');
     expect(plan.drawingAt(1).routes[0]!.via.map((v) => v.kind)).toEqual(['city', 'event', 'point', 'polity']);
     expect(tool('route').execute({ step: 2, via: ['Roma'], type: 'advance' })).toMatch(/^atlandı/);
     expect(tool('route').execute({ step: 2, via: ['Roma', 'Roma'], type: 'advance' })).toMatch(/^atlandı/); // one stop twice
@@ -257,7 +260,18 @@ describe('the map tools', () => {
 
   it('a route has at most eight stops, and the same route asked twice is one route', () => {
     const { plan, tool } = setup();
-    const names = ['Edirne', 'Budapeşte', 'Viyana', 'Roma', 'Paris', 'Kahire', 'Tebriz', 'İstanbul', 'Kayseri', 'Viyana'];
+    const names = [
+      'Edirne',
+      'Budapeşte',
+      'Viyana',
+      'Roma',
+      'Paris',
+      'Kahire',
+      'Tebriz',
+      'İstanbul',
+      'Kayseri',
+      'Viyana',
+    ];
     tool('route').execute({ via: names, type: 'advance' });
     expect(plan.drawingAt(1).routes[0]!.via).toHaveLength(8);
     tool('route').execute({ via: ['Roma', 'Paris'], type: 'advance' });
@@ -326,7 +340,14 @@ describe('the map tools', () => {
 
   it('sides has at most three sides of eight polities, and a later call replaces the earlier in the same step', () => {
     const { plan, tool } = setup();
-    const polities = ['ottoman-empire', 'kingdom-of-france', 'safavid-dynasty', 'habsburg-monarchy', 'kingdom-of-hungary', 'mamluk-sultanate'];
+    const polities = [
+      'ottoman-empire',
+      'kingdom-of-france',
+      'safavid-dynasty',
+      'habsburg-monarchy',
+      'kingdom-of-hungary',
+      'mamluk-sultanate',
+    ];
     tool('sides').execute({
       sides: [
         { name: '1', polities: [polities[0]!] },

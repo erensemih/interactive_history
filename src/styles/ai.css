@@ -207,7 +207,8 @@
 
 /* a route that is asked to animate draws itself in along its path, stop by stop, the head last (not at all when the reader
    asked the system for reduced motion: it is simply there) */
-.ai-route .reveal {
+/* (the path that opens the mask is in the mask, which is in the layer's <defs>: not inside the route's group) */
+mask .reveal {
   fill: none;
   stroke: #fff;
   stroke-width: 30;
@@ -225,7 +226,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ai-route .reveal {
+  mask .reveal {
     animation: none;
     stroke-dashoffset: 0;
   }

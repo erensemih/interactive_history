@@ -16,6 +16,13 @@
  * example place is a free point in Germany (Hamburg): "Nazi Almanyası" with the borders of 1942, narrated in eight
  * steps (from 1939 to Berlin in 1945; Barbarossa in the fourth, Stalingrad and El Alamein in the sixth).
  *
+ * The round about a richer vocabulary for war narratives ("the model says WHAT, the app decides HOW"):
+ *   Y. Places, routes and sides: the ends of a line and the stops of a route are places (a city by any of its names, an event, a
+ *      point; a polity is its capital), a war line leaves from a capital (the Normandy line starts in London, not in
+ *      Greenland), the four kinds of route each have their own look, an animated route draws itself in only when motion is
+ *      allowed, and the sides of a conflict are painted as blocs with their names in the caption box. The mock narration
+ *      (A) uses a route and sides too: the Eastern Front, and the retreat of 1944.
+ *
  * The round about a cleaner map ("the model decides WHAT to show, the app decides HOW it looks"):
  *   P. Colours: the colours the map really shows (read from screenshots) are never grey or blue and neighbours differ; in a
  *      narration the lit polities are solid and vivid and the rest is faded.
@@ -787,7 +794,7 @@ const GERMANY = [
   {
     n: 8,
     title: 'Berlin ve teslim',
-    ids: 'union-of-soviet-socialist-republics,nazi-germany,united-states-of-america,kingdom-of-great-britain,free-french',
+    ids: 'union-of-soviet-socialist-republics,nazi-germany,united-states-of-america,kingdom-of-great-britain',
     links: '',
     wars: 1,
     events: ['berlin-muharebesi-1945', 'almanya-teslimi-1945'],
@@ -1539,7 +1546,9 @@ await guard.smoke(async () => {
           km(line.ends[1], BERLIN_PT) < 25 &&
           km(line.ends[0], GREENLAND) > 2500 &&
           line.d <= 1,
-        line ? `Londra’ya ${Math.round(km(line.ends[0], LONDON_PT))} km · Berlin’e ${Math.round(km(line.ends[1], BERLIN_PT))} km · Grönland’a ${Math.round(km(line.ends[0], GREENLAND))} km` : 'çizgi yok',
+        line
+          ? `Londra’ya ${Math.round(km(line.ends[0], LONDON_PT))} km · Berlin’e ${Math.round(km(line.ends[1], BERLIN_PT))} km · Grönland’a ${Math.round(km(line.ends[0], GREENLAND))} km`
+          : 'çizgi yok',
       );
     }
     if (exp.n === 4) {
@@ -1587,14 +1596,14 @@ await guard.smoke(async () => {
         };
       });
       check(
-        '8. adım, Berlin 1945: iki olay 1945’in olayı (işaret yılları 1945) ama veri setindeki Nazi Almanyası 1944’te biter (1945’te sınırı yok), bu yüzden sınır yılı 1944’e döner (başlıkta 1944); savaşın iki tarafı da 1944’te var',
+        '8. adım, Berlin 1945: iki olay 1945’in olayı (işaret yılları 1945); Cliopatria’da Nazi Almanyası 1944’te biter ama düzeltme katmanı 1938 sınırlarını 1945’e taşır, bu yüzden sınır yılı 1945 (başlıkta 1945) ve savaşın iki tarafı da o yılda var',
         end.berlin === '1945' &&
           end.surrender === '1945' &&
           end.germany1944 &&
-          !end.germany1945 &&
+          end.germany1945 &&
           end.soviet1945 &&
-          end.drawing === 1944 &&
-          state.year === '1944',
+          end.drawing === 1945 &&
+          state.year === '1945',
         `işaretler ${end.berlin}, ${end.surrender} · sınır yılı ${state.year}`,
       );
     }
@@ -1929,7 +1938,7 @@ await guard(async () => {
   });
   const gaps = bar.pts.slice(1).map((p, i) => p.cx - bar.pts[i].cx);
   check(
-    'Çizelge ilerleme çubuğu: 8 adımın 8 noktası, 1’den 8’e soldan sağa, tarihleriyle (1939, 1940, 1940, 1941, 1942, 1942, 1944, 1944)',
+    'Çizelge ilerleme çubuğu: 8 adımın 8 noktası, 1’den 8’e soldan sağa, tarihleriyle (1939, 1940, 1940, 1941, 1942, 1942, 1944, 1945)',
     bar.pts.length === 8 &&
       bar.pts.every((p, i) => p.label === String(i + 1) && p.year === GERMANY[i].year) &&
       gaps.every((g) => g > 0),
@@ -3729,20 +3738,22 @@ for (const vp of [
         .map((r) => r.bad)
         .join(' | '),
     );
-    // the crowded step of J (3 events, the war lines of two of them, and a free mark with its label), at three cameras
-    // too: the label of a mark the data knows nothing of keeps clear of the markers, the names and the war lines' ends
+    // the crowded step of J (3 events, the war lines of all of them, the advance on Moscow with its label, and a free mark
+    // with its label), at three cameras too: the label of a mark the data knows nothing of keeps clear of the markers, the
+    // names and the war lines' ends. (The third event comes in as a mark at Stalingrad's place, which the page turns into
+    // that event; the Eastern Front already lights its allies, so the third event is one away from their names.)
     await showStep(page, 4);
     await page.evaluate(() => {
       const mark = window.__ayni.ai.session.provider.requests.at(-1).tools.find((t) => t.name === 'mark');
-      mark.execute({ step: 4, lon: 20.46, lat: 44.82, label: 'Belgrad' });
+      mark.execute({ step: 4, lon: 44.51, lat: 48.71, label: 'Stalingrad' });
       mark.execute({ step: 4, lon: 32.04, lat: 54.78, label: 'Smolensk' });
     });
     await cameraRests(page, 8000);
     await settle(page, 400);
     const crowded = await kReadOverlaps(page, 'kalabalık 4. adım');
     check(
-      `${vp.name}: kalabalık 4. adım (${GERMANY[3].events.length + 1} olay, ${GERMANY[3].wars + 1} savaş çizgisi, serbest işaret ve etiketi) × 3 kamera = ${crowded.length} durumda ${crowded.reduce((t, r) => t + r.flags, 0)} yapay zekâ etiketi hiçbir etiketi ya da işaretçiyi örtmüyor ve harita dışına taşmıyor`,
-      crowded.every((r) => !r.bad) && crowded[0].flags === 1,
+      `${vp.name}: kalabalık 4. adım (${GERMANY[3].events.length + 1} olay, ${GERMANY[3].wars + 1} savaş çizgisi, yolu ve etiketi, serbest işaret ve etiketi) × 3 kamera = ${crowded.length} durumda ${crowded.reduce((t, r) => t + r.flags, 0)} yapay zekâ etiketi hiçbir etiketi ya da işaretçiyi örtmüyor ve harita dışına taşmıyor`,
+      crowded.every((r) => !r.bad) && crowded[0].flags === 2,
       crowded.some((r) => r.bad)
         ? crowded
             .filter((r) => r.bad)
@@ -4696,7 +4707,7 @@ await guard(async () => {
 });
 await guard(async () => {
   // the ruler's step points while a narration is on: not on each other, not on the range's writing, not on the year labels.
-  // The eight steps of the German narration lie in six years (two steps each in 1940, 1942 and 1944); the world narration of
+  // The eight steps of the German narration lie in seven years (two steps each in 1940 and 1942); the world narration of
   // a short range (1942–1944) crowds its five steps into two or three years (1941 and 1942 twice each, 1944): a year is only
   // about 6 px of the ruler, so the points have to be spread, and they must not end up on the label of 1950 beside them.
   for (const [range, how] of [
@@ -5468,7 +5479,12 @@ const FAKE_RUNTIME = (opts = {}) => {
         ),
         by.connect.execute({ step: 1, from: 'Stalingrad', to: 'Danzig', relation: 'war', label: 'Eski adlar' }, ctx),
         by.step.execute(
-          { n: 2, title: 'Dört yol', caption: 'İlerleyiş, geri çekilme, göç ve ticaret yolu: her biri kendi biçiminde.', year: 1942 },
+          {
+            n: 2,
+            title: 'Dört yol',
+            caption: 'İlerleyiş, geri çekilme, göç ve ticaret yolu: her biri kendi biçiminde.',
+            year: 1942,
+          },
           ctx,
         ),
         by.route.execute(
@@ -5481,11 +5497,19 @@ const FAKE_RUNTIME = (opts = {}) => {
           },
           ctx,
         ),
-        by.route.execute({ step: 2, via: ['Stalingrad', 'Kiev', 'Varşova'], type: 'retreat', label: 'Geri çekilme' }, ctx),
+        by.route.execute(
+          { step: 2, via: ['Stalingrad', 'Kiev', 'Varşova'], type: 'retreat', label: 'Geri çekilme' },
+          ctx,
+        ),
         by.route.execute({ step: 2, via: ['Roma', 'Viyana', 'Budapeşte'], type: 'migration', label: 'Göç' }, ctx),
         by.route.execute({ step: 2, via: ['Paris', 'Berlin', 'Prag'], type: 'trade', label: 'Ticaret yolu' }, ctx),
         by.step.execute(
-          { n: 3, title: 'İki blok', caption: 'Mihver bir renkte, Müttefikler öbüründe: kim kiminle, bir bakışta.', year: 1942 },
+          {
+            n: 3,
+            title: 'İki blok',
+            caption: 'Mihver bir renkte, Müttefikler öbüründe: kim kiminle, bir bakışta.',
+            year: 1942,
+          },
           ctx,
         ),
         by.sides.execute(
@@ -5495,7 +5519,11 @@ const FAKE_RUNTIME = (opts = {}) => {
               { name: 'Mihver', polities: ['nazi-germany', 'kingdom-of-italy', 'empire-of-japan'] },
               {
                 name: 'Müttefikler',
-                polities: ['kingdom-of-great-britain', 'union-of-soviet-socialist-republics', 'united-states-of-america'],
+                polities: [
+                  'kingdom-of-great-britain',
+                  'union-of-soviet-socialist-republics',
+                  'united-states-of-america',
+                ],
               },
             ],
           },
@@ -6625,6 +6653,41 @@ const lonLatOf = (page, selector) =>
       return { lon: ll.lng, lat: ll.lat };
     });
   }, selector);
+/**
+ * How much of a route's line is really on the screen: the pixels of the screenshot along the line of the route of that type, and how
+ * many of them are dark (the ink of the line). A name tag sits on the line and covers some of the points, so this is a share,
+ * not a count to match exactly: a route that is fully drawn has most of its points dark, one that is hidden (a mask that opens
+ * nothing) or not yet drawn has none.
+ */
+async function routeInk(page, type) {
+  const pts = await page.evaluate((t) => {
+    const path = document.querySelector(`.ai-layer .ai-route[data-type="${t}"] path.line`);
+    const svg = path.ownerSVGElement.getBoundingClientRect();
+    const len = path.getTotalLength();
+    const out = [];
+    for (let i = 1; i < 24; i++) {
+      const p = path.getPointAtLength((len * i) / 24);
+      out.push({ x: svg.left + p.x, y: svg.top + p.y });
+    }
+    return out;
+  }, type);
+  const png = await page.screenshot();
+  return page.evaluate(
+    async ({ b64, points }) => {
+      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      const bmp = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+      const cx = new OffscreenCanvas(bmp.width, bmp.height).getContext('2d');
+      cx.drawImage(bmp, 0, 0);
+      let dark = 0;
+      for (const p of points) {
+        const d = cx.getImageData(Math.round(p.x), Math.round(p.y), 1, 1).data;
+        if ((0.2126 * d[0] + 0.7152 * d[1] + 0.0722 * d[2]) / 255 < 0.3) dark++;
+      }
+      return { dark, of: points.length };
+    },
+    { b64: png.toString('base64'), points: pts },
+  );
+}
 await guard(async () => {
   const page = await open(AT_HAMBURG, { init: FAKE_RUNTIME, initArg: { shapes: ['places'] } });
   await page.fill('[data-testid=chat-input]', 'Yerler, yollar ve taraflar nasıl çiziliyor?');
@@ -6745,16 +6808,22 @@ await guard(async () => {
   );
   // “hareketi azalt” is the default of this suite: an animated route is simply there, with nothing running
   const calm = await page.evaluate(() => {
-    const reveal = document.querySelector('.ai-layer .ai-route.is-animated .reveal');
+    // (the path that opens the mask lives in the layer's <defs>, not inside the route's group)
+    const reveal = (() => {
+      const g = document.querySelector('.ai-layer .ai-route.is-animated');
+      const id = g?.getAttribute('mask')?.match(/#([^)]+)\)/)?.[1];
+      return id ? (document.getElementById(id)?.querySelector('.reveal') ?? null) : null;
+    })();
     return {
       running: reveal ? reveal.getAnimations().length : -1,
       offset: reveal ? getComputedStyle(reveal).strokeDashoffset : null,
     };
   });
+  const calmInk = await routeInk(page, 'advance');
   check(
-    '“Hareketi azalt” isteyen okurda canlandırılması istenen yol çizilerek belirmez: hiçbir animasyon çalışmıyor, yol baştan sona orada',
-    calm.running === 0 && parseFloat(calm.offset) === 0,
-    JSON.stringify(calm),
+    '“Hareketi azalt” isteyen okurda canlandırılması istenen yol çizilerek belirmez: hiçbir animasyon çalışmıyor, yol baştan sona orada (çizgisinin üstündeki noktaların çoğu ekranda mürekkep renginde: maske yolu kapatmıyor)',
+    calm.running === 0 && parseFloat(calm.offset) === 0 && calmInk.dark / calmInk.of > 0.5,
+    `${JSON.stringify(calm)} · ${calmInk.dark}/${calmInk.of} nokta koyu`,
   );
 
   // --- step 3: the sides of a conflict, as blocs
@@ -6812,7 +6881,10 @@ await guard(async () => {
   await settle(page, 600);
   const back = await page.evaluate(() => {
     const paint = window.__ayni.map.getPaintProperty('ai-fill', 'fill-color');
-    return { side: paint[0] === 'match' && paint[1][0] === 'get' && paint[1][1] === 'id', legend: !!document.querySelector('[data-testid=watch-sides]') };
+    return {
+      side: paint[0] === 'match' && paint[1][0] === 'get' && paint[1][1] === 'id',
+      legend: !!document.querySelector('[data-testid=watch-sides]'),
+    };
   });
   check(
     'Taraf bildirmeyen 1. adıma dönünce boyama ve taraf kutusu gider (her adım yalnızca kendi çizimini gösterir)',
@@ -6831,32 +6903,46 @@ await guard(async () => {
   await finalStatus(page);
   await cameraRests(page, 12000);
   await page.click('[data-testid=ruler-step][data-n="2"]');
-  await page.waitForFunction(() => !!document.querySelector('.ai-layer .ai-route.is-animated'), null, { timeout: 8000 });
-  const during = await page.evaluate(() => {
-    const reveal = document.querySelector('.ai-layer .ai-route.is-animated .reveal');
-    const a = reveal.getAnimations();
-    return { running: a.length, name: a[0]?.animationName ?? '', offset: parseFloat(getComputedStyle(reveal).strokeDashoffset) };
+  await page.waitForFunction(() => !!document.querySelector('.ai-layer .ai-route.is-animated'), null, {
+    timeout: 8000,
   });
+  const revealOf = () => {
+    const g = document.querySelector('.ai-layer .ai-route.is-animated');
+    return document.getElementById(g.getAttribute('mask').match(/#([^)]+)\)/)[1]).querySelector('.reveal');
+  };
+  // the animation is stopped halfway (a fixed moment, however fast this machine is) so that what is on the screen can be looked at
+  const during = await page.evaluate(`(() => {
+    const reveal = (${revealOf})();
+    const a = reveal.getAnimations();
+    const out = { running: a.length, name: a[0]?.animationName ?? '', animated: document.querySelectorAll('.ai-layer .ai-route.is-animated').length };
+    if (a[0]) {
+      a[0].pause();
+      a[0].currentTime = 1250;
+    }
+    out.offset = parseFloat(getComputedStyle(reveal).strokeDashoffset);
+    return out;
+  })()`);
+  await cameraRests(page, 12000);
+  const half = await routeInk(page, 'advance');
+  await page.evaluate(`(${revealOf})().getAnimations().forEach((a) => a.finish())`);
+  await settle(page, 300);
+  const full = await routeInk(page, 'advance');
   check(
-    'Hareket serbestken canlandırılması istenen yol çizilerek belirir: animasyon çalışıyor (yol henüz tam değil), yalnızca ilerleyiş yolu canlandırılır',
+    'Hareket serbestken canlandırılması istenen yol çizilerek belirir: animasyon çalışıyor (yarısında offset 0 ile 1 arasında), yalnızca ilerleyiş yolu canlandırılır',
     during.running === 1 &&
       during.name === 'ai-route-draw' &&
       during.offset > 0 &&
-      (await page.evaluate(() => document.querySelectorAll('.ai-layer .ai-route.is-animated').length)) === 1,
+      during.offset < 1 &&
+      during.animated === 1,
     JSON.stringify(during),
   );
-  await cameraRests(page, 12000);
-  await page.waitForFunction(
-    () => document.querySelector('.ai-layer .ai-route.is-animated .reveal').getAnimations().length === 0,
-    null,
-    { timeout: 8000 },
+  check(
+    'Yarı yolda çizginin yalnızca baş tarafı ekranda, bitince hepsi: koyu nokta payı yarıda daha az, sonunda çoğunlukta (yol maskenin ardında kaybolmaz)',
+    half.dark < full.dark && full.dark / full.of > 0.5,
+    `yarıda ${half.dark}/${half.of} · sonunda ${full.dark}/${full.of}`,
   );
-  const after = await page.evaluate(() => {
-    const reveal = document.querySelector('.ai-layer .ai-route.is-animated .reveal');
-    return parseFloat(getComputedStyle(reveal).strokeDashoffset);
-  });
+  const after = await page.evaluate(`parseFloat(getComputedStyle((${revealOf})()).strokeDashoffset)`);
   check('Animasyon bitince yol baştan sona görünür (çizgi tam, ok uçta)', after === 0, `dashoffset ${after}`);
-  // and the arrow of a route that has finished drawing sits on its last stop
   await page.context().close();
 });
 
@@ -6885,7 +6971,10 @@ await guard(async () => {
   const sampled = await sampleMap(page, spot.ids);
   check(
     'Ekran görüntüsünden: iki bloğun devletleri iki renkte (örneklerin %95’i tarafının renginde), haritanın geri kalanı soluk',
-    sampled.nLit >= 15 && sampled.litOff / sampled.nLit < 0.05 && sampled.nRest >= 100 && sampled.restOff / sampled.nRest < 0.05,
+    sampled.nLit >= 15 &&
+      sampled.litOff / sampled.nLit < 0.05 &&
+      sampled.nRest >= 100 &&
+      sampled.restOff / sampled.nRest < 0.05,
     `${sampled.nLit} öne çıkan (${sampled.litOff} sapma) · ${sampled.nRest} soluk (${sampled.restOff} sapma)`,
   );
   await page.context().close();

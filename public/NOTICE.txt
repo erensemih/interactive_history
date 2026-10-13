@@ -23,11 +23,16 @@ DEĞİŞİKLİKLER (CC BY 4.0 gereği belirtilmiştir):
   - Aynı devleti iki adla anan kayıtlar (ör. "Denmark-Norway" ve "Denmark") tek devlette birleştirildi;
     art arda gelen, şekli birebir aynı satırlar tek satıra indirildi.
   - Her devlet için, komşuların farklı renkte görünmesi için bir "ton" numarası hesaplandı.
+  - Sayfa yüklenirken, veri dosyası değiştirilmeden, küçük bir düzeltme katmanı (corrections/ww2.json) uygulanır: Nazi
+    Almanyası'nın 1938 satırının şekli 1945 için kopyalanır, Singapur ve Doğu Timor için Japonya'nın iki küçük satırı
+    eklenir ve işgal altındaki topraklar sayfada işgal adıyla anılır (ör. "Polonya · Alman işgali"). Her kaydın
+    gerekçesi ve kaynağı o dosyadadır.
   Veri setinin kendi uyarısı geçerlidir: sınırlar, bir tarihsel yorumun yalnızca bir sürümüdür.
 
 2) Kıyı çizgisi ve göller: Natural Earth
 ----------------------------------------
-Kaynak   : https://www.naturalearthdata.com/  (1:50m land, lakes)
+Kaynak   : https://www.naturalearthdata.com/  (1:50m land, lakes; 1:10m admin-0 ülke sınırları, düzeltme
+           katmanındaki iki yamanın şekli için)
 Lisans   : Kamu malı (Public Domain)
 
 3) Yazı tipleri (uygulama ile birlikte paketlenir)
@@ -46,3 +51,27 @@ public/data/events/*.json ve public/data/entities.json içindeki Türkçe başl�
 tanımları bu projede yazılmıştır. Her olayın kaynağı kendi kaydında (Vikipedi makalesi) gösterilir;
 Vikipedi içeriği CC BY-SA 4.0 altındadır, buradaki özetler özgün anlatımla yazılmıştır.
 Devletlerin Vikipedi/Vikiveri bağlantıları Cliopatria veri setinden gelir.
+
+6) Yer göstergeliği (places.json): Natural Earth "Populated places"
+-------------------------------------------------------------------
+Kaynak   : https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-populated-places/  (1:10m)
+Lisans   : Kamu malı (Public Domain). Natural Earth'ün her sürümü kamu malıdır; izin ya da atıf gerekmez
+           (https://www.naturalearthdata.com/about/terms-of-use/; aynı ifade natural-earth-vector deposunun
+           LICENSE.md dosyasındadır).
+Atıf     : Made with Natural Earth.
+
+DEĞİŞİKLİKLER:
+  - 7.342 noktadan yalnızca ulusal başkentler, nüfusu 100.000 ve üzeri olan yerler ve olay, başkent ve tarihsel ad
+    listelerinde geçen yerler alındı; her yer için Türkçe ad (kaynağın NAME_TR alanı), İngilizce ad, koordinat,
+    en büyük nüfus değeri ve ülke kodu tutuldu.
+  - Kaynağın bazı yanlış İngilizce adları (ör. "Pochinki" Cuttack için), başka bir kentten kopyalanmış birkaç nüfus
+    değeri ve Kırım'daki yerlerin ülke kodu düzeltildi (UA); bozuk alternatif adlar atıldı.
+  - Tarihsel ve alternatif adlar (Stalingrad, Danzig, Königsberg, Peking, Selanik…) elle eklendi.
+  - Natural Earth'te bulunmayan 117 yerin (ör. Sedan, Dunkirk, Treblinka, Aachen) adı ve koordinatı elle girildi
+    (genel başvuru bilgisi; konumlar yaklaşık 1 km içinde olmalıdır).
+
+7) Başkent tablosu (capitals.json)
+----------------------------------
+Elle derlenmiş genel tarih bilgisidir (hangi devletin hangi yıllarda hangi şehirden yönetildiği); bir üçüncü taraf
+veri setinden alınmamıştır, yer kimlikleri yukarıdaki yer göstergeliğine bağlanır. Vikipedi makale başlıkları
+kaynakça olarak anılır, içerik kopyalanmamıştır.

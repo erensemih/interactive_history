@@ -20,6 +20,9 @@
  * And the 1800–2000 round: the border rows come in a sliding window of years (the header says "yükleniyor…" for a
  * moment after a long jump in time, and never stays that way), a long range of the 200 years still works, and the
  * first and last years of the data are reachable.
+ * And the correction layer (section 12, public/data/corrections/ww2.json): an occupied land reads as an occupation in the
+ * title, the card and on the map (Warsaw 1942 "Polonya · Alman işgali", Athens "İtalyan" then "Alman işgali", Paris),
+ * Germany itself does not; Nazi Germany is drawn in 1945 (Berlin) and Singapore is Japanese in 1942–45.
  *
  * Switches (all optional):
  *   E2E_SUITE=smoke   (or --smoke) the quick pass: only SMOKE_SECTIONS (and, of the main block, sections 0–3)
@@ -1765,9 +1768,9 @@ try {
         r.fill,
       );
       check(
-        'Aynı nokta artık Nazi Almanyası (Paris, 1942) ve vurgusu çizili',
-        r.title === 'Nazi Almanyası' && r.drawn > 0,
-        r.title,
+        'Aynı nokta artık Alman işgalinde (Paris, 1942): başlıkta “Fransa · Alman işgali”; sınır verisi orayı Nazi Almanyası olarak çizer ve o devletin çerçevesi çizili',
+        r.title === 'Fransa · Alman işgali' && r.selected.includes('nazi-germany') && r.drawn > 0,
+        `${r.title} · ${r.selected.slice(0, 90)}`,
       );
 
       // the last years of the data
@@ -1804,6 +1807,162 @@ try {
         r.year,
       );
       check('Bu senaryoda konsol hatası yok (11)', errs.length === 0, errs[0] ?? '');
+      await ctx.close();
+    }
+  }
+
+  if (wants(12)) {
+    /* ---- 12. occupied lands read as occupations; 1945 is drawn; Singapore is Japanese (public/data/corrections/ww2.json) */
+    section('12. İşgal etiketi, 1945 ve düzeltme katmanı: Varşova, Paris, Atina, Singapur, Berlin');
+    const readout = (p) =>
+      p.evaluate(() => ({
+        year: document.querySelector('[data-testid=title-year]')?.textContent ?? '',
+        title: document.querySelector('[data-testid=title-main]')?.textContent.trim() ?? '',
+        card: document.querySelector('[data-testid=place-title]')?.textContent.trim() ?? '',
+        note: document.querySelector('[data-testid=place-occupation]')?.textContent.replace(/\s+/g, ' ').trim() ?? null,
+        selected: JSON.stringify(window.__ayni.map.getFilter('polity-selected-line')),
+        drawn: window.__ayni.map.queryRenderedFeatures({ layers: ['polity-selected-line'] }).length,
+      }));
+    const onPlace = async (hash) => {
+      const o = await open(hash);
+      await o.p.waitForFunction(
+        () => document.querySelector('[data-testid=title-main]')?.textContent.trim() !== 'Dünya',
+        null,
+        {
+          timeout: 8000,
+        },
+      );
+      await o.p
+        .waitForFunction(
+          () => window.__ayni.map.queryRenderedFeatures({ layers: ['polity-selected-line'] }).length > 0,
+          null,
+          {
+            timeout: 20000,
+          },
+        )
+        .catch(() => undefined);
+      return { ...o, r: await readout(o.p) };
+    };
+
+    // Warsaw in 1942: the border data draws it as Nazi Germany; the page says it is an occupation, and what is occupied
+    {
+      const { ctx, p, errs, r } = await onPlace('#t=1942-1942&p=21.012,52.230');
+      check(
+        'Varşova, 1942: başlıkta ve kartta “Polonya · Alman işgali” (sınır verisi orayı Nazi Almanyası çizer; sayfa işgal olarak adlandırır)',
+        r.year === '1942' && r.title === 'Polonya · Alman işgali' && r.card === 'Polonya · Alman işgali',
+        `${r.title} · ${r.card}`,
+      );
+      check(
+        'Kartta işgal notu var: “Polonya, o yıl Nazi Almanyası tarafından işgal edilmişti … bu bir işgaldir, bir devlet değişikliği değil”; çizili çerçeve verinin devleti (Nazi Almanyası)',
+        !!r.note &&
+          r.note.includes('Polonya') &&
+          r.note.includes('Nazi Almanyası tarafından işgal edilmişti') &&
+          r.note.includes('bir devlet değişikliği değil') &&
+          r.selected.includes('nazi-germany') &&
+          r.drawn > 0,
+        r.note ?? 'not yok',
+      );
+      // on the map: the land's name with the word for the occupation under it, set like a polity's name
+      await p.evaluate(() => window.__ayni.map.jumpTo({ center: [19, 51.5], zoom: 4.2 }));
+      await p.waitForTimeout(1800); // the names are laid out a moment after the camera has come to rest
+      const names = await p.evaluate(() =>
+        [...document.querySelectorAll('.plabel:not(.is-hidden)')].map((e) => ({
+          occupation: e.classList.contains('is-occupation'),
+          text: e.textContent.replace(/\s+/g, ' ').trim(),
+        })),
+      );
+      const occ = names.filter((n) => n.occupation);
+      check(
+        'Haritada da: Polonya’nın üstünde adı ve altında “(Alman işgali)” yazar (işgal altındaki bir toprak işgalcinin adıyla anılmaz); Almanya’nın kendi adı yerinde',
+        occ.some((n) => /^Polonya\s*\(Alman işgali\)$/.test(n.text)) &&
+          names.some((n) => !n.occupation && n.text === 'Nazi Almanyası'),
+        names.map((n) => (n.occupation ? `[${n.text}]` : n.text)).join(' | '),
+      );
+      check('Bu senaryoda konsol hatası yok (12, Varşova)', errs.length === 0, errs[0] ?? '');
+      await ctx.close();
+    }
+
+    // Germany itself is not an occupation, whoever holds it; the occupier's word follows the holder (Athens: Italian in 1942, German in 1944)
+    {
+      const hamburg = await onPlace('#t=1942-1942&p=10.000,53.500');
+      check(
+        'Almanya’nın kendisi işgal değil: Hamburg, 1942 → “Nazi Almanyası”, kartta işgal notu yok',
+        hamburg.r.title === 'Nazi Almanyası' && hamburg.r.card === 'Nazi Almanyası' && hamburg.r.note === null,
+        `${hamburg.r.title} · ${hamburg.r.note ?? 'not yok'}`,
+      );
+      await hamburg.ctx.close();
+      const athens42 = await onPlace('#t=1942-1942&p=23.730,37.980');
+      const athens44 = await onPlace('#t=1944-1944&p=23.730,37.980');
+      check(
+        'İşgalcinin sözcüğü yılın sahibini izler: Atina 1942’de “Yunanistan · İtalyan işgali”, 1944’te “Yunanistan · Alman işgali”',
+        athens42.r.title === 'Yunanistan · İtalyan işgali' && athens44.r.title === 'Yunanistan · Alman işgali',
+        `${athens42.r.title} | ${athens44.r.title}`,
+      );
+      await athens42.ctx.close();
+      await athens44.ctx.close();
+      const paris = await onPlace('#t=1942-1942&p=2.350,48.860');
+      check(
+        'Paris, 1942: “Fransa · Alman işgali”; 1939’da (işgalden önce) yalnızca “Fransa Üçüncü Cumhuriyeti”',
+        paris.r.title === 'Fransa · Alman işgali' &&
+          (await (async () => {
+            await paris.p.evaluate(() => window.__ayni.store.setRange({ from: 1939, to: 1939 }));
+            await bordersSettled(paris.p);
+            const before = await readout(paris.p);
+            return before.title === 'Fransa Üçüncü Cumhuriyeti' && before.note === null;
+          })()),
+        paris.r.title,
+      );
+      await paris.ctx.close();
+    }
+
+    // Berlin in 1945: Cliopatria's rows of Nazi Germany end in 1944; the correction layer carries the 1938 borders over 1945
+    {
+      const { ctx, p, errs, r } = await onPlace('#t=1945-1945&p=13.400,52.520');
+      check(
+        'Berlin, 1945: sınır yılı 1945 ve yer hâlâ “Nazi Almanyası” (1944 sınırları gösterilmiyor); işgal notu yok; devletin çerçevesi çizili',
+        r.year === '1945' &&
+          r.title === 'Nazi Almanyası' &&
+          r.note === null &&
+          r.selected.includes('nazi-germany') &&
+          r.drawn > 0,
+        `${r.year} · ${r.title}`,
+      );
+      const drawn1945 = await p.evaluate(() => {
+        const m = window.__ayni.map;
+        const q = m.project([13.4, 52.52]);
+        return [
+          ...new Set(m.queryRenderedFeatures([q.x, q.y], { layers: ['polity-fill'] }).map((f) => f.properties.id)),
+        ];
+      });
+      // (the zone rows of the data lie under the carried-over Germany: the map reports every feature at the point, topmost first)
+      check(
+        'Haritada Berlin’de en üstte çizilen devlet 1945’te Nazi Almanyası (altındaki bölge satırlarını örter)',
+        drawn1945[0] === 'nazi-germany',
+        drawn1945.join(' > '),
+      );
+      check('Bu senaryoda konsol hatası yok (12, Berlin)', errs.length === 0, errs[0] ?? '');
+      await ctx.close();
+    }
+
+    // Singapore: the data keeps it British through the Japanese occupation; the correction layer paints it Japanese 1942–45
+    {
+      const { ctx, p, r } = await onPlace('#t=1943-1943&p=103.820,1.350');
+      check(
+        'Singapur, 1943: “Singapur · Japon işgali” (Japonya’nın toprağı çizilir, işgal olarak adlandırılır)',
+        r.year === '1943' && r.title === 'Singapur · Japon işgali' && r.selected.includes('empire-of-japan'),
+        `${r.title}`,
+      );
+      await p.evaluate(() => window.__ayni.store.setRange({ from: 1941, to: 1941 }));
+      await bordersSettled(p);
+      const before = await readout(p);
+      await p.evaluate(() => window.__ayni.store.setRange({ from: 1946, to: 1946 }));
+      await bordersSettled(p);
+      const after = await readout(p);
+      check(
+        'Singapur 1941’de ve 1946’da İngiliz Sömürge İmparatorluğu (işgal yalnızca 1942–45)',
+        before.title === 'İngiliz Sömürge İmparatorluğu' && after.title === 'İngiliz Sömürge İmparatorluğu',
+        `${before.title} | ${after.title}`,
+      );
       await ctx.close();
     }
   }

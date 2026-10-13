@@ -45,8 +45,8 @@ function encodeRing(ring: number[][], scale: number): number[] {
   // points on the grid; a point that repeats the one before is dropped, and so is the closing point
   const pts: [number, number][] = [];
   for (const p of ring) {
-    const x = Math.round(p[0]! * scale);
-    const y = Math.round(p[1]! * scale);
+    const x = Math.round(p[0]! * scale) || 0; // (`|| 0`: no minus zero)
+    const y = Math.round(p[1]! * scale) || 0;
     const last = pts[pts.length - 1];
     if (!last || last[0] !== x || last[1] !== y) pts.push([x, y]);
   }
