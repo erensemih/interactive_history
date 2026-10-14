@@ -1,9 +1,7 @@
 import type { AppData } from '../data/load';
-import type { HistoricalEvent } from '../domain/types';
 import { subjectKey, subjectLabel, type AiContext, type ContextEvent, type Mode } from './context';
 import { describeDrawing, TurnPlan } from './drawing';
 import { captionFromText, stepsOf } from './narration';
-import { narrationOutline } from './outline';
 import { buildTurns, type HistoryTurn } from './prompt';
 import {
   toModelError,
@@ -98,7 +96,6 @@ export class AiSession {
   private readonly ready: Promise<ModelProvider>;
   private readonly sources: SourceProvider[];
   private readonly currentDrawing: () => Drawing | null;
-  private readonly events: readonly HistoricalEvent[];
   private abort: AbortController | null = null;
   private seq = 0;
   private lastSubject: { key: string; label: string; ctx: AiContext } | null = null;
@@ -108,7 +105,6 @@ export class AiSession {
   constructor(options: SessionOptions) {
     this.currentDrawing = options.drawing ?? (() => null);
     this.sources = options.sources;
-    this.events = options.data.events;
     this.tier = options.tier ?? 'default';
     this.resolver = new Resolver(options.data);
     this.ready = options.provider;
@@ -195,10 +191,13 @@ export class AiSession {
       mode: request.mode,
       status: 'waiting',
       text: '',
-      plan: new TurnPlan((id) => {
-        const ev = this.resolver.eventById(id);
-        return ev ? this.resolver.showYearOf(ev) : null;
-      }),
+      plan: new TurnPlan(
+        (id) => {
+          const ev = this.resolver.eventById(id);
+          return ev ? this.resolver.showYearOf(ev) : null;
+        },
+        (id) => this.resolver.eventById(id)?.start ?? null,
+      ),
       error: null,
       truncated: false,
       notes: [],
@@ -366,7 +365,6 @@ export class AiSession {
       catalog: tools.length ? this.resolver.catalog(context.range) : [],
       events: tools.length ? this.resolver.eventCatalog(context.range) : [],
       sources,
-      outline: tools.length && request.mode === 'narration' ? narrationOutline(context, this.events) : [],
       repeats: this.repeatsOf(request, context),
       drawing: this.currentDrawing(),
       nameOf: (id) => this.resolver.nameOf(id),

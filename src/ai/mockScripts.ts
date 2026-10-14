@@ -177,6 +177,27 @@ const STALINGRAD_ANSWER: ScriptStep = {
   ],
 };
 
+/** A scene in the west: the fall of France. The borders it shows are those of its start, 1939, where the Third Republic still is. */
+const FRANCE_ANSWER: ScriptStep = {
+  title: 'Fransa’nın düşüşü',
+  caption:
+    "10 Mayıs 1940'ta başlayan [Fransa Muharebesi](olay:fransa-muharebesi-1940)'nde Almanya altı haftada Fransa'yı yendi; Britanya ordusu kıtadan çekildi.",
+  text: "10 Mayıs 1940'ta Almanya Hollanda ve Belçika'ya girdi, Ardenler üzerinden yaptığı zırhlı atılımla Sedan'da Fransız cephesini yardı ve Kanal kıyısına ulaştı. [Fransa Muharebesi](olay:fransa-muharebesi-1940) altı hafta sürdü; Britanya Seferi Kuvvetleri kıtayı terk etti, Fransa 22 Haziran'da ateşkes imzaladı.\n\nHaritada Fransa, Britanya ve Almanya'nın birbirine komşu olduğu Batı Avrupa görünür: savaşın başladığı Mayıs 1940'ta Fransa Üçüncü Cumhuriyeti hâlâ ayaktaydı, bu yüzden sınırlar bir önceki yılın, 1939'un sınırlarıdır.",
+  actions: [
+    ['show_event', { event: 'fransa-muharebesi-1940' }],
+    ['highlight', { polities: ['french-third-republic', 'kingdom-of-great-britain'] }],
+  ],
+};
+
+/** The landings: a scene in the west too, with the United States in it (it frames Western Europe, not Alaska and Greenland). */
+const NORMANDY_ANSWER: ScriptStep = {
+  title: 'Normandiya Çıkarması',
+  caption:
+    "6 Haziran 1944'te Britanya, ABD ve Kanada kuvvetleri [Normandiya'ya çıktı](olay:normandiya-1944); Batı Avrupa'da ikinci cephe açıldı.",
+  text: "6 Haziran 1944'te Britanya, ABD ve Kanada kuvvetleri Normandiya sahillerine çıktı: tarihin en büyük amfibi harekâtı [Normandiya Çıkarması](olay:normandiya-1944) Batı Avrupa'da ikinci cepheyi açtı. Ağustos'ta Paris kurtarıldı.\n\nHaritada çıkarmanın yeri ve iki tarafın başkentleri arasındaki çizgi görünür; Amerika Birleşik Devletleri de bu sahnededir ama toprağının hiçbir parçası bu bölgede olmadığı için harita yalnızca Batı Avrupa'yı gösterir.",
+  actions: [['show_event', { event: 'normandiya-1944' }]],
+};
+
 /** A relation the data has no event for: a line of the model's own (the 1939 Pact of Steel). */
 const AXIS_ANSWER: ScriptStep = {
   title: 'Almanya ve İtalya',
@@ -224,10 +245,11 @@ const has = (text: string, ...words: string[]) => words.every((w) => normalizeNa
 const FAILURE = /\[hata:([a-z_]+)\]/;
 
 /**
- * The scripted answers: the German narration (a place of Nazi Germany, 1939–1945) and two plain questions for the
- * acceptance test (one an event and one a relation the data has no event for), a reply that ignores the format and is
- * plain text, the open-event question, and generic ones made from the app's own data so that any place and any range
- * gets something real to show. The first script that fits answers.
+ * The scripted answers: the German narration (a place of Nazi Germany, 1939–1945) and plain questions for the
+ * acceptance test (an event, a relation the data has no event for, the sides of the war, and two scenes in the west: the
+ * fall of France and the landings in Normandy), a reply that ignores the format and is plain text, the open-event question,
+ * and generic ones made from the app's own data so that any place and any range gets something real to show. The first
+ * script that fits answers.
  */
 export function createMockScripts(data: Pick<AppData, 'entities' | 'events'>): MockScript[] {
   const nameOf = (id: string) => data.entities.get(id)?.name ?? id;
@@ -263,6 +285,16 @@ export function createMockScripts(data: Pick<AppData, 'entities' | 'events'>): M
   const sidesQuestion: MockScript = (req) => {
     if (req.meta.mode !== 'qa' || !has(req.meta.question, 'mihver', 'muttefik')) return null;
     return single(SIDES_ANSWER);
+  };
+
+  const franceQuestion: MockScript = (req) => {
+    if (req.meta.mode !== 'qa' || !has(req.meta.question, 'fransa', '1940')) return null;
+    return single(FRANCE_ANSWER);
+  };
+
+  const normandyQuestion: MockScript = (req) => {
+    if (req.meta.mode !== 'qa' || !has(req.meta.question, 'normandiya')) return null;
+    return single(NORMANDY_ANSWER);
   };
 
   const axisQuestion: MockScript = (req) => {
@@ -308,6 +340,8 @@ export function createMockScripts(data: Pick<AppData, 'entities' | 'events'>): M
     germanNarration,
     stalingradQuestion,
     sidesQuestion,
+    franceQuestion,
+    normandyQuestion,
     axisQuestion,
     eventQuestion,
     placeNarration,

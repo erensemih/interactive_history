@@ -62,7 +62,7 @@ describe('the director', () => {
     // only step 2's own: the Battle of France and the armistice (the app draws the war line); nothing of Stalingrad on the way back
     expect(director.drawing?.links).toEqual([]);
     expect(director.drawing?.events).toEqual(['fransa-muharebesi-1940', 'compiegne-ateskesi-1940']);
-    expect(director.year).toBe(1940);
+    expect(director.year).toBe(1939); // the borders at the start of the Battle of France (May 1940): the Third Republic is still there
     director.activate(id, 1);
     expect(director.drawing?.links).toEqual([]);
     expect(director.drawing?.events).toEqual(['polonya-isgali-1939']);
@@ -242,7 +242,7 @@ describe('the director', () => {
     expect(director.year).toBeNull();
     expect(director.drawing?.year).toBe(1939); // still part of the step, just not applied
     director.activate(id, 2);
-    expect(director.year).toBe(1940);
+    expect(director.year).toBe(1939);
   });
 
   it('an answer without map actions leaves the map as it was', async () => {

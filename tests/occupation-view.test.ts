@@ -82,12 +82,13 @@ describe('what the model is told of an occupied place', () => {
     expect(contextFromView(viewAt(10.0, 53.55, 1942), data).places[0]!.occupation).toBeNull();
   });
 
-  it('says in words that the borders draw it as the occupier’s but it was an occupied country, and to tell it so', () => {
+  it('says in words that the borders draw it as the occupier’s but it was an occupied country', () => {
     const text = describeContext(warsaw(), null);
     expect(text).toContain('İşgal: sınır verisi burayı Nazi Almanyası toprağı olarak çizer');
     expect(text).toContain('gerçekte Polonya toprağıdır');
     expect(text).toContain('Alman işgali');
-    expect(text).toContain('işgal altındaki Polonya olarak anlat');
+    // a fact for the model to use as it sees fit (the owner's file says to name an occupation as one), not an order
+    expect(text).not.toContain('olarak anlat');
     // a place that is not occupied gets no such line
     expect(describeContext(contextFromView(viewAt(10.0, 53.55, 1942), data), null)).not.toContain('İşgal:');
   });

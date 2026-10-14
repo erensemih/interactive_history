@@ -9,6 +9,7 @@ import {
   TurnPlan,
 } from '../src/ai/drawing';
 import { eventKindOf, warSides } from '../src/ai/eventKinds';
+import { pointsBox, surroundings } from '../src/domain/camera';
 import { distanceKm, Resolver } from '../src/ai/resolve';
 import type { MapAction, PlaceRef, RouteType, Side } from '../src/ai/types';
 import { withMiniPlaces } from './helpers/places';
@@ -580,9 +581,35 @@ describe('resolveDrawing with places (a few cities and capitals on the 1400–16
     ]);
     const r = resolveDrawing(drawing, resolver, 1520);
     expect(r.spotIds).toEqual(['kingdom-of-france', 'ottoman-empire', 'safavid-dynasty']);
+    // the scene has places (the stops of the route): the camera frames them and the part of the lit polities that is there;
+    // of the Safavids, far away, nothing (France reaches in by a hair at the edge of the surroundings)
     const target = frameTargetOf(r, resolver, 1520)!;
-    expect(target.boxes).toHaveLength(3);
     expect(target.points).toEqual([EDIRNE, VIENNA]); // the stops of the route are in view too
+    expect(target.boxes.length).toBeLessThan(3);
+    const around = surroundings(pointsBox(target.points)!);
+    for (const b of target.boxes) {
+      expect(b[0]).toBeGreaterThanOrEqual(around[0] - 1e-9);
+      expect(b[2]).toBeLessThanOrEqual(around[2] + 1e-9);
+    }
+    // the Ottoman part around the route is there, with Edirne in it (Vienna is not Ottoman)
+    expect(
+      target.boxes.some((b) => b[0] < EDIRNE.lon && EDIRNE.lon < b[2] && b[1] < EDIRNE.lat && EDIRNE.lat < b[3]),
+    ).toBe(true);
+    // with no place at all, only the polities: the body of each of the three
+    const only = frameTargetOf(
+      resolveDrawing(
+        drawingOf([
+          hl(1, 'kingdom-of-france'),
+          sides(1, { name: 'A', polities: ['ottoman-empire'] }, { name: 'B', polities: ['safavid-dynasty'] }),
+        ]),
+        resolver,
+        1520,
+      ),
+      resolver,
+      1520,
+    )!;
+    expect(only.points).toEqual([]);
+    expect(only.boxes).toHaveLength(3);
   });
 });
 

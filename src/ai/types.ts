@@ -47,7 +47,8 @@ export const LIMITS = {
   sidePolities: 8,
   events: 6,
   label: 28,
-  steps: 12,
+  /** A sanity limit, not a shape: the number of scenes of an answer is the model's to decide. */
+  steps: 60,
   title: 64,
   /** A step's caption (the subtitle over the map): a sentence or two. */
   caption: 340,
@@ -120,8 +121,9 @@ export interface Drawing {
   /** Events of the app's own data the step talks about: the app draws each by its kind, with its own marker. */
   events: string[];
   /**
-   * The border year the step shows (inside the selected range): the one the model named, else the year of the
-   * earliest event it shows; undefined leaves the year to the reader.
+   * The border year the step shows (inside the selected range): the one the model named, else the borders at the start
+   * of the earliest event it shows (`Resolver.showYearOf`: the event's year, or the year before when a main party of it
+   * ended in that year); undefined leaves the year to the reader.
    */
   year?: number;
 }
@@ -195,8 +197,10 @@ export const EMPTY_RESOLVED: ResolvedDrawing = {
 };
 
 /**
- * Everything a step put on the map, as the camera sees it: boxes (the main parts of the polities in the
- * spotlight) and points (event markers, the ends of the lines, marks). The camera brings all of it into view.
+ * Everything a step put on the map, as the camera sees it: points (event markers, the ends of the lines, the stops of the
+ * routes, marks) and boxes (for each polity in the spotlight, the part of it that the scene is about: the part that reaches
+ * into the surroundings of the points, cut at their edge; its body where there are no points). The camera brings all of it
+ * into view, not the whole territory of the polities (their colonies, Alaska, Greenland).
  */
 export interface FrameTarget {
   boxes: Bounds[];

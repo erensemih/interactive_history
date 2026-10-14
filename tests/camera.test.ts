@@ -7,8 +7,10 @@ import {
   isFramed,
   isSubstantial,
   mercator,
+  pointsBox,
   projectWith,
   SUBSTANTIAL,
+  surroundings,
   type Camera,
 } from '../src/domain/camera';
 
@@ -162,6 +164,29 @@ describe('frameBounds', () => {
     expect(frameBounds([], [])).toBeNull();
     expect(frameBounds([], [{ lon: 179.5, lat: 81 }])![2]).toBeLessThanOrEqual(179.9);
     expect(frameBounds([], [{ lon: 0, lat: -59 }])![1]).toBeGreaterThanOrEqual(-60);
+  });
+});
+
+describe('pointsBox and surroundings', () => {
+  it('pointsBox is the box around some points, and nothing for none', () => {
+    expect(pointsBox([])).toBeNull();
+    expect(pointsBox([{ lon: 2.35, lat: 48.86 }])).toEqual([2.35, 48.86, 2.35, 48.86]);
+    expect(
+      pointsBox([
+        { lon: 13.4, lat: 52.5 },
+        { lon: -0.87, lat: 49.37 },
+        { lon: -0.13, lat: 51.5 },
+      ]),
+    ).toEqual([-0.87, 49.37, 13.4, 52.5]);
+  });
+
+  it('surroundings grow the places of a scene by a third of its size, and by a region at least for a lone place', () => {
+    expect(surroundings([2.35, 48.86, 2.35, 48.86])).toEqual([-3.65, 44.86, 8.35, 52.86]); // 6° by 4° each way
+    const wide = surroundings([0, 40, 60, 50]);
+    expect(wide[0]).toBeCloseTo(-20, 6); // a third of 60° of longitude
+    expect(wide[2]).toBeCloseTo(80, 6);
+    expect(wide[1]).toBeCloseTo(36, 6); // 4° at least: a third of 10° of latitude is less
+    expect(wide[3]).toBeCloseTo(54, 6);
   });
 });
 

@@ -12,7 +12,7 @@ import { createSampleProvider } from './ai/sampleProvider';
 import { AiSession, type AssistantItem } from './ai/session';
 import { readTier, writeTier } from './ai/settings';
 import { appEventsSource } from './ai/sources';
-import type { Drawing } from './ai/types';
+import type { Drawing, FrameTarget } from './ai/types';
 import { loadData, type AppData } from './data/load';
 import { CameraWatch, type Camera } from './domain/camera';
 import type { HistoricalEvent } from './domain/types';
@@ -44,7 +44,13 @@ declare global {
       /** The borders of the shown year are on the map (they are fetched in windows of years: see MapView). */
       bordersReady: () => boolean;
       /** The reading companion (tests read what it has drawn and said; nothing writes through this). */
-      ai: { session: AiSession; director: Director; presentation: Presentation };
+      ai: {
+        session: AiSession;
+        director: Director;
+        presentation: Presentation;
+        /** What the step on screen asks the camera to show (null: nothing). */
+        frameTarget: () => FrameTarget | null;
+      };
     };
   }
 }
@@ -207,10 +213,15 @@ export async function startApp(root: HTMLElement): Promise<void> {
    */
   function frameDrawing(drawing: Drawing) {
     if (!mapView || !presentation.narrating) return; // with the answer closed nothing of the AI's is on the map to bring into view
-    const year = director.year ?? vm.year;
-    const target = frameTargetOf(resolveDrawing(drawing, session.resolver, year), session.resolver, year);
+    const target = frameTargetFor(drawing);
     if (target && mapView.frameTarget(target)) return; // moving: the reference is taken when the move ends
     watch.settle(cameraNow());
+  }
+  /** What a drawing asks the camera to show, for the year the map shows it in (the AI's year is held inside the range, as the view holds it). */
+  function frameTargetFor(drawing: Drawing) {
+    const { range } = store.state;
+    const year = Math.min(range.to, Math.max(range.from, director.year ?? vm.year));
+    return frameTargetOf(resolveDrawing(drawing, session.resolver, year), session.resolver, year);
   }
 
   /** The info card steps aside when the reader asks something (the selection stays: the question is about it). */
@@ -479,12 +490,12 @@ export async function startApp(root: HTMLElement): Promise<void> {
     window.setTimeout(settled, 400); // the map did not need to change size
   }
 
-  /** The steps of the answer on screen, for the timeline: each at the year its scene shows. */
+  /** The steps of the answer on screen, for the timeline: each at the date it is about. */
   function stepMarks() {
     if (!presentation.narrating || !presentation.stepped) return [];
     const active = presentation.step?.n ?? null;
     return presentation.steps.flatMap((s) =>
-      s.year === null ? [] : [{ n: s.n, year: s.year, title: s.title, active: s.n === active }],
+      s.when === null ? [] : [{ n: s.n, when: s.when, title: s.title, active: s.n === active }],
     );
   }
 
@@ -889,6 +900,11 @@ export async function startApp(root: HTMLElement): Promise<void> {
     view: () => vm,
     visibleMarkerIds: () => mapView.visibleMarkerIds(),
     bordersReady: () => mapView.bordersReady(),
-    ai: { session, director, presentation },
+    ai: {
+      session,
+      director,
+      presentation,
+      frameTarget: () => (director.drawing ? frameTargetFor(director.drawing) : null),
+    },
   };
 }

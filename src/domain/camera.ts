@@ -159,6 +159,34 @@ export function frameBounds(
   return [Math.max(-179.9, w), Math.max(-60, s), Math.min(179.9, e), Math.min(82, n)];
 }
 
+/** The box around some points (null without any). */
+export function pointsBox(points: readonly { lon: number; lat: number }[]): Bounds | null {
+  if (!points.length) return null;
+  let w = Infinity;
+  let s = Infinity;
+  let e = -Infinity;
+  let n = -Infinity;
+  for (const p of points) {
+    w = Math.min(w, p.lon);
+    s = Math.min(s, p.lat);
+    e = Math.max(e, p.lon);
+    n = Math.max(n, p.lat);
+  }
+  return [w, s, e, n];
+}
+
+/**
+ * What lies around a scene: the box of the places it puts on the map, grown by a margin (a third of its size each way, and
+ * never less than 6° of longitude and 4° of latitude, so that a lone place still has a region around it). The parts of the
+ * polities that are lit and reach into this box are the part of them the scene is about; the camera frames that, not the
+ * polities' whole territory.
+ */
+export function surroundings(focus: Bounds): Bounds {
+  const lon = Math.max(6, (focus[2] - focus[0]) / 3);
+  const lat = Math.max(4, (focus[3] - focus[1]) / 3);
+  return [focus[0] - lon, focus[1] - lat, focus[2] + lon, focus[3] + lat];
+}
+
 /**
  * Is the box already well framed by `camera`? All of it inside the padded view, at about the zoom a fit
  * would give (`fitZoom`), and centred well enough. A drawing that is framed is left alone: the map does not

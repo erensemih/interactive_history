@@ -88,13 +88,15 @@ function routeTypeOf(value: unknown): RouteType | null {
 }
 
 const PLACE_HELP =
-  'Yer: bir şehir adı (örn. "Smolensk", "Moskova"; eski adlar da olur: "Stalingrad", "Danzig"), OLAYLAR listesindeki bir olayın kimliği, bir devletin kimliği (o yılın BAŞKENTİ kullanılır) ya da "enlem, boylam" (örn. "52.23, 21.01").';
+  'Yer: şehir adı ("Moskova"; eski adlar da tanınır: "Stalingrad", "Danzig"), OLAYLAR listesindeki bir olayın kimliği, devletin kimliği (o yılın başkenti) ya da "enlem, boylam" ("52.23, 21.01"); tanınmayan yer atlanır.';
+
+const STEP_RANGE_NOTE = `atlandı: sahne numarası 1 ile ${LIMITS.steps} arasında olmalı`;
 
 const STEP_PROP = {
   type: 'integer',
   minimum: 1,
   maximum: LIMITS.steps,
-  description: 'Hangi adıma ait olduğu (varsayılan 1). Çizim yalnızca o adım etkinken haritada durur.',
+  description: 'Hangi sahneye ait olduğu (varsayılan 1). Çizim, o sahne etkinken haritada durur.',
 };
 
 /**
@@ -145,21 +147,20 @@ export function createTools(env: ToolEnv): ToolSpec[] {
     {
       name: 'step',
       description:
-        'Bir adımı (bir sahneyi) bildirir: numarası, kısa başlığı ve altyazısı (adımın özü, bir iki cümle; okur haritayı izlerken bunu okur). Her cevap adımlıdır: tek bir şeyi anlatıyorsan tek adım (n:1), birkaç sahne gerekiyorsa her biri için bir adım. Her adım için bir kez, ilk turda, o adımın gösterim araçlarıyla (show_event, highlight, connect, mark) birlikte çağır. Her adım haritanın sahibidir: etkin olunca harita yalnızca o adımın gösterimini gösterir. Adımda bir olay gösteriyorsan yıl vermen gerekmez; harita o olayın yılının sınırlarını gösterir. Yılı yalnızca olay göstermeyen ya da başka bir yıl isteyen adımda ver. Tam metni burada yazma; o sonra, nihai yanıtta "## n. Başlık" altında gelir. Dönüş: "tamam".',
+        'Bir sahneyi tanımlar: numarası, kısa başlığı ve altyazısı. Aynı numarayla çağrılan gösterim araçları sahnenin haritasını kurar; harita, etkin sahnenin kendi gösterimini gösterir. year verilirse harita o yılın sınırlarını gösterir; verilmezse sahnedeki olayın başladığı yılın, olay yoksa okurun yılının sınırlarını. Tam metin bu çağrıda yer almaz; ikinci turda "## n. Başlık" altında yazılır. Dönüş: "tamam".',
       inputSchema: {
         type: 'object',
         properties: {
-          n: { ...STEP_PROP, description: "Adım numarası, 1'den başlar." },
-          title: { type: 'string', description: 'Adımın kısa başlığı (en çok 6 sözcük).' },
+          n: { ...STEP_PROP, description: "Sahne numarası, 1'den başlar." },
+          title: { type: 'string', description: 'Sahnenin kısa başlığı.' },
           caption: {
             type: 'string',
             description:
-              'Altyazı: adımın özü, bir iki cümle (en çok ~200 karakter). Tam metnin özeti olmalı. Veri setindeki bir olaydan söz ediyorsan onu [olay adı](olay:KİMLİK) biçiminde yaz; okur tıklayıp haritada görür.',
+              'Altyazı: sahnenin özü, bir iki cümle; haritanın üstünde görünür. Veri setindeki bir olay [olay adı](olay:KİMLİK) biçiminde anılırsa okur tıklayıp haritada görür.',
           },
           year: {
             type: 'integer',
-            description:
-              'İsteğe bağlı: adımın gösterdiği harita sınırlarının yılı (seçili aralığın içinde). Olay gösteren adımda verme.',
+            description: 'İsteğe bağlı: haritada gösterilecek sınırların yılı (seçili aralığın içinde).',
           },
         },
         required: ['n', 'title', 'caption'],
@@ -169,7 +170,7 @@ export function createTools(env: ToolEnv): ToolSpec[] {
         const numbered = input.step !== undefined || input.n !== undefined;
         const next = Math.min(LIMITS.steps, Math.max(0, ...plan.numbers()) + 1);
         const n = numbered ? stepOf(input) : next;
-        if (n === null) return 'atlandı: adım numarası 1 ile 12 arasında olmalı';
+        if (n === null) return STEP_RANGE_NOTE;
         plan.declare(n, cleanLabel(input.title, LIMITS.title), cleanCaption(input.caption, LIMITS.caption));
         env.onChange?.();
         if (input.year === undefined || input.year === null || input.year === '') return OK;
@@ -181,39 +182,43 @@ export function createTools(env: ToolEnv): ToolSpec[] {
     {
       name: 'show_event',
       description:
-        'Uygulamanın OLAYLAR listesindeki bir olayı haritada gösterir. Yalnızca hangi olay olduğunu söylersin; uygulama onu HER SEFERİNDE aynı biçimde çizer: olayın tarafları öne çıkar, olayın kendi işareti konur, savaşlarda iki taraf arasındaki çizgi işaretin üzerinden geçer. Anlattığın şey listede bir olaysa her zaman bunu kullan (çizgi ya da işaret çizme). Kimlik listeden olmalı. Dönüş: "tamam" ya da neden atlandığı.',
+        'OLAYLAR listesindeki bir olayı haritada gösterir: olayın tarafları öne çıkar, olayın işareti konur; savaş olaylarında iki tarafın başkentlerinden çıkan ve işaretin üzerinden geçen bir çizgi çizilir. event: OLAYLAR listesindeki kimlik. Dönüş: "tamam" ya da atlanma nedeni.',
       inputSchema: {
         type: 'object',
         properties: {
           step: STEP_PROP,
-          event: { type: 'string', description: 'OLAYLAR listesindeki olay kimliği (örn. "caldiran-1514").' },
+          event: { type: 'string', description: 'OLAYLAR listesindeki olay kimliği (örn. "stalingrad-1942").' },
         },
         required: ['event'],
       },
       execute(input) {
         const step = stepOf(input);
-        if (step === null) return 'atlandı: adım numarası 1 ile 12 arasında olmalı';
+        if (step === null) return STEP_RANGE_NOTE;
         const ev = resolver.event(input.event ?? input.id ?? input.title);
-        if (!ev)
-          return 'atlandı: bu kimlikte bir olay yok; OLAYLAR listesindeki kimliği yaz, listede yoksa mark kullan';
+        if (!ev) return 'atlandı: bu kimlikte bir olay yok; kimlik OLAYLAR listesinden olmalı';
         return accept({ kind: 'event', step, id: ev.id });
       },
     },
     {
       name: 'highlight',
       description:
-        'Hangi devletlerin öne çıkacağını söyler: o adımda bu devletler canlı renkle ve dolgun görünür, haritanın geri kalanı solar. Bir olay gösteriyorsan olayın tarafları zaten öne çıkar; bunu yalnızca olayın taraflarından BAŞKA devletleri öne çıkarmak ya da olay göstermeyen bir adımda kullan. Kimlikler yalnızca POLİTİLER listesinden olmalı; listede olmayan atlanır. Dönüş: "tamam" ya da neden atlandığı.',
+        'Devletleri öne çıkarır: canlı renkle ve dolgun görünürler, haritanın geri kalanı solar. polities: POLİTİLER listesindeki kimlikler (en çok 4); listede olmayan atlanır. Dönüş: "tamam" ya da atlanma nedeni.',
       inputSchema: {
         type: 'object',
         properties: {
           step: STEP_PROP,
-          polities: { type: 'array', items: { type: 'string' }, maxItems: 4, description: 'Devlet kimlikleri.' },
+          polities: {
+            type: 'array',
+            items: { type: 'string' },
+            maxItems: 4,
+            description: 'Devlet kimlikleri (POLİTİLER listesinden).',
+          },
         },
         required: ['polities'],
       },
       execute(input) {
         const step = stepOf(input);
-        if (step === null) return 'atlandı: adım numarası 1 ile 12 arasında olmalı';
+        if (step === null) return STEP_RANGE_NOTE;
         const { ids, skipped } = polities(listOf(input.polities ?? input.polity ?? input.ids).slice(0, 6));
         if (!ids.length) return `atlandı: tanınan devlet yok${note(skipped)}`;
         return accept({ kind: 'highlight', step, polities: ids }) + note(skipped);
@@ -221,7 +226,7 @@ export function createTools(env: ToolEnv): ToolSpec[] {
     },
     {
       name: 'sides',
-      description: `Bir çatışmanın TARAFLARINI devlet gruplarıyla tanımlar (örn. Mihver ve Müttefikler): uygulama her tarafı TEK bir blok olarak, birbirinden belirgin renklerle boyar ve tarafların adını renkleriyle gösterir; böylece "kim kiminle" görünür. sides: her biri {name, polities} olan 2–${LIMITS.sides} taraf; name kısa (örn. "Mihver"); polities POLİTİLER listesindeki kimlikler (taraf başına en çok ${LIMITS.sidePolities}). Bir devlet tek tarafta olur. Tarafları bildirdiğin devletler zaten öne çıkar, ayrıca highlight çağırma. Yalnızca gerçekten iki (ya da daha çok) kutuplu bir çatışmayı (savaş, ittifaklar) anlatırken kullan. Dönüş: "tamam" ya da neden atlandığı.`,
+      description: `Bir çatışmanın taraflarını tanımlar: her taraf tek bir blok olarak ayrı bir renkle boyanır ve adı rengiyle birlikte gösterilir; tarafların devletleri öne çıkar. sides: 2–${LIMITS.sides} taraf, her biri {name, polities}; name kısa bir ad (örn. "Mihver"), polities POLİTİLER listesindeki kimlikler (taraf başına en çok ${LIMITS.sidePolities}). Bir devlet tek tarafta yer alır. Dönüş: "tamam" ya da atlanma nedeni.`,
       inputSchema: {
         type: 'object',
         properties: {
@@ -234,12 +239,12 @@ export function createTools(env: ToolEnv): ToolSpec[] {
             items: {
               type: 'object',
               properties: {
-                name: { type: 'string', description: 'Tarafın kısa adı (en çok 24 karakter).' },
+                name: { type: 'string', description: `Tarafın kısa adı (en çok ${LIMITS.label} karakter).` },
                 polities: {
                   type: 'array',
                   items: { type: 'string' },
                   maxItems: LIMITS.sidePolities,
-                  description: 'Devlet kimlikleri.',
+                  description: 'Devlet kimlikleri (POLİTİLER listesinden).',
                 },
               },
               required: ['name', 'polities'],
@@ -250,7 +255,7 @@ export function createTools(env: ToolEnv): ToolSpec[] {
       },
       execute(input) {
         const step = stepOf(input);
-        if (step === null) return 'atlandı: adım numarası 1 ile 12 arasında olmalı';
+        if (step === null) return STEP_RANGE_NOTE;
         const sides: Side[] = [];
         const skipped: string[] = [];
         const taken = new Set<string>();
@@ -270,7 +275,7 @@ export function createTools(env: ToolEnv): ToolSpec[] {
     },
     {
       name: 'route',
-      description: `Sıralı yerlerden geçen YÖNLÜ bir yol çizer: bir ordunun ilerleyişi ya da seferi (advance), geri çekilme (retreat), göç ya da sürgün (migration), ticaret ya da ikmal yolu (trade). Yolun biçimini uygulama belirler (her tür hep aynı görünür, kıvrımlı ve uçta oklu); sen yalnızca durakları, türü ve istersen kısa bir etiketi ve animate'i söylersin. via: 2–${LIMITS.stops} yer, SIRAYLA (ok sonuncuyu gösterir). ${PLACE_HELP} animate: true ise yol, adım açıldığında çizilerek belirir; yalnızca yönü ya da sırayı vurgulamak istediğinde ver. OLAYLAR'daki bir olayı değil, olaylar arasındaki yolu anlatırken kullan. Dönüş: "tamam" ya da neden atlandığı.`,
+      description: `Sıralı yerlerden geçen yönlü bir yol çizer. type: advance (ilerleyiş, sefer), retreat (geri çekilme), migration (göç, sürgün) ya da trade (ticaret, ikmal); her türün biçimi sabittir (kıvrımlı, uçta oklu). via: 2–${LIMITS.stops} yer, sırayla; ok sonuncuyu gösterir. ${PLACE_HELP} label: isteğe bağlı kısa etiket. animate: true ise yol, sahne açılınca çizilerek belirir. Dönüş: "tamam" ya da atlanma nedeni.`,
       inputSchema: {
         type: 'object',
         properties: {
@@ -283,14 +288,14 @@ export function createTools(env: ToolEnv): ToolSpec[] {
             description: 'Duraklar, sırayla (birincisi başlangıç, sonuncusu varış).',
           },
           type: { type: 'string', enum: [...ROUTE_TYPES], description: 'Yolun türü.' },
-          label: { type: 'string', description: 'İsteğe bağlı kısa etiket, en çok 24 karakter.' },
+          label: { type: 'string', description: `İsteğe bağlı kısa etiket (en çok ${LIMITS.label} karakter).` },
           animate: { type: 'boolean', description: 'Yol çizilerek belirsin mi? Varsayılan: hayır.' },
         },
         required: ['via', 'type'],
       },
       execute(input) {
         const step = stepOf(input);
-        if (step === null) return 'atlandı: adım numarası 1 ile 12 arasında olmalı';
+        if (step === null) return STEP_RANGE_NOTE;
         const type = routeTypeOf(input.type);
         if (!type) return 'atlandı: tür advance, retreat, migration ya da trade olmalı';
         const { refs, skipped } = placeRefs(
@@ -306,7 +311,7 @@ export function createTools(env: ToolEnv): ToolSpec[] {
     },
     {
       name: 'connect',
-      description: `İki YER arasına KENDİ ilişki çizgini çizer: war (savaş), alliance (ittifak), trade (ticaret), treaty (antlaşma). Uçlar yerdir, devletlerin ortası değil. ${PLACE_HELP} YALNIZCA veri setinde olay olarak bulunmayan bir ilişki için kullan (örneğin bir ittifak ya da bir ticaret yolu); OLAYLAR listesindeki bir savaş için show_event kullan, çizgisini uygulama çizer. Dönüş: "tamam" ya da neden atlandığı.`,
+      description: `İki yer arasına bir ilişki çizgisi çizer. relation: war (savaş), alliance (ittifak), trade (ticaret) ya da treaty (antlaşma); her ilişkinin çizgi biçimi sabittir. from, to: iki uç. ${PLACE_HELP} label: isteğe bağlı kısa etiket. Dönüş: "tamam" ya da atlanma nedeni.`,
       inputSchema: {
         type: 'object',
         properties: {
@@ -314,13 +319,13 @@ export function createTools(env: ToolEnv): ToolSpec[] {
           from: { type: 'string', description: 'Birinci uç (bir yer).' },
           to: { type: 'string', description: 'İkinci uç (bir yer).' },
           relation: { type: 'string', enum: [...RELATIONS], description: 'İlişkinin türü.' },
-          label: { type: 'string', description: 'İsteğe bağlı kısa etiket, en çok 24 karakter.' },
+          label: { type: 'string', description: `İsteğe bağlı kısa etiket (en çok ${LIMITS.label} karakter).` },
         },
         required: ['from', 'to', 'relation'],
       },
       execute(input) {
         const step = stepOf(input);
-        if (step === null) return 'atlandı: adım numarası 1 ile 12 arasında olmalı';
+        if (step === null) return STEP_RANGE_NOTE;
         const relation = relationOf(input.relation);
         if (!relation) return 'atlandı: ilişki war, alliance, trade ya da treaty olmalı';
         const { refs, skipped } = placeRefs([input.from, input.to]);
@@ -332,26 +337,30 @@ export function createTools(env: ToolEnv): ToolSpec[] {
     },
     {
       name: 'mark',
-      description: `Haritada, OLAYLAR listesinde BULUNMAYAN bir noktayı (kent, geçit, liman, savaş alanı) kısa bir etiketle işaretler. Yeri place ile söyle (bir şehir adı, eski adlar da olur: "Danzig"; ya da "enlem, boylam") ya da lon ve lat ile. Listedeki bir olay için kullanma: show_event kullan. Koordinatı iyi bilmiyorsan çağırma: yanlış bir işaret, işaretsiz bir anlatımdan kötüdür. Dönüş: "tamam" ya da neden atlandığı.`,
+      description: `Haritada bir noktayı kısa bir etiketle işaretler. Nokta, place ile (bir şehir adı, eski adlar da tanınır: "Danzig"; ya da "enlem, boylam") veya lon ve lat ile verilir; place OLAYLAR listesindeki bir olayın yeriyse olay olarak gösterilir. label: işaretin etiketi. Dönüş: "tamam" ya da atlanma nedeni.`,
       inputSchema: {
         type: 'object',
         properties: {
           step: STEP_PROP,
-          place: { type: 'string', description: 'Yer: şehir adı ya da "enlem, boylam". Verirsen lon/lat gerekmez.' },
+          place: { type: 'string', description: 'Yer: şehir adı ya da "enlem, boylam". Verilirse lon/lat gerekmez.' },
           lon: { type: 'number', description: 'Boylam, ondalık derece (doğu +).' },
           lat: { type: 'number', description: 'Enlem, ondalık derece (kuzey +).' },
-          label: { type: 'string', description: 'Kısa etiket, en çok 24 karakter (place verdiysen şehrin adı olur).' },
+          label: {
+            type: 'string',
+            description: `Kısa etiket (en çok ${LIMITS.label} karakter); place bir şehirse verilmezse şehrin adı olur.`,
+          },
         },
         required: ['label'],
       },
       execute(input) {
         const step = stepOf(input);
-        if (step === null) return 'atlandı: adım numarası 1 ile 12 arasında olmalı';
+        if (step === null) return STEP_RANGE_NOTE;
         let point = null as ReturnType<typeof resolver.point>;
         let name: string | null = null;
         if (input.place !== undefined && input.place !== null && input.place !== '') {
           const ref = resolver.placeRef(input.place, range);
-          if (!ref || ref.kind === 'polity') return 'atlandı: yer tanınmadı (bir şehir adı ya da "enlem, boylam" ver)';
+          if (!ref || ref.kind === 'polity')
+            return 'atlandı: yer tanınmadı (bir şehir adı ya da "enlem, boylam" olmalı)';
           if (ref.kind === 'event')
             return accept({ kind: 'event', step, id: ref.id }) + ' (uygulamanın olay kaydı; olay olarak gösterildi)';
           point = resolver.placePoint(ref, range.to);
@@ -366,7 +375,7 @@ export function createTools(env: ToolEnv): ToolSpec[] {
         const known = resolver.eventFor(label, point, range);
         if (known) {
           accept({ kind: 'event', step, id: known.id });
-          return `tamam: «${known.title}» uygulamanın olay kaydı; olay olarak gösterildi (böyle olaylar için show_event kullan)`;
+          return `tamam: «${known.title}» uygulamanın olay kaydı; olay olarak gösterildi`;
         }
         return accept({ kind: 'mark', step, point, label });
       },

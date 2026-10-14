@@ -72,11 +72,18 @@ describe('a narration', () => {
     expect(answer.plan.drawingAt(6).events).toEqual(['stalingrad-1942', 'el-alamein-1942']);
     expect(answer.plan.drawingAt(7).events).toEqual(['normandiya-1944', 'bagration-1944']);
     expect(answer.plan.drawingAt(8).events).toEqual(['berlin-muharebesi-1945', 'almanya-teslimi-1945']);
-    // the year of a step with events is theirs (the earliest), unless the step names one. (Cliopatria has no Nazi Germany in
-    // 1945; the correction layer carries its 1938 borders over, so the Battle of Berlin is drawn on the borders of 1945.)
+    // the year of a step with events is theirs (the earliest), unless the step names one; and the borders are those of the
+    // event's start: the Battle of France begins in May 1940, when the Third Republic is still there (the data has it up to
+    // 1939), so step 2 shows 1939. (Cliopatria has no Nazi Germany in 1945; the correction layer carries its 1938 borders
+    // over, so the Battle of Berlin is drawn on the borders of 1945.)
     expect(answer.plan.numbers().map((n) => answer.plan.drawingAt(n).year)).toEqual([
-      1939, 1940, 1940, 1941, 1942, 1942, 1944, 1945,
+      1939, 1939, 1940, 1941, 1942, 1942, 1944, 1945,
     ]);
+    // the step's date for the timeline is the day its earliest event starts: Battle of France 10 May 1940, whatever borders it shows
+    const when = answer.plan.numbers().map((n) => answer.plan.whenAt(n)!);
+    expect(when.map(Math.floor)).toEqual([1939, 1940, 1940, 1941, 1942, 1942, 1944, 1945]);
+    expect(when[1]).toBeCloseTo(1940.355, 2);
+    expect(when).toEqual([...when].sort((a, b) => a - b));
     // the vocabulary beyond events: the Eastern Front has its two sides painted as blocs and the advance on Moscow as a
     // directed route through cities (animated), the retreat of 1944 is a route of another type
     const four = answer.plan.drawingAt(4);
@@ -127,7 +134,7 @@ describe('a narration', () => {
     expect(req.turns.at(-1)!.content).toContain('nazi-germany | Nazi Almanyası');
     expect(req.turns.at(-1)!.content).toContain('Stalingrad Muharebesi'); // the app's own record, as a source
     expect(req.turns.at(-1)!.content).toContain('stalingrad-1942 | '); // and with the id show_event takes
-    expect(req.turns.at(-1)!.content).toContain('ANLATIM İSKELETİ'); // a narration comes with the app's outline
+    expect(req.turns.at(-1)!.content).not.toMatch(/İSKELET/); // the events are listed as information, not as a structure to follow
     expect(req.meta.mode).toBe('narration');
   });
 
@@ -183,7 +190,7 @@ describe('a narration', () => {
     const answer = last(session);
     expect(parseAnswer(answer.text).sections.length).toBeGreaterThanOrEqual(3);
     expect(answer.plan.drawingAt(2).events.length).toBeGreaterThan(0);
-    // the mock follows the app's outline, so the world's narration is the same turning points every time
+    // the mock tells the range's most important events, so the world's narration is the same turning points every time
     const second = makeSession(mock());
     await second.send({ text: 'Bu aralıkta dünyada olanları anlat.', mode: 'narration' }, contextAt(null));
     expect(
@@ -330,6 +337,23 @@ describe('a question', () => {
     expect(parseAnswer(answer.text).sections[0]!.body).toContain('\n\n'); // the full text has paragraphs the caption does not
   });
 
+  it('answers the two scenes in the west with one step each: the fall of France on the borders of its start, the landings with the US in them', async () => {
+    const session = makeSession(mock());
+    await session.send({ text: 'Fransa 1940 sahnesini göster.', mode: 'qa' }, berlin());
+    const france = last(session);
+    expect(france.plan.numbers()).toEqual([1]);
+    expect(france.plan.drawingAt(1).events).toEqual(['fransa-muharebesi-1940']);
+    expect(france.plan.drawingAt(1).highlights).toEqual(['french-third-republic', 'kingdom-of-great-britain']);
+    expect(france.plan.drawingAt(1).year).toBe(1939); // the Third Republic is in the data up to 1939
+    expect(france.plan.captionOf(1)).toContain('olay:fransa-muharebesi-1940');
+    await session.send({ text: 'Normandiya çıkarmasını göster.', mode: 'qa' }, berlin());
+    const normandy = last(session);
+    expect(normandy.plan.numbers()).toEqual([1]);
+    expect(normandy.plan.drawingAt(1).events).toEqual(['normandiya-1944']);
+    expect(normandy.plan.drawingAt(1).year).toBe(1944);
+    expect(parseAnswer(normandy.text).sections[0]!.body).toContain('\n\n');
+  });
+
   it('with a model that writes plain text and nothing else, the answer is still one step: the page makes the caption', async () => {
     const session = makeSession(mock());
     await session.send({ text: 'Hava gücü hakkında düz metin ver.', mode: 'qa' }, berlin());
@@ -426,23 +450,20 @@ describe('a question', () => {
     expect(provider.requests[2]!.turns.at(-1)!.content).not.toContain('TEKRAR'); // another place: a new ask
   });
 
-  it('gives the same outline for the same subject however many times it is asked, and a new one for another subject', async () => {
+  it('sends a narration request as it sends any other: the context, the lists, the request; no skeleton, whoever is asked about', async () => {
     const provider = mock();
     const session = makeSession(provider);
-    const outlineOf = (i: number) => {
-      const text = provider.requests[i]!.turns.at(-1)!.content;
-      return /ANLATIM İSKELETİ[^\n]*\n([\s\S]*?)\n\n/.exec(text)?.[1];
-    };
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
-    session.newChat();
-    await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, { ...berlin(), year: 1943 }); // another year shown
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, contextAt(TOKYO));
-    expect(outlineOf(0)).toBeTruthy();
-    expect(outlineOf(1)).toBe(outlineOf(0));
-    expect(outlineOf(2)).not.toBe(outlineOf(0));
-    // a question is not a narration: no outline for it
+    await session.send({ text: 'Bu aralıkta dünyada olanları anlat.', mode: 'narration' }, contextAt(null));
     await session.send({ text: AXIS_QUESTION, mode: 'qa' }, berlin());
-    expect(provider.requests[3]!.turns.at(-1)!.content).not.toContain('ANLATIM İSKELETİ');
+    for (const req of provider.requests) {
+      const turn = req.turns.at(-1)!.content;
+      expect(turn).not.toMatch(/İSKELET|ANLATIM/);
+      expect(turn).toContain('OLAYLAR (');
+      expect(turn).toContain('POLİTİLER (');
+      expect(req.turns[0]!.content).not.toMatch(/iskelet/i);
+    }
   });
 
   it('refuses to start a second call while one runs', async () => {

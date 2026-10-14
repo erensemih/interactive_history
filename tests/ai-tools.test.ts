@@ -3,8 +3,13 @@ import { TurnPlan } from '../src/ai/drawing';
 import type { ToolSpec } from '../src/ai/provider';
 import { Resolver } from '../src/ai/resolve';
 import { createTools } from '../src/ai/tools';
+import { LIMITS } from '../src/ai/types';
 import { withMiniPlaces } from './helpers/places';
 import { archivedData } from './helpers/shipped';
+
+/** One property of a tool's input schema. */
+const prop = (t: ToolSpec, name: string) =>
+  t.inputSchema.properties[name] as { description?: string; maximum?: number };
 
 const resolver = new Resolver(withMiniPlaces(archivedData('1400-1600')));
 const range = { from: 1500, to: 1550 };
@@ -369,15 +374,60 @@ describe('the map tools', () => {
     expect(changes()).toBe(1);
   });
 
-  it('the tools that draw say what the app does with their input, so the model asks for what and never for how', () => {
+  it('each description says what the tool does, what it needs and what it returns, and gives no order', () => {
+    const { tools } = setup();
+    // a rule about when or how much to use a tool belongs to the owner's file, if anywhere; the description is a manual
+    const orders = /\b(her zaman|hep|asla|hiçbir zaman|mutlaka|yalnızca|sadece)\b|çağır|kullan(ma|ın|ılmaz)?\b/i;
+    for (const t of tools) {
+      expect(t.description, t.name).not.toMatch(orders);
+      expect(JSON.stringify(t.inputSchema), `${t.name} (its parameters)`).not.toMatch(orders);
+      expect(t.description, t.name).toContain('Dönüş:'); // what it returns
+      expect(t.description.length, t.name).toBeLessThanOrEqual(640); // and short
+    }
+  });
+
+  it('say what each tool needs: ids from the lists, places in the forms the page understands', () => {
     const { tool } = setup();
-    expect(tool('show_event').description).toContain('aynı biçimde'); // always drawn the same way
-    expect(tool('connect').description).toContain('OLAYLAR'); // for what the data has no event for
-    expect(tool('mark').description).toContain('OLAYLAR');
-    expect(tool('sides').description).toContain('TEK bir blok'); // the app paints each side as one bloc
-    expect(tool('route').description).toContain('uygulama belirler'); // the app decides how a route looks
-    for (const name of ['connect', 'route']) expect(tool(name).description).toContain('BAŞKENT'); // a polity means its capital
-    expect(tool('highlight').description).toContain('öne çıkacağını');
+    expect(tool('show_event').description).toContain('OLAYLAR listesindeki');
+    expect(prop(tool('show_event'), 'event').description).toContain('OLAYLAR listesindeki');
+    expect(tool('highlight').description).toContain('POLİTİLER listesindeki');
+    expect(tool('sides').description).toContain('POLİTİLER listesindeki');
+    for (const name of ['connect', 'route']) {
+      const text = tool(name).description;
+      expect(text, name).toContain('şehir adı');
+      expect(text, name).toContain('eski adlar da tanınır');
+      expect(text, name).toContain('"enlem, boylam"');
+      expect(text, name).toContain('devletin kimliği (o yılın başkenti)'); // a polity means its capital
+    }
+    expect(tool('mark').description).toContain('"enlem, boylam"');
+    expect(tool('mark').description).toContain('OLAYLAR'); // a place of the app's events is shown as that event
+  });
+
+  it('say what the app does with the input, so the model asks for what and never for how', () => {
+    const { tool } = setup();
+    expect(tool('show_event').description).toContain('olayın tarafları öne çıkar'); // the app lights the parties...
+    expect(tool('show_event').description).toContain('başkentlerinden çıkan'); // ...and draws the war line itself
+    expect(tool('sides').description).toContain('tek bir blok'); // each side is painted as one bloc
+    expect(tool('route').description).toContain('her türün biçimi sabittir'); // the look of a route is the app's
+    expect(tool('connect').description).toContain('her ilişkinin çizgi biçimi sabittir');
+    expect(tool('highlight').description).toContain('haritanın geri kalanı solar');
+    expect(tool('step').description).toContain('harita, etkin sahnenin kendi gösterimini gösterir');
+    expect(tool('route').description).toContain('çizilerek belirir'); // what animate does
+  });
+
+  it('the number of scenes is the model’s: a high sanity limit only, nothing near the twelve of before', () => {
+    const { plan, tool } = setup();
+    expect(LIMITS.steps).toBeGreaterThanOrEqual(40);
+    for (let n = 1; n <= 40; n++) expect(tool('step').execute({ n, title: `A${n}`, caption: 'a' })).toBe('tamam');
+    expect(plan.numbers()).toHaveLength(40);
+    expect(tool('show_event').execute({ step: 40, event: 'caldiran-1514' })).toBe('tamam');
+    expect(plan.drawingAt(40).events).toEqual(['caldiran-1514']);
+    // past the sanity limit a request is declined, with the limit in the message
+    expect(tool('step').execute({ n: LIMITS.steps + 1, title: 'x', caption: 'y' })).toMatch(
+      new RegExp(`^atlandı: sahne numarası 1 ile ${LIMITS.steps} arasında`),
+    );
+    expect(tool('highlight').execute({ step: LIMITS.steps + 1, polities: ['ottoman-empire'] })).toMatch(/^atlandı/);
+    expect(prop(tool('step'), 'n').maximum).toBe(LIMITS.steps);
   });
 
   it('show_event takes an event of the app by id, or by a title that names exactly one', () => {

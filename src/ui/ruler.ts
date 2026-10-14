@@ -1,17 +1,17 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { styleMap } from 'lit-html/directives/style-map.js';
 import type { AppData } from '../data/load';
-import { spreadPoints } from '../domain/spread';
+import { placeStepPoints } from '../domain/spread';
 import { clamp, presetRange } from '../domain/time';
 import type { Store } from '../state/store';
 import { clsx, formatRange } from './format';
 
 type Drag = { mode: 'start' | 'end' | 'move' | 'cursor'; grab: number; pointerId: number } | null;
 
-/** A step of the narration on screen, at the year its scene shows. */
+/** A step of the narration on screen, at the date it is about (a fractional year). */
 export interface StepMark {
   n: number;
-  year: number;
+  when: number;
   title: string;
   active: boolean;
 }
@@ -21,13 +21,8 @@ export interface RulerActions {
   goStep(n: number): void;
 }
 
-/**
- * Closest two step points may sit (px, centre to centre): a point is 15 px across and the one on screen is drawn 1.3 times
- * as big, so no two ever touch. Points that crowd one another are spread about where their years put them.
- */
-const STEP_PITCH = 22;
-/** A point's radius: it keeps this far from the ends of the track. */
-const STEP_RADIUS = 10;
+/** A point smaller than this has no room for its number (the one on screen always shows it). */
+const STEP_NUMBERED = 13;
 
 /**
  * The time control: one slim ruler over the whole dataset (the years of the border data) with a brush for the selected
@@ -165,15 +160,21 @@ export class Ruler {
   private progress(steps: readonly StepMark[]): TemplateResult | typeof nothing {
     if (steps.length < 2 || !this.track) return nothing;
     const width = this.track.clientWidth || 1;
-    // left to right by year (and by number within a year); points that crowd each other are spread about their years
-    const ordered = [...steps].sort((a, b) => a.year - b.year || a.n - b.n);
-    const xs = spreadPoints(
-      ordered.map((m) => (this.pct(m.year + 0.5) / 100) * width),
-      STEP_PITCH,
-      STEP_RADIUS,
-      width - STEP_RADIUS,
+    const { range } = this.store.state;
+    const px = (year: number) => (this.pct(year) / 100) * width;
+    // The points stand at their dates and stay inside the selected range (the brush). A range of a few years is only a few
+    // tens of pixels of the ruler, so the points shrink to what fits, and crowded ones are spread, never past the brush.
+    const left = px(range.from);
+    const right = px(range.to + 1);
+    const dated = steps
+      .map((m) => ({ ...m, at: clamp(m.when, range.from, range.to + 1) }))
+      .sort((a, b) => a.at - b.at || a.n - b.n); // left to right by date (and by number within one)
+    const { xs, size, onSize } = placeStepPoints(
+      dated.map((m) => px(m.at)),
+      left,
+      right,
     );
-    const placed = ordered.map((m, i) => ({ ...m, x: xs[i]! }));
+    const placed = dated.map((m, i) => ({ ...m, x: xs[i]! }));
     const first = placed[0]!;
     const active = placed.find((m) => m.active);
     const rank = active ? placed.indexOf(active) : -1;
@@ -191,11 +192,16 @@ export class Ruler {
         (m, i) =>
           html`<button
             type="button"
-            class=${clsx('ruler-step', m.active && 'is-on', rank >= 0 && i < rank && 'is-past')}
+            class=${clsx(
+              'ruler-step',
+              m.active && 'is-on',
+              rank >= 0 && i < rank && 'is-past',
+              !m.active && size < STEP_NUMBERED && 'is-plain',
+            )}
             data-testid="ruler-step"
             data-n=${m.n}
-            style=${styleMap({ left: `${m.x}px` })}
-            title=${`${m.n}. adım${m.title ? `: ${m.title}` : ''} · ${m.year}`}
+            style=${styleMap({ left: `${m.x}px`, '--s': `${m.active ? onSize : size}px` })}
+            title=${`${m.n}. adım${m.title ? `: ${m.title}` : ''} · ${Math.floor(m.when)}`}
             tabindex="-1"
             aria-hidden="true"
             @pointerdown=${(e: PointerEvent) => e.stopPropagation()}
@@ -210,9 +216,10 @@ export class Ruler {
   /* ------------------------------------------------------------ render */
 
   /**
-   * While a narration is on screen the ruler is also its progress bar: each step is a point at its year, those
-   * already seen are filled, the one on screen is marked, and a line runs from the first to it. Steps without a year
-   * are left out of it (there is nowhere to put them). Fewer than two dated steps are no progress to speak of.
+   * While a narration is on screen the ruler is also its progress bar: each step is a point at its date (inside the
+   * selected range), those already seen are filled, the one on screen is marked, and a line runs from the first to it.
+   * Steps without a date are left out of it (there is nowhere to put them). Fewer than two dated steps are no progress to
+   * speak of.
    */
   render(shownYear?: number, steps: readonly StepMark[] = []) {
     this.last = { year: shownYear, steps };

@@ -220,33 +220,65 @@ export class Resolver {
   }
 
   /**
-   * The bounding box of a polity's main parts in `year`: the parts that are not much smaller than its biggest
-   * one, so an island or an exclave far away does not stretch the box over half the world. Null without borders.
+   * The box of the part of a polity that a scene is about, in `year` (null without borders that year).
+   *
+   *  - With `around` (what lies around the places the scene puts on the map: its events, the ends of its lines, its marks):
+   *    the parts of the polity that reach into it, each cut at its edge. A colony, an island group, an exclave, or the far end of
+   *    a land that runs on for thousands of kilometres never stretches the view; a polity with no part there has nothing to show
+   *    (null).
+   *  - Without it: the polity's body, its biggest part and the parts that lie against it (Britain with Northern Ireland, not
+   *    Aden or Iceland; the United States without Alaska and Greenland). A part as big as the homeland but far from it is
+   *    not the homeland.
    */
-  boundsAt(id: string, year: number): Bounds | null {
+  boundsAt(id: string, year: number, around?: Bounds | null): Bounds | null {
     const row = this.rowAt(id, year);
     if (!row) return null;
-    const key = `${id}@${row.from}`;
-    const cached = this.boundsCache.get(key);
-    if (cached !== undefined) return cached;
-    let box: Bounds | null = null;
-    if (row.polys.length) {
-      const parts = row.polys.map((poly) => ({ poly, area: ringArea(poly[0]!) })).sort((a, b) => b.area - a.area);
-      const biggest = parts[0]!.area;
+    const parts = this.partsOf(row);
+    if (!parts.length) return around && !meets(row.bbox ?? row.box, around) ? null : (row.bbox ?? row.box);
+    if (around) {
+      let box: Bounds | null = null;
       for (const part of parts) {
-        if (part.area < biggest * MAIN_PART) break;
-        const b = ringBounds(part.poly[0]!);
-        box = box
-          ? [Math.min(box[0], b[0]), Math.min(box[1], b[1]), Math.max(box[2], b[2]), Math.max(box[3], b[3])]
-          : b;
+        if (!meets(part.box, around)) continue;
+        const cut: Bounds = [
+          Math.max(part.box[0], around[0]),
+          Math.max(part.box[1], around[1]),
+          Math.min(part.box[2], around[2]),
+          Math.min(part.box[3], around[3]),
+        ];
+        box = box ? unite(box, cut) : cut;
       }
+      return box;
     }
-    box ??= row.bbox ?? row.box;
-    this.boundsCache.set(key, box);
-    return box;
+    let body = this.bodyCache.get(row);
+    if (!body) {
+      const main = parts[0]!;
+      const near: Bounds = [
+        main.box[0] - BODY_GAP,
+        main.box[1] - BODY_GAP,
+        main.box[2] + BODY_GAP,
+        main.box[3] + BODY_GAP,
+      ];
+      body = main.box;
+      for (const part of parts.slice(1)) if (meets(part.box, near)) body = unite(body, part.box);
+      this.bodyCache.set(row, body);
+    }
+    return body;
   }
 
-  private readonly boundsCache = new Map<string, Bounds>();
+  private readonly partCache = new WeakMap<BorderRow, Part[]>();
+  private readonly bodyCache = new WeakMap<BorderRow, Bounds>();
+
+  /** The parts (polygons) of a row with the box and the area of each, the biggest first. */
+  private partsOf(row: BorderRow): Part[] {
+    let parts = this.partCache.get(row);
+    if (!parts) {
+      parts = row.polys
+        .map((poly) => ({ box: ringBounds(poly[0]!), area: ringArea(poly[0]!) }))
+        .sort((a, b) => b.area - a.area);
+      this.partCache.set(row, parts);
+    }
+    return parts;
+  }
 
   /* --------------------------------------------------------------- events */
 
@@ -256,10 +288,15 @@ export class Resolver {
   }
 
   /**
-   * The border year a step about this event shows: the event's own year, unless the event is what ended one of its
-   * parties (Granada fell on 2 January 1492, Constantinople in 1453): that polity has no borders in the year of its
-   * end, and a map without it could not show the war. Then the latest of the three years before it in which the
-   * parties are all there. (A war needs both its sides; any other event needs one party.)
+   * The border year a step about this event shows: the borders at the event's start, not after it. A year's borders are how
+   * that year ended, so the event's own year can already be a world without the event's parties (the Third Republic has no
+   * borders in 1940, the year the Battle of France began in: its war line would fall back to the next party on its side).
+   *  1. The event's year, or the latest of the three years before it in which the event can be drawn at all (a war needs
+   *     both its sides, any other event one of its parties): the event may be what ended a party for good (Granada fell
+   *     on 2 January 1492, Constantinople in 1453).
+   *  2. Then, if a main party of the event (the first two the data lists and, in a war, the first of each side: the ends
+   *     of its line) had borders the year before and has none in that year, it ended during the year: at the event's
+   *     start it was still there, so the year before is shown (when the event can be drawn in it).
    */
   showYearOf(ev: HistoricalEvent): number {
     const sides = eventKindOf(ev.category) === 'war' ? warSides(ev) : null;
@@ -267,8 +304,16 @@ export class Resolver {
       sides
         ? sides.first.some((p) => this.rowAt(p, y)) && sides.second.some((p) => this.rowAt(p, y))
         : ev.parties.some((p) => this.rowAt(p, y));
-    for (let y = ev.year; y >= ev.year - 3; y--) if (present(y)) return y;
-    return ev.year;
+    let year = ev.year;
+    for (let y = ev.year; y >= ev.year - 3; y--) {
+      if (present(y)) {
+        year = y;
+        break;
+      }
+    }
+    const main = new Set([...ev.parties.slice(0, 2), ...(sides ? [sides.first[0], sides.second[0]] : [])]);
+    const lost = [...main].some((p) => !!p && !this.rowAt(p, year) && !!this.rowAt(p, year - 1));
+    return lost && present(year - 1) ? year - 1 : year;
   }
 
   /**
@@ -455,8 +500,26 @@ export class Resolver {
   }
 }
 
-/** A part smaller than this share of its polity's biggest part is an exclave, not where the polity is. */
+/** A part smaller than this share of its polity's biggest part is an exclave, not where the polity is joined from. */
 const MAIN_PART = 0.2;
+
+/** A polity's body (what is framed when a scene has no place to frame around): its biggest part and the parts within this many degrees of it. */
+const BODY_GAP = 3;
+
+interface Part {
+  box: Bounds;
+  area: number;
+}
+
+/** Do the two boxes share any ground? */
+const meets = (a: Bounds, b: Bounds): boolean => a[0] <= b[2] && b[0] <= a[2] && a[1] <= b[3] && b[1] <= a[3];
+
+const unite = (a: Bounds, b: Bounds): Bounds => [
+  Math.min(a[0], b[0]),
+  Math.min(a[1], b[1]),
+  Math.max(a[2], b[2]),
+  Math.max(a[3], b[3]),
+];
 
 function ringBounds(ring: number[][]): Bounds {
   let w = Infinity;

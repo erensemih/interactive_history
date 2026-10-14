@@ -1,4 +1,5 @@
 import type { HistoricalEvent, PlacePoint } from '../domain/types';
+import { pointsBox, surroundings } from '../domain/camera';
 import { eventKindOf, warSides } from './eventKinds';
 import { distanceKm, normalizeName, type Resolver } from './resolve';
 import {
@@ -29,8 +30,11 @@ export const emptyDrawing = (): Drawing => ({
   events: [],
 });
 
-/** The year of an event of the data (null for an id the data does not know). */
+/** The border year a step about an event of the data shows (null for an id the data does not know). */
 export type EventYear = (id: string) => number | null;
+
+/** When an event of the data starts, as a fractional year (null for an id the data does not know). */
+export type EventStart = (id: string) => number | null;
 
 const refKey = (r: PlaceRef): string =>
   r.kind === 'point' ? `p:${r.point.lon.toFixed(2)},${r.point.lat.toFixed(2)}` : `${r.kind}:${r.id}`;
@@ -45,8 +49,9 @@ const newest = <T>(list: T[], max: number): T[] => (list.length > max ? list.sli
 /**
  * What one step shows on the map: its own actions and nothing else. The step before leaves nothing behind
  * and the step after inherits nothing, so the map is always exactly what the step on screen asked for.
- * The year is part of that: the one the step names, else the year of the earliest event it shows (a step about
- * Mohács shows the borders of 1526 without being told), else the reader's own.
+ * The year is part of that: the one the step names, else the borders at the start of the earliest event it shows (a step
+ * about Mohács shows the borders of 1526 without being told; one about the Battle of France those of 1939, the last
+ * year with a France), else the reader's own.
  */
 export function drawingOf(actions: readonly MapAction[], eventYearOf?: EventYear): Drawing {
   const d = emptyDrawing();
@@ -116,8 +121,14 @@ export class TurnPlan {
   /** Grows with every change, so a view can tell cheaply whether it has to look again. */
   version = 0;
 
-  /** `eventYearOf` lets a step that shows an event of the data and names no year show that event's year. */
-  constructor(private readonly eventYearOf?: EventYear) {}
+  /**
+   * `eventYearOf` lets a step that shows an event of the data and names no year show that event's borders;
+   * `eventStartOf` lets the timeline put such a step at the date the event starts.
+   */
+  constructor(
+    private readonly eventYearOf?: EventYear,
+    private readonly eventStartOf?: EventStart,
+  ) {}
 
   private ensure(n: number): PlannedStep {
     let step = this.steps.get(n);
@@ -172,6 +183,19 @@ export class TurnPlan {
    */
   drawingAt(n: number): Drawing {
     return drawingOf(this.actionsOf(n), this.eventYearOf);
+  }
+
+  /**
+   * When step `n` is about, as a fractional year, for its place on the timeline: the date the earliest event it shows
+   * starts, else (a step that shows no event) the middle of the year it names. Null when it has neither: there is nowhere
+   * to put it. This is the step's date in the story; the borders it shows (`drawingAt(n).year`) may be those of the year
+   * before (the borders at the event's start).
+   */
+  whenAt(n: number): number | null {
+    const d = this.drawingAt(n);
+    const starts = d.events.map((id) => this.eventStartOf?.(id) ?? null).filter((t): t is number => t !== null);
+    if (starts.length) return Math.min(...starts);
+    return d.year !== undefined ? d.year + 0.5 : null;
   }
 }
 
@@ -274,14 +298,14 @@ export function resolveDrawing(drawing: Drawing, resolver: Resolver, year: numbe
 }
 
 /**
- * Everything the drawing puts on the map for `year`, as the camera needs it. Null when it puts nothing
- * anywhere (a step with only a year, or an empty one): the camera then stays where it is.
+ * Everything the drawing puts on the map for `year`, as the camera needs it: the points it names (event markers, the ends of
+ * its lines, the stops of its routes, its marks) and, for each lit polity, the part of it that the scene is about. With
+ * points, that is the part of the polity that reaches into their surroundings (`surroundings`): France and the United
+ * Kingdom of a scene in Normandy frame Western Europe, not their colonies, and the United States in it frames nothing,
+ * since none of its land is there. With none (a step that only lights polities), it is the polity's body. Null when it
+ * puts nothing anywhere (a step with only a year, or an empty one): the camera then stays where it is.
  */
 export function frameTargetOf(resolved: ResolvedDrawing, resolver: Resolver, year: number): FrameTarget | null {
-  const boxes = resolved.spotIds.flatMap((id) => {
-    const box = resolver.boundsAt(id, year);
-    return box ? [box] : [];
-  });
   const points: PlacePoint[] = [];
   for (const l of resolved.links) points.push(l.a, l.b);
   for (const r of resolved.routes) points.push(...r.points);
@@ -290,6 +314,12 @@ export function frameTargetOf(resolved: ResolvedDrawing, resolver: Resolver, yea
     points.push(e.point);
     if (e.war) points.push(e.war.a, e.war.b);
   }
+  const focus = pointsBox(points);
+  const around = focus ? surroundings(focus) : undefined;
+  const boxes = resolved.spotIds.flatMap((id) => {
+    const box = resolver.boundsAt(id, year, around);
+    return box ? [box] : [];
+  });
   return boxes.length || points.length ? { boxes, points } : null;
 }
 

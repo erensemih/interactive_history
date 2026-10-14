@@ -3,14 +3,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { subjectKey, subjectLabel, type AiContext } from '../src/ai/context';
 import { drawingOf, emptyDrawing, TurnPlan } from '../src/ai/drawing';
 import { INSTRUCTIONS_FILE } from '../src/ai/instructions';
-import { narrationOutline } from '../src/ai/outline';
 import {
   buildTurns,
   condense,
   describeCatalog,
   describeContext,
   describeEvents,
-  describeOutline,
   FULL_HISTORY_BYTES,
   instructions,
   NARRATION_REQUEST,
@@ -60,6 +58,26 @@ const base = (patch: Partial<PromptInput> = {}): PromptInput => ({
   ...patch,
 });
 
+/** The rules the notes used to carry about how to build a narration (the skeleton, the shape, which tool when). They are gone. */
+const REMOVED_RULES: [name: string, pattern: RegExp][] = [
+  ['the narration skeleton', /iskelet/i],
+  ['a step per skeleton row', /sıra ve adım sayısı/],
+  ['do not add steps', /adım ekleme/],
+  ['one step for one thing', /tek (bir şeyi anlatıyorsan )?adım yaz/i],
+  ['every answer has steps', /Her cevap adımlıdır/],
+  ['no format to choose', /Biçim seçmen gerekmez/],
+  ['merge steps that share a scene', /aynı sahneyi paylaşan/],
+  ['one event, no connect or mark', /Aynı olay için ayrıca/],
+  ['highlight only for the others', /yalnızca onlardan başka devletler/],
+  ['sides only for two-sided conflicts', /Yalnızca gerçekten iki/],
+  ['connect only for what the data lacks', /yalnızca OLAYLAR'da karşılığı olmayan/],
+  ['do not show far-away things together', /çok uzak şeyleri gereksiz yere gösterme/],
+  ['stay in the selected range', /aralığın dışındaki gelişmelere/],
+  ['do not contradict the records', /onlarla çelişme/],
+  ['each step must declare everything itself', /kendi başına bildirmeli/],
+  ['skipped tools are of no importance', /önemli değil/],
+];
+
 describe('instructions', () => {
   it("are the owner's file, as it is, followed by the page's own notes", () => {
     const file = readFileSync(new URL('../instructions/okuma-arkadasi.txt', import.meta.url), 'utf8');
@@ -70,134 +88,82 @@ describe('instructions', () => {
       expect(text.slice(INSTRUCTIONS_FILE.length)).toMatch(/^\n\nUYGULAMA NOTLARI\n/);
     }
     expect(INSTRUCTIONS_FILE).toContain('Sen, tarih okuyan birine harita üzerinden eşlik eden bir okuma arkadaşısın.');
-    expect(INSTRUCTIONS_FILE).toContain('Her adım için iki metin yazarsın:');
+    expect(INSTRUCTIONS_FILE).toContain('Anlatımı nasıl kuracağın sana kalmış: kaç sahne, hangi sırayla');
   });
 
-  it('map every action the file names onto a tool the page really offers', () => {
+  it('leave how to build a narration to the model: none of the rules that used to steer it is left, in the file or in the notes', () => {
+    for (const tools of [true, false]) {
+      const text = instructions(tools);
+      for (const [name, pattern] of REMOVED_RULES) expect(text, name).not.toMatch(pattern);
+    }
+  });
+
+  it('keep the file to what the owner wrote: what the model has, the format, the truth, the tone, the reader’s say', () => {
+    for (const heading of ['## Elindekiler', '## Biçim', '## Doğruluk', '## Ton', '## Kullanıcı']) {
+      expect(INSTRUCTIONS_FILE).toContain(heading);
+    }
+    expect(INSTRUCTIONS_FILE).toContain('kamera dahil, uygulama halleder');
+    expect(INSTRUCTIONS_FILE).toContain('Cevabın sahnelerden oluşur; tek bir sahne de olabilir.');
+    expect(INSTRUCTIONS_FILE).toContain('Veri setindeki bir olaydan söz ettiğinde onu\nolay olarak işaretle');
+    expect(INSTRUCTIONS_FILE).toContain('Bilmediğin şeyi uydurma. Emin olmadığın bir konum için çizim yapma.');
+    expect(INSTRUCTIONS_FILE).toContain('İşgal edilmiş bir toprağı işgal olarak an.');
+    expect(INSTRUCTIONS_FILE).toContain('tartışmalı olarak anlat; taraf\ntutma');
+    expect(INSTRUCTIONS_FILE).toContain('Kullanıcı başka bir şey isterse');
+  });
+
+  it('offer the seven tools, the first two named in the notes (the protocol is built on them) and the rest by their own descriptions', () => {
     const plan = new TurnPlan();
     const offered = createTools({ resolver, range, plan }).map((t) => t.name);
-    const text = instructions(true);
-    const literal = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // what the file says the model may do, and the tool the notes give each of them
-    for (const [inFile, inNotes, tool] of [
-      ['sadece o olayı göster', 'veri setindeki bir olayı göstermek', 'show_event'],
-      ['Hangi devletlerin öne çıkacağını', 'hangi devletlerin öne çıkacağını söylemek', 'highlight'],
-      ['Bir çatışmanın taraflarını', 'bir çatışmanın taraflarını (kim kiminle) göstermek', 'sides'],
-      [
-        'sıralı yerlerden geçen yönlü bir yol',
-        'bir ordunun ilerleyişini, bir seferi, bir geri çekilişi, bir göçü ya da bir ticaret yolunu çizmek',
-        'route',
-      ],
-      ['Kendi çizgi', 'veride olmayan bir ilişkiyi çizmek', 'connect'],
-      ['yol ve işaretlerini', 'veride olmayan bir yeri işaretlemek', 'mark'],
-      ['Her adım için iki metin', 'adımları bildirmek', 'step'],
-    ] as const) {
-      expect(INSTRUCTIONS_FILE).toContain(inFile);
-      expect(offered).toContain(tool);
-      expect(text).toMatch(new RegExp(`${literal(inNotes)}[^\\n]*→ \`${tool}\``)); // "action → `tool`"
-    }
-    // every tool of the page is named in the notes, and no tool the file does not have a use for is offered
     expect(offered).toEqual(['step', 'show_event', 'highlight', 'sides', 'route', 'connect', 'mark']);
-    for (const name of offered) expect(text).toContain(`\`${name}\``);
+    const text = instructions(true);
+    expect(text).toContain('`step`');
+    expect(text).toContain('show_event{step:1,event:"…"}');
     expect(text).toContain('POLİTİLER');
     expect(text).toContain('OLAYLAR');
+    // which tool does what is in the tools’ descriptions (see ai-tools.test.ts), not in the notes
+    for (const name of ['highlight', 'sides', 'route', 'connect', 'mark']) expect(text).not.toContain(`\`${name}\``);
   });
 
-  it('say what a place is: where lines begin and end and routes stop, with a polity standing for its capital', () => {
+  it('say what the app does so the model does not have to: no camera, no looks, the year of the map', () => {
     const text = instructions(true);
-    expect(INSTRUCTIONS_FILE).toContain('devletlerin ortası değil');
-    expect(INSTRUCTIONS_FILE).toContain('o yılın başkenti');
-    expect(text).toMatch(/Yerler\. `connect`in uçları ve `route`un durakları devletlerin ortası değil, YERLERDİR/);
-    expect(text).toContain('eski adlar da tanınır');
-    expect(text).toContain('"enlem, boylam"');
-    expect(text).toContain('o yılın başkenti kullanılır');
-    expect(text).toMatch(/Yerini emin olmadığın bir yeri koordinatla uydurma/);
-  });
-
-  it('say what sides and routes are for, and show them on the worked example', () => {
-    const text = instructions(true);
-    expect(text).toMatch(/uygulama her tarafı tek bir blok olarak/);
-    expect(text).toMatch(/ayrıca `highlight` çağırma/);
-    expect(text).toMatch(/animate:true ise yol adım açılınca çizilerek belirir/);
-    const example = text.slice(text.indexOf('ÖRNEK (iki adımlı)'));
-    expect(example).toContain('sides{step:1,sides:[');
-    expect(example).toContain('route{step:1,via:[');
-    expect(example).toContain('type:"advance"');
-  });
-
-  it('give the file the section on disputed borders, between the display rules and the tone', () => {
-    expect(INSTRUCTIONS_FILE).toContain('## Tartışmalı sınırlar');
-    const at = INSTRUCTIONS_FILE.indexOf('## Tartışmalı sınırlar');
-    expect(at).toBeGreaterThan(INSTRUCTIONS_FILE.indexOf('## Gösterim'));
-    expect(at).toBeLessThan(INSTRUCTIONS_FILE.indexOf('## Ton'));
-    const section = INSTRUCTIONS_FILE.slice(at, INSTRUCTIONS_FILE.indexOf('## Ton')).replace(/\s+/g, ' ');
-    expect(section).toContain('Haritadaki sınırlar bir veri setinin yorumudur, kesin gerçek değildir.');
-    expect(section).toContain('Hüküm verme, taraf tutma.');
-    expect(section).toContain('İşgal edilmiş bir toprağı işgalcinin toprağı gibi anlatma; işgal olduğunu söyle.');
-  });
-
-  it('say what the app does so the model does not have to: no camera, no looks, the year from the events', () => {
-    const text = instructions(true);
-    expect(text).toContain('NASIL görüneceğini (renk, vurgu, çizgi, kamera) uygulama belirler');
-    expect(text).toContain('Kamera diye bir aracın yok');
+    expect(text).toContain('nasıl görüneceğini (renk, vurgu, çizgi, kamera) uygulama belirler');
     expect(text).not.toContain('`focus`');
     expect(text).not.toContain('`set_year`');
-    expect(text).toContain('`year`'); // the step's own, for a step with no event
-    expect(text).toMatch(/savaşlarda iki taraf arasındaki çizgiyi o işaretin üzerinden geçirir/);
-    expect(text).toMatch(/Aynı olay için ayrıca `connect` ya da `mark` çağırma/);
+    expect(text).toContain('year'); // the step's own, which it may name
+    expect(text).toMatch(
+      /sahnedeki olayın başladığı yıl \(o yılın sınırlarında olayın ana tarafları yoksa bir önceki yıl\)/,
+    );
+    expect(text).toMatch(/Harita, etkin sahnenin kendi gösterimini gösterir/);
+    expect(text).not.toContain('devral'); // nothing is inherited from the step before
   });
 
   it('teach the way an event is named in a text, so the reader can click it', () => {
     const text = instructions(true);
-    expect(INSTRUCTIONS_FILE).toContain('onu olay olarak işaretle');
+    expect(INSTRUCTIONS_FILE).toContain('onu\nolay olarak işaretle');
     expect(text).toContain('`[olay adı](olay:KİMLİK)`');
     expect(text).toContain("`[Stalingrad Muharebesi](olay:stalingrad-1942)'nde`");
-    expect(text).toMatch(/başlıklarda da kullanma/);
+    expect(text).toMatch(/başlıklarda da kullanılmaz/);
+    expect(text).toMatch(/listede olmayan kimlik tanınmaz/); // the ids come from the lists
   });
 
   it('give the two-phase protocol of a stepped answer: the tools first, in one round, then the numbered texts', () => {
     const text = instructions(true);
-    expect(text).toContain('TEK turda');
-    expect(text).toContain('HİÇ METİN YAZMADAN');
+    expect(text).toContain('Önce metin yazmadan');
+    expect(text).toContain('tek turda, birlikte (paralel)');
     expect(text).toMatch(/step`\{n, title, caption\}/);
     expect(text).toContain('"## n. Başlık"');
-    expect(text).toContain('Altyazı bu metnin özeti olmalı');
-    // every answer is a narration: a plain question is one step (n:1), never a different format the model has to choose
-    expect(text).toContain('Her cevap adımlıdır');
-    expect(text).toMatch(/Tek bir şeyi anlatıyorsan tek adım yaz \(n:1\)/);
-    expect(text).toContain('Biçim seçmen gerekmez');
     expect(text).toContain('"Devamını oku"');
-    expect(text).not.toContain('Tek parça cevap');
+    expect(text).toMatch(/Cevabın her sahnesi için `step` aracıyla/);
   });
 
-  it('say that every step owns the map, and that an event of the app is shown by its own marker', () => {
+  it('show the protocol on a format example that says nothing of what a narration is to be', () => {
     const text = instructions(true);
-    expect(text).toContain('Her adım haritanın sahibidir');
-    expect(text).toContain('kendi başına bildirmeli');
-    expect(text).not.toContain('devral'); // nothing is inherited from the step before
-    expect(text).not.toContain('`clear`');
-    expect(text).toMatch(/OLAYLAR listesindeki kimlikle\)\. Yalnızca hangi olay olduğunu söylersin/);
-    expect(text).toMatch(/`mark`\s*\(kent, geçit, liman/);
-  });
-
-  it('give the narration outline rule: the same steps for the same subject, in the outline’s order', () => {
-    const text = instructions(true);
-    expect(text).toContain('ANLATIM İSKELETİ');
-    expect(text).toMatch(/sıra ve adım sayısı iskeletindir/);
-    expect(text).toMatch(/İskeletin dışına çıkıp adım ekleme/);
-    expect(text).toMatch(/Kullanıcı başka bir biçim isterse/);
-  });
-
-  it('show the protocol on a worked example', () => {
-    const text = instructions(true);
-    expect(text).toContain('ÖRNEK');
-    expect(text).toMatch(/step\{n:1,title:"[^"]+",caption:"[^"]+"/);
-    expect(text).toMatch(/\n ## 2\. Stalingrad\n/);
-    expect(text).toContain('show_event{step:1,event:"barbarossa-1941"}');
-    // and one of a single step: a plain question has a caption and a text too
-    expect(text).toContain('ÖRNEK (tek adımlı');
-    expect(text).toMatch(/step\{n:1,title:"Stalingrad",caption:"[^"]+"\}/);
-    expect(text).toMatch(/\n ## 1\. Stalingrad\n/);
+    const example = text.slice(text.indexOf('ÖRNEK'));
+    expect(example.startsWith('ÖRNEK (biçim)')).toBe(true);
+    expect(example).toMatch(/step\{n:1,title:"…",caption:"…"\}/);
+    expect(example).toMatch(/\n ## 1\. …\n/);
+    expect(example).toMatch(/\n ## 2\. …\n/);
+    expect(example).not.toMatch(/stalingrad|barbarossa|sides\{|route\{/i);
     expect(instructions(false)).not.toContain('ÖRNEK');
   });
 
@@ -209,7 +175,7 @@ describe('instructions', () => {
     expect(text).toContain('## n. Başlık');
     // the caption is made from the text: its first sentences, with the rest behind "Devamını oku"
     expect(text).toContain('ilk bir iki cümlesi');
-    expect(text).toContain('tek adım yaz');
+    expect(text).toContain('tek sahne de olabilir');
   });
 });
 
@@ -375,7 +341,7 @@ describe('buildTurns', () => {
     // the oldest are shorter, and every question of the chat is still somewhere in what the model is sent
     const all = turns.map((t) => t.content).join('\n');
     for (let i = 0; i < 12; i++) expect(all).toContain(`Soru ${i}`);
-    expect(all).not.toContain(`0: ${long}`);
+    expect(all).not.toMatch(/^0: Eski yanıt/m); // (not "10: …", whose tail reads the same)
   });
 
   it('sends a long chat whole when it fits, and keeps the page’s own hard limit in mind', () => {
@@ -395,18 +361,20 @@ describe('buildTurns', () => {
     const again = buildTurns(base({ repeats: 2 })).at(-1)!.content;
     expect(again).toMatch(/\nTEKRAR\nBu istek \(aynı sözlerle, aynı konuda\) bu sohbette daha önce 2 kez yapıldı/);
     expect(again.indexOf('TEKRAR')).toBeLessThan(again.indexOf('İSTEK\n')); // before the request, like the other facts
+    // a fact, not an order: what to do about it is the model's
+    expect(again).not.toMatch(/Aynısını baştan yazma|atıf yap|neyi merak/);
   });
 
-  it('gives the app’s outline with a narration, in the request, and nothing of the kind without tools', () => {
-    const outline = narrationOutline(context, data.events);
-    expect(outline.length).toBeGreaterThanOrEqual(3);
-    const last = buildTurns(base({ outline })).at(-1)!.content;
-    expect(last).toContain('ANLATIM İSKELETİ (');
-    expect(last).toContain(describeOutline(outline));
-    expect(last).toMatch(/\n1\. [a-z0-9-]+ \| [^|]+ \| [^|]+ \| [^|\n]+\n/);
-    expect(last.indexOf('ANLATIM İSKELETİ')).toBeGreaterThan(last.indexOf('OLAYLAR ('));
-    expect(buildTurns(base({ outline, tools: false })).at(-1)!.content).not.toContain('ANLATIM İSKELETİ');
-    expect(buildTurns(base({ outline: [] })).at(-1)!.content).not.toContain('ANLATIM İSKELETİ');
+  it('gives a narration request the same as any other: the lists as information, no skeleton to follow', () => {
+    const last = buildTurns(base({ question: NARRATION_REQUEST })).at(-1)!.content;
+    expect(last).toContain('POLİTİLER (');
+    expect(last).toContain('OLAYLAR (');
+    expect(last).not.toMatch(/İSKELET|bu sıra ve sayıda/);
+    expect(last).not.toContain('ANLATIM');
+    // the lists say what they are for (the ids the tools take), not what to do with them
+    expect(last).toMatch(
+      /OLAYLAR \(uygulamanın seçili aralıktaki olayları; show_event ve metindeki \[ad\]\(olay:kimlik\)/,
+    );
   });
 
   it('thins the records before it gives up the request', async () => {

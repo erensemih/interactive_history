@@ -21,8 +21,10 @@ export interface StepView {
   hasText: boolean;
   /** Does the step change the map (a drawing, a region or a year)? */
   hasScene: boolean;
-  /** The border year the step asks for, if any: where the step sits on the timeline. */
+  /** The border year the step shows, if any (the borders at the start of its event: see `Resolver.showYearOf`). */
   year: number | null;
+  /** When the step is about, as a fractional year: where it sits on the timeline. Null: nowhere (no event, no year). */
+  when: number | null;
 }
 
 const streaming = (item: AssistantItem) => item.status === 'waiting' || item.status === 'streaming';
@@ -71,6 +73,7 @@ export function stepsOf(item: AssistantItem): StepView[] {
       hasText: body.trim().length > 0,
       hasScene: !isEmptyDrawing(scene) || scene.year !== undefined,
       year: scene.year ?? null,
+      when: item.plan.whenAt(n),
     };
   });
 }
