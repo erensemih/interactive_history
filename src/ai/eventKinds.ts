@@ -1,16 +1,18 @@
 import type { HistoricalEvent } from '../domain/types';
 
 /**
- * How an event of the data looks on the map is the app's decision, fixed by its category, so every event of a kind
- * looks the same way every time. A war (military) lights its parties and draws one line between the two sides that
- * runs through the event's own marker; every other kind lights its parties and shows its marker.
+ * What kind an event is matters to the app in one place: which borders its scene shows (`Resolver.showYearOf`). A war
+ * (military) needs both its sides on the map at the event's start, any other event one of its parties. Nothing is drawn by
+ * kind any more: an event is shown by its own marker, and who is lit, painted or joined by an arrow is the model's to say.
  */
 export type EventKind = 'war' | 'plain';
 
 export const eventKindOf = (category: string): EventKind => (category === 'military' ? 'war' : 'plain');
 
 /** The two sides of a war event: who fought whom, each side as a list in the order the data gives them. */
-export function warSides(ev: Pick<HistoricalEvent, 'parties' | 'versus'>): { first: string[]; second: string[] } | null {
+export function warSides(
+  ev: Pick<HistoricalEvent, 'parties' | 'versus'>,
+): { first: string[]; second: string[] } | null {
   const [head, ...rest] = ev.parties;
   if (!head) return null;
   if (ev.versus?.length) {

@@ -1,18 +1,18 @@
 import { html, render } from 'lit-html';
 import { contextEvent, contextFromView, type AiContext } from './ai/context';
 import { Director } from './ai/director';
-import { describeDrawing, frameTargetOf, resolveDrawing } from './ai/drawing';
+import { describeDrawing, frameTargetOf, resolveFrame } from './ai/drawing';
 import { errorCopy } from './ai/errorCopy';
 import { createMockProvider } from './ai/mockProvider';
 import { createMockScripts } from './ai/mockScripts';
 import { openPermissionsPanel } from './ai/permissions';
 import { Presentation } from './ai/presentation';
-import { eventRequest, NARRATION_REQUEST, WORLD_NARRATION_REQUEST } from './ai/prompt';
+import { eventRequest, narrationRequest } from './ai/prompt';
 import { createSampleProvider } from './ai/sampleProvider';
 import { AiSession, type AssistantItem } from './ai/session';
 import { readTier, writeTier } from './ai/settings';
 import { appEventsSource } from './ai/sources';
-import type { Drawing, FrameTarget } from './ai/types';
+import type { Drawing, FrameTarget, ResolvedFrame } from './ai/types';
 import { loadData, type AppData } from './data/load';
 import { CameraWatch, type Camera } from './domain/camera';
 import type { HistoricalEvent } from './domain/types';
@@ -48,9 +48,13 @@ declare global {
         session: AiSession;
         director: Director;
         presentation: Presentation;
-        /** What the step on screen asks the camera to show (null: nothing). */
+        /** What the scene on screen asks the camera to show (null: nothing). */
         frameTarget: () => FrameTarget | null;
+        /** What the map was last told to draw of the AI's (null: nothing of it is on the map). */
+        frame: () => ResolvedFrame | null;
       };
+      /** The map shows the world twice over, as it does for a scene across the date line. */
+      wide: () => boolean;
     };
   }
 }
@@ -208,8 +212,8 @@ export async function startApp(root: HTMLElement): Promise<void> {
   const miniMap = () => readMode() === 'full';
 
   /**
-   * Brings what a step puts on the map into view, at the year that step shows (the camera follows the narration).
-   * When the drawing is already framed the camera stays, and that is where the reader's moves are measured from.
+   * Brings what a scene puts on the map into view, once, as it begins (the camera follows the narration and is steady while the
+   * scene's beats play). When the drawing is already framed the camera stays, and that is where the reader's moves are measured from.
    */
   function frameDrawing(drawing: Drawing) {
     if (!mapView || !presentation.narrating) return; // with the answer closed nothing of the AI's is on the map to bring into view
@@ -217,11 +221,21 @@ export async function startApp(root: HTMLElement): Promise<void> {
     if (target && mapView.frameTarget(target)) return; // moving: the reference is taken when the move ends
     watch.settle(cameraNow());
   }
-  /** What a drawing asks the camera to show, for the year the map shows it in (the AI's year is held inside the range, as the view holds it). */
-  function frameTargetFor(drawing: Drawing) {
+  /**
+   * What a scene asks the camera to show: everything its beats put on the map, in each border year the scene shows (the one it
+   * starts at and the one its changes of borders take it to; the AI's years are held inside the range, as the view holds them).
+   */
+  function frameTargetFor(drawing: Drawing): FrameTarget | null {
     const { range } = store.state;
-    const year = Math.min(range.to, Math.max(range.from, director.year ?? vm.year));
-    return frameTargetOf(resolveDrawing(drawing, session.resolver, year), session.resolver, year);
+    const hold = (y: number) => Math.min(range.to, Math.max(range.from, y));
+    const years = director.sceneYears.map(hold);
+    const targets = (years.length ? years : [hold(vm.year)])
+      .map((year) => frameTargetOf(drawing, session.resolver, year))
+      .filter((t): t is FrameTarget => !!t);
+    if (!targets.length) return null;
+    return targets.length === 1
+      ? targets[0]!
+      : { boxes: targets.flatMap((t) => t.boxes), points: targets.flatMap((t) => t.points) };
   }
 
   /** The info card steps aside when the reader asks something (the selection stays: the question is about it). */
@@ -247,8 +261,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
     tuck();
     presentation.show();
     const context = { ...liveContext, event: null };
-    const text = context.places.length ? NARRATION_REQUEST : WORLD_NARRATION_REQUEST;
-    void session.send({ text, mode: 'narration' }, context);
+    void session.send({ text: narrationRequest(context), mode: 'narration' }, context);
   }
   function askAboutEvent(ev: HistoricalEvent) {
     tuck();
@@ -312,11 +325,12 @@ export async function startApp(root: HTMLElement): Promise<void> {
     actions: {
       stop: () => session.stop(),
       retry: () => void session.retry(),
+      // (in the reader a scene is shown as it ends: nothing plays there)
       selectStep: (itemId, n) => {
-        director.activate(itemId, n);
+        director.activate(itemId, n, { done: true });
         announceStep(itemId, n);
       },
-      readStep: (itemId, n) => director.activate(itemId, n),
+      readStep: (itemId, n) => director.activate(itemId, n, { done: true }),
       openPermissions: () => void openPermissionsPanel(),
       watch: () => presentation.closeRead(),
       close: () => presentation.closeRead(),
@@ -347,8 +361,8 @@ export async function startApp(root: HTMLElement): Promise<void> {
       store.refresh();
     },
   });
-  const ruler = new Ruler($('dock-ruler'), store, data, { goStep: (n) => presentation.go(n) });
-  const timeline = new Timeline($('dock-timeline'), store, data, tip);
+  const ruler = new Ruler($('dock-ruler'), store, data);
+  const timeline = new Timeline($('dock-timeline'), store, data, tip, { goStep: (n) => presentation.go(n) });
 
   const credits = $('credits');
   render(
@@ -393,7 +407,11 @@ export async function startApp(root: HTMLElement): Promise<void> {
   let vmState = store.state;
   /** The year the AI asked for when `vm` was derived. */
   let vmAiYear: number | null = null;
-  let drawnDrawing: unknown = null;
+  let drawnFrame: unknown = null;
+  /** What the map was last told to draw of the AI's. */
+  let resolvedFrame: ResolvedFrame | null = null;
+  /** The border year the map showed at the last update (a change of it under a narration is pointed at: the ground that changed hands). */
+  let lastYear: number | null = null;
   let wasNarrating = false;
   /** Who narrates the map now: the AI, else the selected place, else nobody. */
   let narratorNow: Narrator | null = null;
@@ -547,16 +565,24 @@ export async function startApp(root: HTMLElement): Promise<void> {
       }, 120);
     }
     wasNarrating = narrating;
-    // What the AI has drawn is shown while its answer is on screen, for the year shown.
-    const drawing = narrating ? director.drawing : null;
-    if (drawing !== drawnDrawing || vm.year !== drawnYear) {
-      drawnDrawing = drawing;
+    // What the AI shows at this moment of its scene is on the map while its answer is on screen, for the year shown.
+    const frame = narrating ? director.frame : null;
+    if (frame !== drawnFrame || vm.year !== drawnYear) {
+      const hadFrame = drawnFrame !== null;
+      drawnFrame = frame;
       drawnYear = vm.year;
-      mapView.setAiDrawing(
-        drawing ? resolveDrawing(drawing, session.resolver, vm.year) : null,
-        drawing ? describe(drawing) : '',
-      );
+      resolvedFrame = frame ? resolveFrame(frame, session.resolver, vm.year) : null;
+      mapView.setAiFrame(resolvedFrame, frame && director.drawing ? describe(director.drawing) : '');
+      // The borders under a narration do not swap in silence: when the AI moves the year (to another scene's, or by a beat), what
+      // changed hands is pointed at for a moment (a beat that names a change of borders points at its own).
+      const pointsAtOwn = !!frame?.changes.some((c) => c.now);
+      if (frame && aiYear !== null && lastYear !== null && vm.year !== lastYear && !pointsAtOwn) {
+        mapView.flashYears(lastYear, vm.year);
+      } else if (!frame && hadFrame) {
+        mapView.clearFlashes();
+      }
     }
+    lastYear = vm.year;
 
     head.render(vm);
     syncStage();
@@ -566,8 +592,8 @@ export async function startApp(root: HTMLElement): Promise<void> {
     askBox.update();
     watchView.update();
     readView.update();
-    ruler.render(vm.year, stepMarks());
-    timeline.render(vm);
+    ruler.render(vm.year);
+    timeline.render(vm, stepMarks());
 
     announceChanges(vm);
     if (focusCardAfterUpdate && open) {
@@ -779,8 +805,8 @@ export async function startApp(root: HTMLElement): Promise<void> {
   liveContext = contextFromView(vm, data);
   head.render(vm);
   card.render(vm, { tucked: cardTucked, introOpen, closeIntro: () => ((introOpen = false), store.refresh()) });
-  ruler.render(vm.year, []);
-  timeline.render(vm);
+  ruler.render(vm.year);
+  timeline.render(vm, []);
   announceChanges(vm);
   await new Promise((r) => requestAnimationFrame(() => r(null)));
   const initialView = parseCamera(location.hash);
@@ -905,6 +931,8 @@ export async function startApp(root: HTMLElement): Promise<void> {
       director,
       presentation,
       frameTarget: () => (director.drawing ? frameTargetFor(director.drawing) : null),
+      frame: () => resolvedFrame,
     },
+    wide: () => mapView.isWide(),
   };
 }

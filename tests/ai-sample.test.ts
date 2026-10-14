@@ -169,8 +169,11 @@ describe('a conversation through the runtime (a fake one that runs the page func
                 .get('highlight')!
                 .execute({ step: 1, polities: ['ottoman-empire', 'kingdom-of-france', 'atlantis'] }, context),
               by
-                .get('connect')!
-                .execute({ step: 1, from: 'ottoman-empire', to: 'kingdom-of-france', relation: 'alliance' }, context),
+                .get('sides')!
+                .execute(
+                  { step: 1, sides: [{ name: 'İttifak', polities: ['ottoman-empire', 'kingdom-of-france'] }] },
+                  context,
+                ),
             ])),
           );
         }
@@ -196,6 +199,9 @@ describe('a conversation through the runtime (a fake one that runs the page func
     expect(results[0]).toBe('tamam');
     expect(String(results[1])).toContain('atlantis'); // the model is told what was skipped
     expect(answer.plan.drawingAt(1).highlights).toEqual(['ottoman-empire', 'kingdom-of-france']);
+    expect(answer.plan.drawingAt(1).sides).toEqual([
+      { name: 'İttifak', polities: ['ottoman-empire', 'kingdom-of-france'] },
+    ]);
     expect(answer.plan.titleOf(1)).toBe('İttifak');
   });
 

@@ -455,39 +455,32 @@
   }
 }
 
-/* ------------------------------------------------- the ruler as a narration's progress bar */
-/* The step points take the brush's row, so its own label gives way while they are there (the range is still written, large, in the
-   label beside the ruler). */
-.ruler.has-steps .brush-label {
-  display: none;
-}
-
-/* While an answer in steps is on screen, each step is a small numbered point at its date on the ruler's axis, inside the selected
-   range (its size, --s, is set by the ruler: 15 px where there is room, down to 7 px in a range of a few years, where only the one on
-   screen shows its number); the ones already seen are filled, the one on screen is the accent, and a line runs from the first to it. */
-.ruler-steps {
+/* --------------------------------------- the timeline as a narration's progress bar */
+/* While an answer in scenes is on screen, each scene is a small numbered point at its date on the strip under the dots (the strip is
+   the selected range, zoomed, so the points stand at their dates inside it). Their size, --s, is set by the page: 15 px where there is
+   room, down to 7 px in a range of a few years, where only the one on screen shows its number. The ones already seen are filled, the
+   one on screen is the accent, and a line runs from the first to it. */
+.tl-steps {
   position: absolute;
   left: 0;
   right: 0;
-  top: 0;
-  height: 100%;
   z-index: 4;
   pointer-events: none;
 }
 
-.ruler-run {
+.tl-run {
   position: absolute;
-  top: 12.5px;
+  top: 4.5px;
   height: 3px;
   border-radius: 2px;
   background: var(--accent);
   opacity: 0.85;
 }
 
-.ruler-step {
+.tl-step {
   --s: 15px;
   position: absolute;
-  top: 14px;
+  top: 6px;
   width: var(--s);
   height: var(--s);
   margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
@@ -507,29 +500,29 @@
   transition: transform 0.15s;
 }
 
-.ruler-step.is-plain {
+.tl-step.is-plain {
   border-width: 1px;
   font-size: 0;
 }
 
-.ruler-step::before {
+.tl-step::before {
   /* a comfortable target around a small point */
   content: '';
   position: absolute;
-  inset: -6px;
+  inset: -3px -6px;
 }
 
-.ruler-step.is-plain::before {
+.tl-step.is-plain::before {
   /* points that crowd one another have no room for a bigger target: each is reached at its own middle */
   inset: 0;
 }
 
-.ruler-step.is-past {
+.tl-step.is-past {
   background: var(--ink);
   color: var(--paper);
 }
 
-.ruler-step.is-on {
+.tl-step.is-on {
   z-index: 2;
   border-color: var(--accent);
   border-width: 1.5px;
@@ -539,6 +532,6 @@
   pointer-events: none;
 }
 
-.ruler-step:hover {
+.tl-step:hover {
   transform: scale(1.25);
 }

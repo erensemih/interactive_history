@@ -3,9 +3,11 @@ import { errorCopy } from '../../ai/errorCopy';
 import { hasMore } from '../../ai/narration';
 import { SPEED_IDS, SPEEDS, type Presentation, type SpeedId } from '../../ai/presentation';
 import type { AiSession, AssistantItem } from '../../ai/session';
+import type { Bloc } from '../../ai/types';
 import { clsx } from '../format';
 import { eventRefOf, inline } from '../read/richText';
 import { plainText, withoutOpenReference } from '../read/segments';
+import type { StepView } from '../../ai/narration';
 
 export interface WatchActions {
   stop(): void;
@@ -77,12 +79,17 @@ export class WatchView {
     this.element = document.createElement('div');
     this.element.className = 'watch-host';
     this.element.dataset.testid = 'watch-host';
-    // one listener over everything drawn here: the names of events in a caption or a short text are links
+    // one listener over everything drawn here: the names of events in a caption or a short text are links, and a sentence of a
+    // caption plays its beat again
     this.element.addEventListener('click', (e) => {
       const id = eventRefOf(e.target);
-      if (!id) return;
-      e.preventDefault();
-      deps.actions.openEvent(id);
+      if (id) {
+        e.preventDefault();
+        deps.actions.openEvent(id);
+        return;
+      }
+      const beat = (e.target as HTMLElement | null)?.closest<HTMLElement>('.watch-beat');
+      if (beat?.dataset.beat !== undefined) deps.presentation.replayBeat(Number(beat.dataset.beat));
     });
     this.draw();
   }
@@ -118,6 +125,18 @@ export class WatchView {
     else if (nothingYet) body = this.ended(item);
     else body = this.captions(item);
     render(body, this.element);
+    this.keepBeatInView();
+  }
+
+  /** A long caption scrolls inside its box: the sentence that plays is kept in sight. */
+  private keepBeatInView() {
+    const box = this.element.querySelector<HTMLElement>('.watch-sentences');
+    const now = box?.querySelector<HTMLElement>('[data-state="now"]');
+    if (!box || !now || box.scrollHeight <= box.clientHeight + 1) return;
+    const top = now.offsetTop;
+    const bottom = top + now.offsetHeight;
+    if (top < box.scrollTop) box.scrollTop = Math.max(0, top - 2);
+    else if (bottom > box.scrollTop + box.clientHeight) box.scrollTop = bottom - box.clientHeight + 2;
   }
 
   /* --------------------------------------------------------------- states */
@@ -213,13 +232,13 @@ export class WatchView {
   }
 
   /**
-   * The key of the sides the step shows: each side's name in the colour the map paints it. A step that has none, in an answer
-   * that has sides in another step, keeps the row (empty): the box must keep its height from step to step, because the camera
-   * brings a step into view above it and the foot of the screen must not move under it.
+   * The sides the scene shows at this moment: each side's name in the colour the map paints it (the same colour in every scene),
+   * or the polities that stand aside or whose side is unclear, hatched. A scene that has none, in an answer that has sides in
+   * another scene, keeps the row (empty): the box must keep its height from scene to scene, because the camera brings a scene into
+   * view above it and the foot of the screen must not move under it.
    */
-  private sidesKey(item: AssistantItem, n: number, reserve: boolean): TemplateResult | typeof nothing {
-    const sides = item.plan.drawingAt(n).sides;
-    if (!sides.length) {
+  private legend(blocs: readonly Bloc[], reserve: boolean): TemplateResult | typeof nothing {
+    if (!blocs.length) {
       return reserve
         ? html`<ul class="watch-sides is-empty" aria-hidden="true">
             <li><i class="watch-side-swatch"></i><span>&nbsp;</span></li>
@@ -228,17 +247,56 @@ export class WatchView {
     }
     const { resolver } = this.deps.session;
     return html`<ul class="watch-sides" data-testid="watch-sides" aria-label="Taraflar">
-      ${sides.map(
-        (side, i) =>
+      ${blocs.map(
+        (bloc) =>
           html`<li
-            data-side=${i}
-            style=${`--side: var(--side-${i})`}
-            title=${side.polities.map((id) => resolver.nameOf(id)).join(', ')}
+            data-side=${bloc.color}
+            style=${`--side: var(--side-${bloc.color})`}
+            title=${bloc.polities.map((id) => resolver.nameOf(id)).join(', ')}
           >
-            <i class="watch-side-swatch" aria-hidden="true"></i><span>${side.name}</span>
+            <i class="watch-side-swatch" aria-hidden="true"></i><span>${bloc.name}</span>
           </li>`,
       )}
     </ul>`;
+  }
+
+  /**
+   * The caption, sentence by sentence: the sentence that plays is emphasised, the ones to come are dimmed, the ones that have
+   * played are as they are (a scene that has ended is all of them). A click on a sentence plays its beat again. The box is as
+   * tall as the tallest caption of the answer (the longest ones are set invisibly beside it), so it keeps its height from scene
+   * to scene; beyond a few lines it scrolls.
+   */
+  private sentences(step: StepView): TemplateResult {
+    const { presentation: p } = this.deps;
+    const clock = p.clock;
+    const playing = clock && !clock.done && clock.n === step.n ? clock.beat : -1;
+    const longest = p.steps
+      .filter((s) => s.n !== step.n)
+      .sort((a, b) => b.caption.length - a.caption.length)
+      .slice(0, 3);
+    return html`<div class="watch-caption">
+      <p
+        class="watch-sentences"
+        data-testid="watch-caption"
+        data-playing=${playing}
+        data-held=${p.held}
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        ${step.beats.map((sentence, k) => {
+          const state = playing < 0 || k < playing ? 'past' : k === playing ? 'now' : 'next';
+          return html`<span
+              class="watch-beat"
+              data-testid="watch-beat"
+              data-beat=${k}
+              data-state=${state}
+              title=${step.beats.length > 1 ? 'Bu cümleyi yeniden oynat' : nothing}
+              >${inline(withoutOpenReference(sentence), this.known)}</span
+            >${k < step.beats.length - 1 ? ' ' : nothing}`;
+        })}
+      </p>
+      ${longest.map((s) => html`<p class="watch-ghost" aria-hidden="true">${plainText(withoutOpenReference(s.caption))}</p>`)}
+    </div>`;
   }
 
   /* ------------------------------------------------------ a narration in steps */
@@ -359,14 +417,7 @@ export class WatchView {
           </button>
         </div>
       </div>
-      <p class="watch-caption" data-testid="watch-caption" aria-live="polite" aria-atomic="true">
-        ${inline(withoutOpenReference(step.caption), this.known)}
-      </p>
-      ${this.sidesKey(
-        item,
-        step.n,
-        item.plan.numbers().some((k) => item.plan.drawingAt(k).sides.length > 0),
-      )}
+      ${this.sentences(step)} ${this.legend(p.frame?.blocs ?? [], item.plan.hasSides())}
       ${
         several
           ? nothing

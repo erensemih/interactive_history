@@ -344,6 +344,42 @@
   }
 }
 
+/* An event of a narration whose beat is over: a small numbered dot (the number of its beat), no year, no name. The one that plays
+   (and the opened one) is the full marker. The number is the beat's, in ink on paper like the AI's own marks. */
+.evt-n {
+  display: none;
+}
+
+.evt.is-dot .evt-mark,
+.evt.is-dot .evt-year {
+  display: none;
+}
+
+.evt.is-dot .evt-n {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 0 2px var(--paper);
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--paper);
+  pointer-events: none;
+}
+
+.evt.is-dot:hover .evt-n,
+.evt.is-dot.is-hover .evt-n,
+.evt.is-dot:focus-visible .evt-n {
+  box-shadow:
+    0 0 0 2px var(--paper),
+    0 0 0 4px var(--accent);
+}
+
 .evt-year {
   position: absolute;
   left: calc(50% + 11px);

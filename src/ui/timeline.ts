@@ -3,7 +3,8 @@ import { styleMap } from 'lit-html/directives/style-map.js';
 import type { AppData } from '../data/load';
 import { MARKER_DIAMETER, styleFor } from '../domain/categories';
 import { stackDots } from '../domain/lanes';
-import { axisTicks } from '../domain/time';
+import { placeStepPoints } from '../domain/spread';
+import { axisTicks, clamp } from '../domain/time';
 import type { HistoricalEvent, YearRange } from '../domain/types';
 import type { PlaceView, ViewModel } from '../state/derive';
 import type { Store } from '../state/store';
@@ -30,6 +31,21 @@ const TAG_H = 20;
 const STRIP_TAG_H = 16;
 /** A year label this close to the right edge would be cut off, so it is left out (its tick stays). */
 const EDGE_ROOM = 30;
+/** A point smaller than this has no room for its number (the one on screen always shows it). */
+const STEP_NUMBERED = 13;
+
+/** A scene of the narration on screen, at the date it is about (a fractional year). */
+export interface StepMark {
+  n: number;
+  when: number;
+  title: string;
+  active: boolean;
+}
+
+/** The timeline's part in a narration: a scene can be chosen by its point on the strip. */
+export interface TimelineActions {
+  goStep(n: number): void;
+}
 
 const rowCentre = (row: number) => DOT_AREA - PITCH / 2 - row * PITCH;
 
@@ -55,22 +71,24 @@ export class Timeline {
   private readonly measure = document.createElement('canvas').getContext('2d')!;
   private readonly widthCache = new Map<string, number>();
   private last: ViewModel | null = null;
+  private steps: readonly StepMark[] = [];
 
   constructor(
     private readonly host: HTMLElement,
     private readonly store: Store,
     private readonly data: AppData,
     private readonly tip: Tooltip,
+    private readonly actions: TimelineActions = { goStep: () => undefined },
   ) {
     document.fonts?.addEventListener('loadingdone', () => {
       this.widthCache.clear();
-      if (this.last) this.render(this.last);
+      if (this.last) this.render(this.last, this.steps);
     });
     new ResizeObserver(() => {
       const w = this.plotWidth();
       if (w && Math.abs(w - this.width) > 2) {
         this.width = w;
-        if (this.last) this.render(this.last);
+        if (this.last) this.render(this.last, this.steps);
       }
     }).observe(this.host);
   }
@@ -95,8 +113,15 @@ export class Timeline {
     return ((t - domain.from) / span) * this.width;
   }
 
-  render(vm: ViewModel) {
+  /**
+   * `steps` are the scenes of the narration on screen: while there is one, each scene is a small numbered point at its date on the
+   * strip under the dots (the strip is the selected range, so the points stand at their dates inside it); the ones already seen are
+   * filled, the one on screen is the accent, and a line runs from the first to it. Scenes without a date are left out (there is
+   * nowhere to put them), and fewer than two dated ones are no progress to speak of.
+   */
+  render(vm: ViewModel, steps: readonly StepMark[] = []) {
     this.last = vm;
+    this.steps = steps;
     this.width = this.plotWidth() || this.width;
     const place = vm.places[0] ?? null;
     const { domain } = vm;
@@ -124,8 +149,86 @@ export class Timeline {
     const w = this.plotWidth();
     if (w && Math.abs(w - this.width) > 2) {
       this.width = w;
-      this.render(vm);
+      this.render(vm, steps);
     }
+  }
+
+  /**
+   * Where the scenes of the narration stand on the strip: at their dates, inside the selected range. A range of a few years is only a
+   * few tens of pixels wide on the 1800–2000 ruler but the whole width of the page here, so the points keep their size and stand
+   * where their dates are; crowded ones are spread, never past the ends. Null when there is no progress to show.
+   */
+  private stepLayout(domain: YearRange) {
+    const steps = this.steps;
+    if (steps.length < 2) return null;
+    const w = this.width;
+    const dated = steps
+      .map((m) => ({ ...m, at: clamp(m.when, domain.from, domain.to + 1) }))
+      .sort((a, b) => a.at - b.at || a.n - b.n); // left to right by date (and by number within one)
+    const { xs, size, onSize } = placeStepPoints(
+      dated.map((m) => this.xOf(m.at, domain)),
+      0,
+      w,
+    );
+    const placed = dated.map((m, i) => ({ ...m, x: xs[i]! }));
+    const active = placed.find((m) => m.active);
+    // the point on screen is bigger than the rest: at an end of the strip it is moved in until none of it sticks out
+    if (active) active.x = Math.min(Math.max(active.x, onSize / 2), Math.max(onSize / 2, w - onSize / 2));
+    return { placed, size, onSize, rank: active ? placed.indexOf(active) : -1 };
+  }
+
+  /** The scenes of the narration as points on the strip, at their dates, inside the selected range. */
+  private progress(layout: ReturnType<Timeline['stepLayout']>): TemplateResult | typeof nothing {
+    if (!layout) return nothing;
+    const { placed, size, onSize, rank } = layout;
+    const first = placed[0]!;
+    const active = rank >= 0 ? placed[rank]! : undefined;
+    return html`<div
+      class="tl-steps"
+      style=${styleMap({ top: `${BAND_TOP}px`, height: `${BAND_H}px` })}
+      data-testid="tl-steps"
+    >
+      ${
+        active
+          ? html`<i
+              class="tl-run"
+              style=${styleMap({ left: `${first.x}px`, width: `${Math.max(0, active.x - first.x)}px` })}
+              aria-hidden="true"
+            ></i>`
+          : nothing
+      }
+      ${placed.map(
+        (m, i) =>
+          html`<button
+            type="button"
+            class=${clsx(
+              'tl-step',
+              m.active && 'is-on',
+              rank >= 0 && i < rank && 'is-past',
+              !m.active && size < STEP_NUMBERED && 'is-plain',
+            )}
+            data-testid="tl-step"
+            data-n=${m.n}
+            style=${styleMap({ left: `${m.x}px`, '--s': `${m.active ? onSize : size}px` })}
+            title=${`${m.n}. sahne${m.title ? `: ${m.title}` : ''} · ${Math.floor(m.when)}`}
+            tabindex="-1"
+            aria-hidden="true"
+            @click=${() => this.actions.goStep(m.n)}
+          >
+            ${m.n}
+          </button>`,
+      )}
+    </div>`;
+  }
+
+  /** Is the year written at `x` (the label starts there) under one of the scene points? Then it is left off: a label half hidden reads as nothing. */
+  private underStep(layout: ReturnType<Timeline['stepLayout']>, x: number, label: string, major: boolean): boolean {
+    if (!layout) return false;
+    const right = x + 3 + this.textWidth(label, major ? 700 : 600, 10) + 2;
+    return layout.placed.some((m) => {
+      const half = (m.active ? layout.onSize : layout.size) / 2;
+      return m.x + half > x - 1 && m.x - half < right;
+    });
   }
 
   private plot(vm: ViewModel, place: PlaceView | null): TemplateResult {
@@ -136,6 +239,7 @@ export class Timeline {
 
     const items = place ? this.layoutEvents(place.timeline, domain) : [];
     const picked = items.find((it) => it.ev.id === this.store.state.selectedEventId) ?? null;
+    const layout = this.stepLayout(domain);
 
     return html`
       <div
@@ -154,11 +258,11 @@ export class Timeline {
               class=${clsx('tl-tick', t.major && 'is-major')}
               style=${styleMap({ left: `${x}px` })}
               aria-hidden="true"
-              >${x <= w - EDGE_ROOM ? t.year : nothing}</span
+              >${x <= w - EDGE_ROOM && !this.underStep(layout, x, String(t.year), t.major) ? t.year : nothing}</span
             >`;
           })}
         </div>
-
+        ${this.progress(layout)}
         ${
           place
             ? html`

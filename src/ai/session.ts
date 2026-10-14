@@ -202,6 +202,12 @@ export class AiSession {
       truncated: false,
       notes: [],
     };
+    // the narration is about whoever holds the place it was asked for, in any year of the range: the side that has one of
+    // them is the side the map is painted relative to
+    reply.plan.focus = context.places.flatMap((p) => [
+      ...(p.holder ? [p.holder.id] : []),
+      ...p.sovereigns.map((s) => s.id),
+    ]);
     this.items.push(
       {
         kind: 'user',

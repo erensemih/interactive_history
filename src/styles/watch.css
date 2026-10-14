@@ -68,16 +68,70 @@
   color: var(--ink-3);
 }
 
-/* two lines are always set aside, so the box keeps its height from step to step */
+/* The caption is read sentence by sentence (the beats of the scene): the one that plays is marked, the ones to come are dimmed, the
+   ones that have played are as they are (a scene that has ended: all of them). Two lines are always set aside, and the box is as tall
+   as the tallest caption of the answer, which is set invisibly beside the visible one, so the box keeps its height from scene to
+   scene; beyond a few lines it scrolls (the sentence that plays is kept in sight). */
 .watch-caption {
+  display: grid;
   margin: 2px 0 0;
-  min-height: calc(2 * 1.38em);
   font-family: var(--font-serif);
   font-optical-sizing: auto;
   font-size: 16.5px;
   line-height: 1.38;
   color: var(--ink);
   text-wrap: pretty;
+}
+
+.watch-sentences,
+.watch-ghost {
+  grid-area: 1 / 1;
+  min-height: calc(2 * 1.38em);
+  max-height: calc(4 * 1.38em);
+  margin: 0;
+  overflow: hidden;
+}
+
+.watch-sentences {
+  position: relative;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.watch-ghost {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.watch-beat {
+  border-radius: 3px;
+  transition:
+    opacity 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.watch-beat[title] {
+  cursor: pointer;
+}
+
+/* what is to come waits, dimmed; what plays has a soft marker-pen ground (a shadow, so the lines do not move) */
+.watch-beat[data-state='next'] {
+  opacity: 0.38;
+}
+
+.watch-beat[data-state='now'] {
+  background-color: rgb(255 214 102 / 0.42);
+  box-shadow: 0 0 0 2px rgb(255 214 102 / 0.42);
+}
+
+.watch-beat[title]:hover {
+  background-color: rgb(31 27 22 / 0.07);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .watch-beat {
+    transition: none;
+  }
 }
 
 /* the controls are quiet: no frame until the pointer is on them (the text button keeps a thin one: it is the way to a whole other view) */
@@ -331,4 +385,9 @@
   box-shadow:
     0 0 0 1.5px var(--paper),
     0 0 0 2.6px rgb(31 27 22 / 0.55);
+}
+
+/* whoever stands aside, or whose side is unclear, is hatched on the map and in the legend */
+.watch-sides li[data-side='neutral'] .watch-side-swatch {
+  background: repeating-linear-gradient(135deg, var(--ink) 0 1.4px, var(--paper) 1.4px 4px);
 }

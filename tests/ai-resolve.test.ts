@@ -374,3 +374,123 @@ describe('Resolver.rowAt when the data has more than one row for a polity in a y
     expect(only.rowAt('z', 1943)?.area).toBe(700);
   });
 });
+
+describe('the border of a polity as a place ("sınır: devlet → yer")', () => {
+  const places = new Resolver(withMiniPlaces(data));
+  const VIENNA = { lon: 16.37, lat: 48.21 };
+  const vienna = { kind: 'city', id: 'vienna', name: 'Viyana' };
+
+  it('is written with an arrow, or any of the ways a model writes one, and has a polity and a place', () => {
+    for (const text of [
+      'sınır: ottoman-empire → Viyana',
+      'Sınır: Osmanlı İmparatorluğu -> Viyana',
+      'sinir: ottoman-empire => viyana',
+      'border: ottoman-empire > Wien',
+      'sınır: ottoman-empire, Viyana',
+      'sınır: ottoman-empire; Viyana',
+      'sınır: ottoman-empire doğru Viyana',
+      'border: ottoman-empire toward Vienna',
+      '  Sınır :  Osmanlı   → Viyana ',
+    ]) {
+      expect(places.placeRef(text, range), text).toEqual({ kind: 'border', id: 'ottoman-empire', toward: vienna });
+    }
+  });
+
+  it('may look toward any kind of place: an event, a point, the capital of another polity', () => {
+    expect(places.placeRef('sınır: ottoman-empire → mohac-1526', range)).toMatchObject({
+      kind: 'border',
+      toward: { kind: 'event', id: 'mohac-1526' },
+    });
+    expect(places.placeRef('sınır: ottoman-empire → 48.2, 16.4', range)).toMatchObject({
+      kind: 'border',
+      toward: { kind: 'point', point: { lon: 16.4, lat: 48.2 } },
+    });
+    expect(places.placeRef('sınır: ottoman-empire → kingdom-of-france', range)).toMatchObject({
+      kind: 'border',
+      toward: { kind: 'polity', id: 'kingdom-of-france' },
+    });
+  });
+
+  it('is nothing when it is not written that way, or when either end is not known', () => {
+    for (const text of [
+      'sınır: atlantis → Viyana',
+      'sınır: ottoman-empire → Atlantis',
+      'sınır: ottoman-empire',
+      'sınır: → Viyana',
+      'sınır: albanian-principalities → Viyana', // gone before the range
+      'ülke: ottoman-empire → Viyana',
+    ])
+      expect(places.placeRef(text, range), text).toBeNull();
+    // a border toward a border is no place (the end of a border is a place, not another border)
+    expect(places.placeRef('sınır: ottoman-empire → sınır: kingdom-of-france → Viyana', range)).toBeNull();
+  });
+
+  it('is named, and told from the polity itself and from another border', () => {
+    const a = places.placeRef('sınır: ottoman-empire → Viyana', range)!;
+    expect(places.placeName(a)).toBe('Osmanlı İmparatorluğu sınırı');
+    expect(places.samePlace(a, places.placeRef('sınır: ottoman-empire → viyana', range)!)).toBe(true);
+    expect(places.samePlace(a, places.placeRef('sınır: ottoman-empire → Paris', range)!)).toBe(false);
+    expect(places.samePlace(a, { kind: 'polity', id: 'ottoman-empire' })).toBe(false);
+  });
+
+  it('is the point of the polity’s border nearest the place it looks toward, on the polity’s side of the front', () => {
+    const point = places.borderPoint('ottoman-empire', 1526, VIENNA)!;
+    expect(point).not.toBeNull();
+    // it lies on the border: nearer Vienna than the capital is, and Vienna is not Ottoman land in 1526
+    const scale = Math.cos((VIENNA.lat * Math.PI) / 180); // (a degree of longitude is shorter here than a degree of latitude)
+    const dist = (p: { lon: number; lat: number }) => Math.hypot((p.lon - VIENNA.lon) * scale, p.lat - VIENNA.lat);
+    expect(dist(point)).toBeLessThan(dist({ lon: 28.98, lat: 41.01 }));
+    // and it is the nearest of all the points of the ring: no vertex of the row is nearer
+    const row = places.rowAt('ottoman-empire', 1526)!;
+    let nearest = Infinity;
+    for (const poly of row.polys)
+      for (const ring of poly) for (const [x, y] of ring) nearest = Math.min(nearest, dist({ lon: x!, lat: y! }));
+    expect(dist(point)).toBeLessThanOrEqual(nearest + 1e-3);
+    // a point on the border is where the stop is: the route's point for the stop is the same
+    expect(places.placePoint({ kind: 'border', id: 'ottoman-empire', toward: vienna as never }, 1526)).toEqual(point);
+  });
+
+  it('is nowhere for a polity with no borders in the year, for a place that is nowhere, and an army starts from where it is, not from its capital', () => {
+    expect(places.borderPoint('mamluk-sultanate', 1530, VIENNA)).toBeNull();
+    expect(places.borderPoint('atlantis', 1530, VIENNA)).toBeNull();
+    expect(
+      places.placePoint(
+        { kind: 'border', id: 'ottoman-empire', toward: { kind: 'polity', id: 'mamluk-sultanate' } },
+        1530,
+      ),
+    ).toBeNull();
+    const capital = places.placePoint({ kind: 'polity', id: 'ottoman-empire' }, 1526)!;
+    const border = places.placePoint({ kind: 'border', id: 'ottoman-empire', toward: vienna as never }, 1526)!;
+    expect(border).not.toEqual(capital);
+  });
+
+  it('keeps the short way over the date line: the nearest point is found around the place, not across the map', () => {
+    const rows: BorderRow[] = [
+      {
+        id: 'ada',
+        from: 1900,
+        to: 1950,
+        area: 1,
+        label: null,
+        bbox: [170, -10, 179, 10],
+        box: [170, -10, 179, 10],
+        polys: [
+          [
+            [
+              [170, -10],
+              [179, -10],
+              [179, 10],
+              [170, 10],
+              [170, -10],
+            ],
+          ],
+        ],
+      },
+    ];
+    const r = new Resolver({ entities: new Map(), rows });
+    // a place just over the date line (−178°): the nearest border of the island is its east edge at 179°, 3° away
+    const p = r.borderPoint('ada', 1920, { lon: -178, lat: 0 })!;
+    expect(p.lon).toBeCloseTo(179, 3);
+    expect(Math.abs(p.lat)).toBeLessThan(0.5);
+  });
+});

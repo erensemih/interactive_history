@@ -1,6 +1,9 @@
 /* ---------------------------------------------------- what the AI draws on the map */
-/* Pen and ink on paper: the same visual language as the data layers, told apart from them by pattern
-   (solid, double, dashed, dotted) and never by hue. Vermilion stays the reader's own colour. */
+/* The visual language of the map is fixed, the same in every answer: an AREA is territory or control (colour, hatching for
+   occupation or doubt: see MapView), an ARROW is a movement and only that, a POINT is a place or an event. Nothing else is drawn;
+   in particular no line joins two places that merely have something to do with each other. What the AI draws here is pen and ink:
+   the arrows of the beat that plays and its own marks, told apart by pattern (solid, dashed, dotted) and never by hue, so they do
+   not compete with the colours of the sides or with the vermilion that means "your selection". */
 .ai-layer {
   position: absolute;
   inset: 0;
@@ -25,106 +28,15 @@
   inset: 0;
 }
 
-/* relation lines */
-.ai-link {
-  animation: ai-in 0.5s ease both;
-}
-
-.ai-link .casing,
-.ai-link .line,
-.ai-link .inner {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.ai-link .casing {
-  stroke: var(--paper);
-  stroke-opacity: 0.88;
-}
-
-.ai-link .line {
-  stroke: var(--ink);
-}
-
-.ai-link .end {
-  fill: var(--ink);
-  stroke: var(--paper);
-  stroke-width: 1.6;
-}
-
-.ai-link .head {
-  fill: var(--ink);
-  stroke: var(--paper);
-  stroke-width: 1.3;
-  paint-order: stroke;
-  stroke-linejoin: round;
-}
-
-.ai-link[data-relation='war'] .casing {
-  stroke-width: 5.6;
-}
-.ai-link[data-relation='war'] .line {
-  stroke-width: 2.4;
-}
-
-/* alliance: a double line (an ink band with a paper core) */
-.ai-link[data-relation='alliance'] .casing {
-  stroke-width: 8.6;
-}
-.ai-link[data-relation='alliance'] .line {
-  stroke-width: 5.4;
-}
-.ai-link[data-relation='alliance'] .inner {
-  stroke: var(--paper);
-  stroke-width: 1.9;
-}
-
-/* trade: dashed, with an arrowhead at both ends */
-.ai-link[data-relation='trade'] .casing {
-  stroke-width: 5;
-}
-.ai-link[data-relation='trade'] .line {
-  stroke-width: 2;
-  stroke-dasharray: 7 5;
-  stroke-linecap: butt;
-}
-
-/* treaty: dotted */
-.ai-link[data-relation='treaty'] .casing {
-  stroke-width: 6.4;
-}
-.ai-link[data-relation='treaty'] .line {
-  stroke-width: 3.4;
-  stroke-dasharray: 0.1 6.4;
-}
-
-.ai-link .glyph .disc {
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 1.5;
-}
-.ai-link .glyph .core {
-  fill: var(--ink);
-}
-.ai-link .glyph .cross {
-  fill: none;
-  stroke: var(--ink);
-  stroke-width: 2.3;
-  stroke-linecap: round;
-}
-.ai-link .glyph .diamond {
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 1.7;
-  stroke-linejoin: round;
-}
-
-/* routes: a curved arrow through places, one look per type, the same every time. Pen and ink like everything else the AI
-   draws, told apart by pattern: an advance is solid and heavy, a retreat dashed with an open head, a migration dotted, a
-   trade or supply road long-and-short dashes. The last stop carries the arrowhead; the stops before it are small dots. */
+/* routes: a curved arrow through places, one look per type, the same every time. A solid heavy line is an advance, a dashed
+   one with an open head a retreat, a dotted one a migration, long-and-short dashes a trade or supply road. The last stop carries
+   the arrowhead; the stops before it are small dots. An arrow is there while its beat plays and fades away when the beat is over. */
 .ai-route {
   animation: ai-in 0.5s ease both;
+}
+
+.ai-route.is-leaving {
+  animation: ai-out 0.52s ease forwards;
 }
 
 .ai-route .casing,
@@ -232,44 +144,8 @@ mask .reveal {
   }
 }
 
-/* A war event, drawn by the app the same way every time: one ink line from the first side's polity through the event's own
-   marker to the second side's, the marker sitting on a paper ring where the line passes. No glyph, no name box: the marker
-   is the glyph, and the name shows on hover like every marker's. */
-.ai-war {
-  animation: ai-in 0.5s ease both;
-}
-
-.ai-war .casing,
-.ai-war .line {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.ai-war .casing {
-  stroke: var(--paper);
-  stroke-opacity: 0.9;
-  stroke-width: 6;
-}
-
-.ai-war .line {
-  stroke: var(--ink);
-  stroke-width: 2.6;
-}
-
-.ai-war .end {
-  fill: var(--ink);
-  stroke: var(--paper);
-  stroke-width: 1.6;
-}
-
-.ai-war .ring {
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 2.2;
-}
-
-/* marks: an ink diamond on a paper ring, with a small label beside it */
+/* marks: an ink diamond on a paper ring, with a small label beside it while its beat plays; once the beat is over a small numbered
+   dot (the number of its beat), like the dots of the events */
 .ai-pt {
   position: absolute;
   left: 0;
@@ -291,6 +167,33 @@ mask .reveal {
   box-shadow: 0 0 0 2px var(--paper);
   transform: rotate(45deg);
   animation: ai-pop 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.ai-pt.is-dot::before {
+  left: -7.5px;
+  top: -7.5px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  transform: none;
+  animation: none;
+}
+
+/* (the number is the dot's own: centred on it, in paper on ink) */
+.ai-pt.is-dot::after {
+  content: attr(data-n);
+  position: absolute;
+  left: -7.5px;
+  top: -7.5px;
+  width: 15px;
+  height: 15px;
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--paper);
+  text-align: center;
 }
 
 .ai-flag {
@@ -318,7 +221,6 @@ mask .reveal {
   font-size: 13px;
 }
 
-.ai-flag.is-link,
 .ai-flag.is-route {
   font-family: var(--font-sans);
   font-weight: 600;
@@ -328,6 +230,12 @@ mask .reveal {
 
 @keyframes ai-in {
   from {
+    opacity: 0;
+  }
+}
+
+@keyframes ai-out {
+  to {
     opacity: 0;
   }
 }

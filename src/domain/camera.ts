@@ -123,7 +123,11 @@ export function framePadding(controls: readonly Rect[], size: MapSize, base?: Pa
   return out;
 }
 
-/** The box around everything a step puts on the map, never thinner than `minSpan` degrees (a lone mark still gets a sensible view). */
+/**
+ * The box around everything a step puts on the map, never thinner than `minSpan` degrees (a lone mark still gets a sensible
+ * view). Longitudes may run past ±180° where the step crosses the date line (see `FrameTarget`): the box is then the narrow one
+ * across it (east of the date line, 190° is −170°), and the map is wide to show it.
+ */
 export function frameBounds(
   boxes: readonly Bounds[],
   points: readonly { lon: number; lat: number }[],
@@ -146,6 +150,7 @@ export function frameBounds(
     n = Math.max(n, p.lat);
   }
   if (![w, s, e, n].every(Number.isFinite)) return null;
+  const crossing = w < -180 || e > 180; // (a box a lone point near the edge is grown into does not cross the date line)
   if (e - w < minSpan.lon) {
     const mid = (e + w) / 2;
     w = mid - minSpan.lon / 2;
@@ -156,8 +161,12 @@ export function frameBounds(
     s = mid - minSpan.lat / 2;
     n = mid + minSpan.lat / 2;
   }
-  return [Math.max(-179.9, w), Math.max(-60, s), Math.min(179.9, e), Math.min(82, n)];
+  const reach = crossing ? WIDE_LON : 179.9;
+  return [Math.max(-reach, w), Math.max(-60, s), Math.min(reach, e), Math.min(82, n)];
 }
+
+/** How far east and west of the Greenwich meridian the wide view lets the map reach (two worlds' width, strictly inside). */
+export const WIDE_LON = 359.9;
 
 /** The box around some points (null without any). */
 export function pointsBox(points: readonly { lon: number; lat: number }[]): Bounds | null {

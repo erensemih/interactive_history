@@ -45,6 +45,25 @@ export const utf8Bytes = (text: string): number => new TextEncoder().encode(text
 export const NARRATION_REQUEST = 'Bu yerin tarihini seçili aralıkta anlat.';
 export const WORLD_NARRATION_REQUEST = 'Seçili aralıkta dünyada olanları anlat.';
 
+/**
+ * What the narration button asks: the history of the place, with both things "this place" can mean said outright, the
+ * point the reader chose and the polity whose borders hold it in the year shown (a land the data draws as its occupier's
+ * says so). It does not say which of the two to tell about: how much of the story is the point's and how much the polity's
+ * is the model's to decide.
+ */
+export function narrationRequest(ctx: AiContext): string {
+  const place = ctx.places[0];
+  if (!place) return WORLD_NARRATION_REQUEST;
+  const holder = place.holder
+    ? `${ctx.year} sınırlarında bu noktayı içeren devlet: ${place.holder.name}${
+        place.occupation
+          ? ` (sınır verisinde; bu toprak gerçekte ${place.occupation.name}, o yıllarda ${place.occupation.label})`
+          : ''
+      }`
+    : `${ctx.year} sınırlarında bu nokta kayıtlı bir devlete ait değil`;
+  return `${NARRATION_REQUEST} Seçtiğim yer: ${dms(place.point)}; ${holder}.`;
+}
+
 /** What "Bunu sohbette sor" says on the reader's behalf. */
 export const eventRequest = (ev: { title: string; dateLabel: string; location: { name: string } }): string =>
   `“${ev.title}” olayını (${ev.dateLabel}, ${ev.location.name}) anlat; öncesini, sonrasını ve çevresinde olanları da kat.`;
@@ -71,19 +90,19 @@ ${TEXT_RULES}`;
   return `UYGULAMA NOTLARI
 Bu bölüm uygulamanın teknik ayrıntılarıdır; yukarıdakilerle birlikte uygula.
 
-Sahneler ve harita. Cevabın her sahnesi için \`step\` aracıyla {n, title, caption} bildirirsin (n 1'den başlar); sahnenin haritasını aynı numarayla çağırdığın gösterim araçları kurar. Harita, etkin sahnenin kendi gösterimini gösterir: sahne değişince öncekinin çizimleri kalkar, geri dönülünce o sahnenin gösterimi aynen gelir. Neyin görüneceğini sen söylersin; nasıl görüneceğini (renk, vurgu, çizgi, kamera) uygulama belirler. Haritadaki sınırların yılı: \`step\` aracına year verilmişse o yıl; verilmemişse sahnedeki olayın başladığı yıl (o yılın sınırlarında olayın ana tarafları yoksa bir önceki yıl); ikisi de yoksa okurun kendi yılı.
+Sahneler ve harita. Cevabın her sahnesi için \`step\` aracıyla {n, title, caption} bildirirsin (n 1'den başlar); sahnenin haritasını aynı numarayla çağırdığın gösterim araçları kurar. Altyazı cümlelere bölünür (nokta, ünlem ya da soru işaretinden sonra yeni cümle başlar); her cümle sahnenin bir vuruşudur ve araçlardaki \`beat\`, aracın altyazının kaçıncı cümlesi okunurken göründüğünü söyler (1'den başlar; verilmezse 1). Vuruşlar okuma hızında sırayla oynar: oynayan vuruşun okları görünür ve vuruş bitince söner, işaretleri küçük numaralı noktalara dönüşür; renkler ve toprak değişimleri sonraki vuruşlarda ve sonraki sahnelerde kalır. Sahne bitince haritada işaretlerin numaralı noktaları ve toprak sonuçları durur. Kamera, sahnenin göstereceği her şeyi içine alacak biçimde sahnenin başında bir kez konumlanır. Harita, etkin sahnenin kendi gösterimini gösterir: sahne değişince öncekinin çizimleri kalkar (devletlerin renkleri anlatım boyunca aynı kalır), geri dönülünce o sahnenin gösterimi aynen gelir. Neyin görüneceğini sen söylersin; nasıl görüneceğini (renk, vurgu, ok, kamera) uygulama belirler: alan toprak ya da denetimdir, ok gerçek bir harekettir, nokta bir yer ya da olaydır, tarama işgal ya da belirsizliktir. Haritadaki sınırların yılı: \`step\` aracına year verilmişse o yıl; verilmemişse sahnedeki olayın başladığı yıl (o yılın sınırlarında olayın ana tarafları yoksa bir önceki yıl) ya da bir toprak değişiminin from yılı (hangisi önceyse); hiçbiri yoksa okurun kendi yılı.
 
 Listeler. POLİTİLER ve OLAYLAR listeleri isteğin altında gelir. Araçlara devlet ve olay kimlikleri bu listelerden verilir; listede olmayan kimlik tanınmaz. Bir araç "atlandı" derse o çizim haritaya konmaz; okura gösterilmez.
 
 Olay işareti. Veri setindeki bir olaydan söz ettiğinde, altyazıda ve metinde, adını \`[olay adı](olay:KİMLİK)\` biçiminde yaz; KİMLİK OLAYLAR listesindeki kimliktir. Okur ona tıklayınca olay açılır ve harita onu gösterir. Cümleye uydur: \`[Stalingrad Muharebesi](olay:stalingrad-1942)'nde\`. Listede olmayan bir olay için bu biçim kullanılmaz; başlıklarda da kullanılmaz.
 
 Cevap iki aşamada verilir:
- 1) Önce metin yazmadan, araç çağrılarının hepsi tek turda, birlikte (paralel): her sahne için \`step\`{n, title, caption} ve o sahnenin gösterim araçları, hepsi aynı numarayla. title kısa bir başlık, caption altyazıdır (haritanın üstünde görünür).
+ 1) Önce metin yazmadan, araç çağrılarının hepsi tek turda, birlikte (paralel): her sahne için \`step\`{n, title, caption} ve o sahnenin gösterim araçları, hepsi aynı numarayla. title kısa bir başlık, caption cümle cümle altyazıdır (haritanın üstünde görünür).
  2) Sonuçlar gelince, başka araç çağırmadan, her sahnenin tam metni: "## n. Başlık" satırı (n ve başlık \`step\` çağrısındakiyle aynı), altında sahnenin metni. Tam metin okuma görünümünde ve "Devamını oku" ile açılır.
 ${TEXT_RULES}
 
 ÖRNEK (biçim)
- 1. tur, yalnızca araç çağrıları: step{n:1,title:"…",caption:"…"} · show_event{step:1,event:"…"} · step{n:2,title:"…",caption:"…"} · …
+ 1. tur, yalnızca araç çağrıları: step{n:1,title:"…",caption:"Birinci cümle. İkinci cümle."} · show_event{step:1,beat:1,event:"…"} · route{step:1,beat:2,via:["…","…"],type:"advance"} · step{n:2,title:"…",caption:"…"} · …
  2. tur, yalnızca metin:
  ## 1. …
  (metin)
@@ -102,6 +121,8 @@ export function describeContext(ctx: AiContext, previous: AiContext | null): str
   for (const p of ctx.places) {
     const where = p.regions.length ? ` Bölge: ${p.regions.join(', ')}.` : '';
     lines.push(`Seçili yer: ${p.title} (${dms(p.point)}), ${formatRange(p.range)} aralığında okunuyor.${where}`);
+    if (p.holder)
+      lines.push(`  Haritada gösterilen yılda (${ctx.year}) bu noktayı sınırlarında içeren devlet: ${p.holder.name}.`);
     if (p.occupation) {
       lines.push(
         `  İşgal: sınır verisi burayı ${p.occupation.holder} toprağı olarak çizer; gerçekte ${p.occupation.name} toprağıdır ve o yıllarda bir işgal (${p.occupation.label}) altındaydı.`,

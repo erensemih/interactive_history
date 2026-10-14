@@ -11,8 +11,10 @@ import {
   describeEvents,
   FULL_HISTORY_BYTES,
   instructions,
+  narrationRequest,
   NARRATION_REQUEST,
   utf8Bytes,
+  WORLD_NARRATION_REQUEST,
   type HistoryTurn,
   type PromptInput,
 } from '../src/ai/prompt';
@@ -103,43 +105,74 @@ describe('instructions', () => {
       expect(INSTRUCTIONS_FILE).toContain(heading);
     }
     expect(INSTRUCTIONS_FILE).toContain('kamera dahil, uygulama halleder');
-    expect(INSTRUCTIONS_FILE).toContain('Cevabın sahnelerden oluşur; tek bir sahne de olabilir.');
-    expect(INSTRUCTIONS_FILE).toContain('Veri setindeki bir olaydan söz ettiğinde onu\nolay olarak işaretle');
+    // (line breaks of the file are not part of its words)
+    const words = INSTRUCTIONS_FILE.replace(/\s+/g, ' ');
+    expect(words).toContain('Cevabın sahnelerden oluşur; tek bir sahne de olabilir.');
+    expect(words).toContain('Veri setindeki bir olaydan söz ettiğinde onu olay olarak işaretle');
     expect(INSTRUCTIONS_FILE).toContain('Bilmediğin şeyi uydurma. Emin olmadığın bir konum için çizim yapma.');
     expect(INSTRUCTIONS_FILE).toContain('İşgal edilmiş bir toprağı işgal olarak an.');
     expect(INSTRUCTIONS_FILE).toContain('tartışmalı olarak anlat; taraf\ntutma');
     expect(INSTRUCTIONS_FILE).toContain('Kullanıcı başka bir şey isterse');
   });
 
+  it('describe the scenes of an answer in the owner’s words: a title, a caption that goes sentence by sentence, a full text, a beat for each sentence', () => {
+    const words = INSTRUCTIONS_FILE.replace(/\s+/g, ' ');
+    expect(words).toContain(
+      'Cevabın sahnelerden oluşur; tek bir sahne de olabilir. Her sahnenin kısa bir başlığı, cümle cümle ilerleyen bir altyazısı ve tam bir metni vardır. Altyazının her cümlesi haritada bir vuruştur: o cümle okunurken haritada ne görüneceğini sen seçersin.',
+    );
+    // what the file said of the caption before (a line or two, the essence of the text) is gone: the sentence above replaces it
+    expect(words).not.toContain('bir iki cümle');
+    expect(words).not.toContain('Altyazı metnin özüdür');
+  });
+
   it('offer the seven tools, the first two named in the notes (the protocol is built on them) and the rest by their own descriptions', () => {
     const plan = new TurnPlan();
     const offered = createTools({ resolver, range, plan }).map((t) => t.name);
-    expect(offered).toEqual(['step', 'show_event', 'highlight', 'sides', 'route', 'connect', 'mark']);
+    expect(offered).toEqual(['step', 'show_event', 'highlight', 'sides', 'route', 'territory_change', 'mark']);
     const text = instructions(true);
     expect(text).toContain('`step`');
-    expect(text).toContain('show_event{step:1,event:"…"}');
+    expect(text).toContain('show_event{step:1,beat:1,event:"…"}');
     expect(text).toContain('POLİTİLER');
     expect(text).toContain('OLAYLAR');
     // which tool does what is in the tools’ descriptions (see ai-tools.test.ts), not in the notes
-    for (const name of ['highlight', 'sides', 'route', 'connect', 'mark']) expect(text).not.toContain(`\`${name}\``);
+    for (const name of ['highlight', 'sides', 'route', 'territory_change', 'mark'])
+      expect(text).not.toContain(`\`${name}\``);
+    expect(text).not.toContain('connect'); // there is no line between two places any more
+  });
+
+  it('tell the mechanics of the beats and the camera, and the one meaning of each kind of mark, without saying how to use them', () => {
+    const text = instructions(true);
+    // each sentence of a caption is a beat; `beat` says which sentence an action appears with
+    expect(text).toContain('Altyazı cümlelere bölünür');
+    expect(text).toContain('`beat`');
+    expect(text).toContain('okuma hızında sırayla oynar');
+    expect(text).toContain('küçük numaralı noktalara dönüşür');
+    expect(text).toContain('sahnenin başında bir kez konumlanır');
+    // the fixed visual language: area, arrow, point, hatching
+    expect(text).toContain(
+      'alan toprak ya da denetimdir, ok gerçek bir harekettir, nokta bir yer ya da olaydır, tarama işgal ya da belirsizliktir',
+    );
+    // the colours belong to the actors for the whole narration
+    expect(text).toContain('devletlerin renkleri anlatım boyunca aynı kalır');
   });
 
   it('say what the app does so the model does not have to: no camera, no looks, the year of the map', () => {
     const text = instructions(true);
-    expect(text).toContain('nasıl görüneceğini (renk, vurgu, çizgi, kamera) uygulama belirler');
+    expect(text).toContain('nasıl görüneceğini (renk, vurgu, ok, kamera) uygulama belirler');
     expect(text).not.toContain('`focus`');
     expect(text).not.toContain('`set_year`');
     expect(text).toContain('year'); // the step's own, which it may name
     expect(text).toMatch(
       /sahnedeki olayın başladığı yıl \(o yılın sınırlarında olayın ana tarafları yoksa bir önceki yıl\)/,
     );
+    expect(text).toContain('toprak değişiminin from yılı');
     expect(text).toMatch(/Harita, etkin sahnenin kendi gösterimini gösterir/);
     expect(text).not.toContain('devral'); // nothing is inherited from the step before
   });
 
   it('teach the way an event is named in a text, so the reader can click it', () => {
     const text = instructions(true);
-    expect(INSTRUCTIONS_FILE).toContain('onu\nolay olarak işaretle');
+    expect(INSTRUCTIONS_FILE.replace(/\s+/g, ' ')).toContain('onu olay olarak işaretle');
     expect(text).toContain('`[olay adı](olay:KİMLİK)`');
     expect(text).toContain("`[Stalingrad Muharebesi](olay:stalingrad-1942)'nde`");
     expect(text).toMatch(/başlıklarda da kullanılmaz/);
@@ -160,10 +193,11 @@ describe('instructions', () => {
     const text = instructions(true);
     const example = text.slice(text.indexOf('ÖRNEK'));
     expect(example.startsWith('ÖRNEK (biçim)')).toBe(true);
-    expect(example).toMatch(/step\{n:1,title:"…",caption:"…"\}/);
+    expect(example).toMatch(/step\{n:1,title:"…",caption:"Birinci cümle\. İkinci cümle\."\}/);
+    expect(example).toMatch(/show_event\{step:1,beat:1,event:"…"\}/);
     expect(example).toMatch(/\n ## 1\. …\n/);
     expect(example).toMatch(/\n ## 2\. …\n/);
-    expect(example).not.toMatch(/stalingrad|barbarossa|sides\{|route\{/i);
+    expect(example).not.toMatch(/stalingrad|barbarossa|sides\{/i);
     expect(instructions(false)).not.toContain('ÖRNEK');
   });
 
@@ -176,6 +210,47 @@ describe('instructions', () => {
     // the caption is made from the text: its first sentences, with the rest behind "Devamını oku"
     expect(text).toContain('ilk bir iki cümlesi');
     expect(text).toContain('tek sahne de olabilir');
+  });
+});
+
+describe('narrationRequest (what the narration button asks)', () => {
+  const holder = { id: 'ottoman-empire', name: 'Osmanlı İmparatorluğu' };
+
+  it('gives the model both things "this place" can mean: the point and the polity whose borders hold it in the year shown', () => {
+    const text = narrationRequest(context);
+    expect(text.startsWith(NARRATION_REQUEST)).toBe(true);
+    expect(text).toContain('Seçtiğim yer: 35.50°D, 38.90°K');
+    expect(text).toContain('1525 sınırlarında bu noktayı içeren devlet: Osmanlı İmparatorluğu');
+  });
+
+  it('does not say which of the two to tell about: how much is the point’s and how much the polity’s is the model’s to decide', () => {
+    const text = narrationRequest(context);
+    expect(text).not.toMatch(/odaklan|ağırlık|öncelik|yalnızca|sadece|özellikle|devleti anlat|noktayı anlat/i);
+    // the polity's own events are not told apart from the place's either: the request is the button's, as it was, plus facts
+    expect(text.slice(NARRATION_REQUEST.length)).toMatch(/^ Seçtiğim yer: [^;]+; [^;]+\.$/);
+  });
+
+  it('says so when the point belongs to no polity of the data, and what an occupied land really is', () => {
+    const bare = { ...context, places: [{ ...context.places[0]!, holder: null }] };
+    expect(narrationRequest(bare)).toContain('1525 sınırlarında bu nokta kayıtlı bir devlete ait değil');
+    const occupied = {
+      ...context,
+      places: [
+        {
+          ...context.places[0]!,
+          holder: { id: 'nazi-germany', name: 'Nazi Almanyası' },
+          occupation: { id: 'poland', name: 'Polonya', holder: 'Nazi Almanyası', label: 'Alman işgali' },
+        },
+      ],
+    };
+    const text = narrationRequest(occupied);
+    expect(text).toContain('Nazi Almanyası');
+    expect(text).toContain('bu toprak gerçekte Polonya, o yıllarda Alman işgali');
+    expect(holder.name).toBe('Osmanlı İmparatorluğu'); // (the plain case above names the holder as it is)
+  });
+
+  it('asks about the world as before when no place is selected', () => {
+    expect(narrationRequest({ ...context, places: [] })).toBe(WORLD_NARRATION_REQUEST);
   });
 });
 
@@ -200,6 +275,9 @@ describe('describeContext', () => {
     expect(text).toContain('1500–1550');
     expect(text).toContain('1525');
     expect(text).toContain('Osmanlı İmparatorluğu (35.50°D, 38.90°K)');
+    expect(text).toContain(
+      'Haritada gösterilen yılda (1525) bu noktayı sınırlarında içeren devlet: Osmanlı İmparatorluğu.',
+    );
     expect(text).toContain('Anadolu');
     expect(text).toContain('Bu noktanın egemenleri');
     expect(text).toContain('«Mohaç Muharebesi» (kimlik: mohac-1526), 29 Ağustos 1526');
@@ -280,8 +358,8 @@ describe('buildTurns', () => {
 
   it('tells the model what it has already drawn', () => {
     const drawing = drawingOf([
-      { kind: 'highlight', step: 1, polities: ['ottoman-empire'] },
-      { kind: 'event', step: 1, id: 'caldiran-1514' },
+      { kind: 'highlight', step: 1, beat: 1, polities: ['ottoman-empire'] },
+      { kind: 'event', step: 1, beat: 1, id: 'caldiran-1514' },
     ]);
     const turn = buildTurns(base({ drawing, eventTitleOf: (id) => resolver.eventById(id)?.title ?? id })).at(-1)!;
     expect(turn.content).toContain('öne çıkan: Osmanlı İmparatorluğu');

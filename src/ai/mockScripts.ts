@@ -47,37 +47,111 @@ function sentences(text: string | undefined, n: number): string {
 const clip = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text);
 
 /**
- * The scripted answers are a stand-in for the model that does what the instructions ask of it (every answer is a
- * narration of one or more steps, each with a caption and a full text), over the 1800–2000 data. The model says WHAT
- * is shown and the app draws it: an event the data has is only named (`show_event`: its parties light up and a war's
- * line runs through its marker), `highlight` adds the polities that stand out besides, `sides` groups polities into
- * the sides of a conflict (the app paints each as one bloc), `route` is a directed path through places (an advance, a
- * retreat), and `connect` and `mark` are for what the data does not know (the 1939 Pact of Steel, a place with no
- * event). Lines and routes run between places (cities by name, a polity is its capital). Texts mention the data's events as
- * `[text](olay:id)`, which the page turns into links. Facts are the commonly given ones; where historians disagree
- * the text says so.
+ * The scripted answers are a stand-in for the model that does what the instructions ask of it (every answer is made of
+ * scenes, each with a title, a caption of sentences and a full text), over the 1800–2000 data. The model says WHAT is shown
+ * and the app draws it. Each sentence of a caption is a beat of its scene and every action says which beat it appears with:
+ * `show_event` names an event of the data (its marker: prominent while its beat plays, then a numbered dot), `route` is an
+ * arrow through places (an advance, a retreat; a stop may be the border of a polity toward a place, so an army leaves the front,
+ * not a capital), `sides` says who is on which side (the app paints the map relative to the narration's focus, each actor in
+ * its own colour for the whole narration), `highlight` points at polities, `territory_change` shows what a polity gained and
+ * lost between two years, and `mark` is for a place the data has no event for. There are no lines between places. Texts
+ * mention the data's events as `[text](olay:id)`, which the page turns into links. Facts are the commonly given ones; where
+ * historians disagree the text says so.
  */
 
-/** "Germany at war": eight steps from the invasion of Poland to the surrender, each with a map of its own. */
+/** "Germany at war": eight scenes from the outbreak of the war to the surrender, each with a map of its own. */
 const GERMANY_AT_WAR: ScriptStep[] = [
   {
-    title: 'Polonya’ya saldırı',
+    title: 'Savaş başlıyor',
     caption:
-      "1 Eylül 1939'da Almanya [Polonya'ya saldırdı](olay:polonya-isgali-1939); iki gün sonra Britanya ve Fransa savaş ilan etti.",
-    text: "Savaş, 1 Eylül 1939 sabahı Alman ordusunun [Polonya'ya saldırmasıyla](olay:polonya-isgali-1939) başladı. Bir hafta önce imzalanan [Molotov–Ribbentrop Paktı](olay:molotov-ribbentrop-1939) Almanya'nın doğuda Sovyetler'le karşılaşma riskini ortadan kaldırmıştı; 17 Eylül'de Kızıl Ordu da Polonya'nın doğusuna girdi. Britanya ve Fransa 3 Eylül'de [savaş ilan etti](olay:savas-ilani-1939) ama Polonya'ya fiilen yardım edemedi.",
+      "23 Ağustos 1939'da Almanya ile Sovyetler Birliği [Molotov–Ribbentrop Paktı](olay:molotov-ribbentrop-1939)'nı Moskova'da imzaladı. 1 Eylül'de Alman ordusu [Polonya'ya saldırdı](olay:polonya-isgali-1939). 3 Eylül'de Britanya ve Fransa [Almanya'ya savaş ilan etti](olay:savas-ilani-1939). 17 Eylül'de Kızıl Ordu da [doğudan girdi](olay:sovyet-polonya-isgali-1939) ve Polonya iki işgal bölgesine ayrıldı.",
+    text: "Savaş, 1 Eylül 1939 sabahı Alman ordusunun [Polonya'ya saldırmasıyla](olay:polonya-isgali-1939) başladı. Bir hafta önce Moskova'da imzalanan [Molotov–Ribbentrop Paktı](olay:molotov-ribbentrop-1939), Almanya'nın doğuda Sovyetler'le karşılaşma riskini ortadan kaldırmış ve Polonya'nın paylaşılmasını gizli bir protokolle öngörmüştü. Britanya ve Fransa 3 Eylül'de [savaş ilan etti](olay:savas-ilani-1939) ama Polonya'ya fiilen yardım edemedi; 17 Eylül'de Kızıl Ordu da [Polonya'nın doğusuna girince](olay:sovyet-polonya-isgali-1939) ülke iki işgal bölgesine ayrıldı.\n\nHaritada 1939'dan 1940'a geçerken Sovyetler Birliği'nin kazandığı toprak vurgulanır; sınır verisi yıllık olduğu için aynı yılın öbür işgalleri (Danimarka, Norveç, Fransa) de 1940 haritasında görünür.",
     actions: [
-      ['show_event', { event: 'polonya-isgali-1939' }],
-      ['highlight', { polities: ['nazi-germany'] }],
+      ['show_event', { beat: 1, event: 'molotov-ribbentrop-1939' }],
+      [
+        'sides',
+        {
+          beat: 1,
+          sides: [
+            { name: 'Almanya', polities: ['nazi-germany'] },
+            { name: 'Polonya', polities: ['second-polish-republic'] },
+          ],
+          neutral: ['union-of-soviet-socialist-republics', 'kingdom-of-great-britain', 'french-third-republic'],
+        },
+      ],
+      ['show_event', { beat: 2, event: 'polonya-isgali-1939' }],
+      [
+        'route',
+        {
+          beat: 2,
+          via: ['sınır: nazi-germany → Varşova', 'Varşova'],
+          type: 'advance',
+          label: 'Alman ilerleyişi',
+          animate: true,
+        },
+      ],
+      ['route', { beat: 2, via: ['sınır: nazi-germany → Kraków', 'Kraków'], type: 'advance', animate: true }],
+      ['highlight', { beat: 2, polities: ['second-polish-republic'] }],
+      ['show_event', { beat: 3, event: 'savas-ilani-1939' }],
+      [
+        'sides',
+        {
+          beat: 3,
+          sides: [
+            { name: 'Almanya', polities: ['nazi-germany'] },
+            {
+              name: 'Polonya ve müttefikleri',
+              polities: ['second-polish-republic', 'kingdom-of-great-britain', 'french-third-republic'],
+            },
+          ],
+          neutral: ['union-of-soviet-socialist-republics'],
+        },
+      ],
+      ['show_event', { beat: 4, event: 'sovyet-polonya-isgali-1939' }],
+      [
+        'route',
+        {
+          beat: 4,
+          via: ['sınır: union-of-soviet-socialist-republics → Lviv', 'Lviv'],
+          type: 'advance',
+          label: 'Sovyet ilerleyişi',
+          animate: true,
+        },
+      ],
+      [
+        'sides',
+        {
+          beat: 4,
+          sides: [
+            { name: 'Almanya', polities: ['nazi-germany'] },
+            {
+              name: 'Polonya ve müttefikleri',
+              polities: ['second-polish-republic', 'kingdom-of-great-britain', 'french-third-republic'],
+            },
+            { name: 'Sovyetler Birliği', polities: ['union-of-soviet-socialist-republics'] },
+          ],
+        },
+      ],
+      ['territory_change', { beat: 4, polity: 'union-of-soviet-socialist-republics', from: 1939, to: 1940 }],
     ],
   },
   {
     title: 'Batıda yıldırım savaşı',
     caption:
-      "Mayıs 1940'ta Almanya Ardenler üzerinden saldırıp [Fransa Muharebesi](olay:fransa-muharebesi-1940)'ni altı haftada kazandı; Fransa 22 Haziran'da ateşkes imzaladı.",
+      "Mayıs 1940'ta Almanya Ardenler üzerinden saldırıp [Fransa Muharebesi](olay:fransa-muharebesi-1940)'ni altı haftada kazandı. Fransa 22 Haziran'da [ateşkes imzaladı](olay:compiegne-ateskesi-1940).",
     text: "10 Mayıs 1940'ta başlayan [Fransa Muharebesi](olay:fransa-muharebesi-1940)'nde Alman zırhlı birlikleri Ardenler'i aşıp Sedan'da Fransız cephesini yardı ve Kanal kıyısına ulaştı. Fransa 22 Haziran'da Compiègne'de [ateşkes imzaladı](olay:compiegne-ateskesi-1940); ülke işgal altındaki kuzey ve batı ile Vichy'den yönetilen güney olarak ikiye bölündü. Batı Avrupa'nın büyük bölümü artık Alman denetimindeydi.",
     actions: [
-      ['show_event', { event: 'fransa-muharebesi-1940' }],
-      ['show_event', { event: 'compiegne-ateskesi-1940' }],
+      ['show_event', { beat: 1, event: 'fransa-muharebesi-1940' }],
+      [
+        'route',
+        {
+          beat: 1,
+          via: ['sınır: nazi-germany → Sedan', 'Sedan', 'Dunkirk'],
+          type: 'advance',
+          label: 'Ardenler atılımı',
+        },
+      ],
+      ['show_event', { beat: 2, event: 'compiegne-ateskesi-1940' }],
     ],
   },
   {
@@ -85,19 +159,22 @@ const GERMANY_AT_WAR: ScriptStep[] = [
     caption:
       "Temmuz–Ekim 1940'taki [Britanya Muharebesi](olay:britanya-muharebesi-1940)'nde Luftwaffe havada üstünlük kuramadı; işgal planı ertelendi.",
     text: "Almanya, Britanya'yı barışa zorlamak ve olası bir çıkarma için havada üstünlük kurmak istedi. Temmuz–Ekim 1940'taki [Britanya Muharebesi](olay:britanya-muharebesi-1940)'nde Kraliyet Hava Kuvvetleri radarın ve savaş uçaklarının desteğiyle direndi; Hitler işgal planını erteledi. Savaşın ilk büyük Alman başarısızlığıdır.",
-    actions: [['show_event', { event: 'britanya-muharebesi-1940' }]],
+    actions: [
+      ['show_event', { beat: 1, event: 'britanya-muharebesi-1940' }],
+      ['highlight', { beat: 1, polities: ['kingdom-of-great-britain'] }],
+    ],
   },
   {
     title: 'Doğuya saldırı',
     caption:
-      "22 Haziran 1941'de [Barbarossa Harekâtı](olay:barbarossa-1941) ile Almanya Sovyetler Birliği'ne saldırdı ve savaşın en büyük cephesini açtı.",
+      "22 Haziran 1941'de Almanya ve ortakları [Barbarossa Harekâtı](olay:barbarossa-1941) ile Sovyetler Birliği'ne saldırdı. Alman orduları sınırdan Minsk ve Smolensk üzerinden Moskova'ya doğru ilerledi. Eylül'de [Leningrad kuşatıldı](olay:leningrad-kusatmasi-1941).",
     text: "22 Haziran 1941'de Almanya ve müttefikleri, Molotov–Ribbentrop Paktı'nı bozarak [Barbarossa Harekâtı](olay:barbarossa-1941) ile Sovyetler Birliği'ne üç milyondan fazla askerle saldırdı. İlk aylarda Alman ordusu çok hızlı ilerledi; Eylül'de [Leningrad kuşatıldı](olay:leningrad-kusatmasi-1941). Aralık'ta Moskova önünde durdurulduğunda ise kısa bir savaş umudu da bitmişti.",
     actions: [
-      ['show_event', { event: 'barbarossa-1941' }],
-      ['show_event', { event: 'leningrad-kusatmasi-1941' }],
+      ['show_event', { beat: 1, event: 'barbarossa-1941' }],
       [
         'sides',
         {
+          beat: 1,
           sides: [
             {
               name: 'Mihver ve ortakları',
@@ -110,12 +187,14 @@ const GERMANY_AT_WAR: ScriptStep[] = [
       [
         'route',
         {
-          via: ['Brest-Litovsk', 'Minsk', 'Smolensk', 'Moskova'],
+          beat: 2,
+          via: ['sınır: nazi-germany → Minsk', 'Minsk', 'Smolensk', 'Moskova'],
           type: 'advance',
           label: 'Alman ilerleyişi',
           animate: true,
         },
       ],
+      ['show_event', { beat: 3, event: 'leningrad-kusatmasi-1941' }],
     ],
   },
   {
@@ -124,39 +203,53 @@ const GERMANY_AT_WAR: ScriptStep[] = [
       "20 Ocak 1942'de Berlin-Wannsee'de toplanan yetkililer, Avrupa Yahudilerinin sistemli biçimde yok edilmesini görüştü: [Wannsee Konferansı](olay:wannsee-1942).",
     text: "Savaşın bir yüzü de cephelerin gerisinde yaşandı. 20 Ocak 1942'de Berlin'in Wannsee semtinde toplanan üst düzey Nazi yetkilileri ve devlet memurları, Avrupa Yahudilerinin “nihai çözüm” adıyla sistemli biçimde yok edilmesinin örgütlenmesini görüştü: [Wannsee Konferansı](olay:wannsee-1942). Holokost'ta altı milyon kadar Yahudi öldürüldü.",
     actions: [
-      ['show_event', { event: 'wannsee-1942' }],
-      ['highlight', { polities: ['nazi-germany'] }],
+      ['show_event', { beat: 1, event: 'wannsee-1942' }],
+      ['highlight', { beat: 1, polities: ['nazi-germany'] }],
     ],
   },
   {
     title: 'Dönüm noktası: Stalingrad',
     caption:
-      "Şubat 1943'te [Stalingrad](olay:stalingrad-1942)'da Alman 6. Ordusu teslim oldu; aynı aylarda [El Alamein](olay:el-alamein-1942)'de Mihver Kuzey Afrika'da da durduruldu.",
+      "Şubat 1943'te [Stalingrad](olay:stalingrad-1942)'da Alman 6. Ordusu teslim oldu. Aynı aylarda [El Alamein](olay:el-alamein-1942)'de Mihver Kuzey Afrika'da da durduruldu.",
     text: "1942 sonbaharına gelindiğinde Alman taarruzu iki yerde tıkandı. Volga kıyısındaki [Stalingrad](olay:stalingrad-1942)'da Kızıl Ordu'nun Kasım'daki karşı taarruzu 6. Ordu'yu kuşattı; Şubat 1943'te teslim olan ordunun kaybı Almanya için ağır bir darbeydi. Aynı haftalarda [İkinci El Alamein Muharebesi](olay:el-alamein-1942)'nde Britanya ordusu Rommel'in kuvvetlerini Mısır sınırında yendi. Buradan sonra inisiyatif Müttefiklerdeydi.",
     actions: [
-      ['show_event', { event: 'stalingrad-1942' }],
-      ['show_event', { event: 'el-alamein-1942' }],
+      ['show_event', { beat: 1, event: 'stalingrad-1942' }],
+      ['show_event', { beat: 2, event: 'el-alamein-1942' }],
     ],
   },
   {
     title: 'İkinci cephe',
     caption:
-      "6 Haziran 1944'te Müttefikler [Normandiya'ya çıktı](olay:normandiya-1944); iki hafta sonra Sovyetler [Bagration Harekâtı](olay:bagration-1944) ile doğuda atağa geçti.",
+      "6 Haziran 1944'te Müttefikler [Normandiya'ya çıktı](olay:normandiya-1944). İki hafta sonra Sovyetler [Bagration Harekâtı](olay:bagration-1944) ile doğuda atağa geçti ve Almanlar iki yönden geri çekilmeye başladı.",
     text: "6 Haziran 1944'te Britanya, ABD ve Kanada kuvvetleri [Normandiya'ya çıkarak](olay:normandiya-1944) Batı Avrupa'da ikinci cepheyi açtı. 22 Haziran'da Kızıl Ordu [Bagration Harekâtı](olay:bagration-1944) ile Belarus'ta Alman Orta Ordular Grubu'nu yok etti. Almanya iki yönden de geri çekilmeye başladı; Aralık'taki [Ardenler Taarruzu](olay:ardenler-1944) son büyük karşı atağı oldu.",
     actions: [
-      ['show_event', { event: 'normandiya-1944' }],
-      ['show_event', { event: 'bagration-1944' }],
-      ['route', { via: ['Minsk', 'Varşova', 'Berlin'], type: 'retreat', label: 'Alman geri çekilişi' }],
+      ['show_event', { beat: 1, event: 'normandiya-1944' }],
+      [
+        'sides',
+        {
+          beat: 1,
+          sides: [
+            { name: 'Almanya ve ortakları', polities: ['nazi-germany', 'romania', 'hungary'] },
+            {
+              name: 'Müttefikler',
+              polities: ['kingdom-of-great-britain', 'united-states-of-america', 'union-of-soviet-socialist-republics'],
+            },
+          ],
+        },
+      ],
+      ['show_event', { beat: 2, event: 'bagration-1944' }],
+      ['route', { beat: 2, via: ['Minsk', 'Varşova', 'Berlin'], type: 'retreat', label: 'Alman geri çekilişi' }],
     ],
   },
   {
     title: 'Berlin ve teslim',
     caption:
-      "Nisan–Mayıs 1945'te [Berlin Muharebesi](olay:berlin-muharebesi-1945) sürerken Hitler intihar etti; Almanya 8 Mayıs'ta [koşulsuz teslim oldu](olay:almanya-teslimi-1945).",
+      "Nisan–Mayıs 1945'te [Berlin Muharebesi](olay:berlin-muharebesi-1945) sürerken Hitler intihar etti. Almanya 8 Mayıs'ta [koşulsuz teslim oldu](olay:almanya-teslimi-1945) ve savaşta kazandığı toprakların hepsini yitirdi.",
     text: "16 Nisan 1945'te Kızıl Ordu Oder'den Berlin'e saldırdı; [Berlin Muharebesi](olay:berlin-muharebesi-1945) iki hafta sürdü ve Hitler 30 Nisan'da intihar etti. Almanya 7 Mayıs'ta Reims'te, 8 Mayıs'ta Berlin-Karlshorst'ta [koşulsuz teslim oldu](olay:almanya-teslimi-1945). Ülke dört işgal bölgesine ayrıldı; Nazi Almanyası'nın sonu, aynı zamanda savaşın Avrupa'daki sonuydu.",
     actions: [
-      ['show_event', { event: 'berlin-muharebesi-1945' }],
-      ['show_event', { event: 'almanya-teslimi-1945' }],
+      ['show_event', { beat: 1, event: 'berlin-muharebesi-1945' }],
+      ['show_event', { beat: 2, event: 'almanya-teslimi-1945' }],
+      ['territory_change', { beat: 2, polity: 'nazi-germany', from: 1944, to: 1945 }],
     ],
   },
 ];
@@ -169,11 +262,11 @@ function single(step: ScriptStep): MockReply {
 const STALINGRAD_ANSWER: ScriptStep = {
   title: 'Stalingrad',
   caption:
-    "[Stalingrad Muharebesi](olay:stalingrad-1942)'nde Alman 6. Ordusu kuşatılıp teslim oldu; doğu cephesinde inisiyatif Sovyetlere geçti.",
+    "[Stalingrad Muharebesi](olay:stalingrad-1942)'nde Alman 6. Ordusu kuşatılıp teslim oldu. Doğu cephesinde inisiyatif Sovyetlere geçti.",
   text: "Ağustos 1942'de Volga kıyısındaki Stalingrad'a ulaşan Alman 6. Ordusu, kent içinde sokak sokak süren ağır çatışmalara girdi. Kızıl Ordu 19 Kasım'da kentin kuzeyinden ve güneyinden karşı taarruza geçip ordunun çevresini kapattı; Şubat 1943'te [Stalingrad Muharebesi](olay:stalingrad-1942) Alman teslimiyle sona erdi.\n\nYenilginin önemi sayılarda değil, sonuçtaydı: Almanya bir daha doğuda genel bir taarruz başlatamadı, müttefikleri (Romanya, Macaristan, İtalya) ordularının büyük bölümünü yitirdi. Tarihçiler ölü sayısını iki taraf için yüz binler düzeyinde, toplam kayıpları ise bir milyona yakın veriyor; kesin rakamlar tartışmalıdır.",
   actions: [
-    ['show_event', { event: 'stalingrad-1942' }],
-    ['highlight', { polities: ['union-of-soviet-socialist-republics', 'nazi-germany'] }],
+    ['show_event', { beat: 1, event: 'stalingrad-1942' }],
+    ['highlight', { beat: 2, polities: ['union-of-soviet-socialist-republics', 'nazi-germany'] }],
   ],
 };
 
@@ -181,11 +274,11 @@ const STALINGRAD_ANSWER: ScriptStep = {
 const FRANCE_ANSWER: ScriptStep = {
   title: 'Fransa’nın düşüşü',
   caption:
-    "10 Mayıs 1940'ta başlayan [Fransa Muharebesi](olay:fransa-muharebesi-1940)'nde Almanya altı haftada Fransa'yı yendi; Britanya ordusu kıtadan çekildi.",
+    "10 Mayıs 1940'ta başlayan [Fransa Muharebesi](olay:fransa-muharebesi-1940)'nde Almanya altı haftada Fransa'yı yendi. Britanya ordusu kıtadan çekildi.",
   text: "10 Mayıs 1940'ta Almanya Hollanda ve Belçika'ya girdi, Ardenler üzerinden yaptığı zırhlı atılımla Sedan'da Fransız cephesini yardı ve Kanal kıyısına ulaştı. [Fransa Muharebesi](olay:fransa-muharebesi-1940) altı hafta sürdü; Britanya Seferi Kuvvetleri kıtayı terk etti, Fransa 22 Haziran'da ateşkes imzaladı.\n\nHaritada Fransa, Britanya ve Almanya'nın birbirine komşu olduğu Batı Avrupa görünür: savaşın başladığı Mayıs 1940'ta Fransa Üçüncü Cumhuriyeti hâlâ ayaktaydı, bu yüzden sınırlar bir önceki yılın, 1939'un sınırlarıdır.",
   actions: [
-    ['show_event', { event: 'fransa-muharebesi-1940' }],
-    ['highlight', { polities: ['french-third-republic', 'kingdom-of-great-britain'] }],
+    ['show_event', { beat: 1, event: 'fransa-muharebesi-1940' }],
+    ['highlight', { beat: 2, polities: ['french-third-republic', 'kingdom-of-great-britain'] }],
   ],
 };
 
@@ -193,36 +286,46 @@ const FRANCE_ANSWER: ScriptStep = {
 const NORMANDY_ANSWER: ScriptStep = {
   title: 'Normandiya Çıkarması',
   caption:
-    "6 Haziran 1944'te Britanya, ABD ve Kanada kuvvetleri [Normandiya'ya çıktı](olay:normandiya-1944); Batı Avrupa'da ikinci cephe açıldı.",
-  text: "6 Haziran 1944'te Britanya, ABD ve Kanada kuvvetleri Normandiya sahillerine çıktı: tarihin en büyük amfibi harekâtı [Normandiya Çıkarması](olay:normandiya-1944) Batı Avrupa'da ikinci cepheyi açtı. Ağustos'ta Paris kurtarıldı.\n\nHaritada çıkarmanın yeri ve iki tarafın başkentleri arasındaki çizgi görünür; Amerika Birleşik Devletleri de bu sahnededir ama toprağının hiçbir parçası bu bölgede olmadığı için harita yalnızca Batı Avrupa'yı gösterir.",
-  actions: [['show_event', { event: 'normandiya-1944' }]],
-};
-
-/** A relation the data has no event for: a line of the model's own (the 1939 Pact of Steel). */
-const AXIS_ANSWER: ScriptStep = {
-  title: 'Almanya ve İtalya',
-  caption:
-    "Almanya ile İtalya, 22 Mayıs 1939'da Çelik Pakt ile askerî ittifak kurdu; [Üçlü Pakt](olay:uclu-pakt-1940) 1940'ta Japonya'yı da getirdi.",
-  text: "Hitler ve Mussolini'nin yakınlaşması 1936'daki “Roma–Berlin Mihveri” ile başladı. 22 Mayıs 1939'da imzalanan Çelik Pakt, iki devleti karşılıklı askerî yardıma bağlayan açık bir ittifaktı. Savaş çıktığında İtalya hazır olmadığı için önce tarafsız kaldı, ancak Haziran 1940'ta Fransa çökerken savaşa girdi.\n\nSistem 27 Eylül 1940'ta [Üçlü Pakt](olay:uclu-pakt-1940) ile Japonya'yı da içine aldı; Macaristan, Romanya, Slovakya ve Bulgaristan sonradan katıldı. İttifakın nitelikleri tartışılır: üyeler ortak bir komuta ya da ortak bir strateji kurmadı, her biri kendi savaşını yürüttü.",
-  year: 1939,
+    "6 Haziran 1944'te Britanya, ABD ve Kanada kuvvetleri [Normandiya'ya çıktı](olay:normandiya-1944). Batı Avrupa'da ikinci cephe açıldı.",
+  text: "6 Haziran 1944'te Britanya, ABD ve Kanada kuvvetleri Normandiya sahillerine çıktı: tarihin en büyük amfibi harekâtı [Normandiya Çıkarması](olay:normandiya-1944) Batı Avrupa'da ikinci cepheyi açtı. Ağustos'ta Paris kurtarıldı.\n\nHaritada çıkarmanın yeri görünür; Amerika Birleşik Devletleri de bu sahnededir ama toprağının hiçbir parçası bu bölgede olmadığı için harita yalnızca Batı Avrupa'yı gösterir.",
   actions: [
-    ['highlight', { polities: ['nazi-germany', 'kingdom-of-italy'] }],
-    ['connect', { from: 'Berlin', to: 'Roma', relation: 'alliance', label: 'Çelik Pakt, 1939' }],
-    ['show_event', { event: 'uclu-pakt-1940' }],
+    ['show_event', { beat: 1, event: 'normandiya-1944' }],
+    ['highlight', { beat: 2, polities: ['kingdom-of-great-britain', 'united-states-of-america', 'nazi-germany'] }],
   ],
 };
 
-/** Who stood with whom: the sides of the war, painted as two blocs. */
+/** A relation the data has no event for: shown by colour (the 1939 Pact of Steel), growing with the Tripartite Pact. */
+const AXIS_ANSWER: ScriptStep = {
+  title: 'Almanya ve İtalya',
+  caption:
+    "Almanya ile İtalya, 22 Mayıs 1939'da Çelik Pakt ile askerî ittifak kurdu. [Üçlü Pakt](olay:uclu-pakt-1940) 1940'ta Japonya'yı da getirdi.",
+  text: "Hitler ve Mussolini'nin yakınlaşması 1936'daki “Roma–Berlin Mihveri” ile başladı. 22 Mayıs 1939'da imzalanan Çelik Pakt, iki devleti karşılıklı askerî yardıma bağlayan açık bir ittifaktı. Savaş çıktığında İtalya hazır olmadığı için önce tarafsız kaldı, ancak Haziran 1940'ta Fransa çökerken savaşa girdi.\n\nSistem 27 Eylül 1940'ta [Üçlü Pakt](olay:uclu-pakt-1940) ile Japonya'yı da içine aldı; Macaristan, Romanya, Slovakya ve Bulgaristan sonradan katıldı. İttifakın nitelikleri tartışılır: üyeler ortak bir komuta ya da ortak bir strateji kurmadı, her biri kendi savaşını yürüttü.",
+  year: 1939,
+  actions: [
+    ['sides', { beat: 1, sides: [{ name: 'Çelik Pakt', polities: ['nazi-germany', 'kingdom-of-italy'] }] }],
+    ['show_event', { beat: 2, event: 'uclu-pakt-1940' }],
+    [
+      'sides',
+      {
+        beat: 2,
+        sides: [{ name: 'Çelik Pakt ve Üçlü Pakt', polities: ['nazi-germany', 'kingdom-of-italy', 'empire-of-japan'] }],
+      },
+    ],
+  ],
+};
+
+/** Who stood with whom: the sides of the war, painted as two blocs, and then who stood aside. */
 const SIDES_ANSWER: ScriptStep = {
   title: 'Mihver ve Müttefikler',
   caption:
-    "İkinci Dünya Savaşı'nda bir yanda Mihver (Almanya, İtalya, Japonya), öbür yanda Müttefikler (Britanya, Sovyetler Birliği, ABD) yer aldı; taraflar savaş boyunca değişti.",
+    "İkinci Dünya Savaşı'nda bir yanda Mihver (Almanya, İtalya, Japonya), öbür yanda Müttefikler (Britanya, Sovyetler Birliği, ABD) yer aldı. Taraflar savaş boyunca değişti; İsveç, İsviçre ve Türkiye uzak durdu.",
   text: "İkinci Dünya Savaşı'nın iki ana kutbu, 1940 tarihli Üçlü Pakt'la birleşen Almanya, İtalya ve Japonya'nın oluşturduğu Mihver ile Britanya, Sovyetler Birliği ve ABD'nin başını çektiği Müttefiklerdi. Haritada 1942 yılının görünümü bu iki bloğu birer renkle gösteriyor.\n\nGörüntü yine de basitleştirilmiş bir ikilik. Sovyetler Birliği 1939–1941 arasında Almanya ile bir saldırmazlık paktı içindeydi ve savaşa 1941'de, saldırıya uğrayınca girdi; ABD savaşa 1941 sonunda katıldı; Fransa'nın büyük bölümü 1940'tan sonra işgal altındaydı, Tayland Japonya'nın yanında yer aldı, İsveç ve İsviçre gibi bazı ülkeler tarafsız kaldı. Hangi devletin hangi tarafta sayılacağı yıldan yıla değiştiği için buradaki gruplama 1942 içindir.",
   year: 1942,
   actions: [
     [
       'sides',
       {
+        beat: 1,
         sides: [
           { name: 'Mihver', polities: ['nazi-germany', 'kingdom-of-italy', 'empire-of-japan'] },
           {
@@ -230,6 +333,20 @@ const SIDES_ANSWER: ScriptStep = {
             polities: ['kingdom-of-great-britain', 'union-of-soviet-socialist-republics', 'united-states-of-america'],
           },
         ],
+      },
+    ],
+    [
+      'sides',
+      {
+        beat: 2,
+        sides: [
+          { name: 'Mihver', polities: ['nazi-germany', 'kingdom-of-italy', 'empire-of-japan'] },
+          {
+            name: 'Müttefikler',
+            polities: ['kingdom-of-great-britain', 'union-of-soviet-socialist-republics', 'united-states-of-america'],
+          },
+        ],
+        neutral: ['kingdom-of-sweden', 'swiss-confederation', 'republic-of-turkey'],
       },
     ],
   ],
@@ -324,8 +441,9 @@ export function createMockScripts(data: Pick<AppData, 'entities' | 'events'>): M
       ? `${place.title}, ${context.range.from}–${context.range.to}`
       : `dünya, ${context.range.from}–${context.range.to}`;
     const actions: ScriptStep['actions'] = [];
-    if (place?.holder) actions.push(['highlight', { polities: [place.holder.id] }]);
-    if (place) actions.push(['mark', { lon: place.point.lon, lat: place.point.lat, label: clip(place.title, 24) }]);
+    if (place?.holder) actions.push(['highlight', { beat: 1, polities: [place.holder.id] }]);
+    if (place)
+      actions.push(['mark', { beat: 1, lon: place.point.lon, lat: place.point.lat, label: clip(place.title, 24) }]);
     return single({
       title: 'Deneme kipi',
       caption: 'Deneme kipindesiniz: şu anda bir model yok, yanıtlar komut dosyasından geliyor.',

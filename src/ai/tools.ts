@@ -2,7 +2,7 @@ import type { YearRange } from '../domain/types';
 import type { TurnPlan } from './drawing';
 import type { ToolSpec } from './provider';
 import { cleanCaption, cleanLabel, type Resolver } from './resolve';
-import { LIMITS, RELATIONS, ROUTE_TYPES, type PlaceRef, type Relation, type RouteType, type Side } from './types';
+import { LIMITS, ROUTE_TYPES, type PlaceRef, type RouteType, type Side } from './types';
 
 export interface ToolEnv {
   resolver: Resolver;
@@ -31,22 +31,10 @@ function stepOf(input: Record<string, unknown>): number | null {
   return Math.max(1, n);
 }
 
-const RELATION_ALIASES: Record<string, Relation> = {
-  war: 'war',
-  savas: 'war',
-  alliance: 'alliance',
-  ittifak: 'alliance',
-  trade: 'trade',
-  ticaret: 'trade',
-  treaty: 'treaty',
-  antlasma: 'treaty',
-  anlasma: 'treaty',
-};
-
-function relationOf(value: unknown): Relation | null {
-  if (typeof value !== 'string') return null;
-  const key = value.toLocaleLowerCase('tr').replace(/[şŞ]/g, 's').replace(/[ıİ]/g, 'i').trim();
-  return RELATION_ALIASES[key] ?? null;
+/** The beat (the sentence of the caption) a request appears with: 1 when unsaid or nonsense, never past the limit. */
+function beatOf(input: Record<string, unknown>): number {
+  const n = integer(input.beat);
+  return n === null ? 1 : Math.min(LIMITS.beats, Math.max(1, n));
 }
 
 const ROUTE_ALIASES: Record<string, RouteType> = {
@@ -88,7 +76,7 @@ function routeTypeOf(value: unknown): RouteType | null {
 }
 
 const PLACE_HELP =
-  'Yer: şehir adı ("Moskova"; eski adlar da tanınır: "Stalingrad", "Danzig"), OLAYLAR listesindeki bir olayın kimliği, devletin kimliği (o yılın başkenti) ya da "enlem, boylam" ("52.23, 21.01"); tanınmayan yer atlanır.';
+  'Yer: şehir adı ("Moskova"; eski adlar da tanınır: "Stalingrad"), OLAYLAR listesindeki bir olayın kimliği, devletin kimliği (o yılın başkenti), "enlem, boylam" ya da "sınır: devlet → yer" (devletin sınırının yere en yakın noktası). Tanınmayan yer atlanır.';
 
 const STEP_RANGE_NOTE = `atlandı: sahne numarası 1 ile ${LIMITS.steps} arasında olmalı`;
 
@@ -96,22 +84,30 @@ const STEP_PROP = {
   type: 'integer',
   minimum: 1,
   maximum: LIMITS.steps,
-  description: 'Hangi sahneye ait olduğu (varsayılan 1). Çizim, o sahne etkinken haritada durur.',
+  description: 'Hangi sahneye ait olduğu (varsayılan 1).',
+};
+
+const BEAT_PROP = {
+  type: 'integer',
+  minimum: 1,
+  maximum: LIMITS.beats,
+  description: 'Sahnenin altyazısının kaçıncı cümlesi okunurken göründüğü (varsayılan 1).',
 };
 
 /**
  * The page functions the model may call. They are the only way the AI touches the map. Each one checks
  * its references against the data and either records the request in the plan or declines it ("atlandı"),
  * and never throws: a declined drawing is not an error worth a round trip. They only record; what is
- * drawn, and when, is decided later by the step the reader is on (and each step shows only its own).
+ * drawn, and when, is decided later by the scene and the beat the reader is on (a scene shows only its own).
  *
- * The model decides WHAT the map shows; the app decides HOW it looks. So there are seven tools and none of them
- * is about looks or the camera: `step` (a scene of a narration, with its caption and, if it needs one, its
- * year), `show_event` (an event of the data: the app draws it by its kind), `highlight` (which polities stand
- * out), `sides` (which polities stand together in a conflict: the app paints each side as one bloc), and for what the
- * data does not know, `route` (a directed path through places), `connect` (a line between two places) and `mark` (a
- * point). The ends of a line and the stops of a route are PLACES (an event, a city, a point, or a polity's capital).
- * The order is the order of importance: a view that allows fewer tools keeps the first ones.
+ * The model decides WHAT the map shows; the app decides HOW it looks, with one meaning for each mark: an area is
+ * territory or control, an arrow is a movement, a point is a place or an event, hatching is occupation or doubt. So there are
+ * seven tools and none of them is about looks or the camera: `step` (a scene of a narration, with its caption: the sentences
+ * of which are its beats, and, if it needs one, its year), `show_event` (an event of the data: its marker), `highlight` (which
+ * polities stand out), `sides` (who is on which side: the app paints the map relative to the narration's focus),
+ * `route` (an arrow through places), `territory_change` (what a polity gained and lost between two years) and `mark` (a
+ * point). The stops of a route are PLACES (an event, a city, a point, a polity's capital, or the border of a polity toward
+ * another place). The order is the order of importance: a view that allows fewer tools keeps the first ones.
  */
 export function createTools(env: ToolEnv): ToolSpec[] {
   const { resolver, range, plan } = env;
@@ -147,7 +143,7 @@ export function createTools(env: ToolEnv): ToolSpec[] {
     {
       name: 'step',
       description:
-        'Bir sahneyi tanımlar: numarası, kısa başlığı ve altyazısı. Aynı numarayla çağrılan gösterim araçları sahnenin haritasını kurar; harita, etkin sahnenin kendi gösterimini gösterir. year verilirse harita o yılın sınırlarını gösterir; verilmezse sahnedeki olayın başladığı yılın, olay yoksa okurun yılının sınırlarını. Tam metin bu çağrıda yer almaz; ikinci turda "## n. Başlık" altında yazılır. Dönüş: "tamam".',
+        'Bir sahneyi tanımlar: numarası, kısa başlığı ve altyazısı. Altyazı cümlelere bölünür; her cümle sahnenin sırayla oynayan bir vuruşudur (1\'den başlar). Aynı numarayla çağrılan gösterim araçları sahnenin haritasını kurar; her biri beat ile hangi vuruşta göründüğünü söyler. year verilirse harita o yılın sınırlarıyla açılır; verilmezse sahnedeki olayın başladığı yılın, olay yoksa okurun yılının sınırlarıyla. Tam metin bu çağrıda yer almaz; ikinci turda "## n. Başlık" altında yazılır. Dönüş: "tamam".',
       inputSchema: {
         type: 'object',
         properties: {
@@ -156,7 +152,7 @@ export function createTools(env: ToolEnv): ToolSpec[] {
           caption: {
             type: 'string',
             description:
-              'Altyazı: sahnenin özü, bir iki cümle; haritanın üstünde görünür. Veri setindeki bir olay [olay adı](olay:KİMLİK) biçiminde anılırsa okur tıklayıp haritada görür.',
+              'Altyazı: cümle cümle yazılır ve haritanın üstünde görünür; her cümle bir vuruştur. Veri setindeki bir olay [olay adı](olay:KİMLİK) biçiminde anılırsa okur tıklayıp haritada görür.',
           },
           year: {
             type: 'integer',
@@ -182,11 +178,12 @@ export function createTools(env: ToolEnv): ToolSpec[] {
     {
       name: 'show_event',
       description:
-        'OLAYLAR listesindeki bir olayı haritada gösterir: olayın tarafları öne çıkar, olayın işareti konur; savaş olaylarında iki tarafın başkentlerinden çıkan ve işaretin üzerinden geçen bir çizgi çizilir. event: OLAYLAR listesindeki kimlik. Dönüş: "tamam" ya da atlanma nedeni.',
+        'OLAYLAR listesindeki bir olayın yerini haritada işaretiyle gösterir; işaret, vuruş sürerken belirgindir, sonra küçük numaralı bir noktaya dönüşür. event: OLAYLAR listesindeki kimlik. Dönüş: "tamam" ya da atlanma nedeni.',
       inputSchema: {
         type: 'object',
         properties: {
           step: STEP_PROP,
+          beat: BEAT_PROP,
           event: { type: 'string', description: 'OLAYLAR listesindeki olay kimliği (örn. "stalingrad-1942").' },
         },
         required: ['event'],
@@ -196,21 +193,22 @@ export function createTools(env: ToolEnv): ToolSpec[] {
         if (step === null) return STEP_RANGE_NOTE;
         const ev = resolver.event(input.event ?? input.id ?? input.title);
         if (!ev) return 'atlandı: bu kimlikte bir olay yok; kimlik OLAYLAR listesinden olmalı';
-        return accept({ kind: 'event', step, id: ev.id });
+        return accept({ kind: 'event', step, beat: beatOf(input), id: ev.id });
       },
     },
     {
       name: 'highlight',
       description:
-        'Devletleri öne çıkarır: canlı renkle ve dolgun görünürler, haritanın geri kalanı solar. polities: POLİTİLER listesindeki kimlikler (en çok 4); listede olmayan atlanır. Dönüş: "tamam" ya da atlanma nedeni.',
+        'Devletleri vurgular: vuruş sürerken devletler kendi renginde belirginleşir ve çevresi çizilir, haritanın geri kalanı solar; renkleri değişmez. polities: POLİTİLER listesindeki kimlikler (en çok 8); listede olmayan atlanır. Dönüş: "tamam" ya da atlanma nedeni.',
       inputSchema: {
         type: 'object',
         properties: {
           step: STEP_PROP,
+          beat: BEAT_PROP,
           polities: {
             type: 'array',
             items: { type: 'string' },
-            maxItems: 4,
+            maxItems: LIMITS.highlights,
             description: 'Devlet kimlikleri (POLİTİLER listesinden).',
           },
         },
@@ -219,18 +217,21 @@ export function createTools(env: ToolEnv): ToolSpec[] {
       execute(input) {
         const step = stepOf(input);
         if (step === null) return STEP_RANGE_NOTE;
-        const { ids, skipped } = polities(listOf(input.polities ?? input.polity ?? input.ids).slice(0, 6));
+        const { ids, skipped } = polities(
+          listOf(input.polities ?? input.polity ?? input.ids).slice(0, LIMITS.highlights + 2),
+        );
         if (!ids.length) return `atlandı: tanınan devlet yok${note(skipped)}`;
-        return accept({ kind: 'highlight', step, polities: ids }) + note(skipped);
+        return accept({ kind: 'highlight', step, beat: beatOf(input), polities: ids }) + note(skipped);
       },
     },
     {
       name: 'sides',
-      description: `Bir çatışmanın taraflarını tanımlar: her taraf tek bir blok olarak ayrı bir renkle boyanır ve adı rengiyle birlikte gösterilir; tarafların devletleri öne çıkar. sides: 2–${LIMITS.sides} taraf, her biri {name, polities}; name kısa bir ad (örn. "Mihver"), polities POLİTİLER listesindeki kimlikler (taraf başına en çok ${LIMITS.sidePolities}). Bir devlet tek tarafta yer alır. Dönüş: "tamam" ya da atlanma nedeni.`,
+      description: `Kimin hangi tarafta olduğunu söyler; harita buna göre yeniden boyanır: odak tarafı, karşıt taraflar ve tarafsız devletler ayrı renklerdedir, adı geçmeyenler solar. Bir tarafın rengi anlatım boyunca aynı kalır; taraf değiştiren devlet yeni tarafın rengini alır. sides: 1–${LIMITS.sides} taraf, her biri {name, polities}; odak tarafı, seçili yerin devletinin tarafıdır (yoksa ilk taraf). neutral: tarafsız ya da tarafı belirsiz devletler. Kimlikler POLİTİLER listesinden (taraf başına en çok ${LIMITS.sidePolities}); bir devlet tek yerde yer alır. Dönüş: "tamam" ya da atlanma nedeni.`,
       inputSchema: {
         type: 'object',
         properties: {
           step: STEP_PROP,
+          beat: BEAT_PROP,
           sides: {
             type: 'array',
             minItems: 1,
@@ -249,6 +250,12 @@ export function createTools(env: ToolEnv): ToolSpec[] {
               },
               required: ['name', 'polities'],
             },
+          },
+          neutral: {
+            type: 'array',
+            items: { type: 'string' },
+            maxItems: LIMITS.sidePolities,
+            description: 'Tarafsız ya da tarafı belirsiz devletlerin kimlikleri (isteğe bağlı).',
           },
         },
         required: ['sides'],
@@ -269,17 +276,24 @@ export function createTools(env: ToolEnv): ToolSpec[] {
           for (const id of fresh) taken.add(id);
           if (name && fresh.length) sides.push({ name, polities: fresh });
         }
+        const standing = polities(listOf(input.neutral).slice(0, LIMITS.sidePolities + 4));
+        skipped.push(...standing.skipped);
+        const neutral = standing.ids.filter((id) => !taken.has(id)).slice(0, LIMITS.sidePolities);
         if (!sides.length) return `atlandı: adı ve tanınan devletleri olan bir taraf gerekli${note(skipped)}`;
-        return accept({ kind: 'sides', step, sides: sides.slice(0, LIMITS.sides) }) + note(skipped);
+        return (
+          accept({ kind: 'sides', step, beat: beatOf(input), sides: sides.slice(0, LIMITS.sides), neutral }) +
+          note(skipped)
+        );
       },
     },
     {
       name: 'route',
-      description: `Sıralı yerlerden geçen yönlü bir yol çizer. type: advance (ilerleyiş, sefer), retreat (geri çekilme), migration (göç, sürgün) ya da trade (ticaret, ikmal); her türün biçimi sabittir (kıvrımlı, uçta oklu). via: 2–${LIMITS.stops} yer, sırayla; ok sonuncuyu gösterir. ${PLACE_HELP} label: isteğe bağlı kısa etiket. animate: true ise yol, sahne açılınca çizilerek belirir. Dönüş: "tamam" ya da atlanma nedeni.`,
+      description: `Sıralı yerlerden geçen yönlü bir ok çizer: gerçek bir hareket. type: advance (ilerleyiş), retreat (geri çekilme), migration (göç) ya da trade (ticaret); her türün biçimi sabittir. via: 2–${LIMITS.stops} yer, sırayla; ok sonuncuyu gösterir, vuruş sürerken görünür ve vuruş bitince solar. ${PLACE_HELP} label: kısa etiket. animate: false ise ok çizilerek belirmez. Dönüş: "tamam" ya da atlanma nedeni.`,
       inputSchema: {
         type: 'object',
         properties: {
           step: STEP_PROP,
+          beat: BEAT_PROP,
           via: {
             type: 'array',
             items: { type: 'string' },
@@ -287,9 +301,9 @@ export function createTools(env: ToolEnv): ToolSpec[] {
             maxItems: LIMITS.stops,
             description: 'Duraklar, sırayla (birincisi başlangıç, sonuncusu varış).',
           },
-          type: { type: 'string', enum: [...ROUTE_TYPES], description: 'Yolun türü.' },
+          type: { type: 'string', enum: [...ROUTE_TYPES], description: 'Hareketin türü.' },
           label: { type: 'string', description: `İsteğe bağlı kısa etiket (en çok ${LIMITS.label} karakter).` },
-          animate: { type: 'boolean', description: 'Yol çizilerek belirsin mi? Varsayılan: hayır.' },
+          animate: { type: 'boolean', description: 'Ok çizilerek belirsin mi? Varsayılan: evet.' },
         },
         required: ['via', 'type'],
       },
@@ -305,43 +319,50 @@ export function createTools(env: ToolEnv): ToolSpec[] {
         const stops = refs.filter((r, i) => i === 0 || !resolver.samePlace(r, refs[i - 1]!)).slice(0, LIMITS.stops);
         if (stops.length < 2) return `atlandı: en az iki ayrı ve tanınan yer gerekli${note(skipped)}`;
         const label = cleanLabel(input.label, LIMITS.label) ?? undefined;
-        const animate = input.animate === true || input.animate === 'true';
-        return accept({ kind: 'route', step, via: stops, type, animate, ...(label ? { label } : {}) }) + note(skipped);
+        const animate = !(input.animate === false || input.animate === 'false');
+        return (
+          accept({ kind: 'route', step, beat: beatOf(input), via: stops, type, animate, ...(label ? { label } : {}) }) +
+          note(skipped)
+        );
       },
     },
     {
-      name: 'connect',
-      description: `İki yer arasına bir ilişki çizgisi çizer. relation: war (savaş), alliance (ittifak), trade (ticaret) ya da treaty (antlaşma); her ilişkinin çizgi biçimi sabittir. from, to: iki uç. ${PLACE_HELP} label: isteğe bağlı kısa etiket. Dönüş: "tamam" ya da atlanma nedeni.`,
+      name: 'territory_change',
+      description:
+        'Bir devletin iki yıl arasında kazandığı ve kaybettiği toprağı gösterir: uygulama iki yılın sınırlarını karşılaştırır ve değişen alanı devletin renginde canlandırır; vuruştan sonra harita to yılının sınırlarını gösterir. polity: POLİTİLER listesindeki kimlik. from, to: seçili aralıkta iki yıl (from < to). Sınır verisi yıllıktır: aynı yıl içindeki değişiklikler ayrılamaz. Dönüş: "tamam" ya da atlanma nedeni.',
       inputSchema: {
         type: 'object',
         properties: {
           step: STEP_PROP,
-          from: { type: 'string', description: 'Birinci uç (bir yer).' },
-          to: { type: 'string', description: 'İkinci uç (bir yer).' },
-          relation: { type: 'string', enum: [...RELATIONS], description: 'İlişkinin türü.' },
-          label: { type: 'string', description: `İsteğe bağlı kısa etiket (en çok ${LIMITS.label} karakter).` },
+          beat: BEAT_PROP,
+          polity: { type: 'string', description: 'Devlet kimliği (POLİTİLER listesinden).' },
+          from: { type: 'integer', description: 'Başlangıç yılı (seçili aralığın içinde).' },
+          to: { type: 'integer', description: 'Bitiş yılı (seçili aralığın içinde, from’dan büyük).' },
         },
-        required: ['from', 'to', 'relation'],
+        required: ['polity', 'from', 'to'],
       },
       execute(input) {
         const step = stepOf(input);
         if (step === null) return STEP_RANGE_NOTE;
-        const relation = relationOf(input.relation);
-        if (!relation) return 'atlandı: ilişki war, alliance, trade ya da treaty olmalı';
-        const { refs, skipped } = placeRefs([input.from, input.to]);
-        if (refs.length < 2) return `atlandı: iki yer gerekli${note(skipped)}`;
-        if (resolver.samePlace(refs[0]!, refs[1]!)) return 'atlandı: iki ayrı yer gerekli';
-        const label = cleanLabel(input.label, LIMITS.label) ?? undefined;
-        return accept({ kind: 'connect', step, from: refs[0]!, to: refs[1]!, relation, ...(label ? { label } : {}) });
+        const polity = resolver.polity(input.polity ?? input.polities, range);
+        if (!polity) return 'atlandı: devlet tanınmadı; kimlik POLİTİLER listesinden olmalı';
+        const from = resolver.year(input.from, range);
+        const to = resolver.year(input.to, range);
+        if (from === null || to === null) return `atlandı: iki yıl da ${range.from}–${range.to} aralığında olmalı`;
+        if (from >= to) return 'atlandı: from, to’dan küçük olmalı';
+        if (!resolver.rowAt(polity, from) && !resolver.rowAt(polity, to))
+          return `atlandı: ${resolver.nameOf(polity)} bu iki yılda da sınır verisinde yok`;
+        return accept({ kind: 'territory', step, beat: beatOf(input), polity, from, to });
       },
     },
     {
       name: 'mark',
-      description: `Haritada bir noktayı kısa bir etiketle işaretler. Nokta, place ile (bir şehir adı, eski adlar da tanınır: "Danzig"; ya da "enlem, boylam") veya lon ve lat ile verilir; place OLAYLAR listesindeki bir olayın yeriyse olay olarak gösterilir. label: işaretin etiketi. Dönüş: "tamam" ya da atlanma nedeni.`,
+      description: `Haritada bir noktayı kısa bir etiketle işaretler; işaret vuruş sürerken etiketiyle belirgindir, sonra küçük numaralı bir noktaya dönüşür. Nokta, place ile (bir şehir adı, eski adlar da tanınır: "Danzig"; ya da "enlem, boylam") veya lon ve lat ile verilir; place OLAYLAR listesindeki bir olayın yeriyse olay olarak gösterilir. label: işaretin etiketi. Dönüş: "tamam" ya da atlanma nedeni.`,
       inputSchema: {
         type: 'object',
         properties: {
           step: STEP_PROP,
+          beat: BEAT_PROP,
           place: { type: 'string', description: 'Yer: şehir adı ya da "enlem, boylam". Verilirse lon/lat gerekmez.' },
           lon: { type: 'number', description: 'Boylam, ondalık derece (doğu +).' },
           lat: { type: 'number', description: 'Enlem, ondalık derece (kuzey +).' },
@@ -355,14 +376,17 @@ export function createTools(env: ToolEnv): ToolSpec[] {
       execute(input) {
         const step = stepOf(input);
         if (step === null) return STEP_RANGE_NOTE;
+        const beat = beatOf(input);
         let point = null as ReturnType<typeof resolver.point>;
         let name: string | null = null;
         if (input.place !== undefined && input.place !== null && input.place !== '') {
           const ref = resolver.placeRef(input.place, range);
-          if (!ref || ref.kind === 'polity')
+          if (!ref || ref.kind === 'polity' || ref.kind === 'border')
             return 'atlandı: yer tanınmadı (bir şehir adı ya da "enlem, boylam" olmalı)';
           if (ref.kind === 'event')
-            return accept({ kind: 'event', step, id: ref.id }) + ' (uygulamanın olay kaydı; olay olarak gösterildi)';
+            return (
+              accept({ kind: 'event', step, beat, id: ref.id }) + ' (uygulamanın olay kaydı; olay olarak gösterildi)'
+            );
           point = resolver.placePoint(ref, range.to);
           name = ref.kind === 'city' ? ref.name : null;
         } else {
@@ -374,10 +398,10 @@ export function createTools(env: ToolEnv): ToolSpec[] {
         // A place the app already has an event for is shown by that event's own marker, never by a second one.
         const known = resolver.eventFor(label, point, range);
         if (known) {
-          accept({ kind: 'event', step, id: known.id });
+          accept({ kind: 'event', step, beat, id: known.id });
           return `tamam: «${known.title}» uygulamanın olay kaydı; olay olarak gösterildi`;
         }
-        return accept({ kind: 'mark', step, point, label });
+        return accept({ kind: 'mark', step, beat, point, label });
       },
     },
   ];

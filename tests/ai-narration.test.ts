@@ -89,7 +89,7 @@ describe('stepsOf and isStepped', () => {
 
   it('knows which steps change the map and what year each asks for', () => {
     const plan = planOf([1, 'Bir', 'a'], [2, 'İki', 'b'], [3, 'Üç', 'c']);
-    plan.add({ kind: 'highlight', step: 1, polities: ['ottoman-empire'] });
+    plan.add({ kind: 'highlight', step: 1, beat: 1, polities: ['ottoman-empire'] });
     plan.add({ kind: 'set_year', step: 2, year: 1514 });
     const steps = stepsOf(item('', plan, 'streaming'));
     expect(steps.map((s) => s.hasScene)).toEqual([true, true, false]);
@@ -107,7 +107,7 @@ describe('stepsOf and isStepped', () => {
 
   it('one scene, or one section, is not a narration: it is a single step', () => {
     const plan = new TurnPlan();
-    plan.add({ kind: 'highlight', step: 1, polities: ['nazi-germany'] });
+    plan.add({ kind: 'highlight', step: 1, beat: 1, polities: ['nazi-germany'] });
     const a = item('Kısa bir yanıt.', plan);
     expect(isStepped(a)).toBe(false);
     expect(stepsOf(a)).toMatchObject([{ n: 1, title: '', caption: 'Kısa bir yanıt.', hasText: true, hasScene: true }]);

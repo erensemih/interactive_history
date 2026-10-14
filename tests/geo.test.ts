@@ -122,4 +122,3 @@ describe('lineage reaches every level above the holder', () => {
     expect([...res.lineage].sort()).toEqual(['bohemia', 'empire', 'moravia']);
   });
 });
-

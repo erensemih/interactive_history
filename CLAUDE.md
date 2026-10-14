@@ -26,6 +26,8 @@ Bir değişiklik grubunu bitirirken şunlar koşulur, fazlası değil:
   hatası üretir. Koşuları `flock /tmp/claude-0/e2e.lock …` ile sıraya koy, arka planda koştur ve bir döngüyle bekle (ön planda
   `sleep` engelli).
 - Bir e2e koşarken `dist`'i yeniden derleme. Süreçleri PID ile öldür (`pkill -f` yok).
+- AI e2e'de C ve D, B'nin ilk senaryosunun sayfasını kullanır: tek başlarına verilirse "senaryo beklenmedik biçimde durdu" der; `E2E_ONLY=B,C,C2,D`
+  diye koştur.
 - Hızlı kip çekirdek akıştır: base e2e'de ana blok 0–3, AI e2e'de `guard.smoke(…)` ile işaretli senaryolar. Yeni bir senaryoyu
   ancak çekirdek akışa aitse ve hızlı kip ~3 dk'yı aşmayacaksa işaretle; gerisi tam takımda kalır.
 - Bir kontrol kameranın tam durumuna bağlı çıkıp kiplerden birinde sınırda geçiyorsa kontrolü sağlamlaştır (kamera/zamanlamaya

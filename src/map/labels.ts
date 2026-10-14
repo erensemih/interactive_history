@@ -4,6 +4,7 @@ import { primaryAt, rowsContaining } from '../domain/geo';
 import type { Rect } from '../domain/reveal';
 import type { BorderRow } from '../domain/types';
 import type { OccupationLabel } from '../data/corrections';
+import type { Projector } from './projection';
 
 interface Candidate {
   row: BorderRow;
@@ -71,6 +72,7 @@ export class PolityLabels {
 
   constructor(
     private readonly map: MLMap,
+    private readonly projector: Projector,
     container: HTMLElement,
     private readonly data: AppData,
   ) {
@@ -218,7 +220,7 @@ export class PolityLabels {
       const selected = this.selected.has(row.id) || emphasised;
       if (side < MIN_SIDE_PX && !selected) continue;
 
-      const p = map.project([lon, lat]);
+      const p = this.projector.near(lon, lat);
       if (!(p.x >= -60 && p.y >= -30 && p.x <= W + 60 && p.y <= H + 30)) continue; // also rejects NaN
 
       // Room available for the text: from the inscribed circle, capped by the polygon's width.

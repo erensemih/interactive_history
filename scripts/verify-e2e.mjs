@@ -13,7 +13,8 @@
  * Plus: clicks (land, sea, marker) never move the camera, the set of events the map holds never depends on the
  * selected place (what is drawn does: while a place is selected it is the narrator and the world's events leave the
  * map), the layout never shifts, and the ruler works by pointer and keyboard.
- * And the second round of feedback: place title above (not on) the map, no blue polities, a bottom area of about a
+ * And the second round of feedback: place title above (not on) the map, polity colours (never grey; blue is allowed since the
+ * visual-language round, the sea is one flat light blue), a bottom area of about a
  * third of its former height with hover-only timeline labels, one dot shape/size told apart by colour, a colour-only
  * legend, a selected event that is always visible (the map eases out just far enough), and an info panel driven by
  * selections (place = context, event = focus).
@@ -1014,7 +1015,7 @@ try {
   }
 
   if (wants(8)) {
-    /* ---- 8. title above the map, no blue polities, the bottom area, one dot, the place pin, the legend */
+    /* ---- 8. title above the map, the colours, the bottom area, one dot, the place pin, the legend */
     section('8. Başlık, renkler, alt bölüm, işaretçiler, yer noktası, lejant');
     {
       const { ctx, p, errs } = await open('#t=1940-1944&p=9.2,48.8');
@@ -1056,15 +1057,20 @@ try {
       check('"1942 yılının sınırları" notu başlığın yanında', head.text.includes('1942 yılının sınırları'), head.text);
       await shot(p, '07-baslik.png', { clip: { x: 0, y: 0, width: 1030, height: 90 } });
 
-      // -- colours: no polity is blue
+      // -- colours: the polities are clearly coloured, blue is allowed, the sea is one flat light blue
       const tints = await p.evaluate(() =>
         Array.from({ length: 9 }, (_, i) =>
           getComputedStyle(document.documentElement).getPropertyValue(`--tint-${i}`).trim(),
         ),
       );
+      const seaToken = await p.evaluate(() =>
+        getComputedStyle(document.documentElement).getPropertyValue('--sea').trim(),
+      );
+      const apart = (a, b) =>
+        Math.hypot(...[1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16) - parseInt(b.slice(i, i + 2), 16)));
       check(
-        'Dokuz devlet tonunun hiçbiri mavi, turkuaz ya da mor değil',
-        tints.every((h) => /^#[0-9a-f]{6}$/i.test(h) && !isBlueish(h)),
+        'Dokuz devlet tonunun hepsi belirgin biçimde renkli (gri ya da kum gibi değil: doygunluk ≥ 0,075); mavi serbest ama hiçbiri denizin düz mavisine yakın değil',
+        tints.every((h) => /^#[0-9a-f]{6}$/i.test(h) && hueChroma(h).chroma >= 0.075 && apart(h, seaToken) > 40),
         tints.join(' '),
       );
       const paintColours = await p.evaluate(
@@ -1073,8 +1079,8 @@ try {
           [],
       );
       check(
-        'Haritanın devlet dolgusunda kullanılan renklerin hiçbiri mavi değil',
-        paintColours.length >= 8 && paintColours.every((h) => !isBlueish(h)),
+        'Haritanın devlet dolgusunda kullanılan renkler bu tonlardır (en az 8 renk)',
+        paintColours.length >= 8 && paintColours.every((h) => tints.includes(h.toLowerCase())),
         `${paintColours.length} renk`,
       );
       const land = [
@@ -1102,13 +1108,20 @@ try {
         pts,
       );
       const rendered = (await pixelsAt(p, pts)).map(rgbHex).filter((_, i) => onPolity[i]);
+      // (a sampled pixel may fall on a name or a marker: the ones that are a polity's tint are the polities')
+      const tinted = rendered.filter((h) => tints.some((t) => apart(h, t) <= 6));
       check(
-        'Haritada çizilen devlet piksellerinin hiçbiri mavi değil',
-        rendered.length >= 6 && rendered.every((h) => !isBlueish(h)),
+        'Haritada çizilen devlet pikselleri devlet tonlarıdır (en az 4 örnek) ve hiçbiri denizin rengi değil',
+        tinted.length >= 4 && rendered.every((h) => apart(h, seaToken) > 20),
         rendered.join(' '),
       );
       const seaHex = rgbHex((await pixelsAt(p, [await toPx(-40, 30)]))[0]);
-      check('Deniz hâlâ mavi (mavi yalnızca deniz ve göllere ayrılmış)', isBlueish(seaHex), seaHex);
+      const seaHex2 = rgbHex((await pixelsAt(p, [await toPx(-25, 50)]))[0]);
+      check(
+        'Deniz tek düz açık mavi (--sea): iki uzak noktada aynı renk, degrade ya da derinlik farkı yok',
+        isBlueish(seaHex) && apart(seaHex, seaToken) <= 6 && apart(seaHex, seaHex2) <= 3,
+        `${seaHex} ${seaHex2} (${seaToken})`,
+      );
       await shot(p, '10-isaretciler-lejant.png');
 
       // -- the bottom area
@@ -2002,7 +2015,7 @@ const lines = [
   '- `07-baslik.png`: yer başlığı: küçük, etiketsiz, haritanın üstünde; yanında "… yılının sınırları" notu',
   '- `08-alt-bolum.png`: alt bölüm (≈ 80 px): cetvel + çizelge; olay adları yok; seçili olayın adı yanında',
   '- `09-yer-noktasi.png`: seçili yer: dolu kırmızı nokta ve yarıçapsal sönen ışıma, halka yok',
-  '- `10-isaretciler-lejant.png`: aynı şekil ve boyutta işaretçiler, yalnızca renkleri açıklayan lejant, mavisiz devlet renkleri',
+  '- `10-isaretciler-lejant.png`: aynı şekil ve boyutta işaretçiler, yalnızca renkleri açıklayan lejant, devlet renkleri ve düz deniz',
   "- `11-stalingrad-once-cin.png`: Çin'e yakınlaşılmış görünüm (Stalingrad'dan önce)",
   '- `12-stalingrad-sonra.png`: çizelgeden Stalingrad seçildikten sonra: harita yumuşakça uzaklaştı, işaretçi vurgulu, panelde olay odakta',
   '- `13-olay-kapaninca.png`: olay kapatılınca (ya da yer başlığına tıklanınca) panel yer görünümüne döner',

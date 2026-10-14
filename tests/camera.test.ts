@@ -3,6 +3,7 @@ import {
   CameraWatch,
   cameraDrift,
   frameBounds,
+  WIDE_LON,
   framePadding,
   isFramed,
   isSubstantial,
@@ -164,6 +165,23 @@ describe('frameBounds', () => {
     expect(frameBounds([], [])).toBeNull();
     expect(frameBounds([], [{ lon: 179.5, lat: 81 }])![2]).toBeLessThanOrEqual(179.9);
     expect(frameBounds([], [{ lon: 0, lat: -59 }])![1]).toBeGreaterThanOrEqual(-60);
+    expect(frameBounds([[170, 0, 180, 10]], [])![2]).toBeLessThanOrEqual(179.9);
+  });
+
+  it('runs on past the date line for a scene that crosses it (the wide view shows it), and only then', () => {
+    const pacific = frameBounds(
+      [],
+      [
+        { lon: 139.7, lat: 35.7 },
+        { lon: 202.1, lat: 21.3 }, // Honolulu, the short way from Tokyo
+      ],
+    )!;
+    expect(pacific[0]).toBe(139.7);
+    expect(pacific[2]).toBe(202.1);
+    expect(frameBounds([], [{ lon: -190, lat: 0 }])![0]).toBeCloseTo(-193.5, 6);
+    expect(frameBounds([], [{ lon: 500, lat: 0 }])![2]).toBe(WIDE_LON); // (never past two worlds out)
+    // a lone place near the edge is only given room: it does not cross the line and does not need the wide view
+    expect(frameBounds([], [{ lon: 178, lat: 10 }])![2]).toBe(179.9);
   });
 });
 

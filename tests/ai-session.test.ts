@@ -57,35 +57,50 @@ describe('a narration', () => {
       expect(caption!.length).toBeLessThan(s.body.length);
     }
 
-    // each step owns its map state: what the data has an event for is only named (the app lights its parties and draws
-    // its war line); `highlight` adds the polities that stand out besides
+    // each scene owns its map state: what the data has an event for is only named (it is a marker, nothing more: no line
+    // from a capital to a capital); `highlight` points at polities; `sides` says who stands with whom
     const one = answer.plan.drawingAt(1);
-    expect(one.events).toEqual(['polonya-isgali-1939']);
-    expect(one.highlights).toEqual(['nazi-germany']); // besides the event's own parties
-    expect(one.links).toEqual([]);
+    expect(one.events).toEqual([
+      'molotov-ribbentrop-1939',
+      'polonya-isgali-1939',
+      'savas-ilani-1939',
+      'sovyet-polonya-isgali-1939',
+    ]);
+    expect(one.highlights).toEqual(['second-polish-republic']);
     expect(one.marks).toEqual([]);
     expect(answer.plan.drawingAt(2).events).toEqual(['fransa-muharebesi-1940', 'compiegne-ateskesi-1940']);
-    expect(answer.plan.drawingAt(2).highlights).toEqual([]); // no line of the model's own for a war the data has
+    expect(answer.plan.drawingAt(2).highlights).toEqual([]);
     expect(answer.plan.drawingAt(3).events).toEqual(['britanya-muharebesi-1940']);
     expect(answer.plan.drawingAt(4).events).toEqual(['barbarossa-1941', 'leningrad-kusatmasi-1941']);
     expect(answer.plan.drawingAt(5).events).toEqual(['wannsee-1942']);
     expect(answer.plan.drawingAt(6).events).toEqual(['stalingrad-1942', 'el-alamein-1942']);
     expect(answer.plan.drawingAt(7).events).toEqual(['normandiya-1944', 'bagration-1944']);
     expect(answer.plan.drawingAt(8).events).toEqual(['berlin-muharebesi-1945', 'almanya-teslimi-1945']);
-    // the year of a step with events is theirs (the earliest), unless the step names one; and the borders are those of the
-    // event's start: the Battle of France begins in May 1940, when the Third Republic is still there (the data has it up to
-    // 1939), so step 2 shows 1939. (Cliopatria has no Nazi Germany in 1945; the correction layer carries its 1938 borders
-    // over, so the Battle of Berlin is drawn on the borders of 1945.)
+    // the year of a scene with events is theirs (the earliest), unless the scene names one or changes borders from an earlier
+    // year; and the borders are those of the event's start: the Battle of France begins in May 1940, when the Third Republic
+    // is still there (the data has it up to 1939), so scene 2 shows 1939. (Cliopatria has no Nazi Germany in 1945; the
+    // correction layer carries its 1938 borders over, so the Battle of Berlin is drawn on the borders of 1945, and the scene
+    // that ends with the Reich losing what it had won starts from 1944, where the change of borders starts.)
     expect(answer.plan.numbers().map((n) => answer.plan.drawingAt(n).year)).toEqual([
-      1939, 1939, 1940, 1941, 1942, 1942, 1944, 1945,
+      1939, 1939, 1940, 1941, 1942, 1942, 1944, 1944,
     ]);
-    // the step's date for the timeline is the day its earliest event starts: Battle of France 10 May 1940, whatever borders it shows
+    expect(answer.plan.numbers().map((n) => answer.plan.endYearOf(n))).toEqual([
+      1940, 1939, 1940, 1941, 1942, 1942, 1944, 1945,
+    ]);
+    // the scene's date for the timeline is the day its earliest event starts: Battle of France 10 May 1940, whatever borders it shows
     const when = answer.plan.numbers().map((n) => answer.plan.whenAt(n)!);
     expect(when.map(Math.floor)).toEqual([1939, 1940, 1940, 1941, 1942, 1942, 1944, 1945]);
     expect(when[1]).toBeCloseTo(1940.355, 2);
     expect(when).toEqual([...when].sort((a, b) => a - b));
+    // the first scene is four beats, one sentence each: the pact, the invasion (arrows from the German border), the declarations
+    // of war (Britain and France join the opposing side), the Soviet entry (arrows from the eastern border, the Soviet gain)
+    expect(answer.plan.beatsOf(1)).toHaveLength(4);
+    expect(one.sides.map((side) => side.name)).toEqual(['Almanya', 'Polonya ve müttefikleri', 'Sovyetler Birliği']);
+    expect(one.routes).toHaveLength(3);
+    expect(one.routes.every((r) => r.via[0]!.kind === 'border')).toBe(true); // nothing leaves a capital
+    expect(one.changes).toEqual([{ polity: 'union-of-soviet-socialist-republics', from: 1939, to: 1940 }]);
     // the vocabulary beyond events: the Eastern Front has its two sides painted as blocs and the advance on Moscow as a
-    // directed route through cities (animated), the retreat of 1944 is a route of another type
+    // directed route that leaves the German border (not Berlin), the retreat of 1944 is a route of another type
     const four = answer.plan.drawingAt(4);
     expect(four.sides.map((side) => side.name)).toEqual(['Mihver ve ortakları', 'Sovyetler Birliği']);
     expect(four.sides[0]!.polities).toEqual([
@@ -97,21 +112,33 @@ describe('a narration', () => {
     ]);
     expect(four.routes).toHaveLength(1);
     expect(four.routes[0]).toMatchObject({ type: 'advance', animate: true, label: 'Alman ilerleyişi' });
-    // (the model wrote "Brest-Litovsk", an old name; the gazetteer knows the town as Brest and the page calls it so)
     expect(four.routes[0]!.via.map((v) => (v.kind === 'city' ? v.name : v.kind))).toEqual([
-      'Brest',
+      'border',
       'Minsk',
       'Smolensk',
       'Moskova',
     ]);
-    expect(answer.plan.drawingAt(7).routes).toMatchObject([{ type: 'retreat', animate: false }]);
-    for (const n of [1, 2, 3, 5, 6, 8]) expect(answer.plan.drawingAt(n).routes, `step ${n}`).toEqual([]);
+    expect(answer.plan.drawingAt(7).routes).toMatchObject([{ type: 'retreat', animate: true }]);
+    expect(answer.plan.drawingAt(8).changes).toEqual([{ polity: 'nazi-germany', from: 1944, to: 1945 }]);
+    for (const n of [2, 3, 5, 6]) expect(answer.plan.drawingAt(n).sides, `scene ${n}`).toEqual([]);
     for (const n of answer.plan.numbers()) {
-      // every step shows something and says what it needs by itself, and none of it is left to the step before
+      // every scene shows something and says what it needs by itself, and none of it is left to the scene before
       const d = answer.plan.drawingAt(n);
-      expect(d.events.length + d.highlights.length).toBeGreaterThan(0);
+      expect(d.events.length + d.highlights.length + d.routes.length).toBeGreaterThan(0);
       expect(d.year).toBeDefined();
     }
+    // the actors keep their colours from scene to scene: Germany is the side the narration is about (the place is Berlin's),
+    // and the Soviet Union, once it has one, has the same colour wherever it is named again
+    answer.plan.focus = ['nazi-germany'];
+    const colors = (n: number) =>
+      Object.fromEntries(answer.plan.frameAt(answer.plan.endClock(n)).painted.map((p) => [p.id, p.color]));
+    expect(colors(1)).toMatchObject({
+      'nazi-germany': 'focus',
+      'second-polish-republic': 'foe-1',
+      'union-of-soviet-socialist-republics': 'foe-2',
+    });
+    expect(colors(4)['union-of-soviet-socialist-republics']).toBe('foe-2');
+    expect(colors(2)['union-of-soviet-socialist-republics']).toBe('foe-2'); // a scene that states nothing keeps them
   });
 
   it('reaches the model as tools plus turns made of the rules, the state and the request', async () => {
@@ -126,7 +153,7 @@ describe('a narration', () => {
       'highlight',
       'sides',
       'route',
-      'connect',
+      'territory_change',
       'mark',
     ]);
     expect(req.turns[0]!.content.startsWith(INSTRUCTIONS_FILE)).toBe(true); // the owner's file, as it is, in every call
@@ -217,7 +244,8 @@ describe('a model that does not write quite what was asked', () => {
           input: { step: '1', polities: ['Nazi Almanyası', 'Union of Soviet Socialist Republics'] },
         },
         { name: 'step', input: { n: 2, title: 'İki' } },
-        { name: 'connect', input: { step: 2, from: 'Nazi Almanyası', to: 'İtalya', relation: 'İttifak' } },
+        { name: 'connect', input: { step: 2, from: 'Nazi Almanyası', to: 'İtalya', relation: 'İttifak' } }, // gone: nothing happens
+        { name: 'sides', input: { step: 2, sides: [{ name: 'Çelik Pakt', polities: ['Nazi Almanyası', 'İtalya'] }] } },
         { name: 'set_year', input: { step: 2, year: '1941' } }, // a tool of an older version: there is none to run it, nothing happens
       ],
       text: '**1. Başlangıç**\nİlk paragraf.\n\n**2. İki**\nİkinci paragraf.',
@@ -227,13 +255,11 @@ describe('a model that does not write quite what was asked', () => {
       [2, 'İki'],
     ]);
     expect(answer.plan.drawingAt(1).highlights).toEqual(['nazi-germany', 'union-of-soviet-socialist-republics']);
-    expect(answer.plan.drawingAt(2).links).toEqual([
-      {
-        from: { kind: 'polity', id: 'nazi-germany' },
-        to: { kind: 'polity', id: 'kingdom-of-italy' },
-        relation: 'alliance',
-      },
+    // (a relation is told by colour: the two stand on one side)
+    expect(answer.plan.drawingAt(2).sides).toEqual([
+      { name: 'Çelik Pakt', polities: ['nazi-germany', 'kingdom-of-italy'] },
     ]);
+    expect(answer.plan.drawingAt(2)).not.toHaveProperty('links');
     expect(answer.plan.drawingAt(2).year).toBeUndefined();
   });
 
@@ -288,7 +314,8 @@ describe('a model that does not write quite what was asked', () => {
     const answer = await run({
       calls: [
         { name: 'highlight', input: { polities: ['atlantis', 'lemuria'] } },
-        { name: 'connect', input: { from: 'atlantis', to: 'nazi-germany', relation: 'war' } },
+        { name: 'route', input: { via: ['atlantis', 'nazi-germany'], type: 'advance' } },
+        { name: 'territory_change', input: { polity: 'atlantis', from: 1940, to: 1941 } },
         { name: 'mark', input: { lon: 500, lat: 500, label: 'Yok' } },
         { name: 'show_event', input: { event: 'yok-boyle-bir-olay' } },
         { name: 'draw_everything', input: {} },
@@ -298,13 +325,13 @@ describe('a model that does not write quite what was asked', () => {
     });
     expect(answer.status).toBe('done');
     const d = answer.plan.drawingAt(1);
-    expect(d).toMatchObject({ highlights: ['nazi-germany'], links: [], marks: [], events: [] });
+    expect(d).toMatchObject({ highlights: ['nazi-germany'], routes: [], changes: [], marks: [], events: [] });
     expect(d.year).toBeUndefined();
   });
 });
 
 describe('a question', () => {
-  it('is one step with a caption and a text, and gets one map state: the pact highlights and connects both polities', async () => {
+  it('is one step with a caption and a text, and gets one map state: the pact puts both polities on one side, and the Tripartite Pact grows it', async () => {
     const provider = mock();
     const session = makeSession(provider);
     await session.send({ text: AXIS_QUESTION, mode: 'qa' }, berlin());
@@ -315,13 +342,18 @@ describe('a question', () => {
     expect(answer.plan.titleOf(1)).toBe('Almanya ve İtalya');
     expect(answer.plan.captionOf(1)!.length).toBeLessThan(parseAnswer(answer.text).sections[0]!.body.length); // a caption, not the text
     const d = answer.plan.drawingAt(1);
-    expect(d.highlights).toEqual(['nazi-germany', 'kingdom-of-italy']);
-    // the model gave two cities, not two polities: the line runs from Berlin to Rome
-    expect(d.links[0]).toMatchObject({
-      relation: 'alliance',
-      from: { kind: 'city', name: 'Berlin' },
-      to: { kind: 'city', name: 'Roma' },
-    });
+    // a relation is told by colour: Germany and Italy are one side, and Japan joins it at the second sentence
+    expect(d.sides).toEqual([
+      { name: 'Çelik Pakt ve Üçlü Pakt', polities: ['nazi-germany', 'kingdom-of-italy', 'empire-of-japan'] },
+    ]);
+    expect(answer.plan.beatsOf(1)).toHaveLength(2);
+    const colors = (beat: number) =>
+      Object.fromEntries(
+        answer.plan.frameAt({ n: 1, beat, done: false, replay: 0 }).painted.map((p) => [p.id, p.color]),
+      );
+    expect(Object.keys(colors(0))).toEqual(['nazi-germany', 'kingdom-of-italy']);
+    expect(Object.keys(colors(1))).toEqual(['nazi-germany', 'kingdom-of-italy', 'empire-of-japan']);
+    expect(d.routes).toEqual([]); // and no line between Berlin and Rome
     expect(d.events).toEqual(['uclu-pakt-1940']);
     expect(d.year).toBe(1939); // the step named it: the 1939 pact is not an event of the data
     expect(provider.requests[0]!.turns.at(-1)!.content).toContain(`İSTEK\n${AXIS_QUESTION}`);
@@ -344,6 +376,7 @@ describe('a question', () => {
     expect(france.plan.numbers()).toEqual([1]);
     expect(france.plan.drawingAt(1).events).toEqual(['fransa-muharebesi-1940']);
     expect(france.plan.drawingAt(1).highlights).toEqual(['french-third-republic', 'kingdom-of-great-britain']);
+    expect(france.plan.beatsOf(1)).toHaveLength(2); // (the event at the first sentence, the two polities pointed at on the second)
     expect(france.plan.drawingAt(1).year).toBe(1939); // the Third Republic is in the data up to 1939
     expect(france.plan.captionOf(1)).toContain('olay:fransa-muharebesi-1940');
     await session.send({ text: 'Normandiya çıkarmasını göster.', mode: 'qa' }, berlin());
@@ -380,8 +413,8 @@ describe('a question', () => {
     expect(user.kind === 'user' && user.event?.id).toBe('stalingrad-1942');
     expect(provider.requests[0]!.turns.at(-1)!.content).toContain('Açık olay kartı: «Stalingrad Muharebesi»');
     const answer = last(session);
-    expect(answer.plan.drawingAt(1).highlights).toEqual([]); // only which event: the app lights its parties itself
-    expect(answer.plan.drawingAt(1).links).toEqual([]);
+    expect(answer.plan.drawingAt(1).highlights).toEqual([]); // only which event: its marker is all an event draws
+    expect(answer.plan.drawingAt(1).routes).toEqual([]);
     expect(answer.plan.drawingAt(1).events).toEqual(['stalingrad-1942']); // its own marker, not a mark of the model's
     expect(answer.plan.drawingAt(1).marks).toEqual([]);
     expect(answer.plan.drawingAt(1).year).toBe(1942);
@@ -396,7 +429,7 @@ describe('a question', () => {
     const turns = provider.requests[1]!.turns;
     expect(turns.map((t) => t.role)).toEqual(['user', 'user', 'assistant', 'user']);
     expect(turns[1]!.content).toContain(NARRATION_REQUEST);
-    expect(turns[2]!.content).toContain('## 1. Polonya’ya saldırı');
+    expect(turns[2]!.content).toContain('## 1. Savaş başlıyor');
     expect(turns[3]!.content).toContain(AXIS_QUESTION);
   });
 
@@ -410,13 +443,17 @@ describe('a question', () => {
     expect(turns.map((t) => t.role)).toEqual(['user', 'user', 'assistant', 'user', 'assistant', 'user']);
     // the whole first answer, every step of it, and what it showed
     expect(turns[2]!.content).toContain(
-      "[Haritada gösterdiklerim: 1. adım: öne çıkan: Nazi Almanyası; olay: Almanya'nın Polonya'yı işgali",
+      '[Haritada gösterdiklerim: 1. adım: öne çıkan: Polonya İkinci Cumhuriyeti; taraflar: Almanya (Nazi Almanyası) – Polonya ve müttefikleri',
     );
+    expect(turns[2]!.content).toContain('ok (ilerleyiş): Nazi Almanyası sınırı → Varşova (Alman ilerleyişi)');
+    expect(turns[2]!.content).toContain('toprak değişimi: Sovyetler Birliği 1939→1940');
     expect(turns[2]!.content).toContain('## 8. Berlin ve teslim');
     expect(turns[2]!.content).toMatch(
-      /4\. adım: taraflar: Mihver ve ortakları \([^)]+\) – Sovyetler Birliği \([^)]+\); yol \(ilerleyiş\): Brest → Minsk → Smolensk → Moskova \(Alman ilerleyişi\); olay: Barbarossa Harekâtı, Leningrad Kuşatması/,
+      /4\. adım: taraflar: Mihver ve ortakları \([^)]+\) – Sovyetler Birliği \([^)]+\); ok \(ilerleyiş\): Nazi Almanyası sınırı → Minsk → Smolensk → Moskova \(Alman ilerleyişi\); olay: Barbarossa Harekâtı, Leningrad Kuşatması/,
     );
-    expect(turns[4]!.content).toContain('öne çıkan: Nazi Almanyası, İtalya Krallığı'); // the second answer's own scene
+    expect(turns[4]!.content).toContain(
+      'taraflar: Çelik Pakt ve Üçlü Pakt (Nazi Almanyası, İtalya Krallığı, Japon İmparatorluğu)',
+    ); // the second answer's own scene
     // and the next request, when the chat is not too long, loses nothing
     expect(provider.requests[1]!.turns[2]!.content).toBe(turns[2]!.content);
   });

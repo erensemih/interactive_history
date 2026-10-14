@@ -44,8 +44,9 @@ describe('the director', () => {
     director.subscribe(() => seenActive.push(director.active?.n));
     await session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
     expect(director.active).toEqual({ itemId: answer(session).id, n: 1 });
-    expect(director.drawing?.highlights).toEqual(['nazi-germany']);
-    expect(director.drawing?.events).toEqual(['polonya-isgali-1939']);
+    expect(director.drawing?.highlights).toEqual(['second-polish-republic']);
+    expect(director.drawing?.events).toHaveLength(4); // (all the beats of the scene together)
+    expect(director.clock).toEqual({ n: 1, beat: 0, done: false, replay: 0 }); // and it begins at its first beat
     expect(director.year).toBe(1939);
     expect(seenActive.length).toBeGreaterThan(0);
   });
@@ -59,13 +60,13 @@ describe('the director', () => {
     expect(director.drawing?.highlights).toEqual([]);
     expect(director.year).toBe(1942);
     director.activate(id, 2);
-    // only step 2's own: the Battle of France and the armistice (the app draws the war line); nothing of Stalingrad on the way back
-    expect(director.drawing?.links).toEqual([]);
+    // only step 2's own: the Battle of France and the armistice, and the arrow of the thrust; nothing of Stalingrad on the way back
+    expect(director.drawing?.routes).toHaveLength(1);
     expect(director.drawing?.events).toEqual(['fransa-muharebesi-1940', 'compiegne-ateskesi-1940']);
     expect(director.year).toBe(1939); // the borders at the start of the Battle of France (May 1940): the Third Republic is still there
     director.activate(id, 1);
-    expect(director.drawing?.links).toEqual([]);
-    expect(director.drawing?.events).toEqual(['polonya-isgali-1939']);
+    expect(director.drawing?.routes).toHaveLength(3);
+    expect(director.drawing?.events).toHaveLength(4);
     expect(director.year).toBe(1939);
   });
 
@@ -91,8 +92,8 @@ describe('the director', () => {
     const id = answer(session).id;
     await settle();
     expect(framed).toHaveLength(1); // the first step, once the plan was in: one frame, not one per tool call
-    expect(framed[0]!.highlights).toEqual(['nazi-germany']);
-    expect(framed[0]!.events).toEqual(['polonya-isgali-1939']);
+    expect(framed[0]!.highlights).toEqual(['second-polish-republic']);
+    expect(framed[0]!.events).toHaveLength(4); // everything the scene will show, not the first beat's part of it
     director.activate(id, 3);
     director.activate(id, 4);
     director.activate(id, 4); // the same step again changes nothing
@@ -219,14 +220,14 @@ describe('the director', () => {
     const item = answer(session);
     await settle();
     const before = framed.length;
-    item.plan.add({ kind: 'mark', step: 1, point: { lon: 10, lat: 10 }, label: 'Geç' });
+    item.plan.add({ kind: 'mark', step: 1, beat: 1, point: { lon: 10, lat: 10 }, label: 'Geç' });
     (session as unknown as { notify(): void }).notify();
-    item.plan.add({ kind: 'mark', step: 1, point: { lon: 10.5, lat: 10.5 }, label: 'Hemen ardından' });
+    item.plan.add({ kind: 'mark', step: 1, beat: 1, point: { lon: 10.5, lat: 10.5 }, label: 'Hemen ardından' });
     (session as unknown as { notify(): void }).notify();
     await settle();
     expect(framed).toHaveLength(before + 1); // two changes in a burst, one frame
     director.userMovedCamera(false);
-    item.plan.add({ kind: 'mark', step: 1, point: { lon: 11, lat: 11 }, label: 'Daha geç' });
+    item.plan.add({ kind: 'mark', step: 1, beat: 1, point: { lon: 11, lat: 11 }, label: 'Daha geç' });
     (session as unknown as { notify(): void }).notify();
     await settle();
     expect(framed).toHaveLength(before + 1);
@@ -263,10 +264,10 @@ describe('the director', () => {
     await session.send({ text: AXIS_QUESTION, mode: 'qa' }, berlin());
     const second = answer(session).id;
     expect(director.active).toEqual({ itemId: second, n: 1 });
-    expect(director.drawing?.links.map((l) => l.relation)).toEqual(['alliance']);
+    expect(director.drawing?.sides.map((side) => side.name)).toEqual(['Çelik Pakt ve Üçlü Pakt']);
     director.activate(first, 1);
-    expect(director.drawing?.highlights).toEqual(['nazi-germany']);
-    expect(director.drawing?.events).toEqual(['polonya-isgali-1939']);
+    expect(director.drawing?.highlights).toEqual(['second-polish-republic']);
+    expect(director.drawing?.events).toHaveLength(4);
   });
 
   it('a cleared chat clears the map', async () => {
@@ -290,7 +291,7 @@ describe('the director', () => {
     await session.send({ text: AXIS_QUESTION, mode: 'qa' }, berlin());
     await session.send({ text: 'Peki Japonya?', mode: 'qa' }, berlin());
     expect(provider.requests[1]!.turns.at(-1)!.content).toContain(
-      'Haritada şu an senin çizdiklerin var (öne çıkan: Nazi Almanyası, İtalya Krallığı',
+      'Haritada şu an senin çizdiklerin var (taraflar: Çelik Pakt ve Üçlü Pakt (Nazi Almanyası, İtalya Krallığı, Japon İmparatorluğu)',
     );
     expect(provider.requests[0]!.turns.at(-1)!.content).not.toContain('çizdiklerin');
   });
@@ -299,5 +300,133 @@ describe('the director', () => {
     const { director } = setup();
     director.activate('yok', 1);
     expect(director.active).toBeNull();
+    expect(director.clock).toBeNull();
+    expect(director.frame).toBeNull();
+  });
+});
+
+describe('the beats of the scene on screen', () => {
+  const started = async () => {
+    const made = setup();
+    await made.session.send({ text: NARRATION_REQUEST, mode: 'narration' }, berlin());
+    await settle();
+    return { ...made, id: answer(made.session).id };
+  };
+
+  it('are the scene’s own: the sentences of its caption, at least one', async () => {
+    const { director, id } = await started();
+    expect(director.beatCount).toBe(4); // "Savaş başlıyor": the pact, Poland, the declarations of war, the Soviet entry
+    director.activate(id, 3);
+    expect(director.beatCount).toBe(1);
+    expect(setup().director.beatCount).toBe(1); // (no scene: one)
+  });
+
+  it('show what the scene shows at that moment: the beat that plays is prominent, what is over has left its marks behind', async () => {
+    const { director } = await started();
+    const at = (beat: number) => {
+      director.setBeat(beat);
+      return director.frame!;
+    };
+    expect(at(0).events.map((e) => [e.beat, e.now])).toEqual([[1, true]]);
+    expect(at(0).routes).toEqual([]);
+    expect(at(1).routes).toHaveLength(2); // arrows from the German border, while the invasion plays
+    expect(at(1).events.map((e) => [e.beat, e.now])).toEqual([
+      [1, false],
+      [2, true],
+    ]);
+    expect(at(2).routes).toEqual([]); // gone with their beat
+    expect(at(3).routes).toHaveLength(1);
+    expect(at(3).changes.map((c) => [c.change.polity.slice(0, 5), c.now])).toEqual([['union', true]]);
+    director.complete();
+    const end = director.frame!;
+    expect(director.clock).toEqual({ n: 1, beat: 3, done: true, replay: 0 });
+    expect(end.routes).toEqual([]);
+    expect(end.events.every((e) => !e.now)).toBe(true);
+    expect(end.events).toHaveLength(4); // every marker is still there, as a numbered dot
+    expect(end.changes).toHaveLength(1); // and so is what the scene changed
+  });
+
+  it('move the year with the borders the scene changes, and the camera frames the scene in each of its years', async () => {
+    const { director, id } = await started();
+    expect(director.year).toBe(1939);
+    director.setBeat(3);
+    expect(director.year).toBe(1940); // the Soviet gain: the borders of 1940 from that beat on
+    expect(director.sceneYears).toEqual([1939, 1940]);
+    director.userChangedTime();
+    expect(director.year).toBeNull(); // the reader's own year wins ...
+    expect(director.sceneYears).toEqual([]); // ... for the camera as well
+    director.activate(id, 2); // and the AI's comes back with the next scene
+    expect(director.year).toBe(1939);
+    expect(director.sceneYears).toEqual([1939]);
+  });
+
+  it('a beat asked for again with `replay` is played again: same frame, another replay count', async () => {
+    const { director } = await started();
+    director.setBeat(1);
+    const a = director.frame!;
+    director.setBeat(1); // nothing changed
+    expect(director.frame).toBe(a);
+    director.setBeat(1, true);
+    expect(director.clock).toEqual({ n: 1, beat: 1, done: false, replay: 1 });
+    expect(director.frame!.routes).toEqual(a.routes);
+    expect(director.frame!.replay).toBe(a.replay + 1);
+  });
+
+  it('a beat past the last is the last, and a beat before the first is the first', async () => {
+    const { director } = await started();
+    director.setBeat(99);
+    expect(director.clock!.beat).toBe(3);
+    director.setBeat(-5);
+    expect(director.clock!.beat).toBe(0);
+  });
+
+  it('end with `complete`; the scene asked for again as it ends is no change, and as it begins plays from its start', async () => {
+    const { director, id, framed } = await started();
+    const frames = framed.length;
+    director.setBeat(2);
+    director.complete();
+    expect(director.clock).toMatchObject({ beat: 3, done: true }); // (a scene that has ended is on its last beat)
+    director.activate(id, 1, { done: true }); // (the reader scrolls on in the same scene: nothing moves)
+    expect(director.clock).toMatchObject({ beat: 3, done: true });
+    expect(framed).toHaveLength(frames);
+    director.activate(id, 1); // pointed at again: from its start, and the camera frames it again
+    expect(director.clock).toMatchObject({ beat: 0, done: false, replay: 1 });
+    expect(framed).toHaveLength(frames + 1);
+  });
+
+  it('a scene activated as it ends is shown at its end at once (the reader reads instead of watches)', async () => {
+    const { director, id } = await started();
+    director.activate(id, 4, { done: true });
+    expect(director.clock).toMatchObject({ n: 4, beat: 2, done: true });
+    expect(director.frame!.routes).toEqual([]);
+    expect(director.frame!.events.every((e) => !e.now)).toBe(true);
+  });
+
+  it('restart plays the scene again from its first beat (or shows it as it ends), and frames it again', async () => {
+    const { director, framed } = await started();
+    director.setBeat(2);
+    director.userMovedCamera(false); // (the reader has moved the map since)
+    const frames = framed.length;
+    director.restart();
+    expect(director.clock).toEqual({ n: 1, beat: 0, done: false, replay: 1 });
+    expect(framed).toHaveLength(frames + 1);
+    director.restart(true);
+    expect(director.clock).toMatchObject({ beat: 3, done: true });
+  });
+
+  it('are kept inside a caption that changes under them (a plan that is still arriving)', async () => {
+    const { director, session } = await started();
+    director.setBeat(3);
+    answer(session).plan.declare(1, null, 'Tek cümle kaldı.');
+    expect(director.clock!.beat).toBe(0);
+    expect(director.beatCount).toBe(1);
+  });
+
+  it('the AI’s year goes with the frame: none at all when the scene names none and changes nothing', async () => {
+    const { director, id } = await started();
+    const plain: MockScript = (req) => (req.meta.question === 'düz' ? { text: 'Sadece metin.' } : null);
+    expect(plain).toBeDefined();
+    director.activate(id, 5); // Wannsee: its event's year
+    expect(director.year).toBe(1942);
   });
 });

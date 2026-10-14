@@ -26,9 +26,18 @@ describe('the map tools', () => {
   it('offer seven tools, none of them about looks or the camera: what to show, never how', () => {
     const { tools } = setup();
     // in the order of importance: a view that allows fewer tools keeps the first ones
-    expect(tools.map((t) => t.name)).toEqual(['step', 'show_event', 'highlight', 'sides', 'route', 'connect', 'mark']);
-    // no tool for the camera (the app frames what a step shows) and none for the year (a step names it)
-    expect(tools.some((t) => ['focus', 'set_year', 'clear'].includes(t.name))).toBe(false);
+    expect(tools.map((t) => t.name)).toEqual([
+      'step',
+      'show_event',
+      'highlight',
+      'sides',
+      'route',
+      'territory_change',
+      'mark',
+    ]);
+    // no tool for the camera (the app frames what a scene shows), none for the year (a scene names it), none for a line between
+    // two places (an arrow is a movement; who stands with whom is told by colour)
+    expect(tools.some((t) => ['focus', 'set_year', 'clear', 'connect'].includes(t.name))).toBe(false);
     for (const t of tools) {
       expect(t.description.length).toBeGreaterThan(20);
       expect(t.description.length).toBeLessThanOrEqual(1024);
@@ -53,8 +62,12 @@ describe('the map tools', () => {
     const { plan, tool } = setup();
     tool('step').execute({ n: 1, title: 'Yalnız başlık' });
     expect(plan.captionOf(1)).toBeNull();
-    tool('step').execute({ n: 2, title: 'Uzun', caption: 'Çok uzun bir altyazı. '.repeat(40) });
-    expect(plan.captionOf(2)!.length).toBeLessThanOrEqual(340);
+    tool('step').execute({ n: 2, title: 'Uzun', caption: 'Çok uzun bir altyazı. '.repeat(60) });
+    const cut = plan.captionOf(2)!;
+    expect(cut.length).toBeLessThanOrEqual(LIMITS.caption);
+    // an over-long caption is cut where a sentence ends, never in the middle of one: a sentence is a beat
+    expect(cut.endsWith('altyazı.')).toBe(true);
+    expect(plan.beatsOf(2).every((b) => b === 'Çok uzun bir altyazı.')).toBe(true);
   });
 
   it('a caption keeps the names of events as references, and a cut never leaves half of one', () => {
@@ -63,9 +76,9 @@ describe('the map tools', () => {
     tool('step').execute({ n: 1, title: 'A', caption: `1514’te ${ref}’nde Osmanlı kazandı.` });
     expect(plan.captionOf(1)).toBe(`1514’te ${ref}’nde Osmanlı kazandı.`);
     // cut in the middle of the name: the open reference is dropped, the rest stays
-    tool('step').execute({ n: 2, title: 'B', caption: `${'Söz '.repeat(75)}${ref} sonrası` });
+    tool('step').execute({ n: 2, title: 'B', caption: `${'Söz '.repeat(155)}${ref} sonrası` });
     const cut = plan.captionOf(2)!;
-    expect(cut.length).toBeLessThanOrEqual(340);
+    expect(cut.length).toBeLessThanOrEqual(LIMITS.caption);
     expect(cut).not.toMatch(/\[[^\]]*$/);
     expect(cut).not.toMatch(/\]\(olay:[^)]*$/);
   });
@@ -88,6 +101,7 @@ describe('the map tools', () => {
     expect(Object.keys(step.inputSchema.properties)).toContain('year');
     expect(step.description).toContain('altyazı');
     expect(step.description).toContain('## n. Başlık');
+    expect(step.description).toContain('vuruş'); // each sentence of the caption is a beat
   });
 
   it('a step without a number takes the next free one, so titles never overwrite each other', () => {
@@ -118,71 +132,73 @@ describe('the map tools', () => {
     expect(plan.empty).toBe(true);
   });
 
-  it('connect needs two different known places and a relation, in either language', () => {
+  it('territory_change names a polity and two years of the selected range, and the later one is where the scene’s borders go', () => {
     const { plan, tool } = setup();
-    expect(
-      tool('connect').execute({
-        step: 1,
-        from: 'ottoman-empire',
-        to: 'kingdom-of-france',
-        relation: 'alliance',
-        label: 'İttifak, 1536',
-      }),
-    ).toBe('tamam');
-    expect(tool('connect').execute({ step: 1, from: 'Osmanlı', to: 'Safevî Devleti', relation: 'savaş' })).toBe(
+    expect(tool('territory_change').execute({ step: 1, beat: 2, polity: 'Osmanlı', from: 1500, to: 1530 })).toBe(
       'tamam',
     );
-    expect(tool('connect').execute({ from: 'ottoman-empire', to: 'ottoman-empire', relation: 'war' })).toMatch(
-      /^atlandı/,
-    );
-    expect(tool('connect').execute({ from: 'ottoman-empire', to: 'atlantis', relation: 'war' })).toMatch(/^atlandı/);
+    expect(plan.drawingAt(1).changes).toEqual([{ polity: 'ottoman-empire', from: 1500, to: 1530 }]);
+    expect(plan.actionsOf(1)[0]).toMatchObject({ kind: 'territory', beat: 2 });
+    expect(plan.drawingAt(1).year).toBe(1500); // the scene starts at the year the change starts from
+    expect(plan.endYearOf(1)).toBe(1530);
+    // years outside the range, in the wrong order or not numbers, and polities nobody knows are declined
+    expect(tool('territory_change').execute({ polity: 'ottoman-empire', from: 1400, to: 1530 })).toMatch(/^atlandı/);
+    expect(tool('territory_change').execute({ polity: 'ottoman-empire', from: 1530, to: 1500 })).toMatch(/^atlandı/);
+    expect(tool('territory_change').execute({ polity: 'ottoman-empire', from: 1520, to: 1520 })).toMatch(/^atlandı/);
+    expect(tool('territory_change').execute({ polity: 'ottoman-empire', from: 'x', to: 1520 })).toMatch(/^atlandı/);
+    expect(tool('territory_change').execute({ polity: 'atlantis', from: 1500, to: 1520 })).toMatch(/^atlandı/);
+    expect(plan.drawingAt(1).changes).toHaveLength(1);
+  });
+
+  it('territory_change needs the polity to have borders in one of the two years', () => {
+    const { plan, tool } = setup();
+    // the Mamluks are in the range (to 1517), so the id is known, but they have no borders in either of these two years
+    expect(resolver.presentIn('mamluk-sultanate', range)).toBe(true);
+    const gone = tool('territory_change').execute({ polity: 'mamluk-sultanate', from: 1520, to: 1530 }) as string;
+    expect(gone).toMatch(/^atlandı/);
+    expect(gone).toContain('Memlük');
+    expect(tool('territory_change').execute({ polity: 'mamluk-sultanate', from: 1510, to: 1530 })).toBe('tamam'); // lost to 1530
+    expect(plan.drawingAt(1).changes).toHaveLength(1);
+  });
+
+  it('every drawing tool says which beat it appears with: the first when unsaid or nonsense, never past the limit', () => {
+    const { plan, tool } = setup();
+    const ask = (beat: unknown) => {
+      tool('show_event').execute({ step: 1, beat, event: 'caldiran-1514' });
+      return (plan.actionsOf(1).at(-1) as { beat: number }).beat;
+    };
+    expect(ask(undefined)).toBe(1);
+    expect(ask(3)).toBe(3);
+    expect(ask('2')).toBe(2);
+    expect(ask(0)).toBe(1);
+    expect(ask(-4)).toBe(1);
+    expect(ask('sonra')).toBe(1);
+    expect(ask(99)).toBe(LIMITS.beats);
+    tool('highlight').execute({ step: 1, beat: 2, polities: ['ottoman-empire'] });
+    tool('route').execute({ step: 1, beat: 3, via: ['Roma', 'Paris'], type: 'advance' });
+    tool('sides').execute({ step: 1, beat: 4, sides: [{ name: 'A', polities: ['ottoman-empire'] }] });
+    tool('mark').execute({ step: 1, beat: 5, lon: 32.48, lat: 37.87, label: 'Konya' });
+    tool('territory_change').execute({ step: 1, beat: 6, polity: 'ottoman-empire', from: 1500, to: 1520 });
     expect(
-      tool('connect').execute({ from: 'ottoman-empire', to: 'kingdom-of-france', relation: 'friendship' }),
-    ).toMatch(/^atlandı/);
-    const links = plan.drawingAt(1).links;
-    expect(links.map((l) => l.relation)).toEqual(['alliance', 'war']);
-    expect(links[0]!.label).toBe('İttifak, 1536');
-    expect(links[0]!.from).toEqual({ kind: 'polity', id: 'ottoman-empire' });
-    expect(links[1]!.to).toEqual({ kind: 'polity', id: 'safavid-dynasty' });
+      plan
+        .actionsOf(1)
+        .slice(-5)
+        .map((a) => (a as { beat: number }).beat),
+    ).toEqual([2, 3, 4, 5, 6]);
   });
 
-  it('the ends of a connect are places: a city by any of its names, an event, a point, a polity (its capital)', () => {
+  it('the beat of an action is a sentence of the scene’s caption: it plays when its sentence does', () => {
     const { plan, tool } = setup();
-    expect(tool('connect').execute({ step: 1, from: 'Konstantinopolis', to: 'Viyana', relation: 'war' })).toBe('tamam');
-    expect(tool('connect').execute({ step: 2, from: 'mohac-1526', to: 'Kahire', relation: 'trade' })).toBe('tamam');
-    expect(tool('connect').execute({ step: 3, from: '47.5, 19.04', to: 'kingdom-of-france', relation: 'treaty' })).toBe(
-      'tamam',
-    );
-    expect(plan.drawingAt(1).links[0]).toMatchObject({
-      from: { kind: 'city', id: 'istanbul', name: 'İstanbul' }, // a historical name is the same place
-      to: { kind: 'city', id: 'vienna', name: 'Viyana' },
-    });
-    expect(plan.drawingAt(2).links[0]).toMatchObject({
-      from: { kind: 'event', id: 'mohac-1526' },
-      to: { kind: 'city', id: 'cairo' },
-    });
-    expect(plan.drawingAt(3).links[0]).toMatchObject({
-      from: { kind: 'point', point: { lon: 19.04, lat: 47.5 } },
-      to: { kind: 'polity', id: 'kingdom-of-france' },
-    });
-  });
-
-  it('the same place twice, or the same place by two names, is not a line; neither is a place nobody knows', () => {
-    const { plan, tool } = setup();
-    expect(tool('connect').execute({ from: 'İstanbul', to: 'Constantinople', relation: 'war' })).toMatch(/^atlandı/);
-    expect(tool('connect').execute({ from: '41.01, 28.98', to: '41.0101, 28.9801', relation: 'war' })).toMatch(
-      /^atlandı/,
-    );
-    const out = tool('connect').execute({ from: 'Atlantis', to: 'Viyana', relation: 'war' }) as string;
-    expect(out).toMatch(/^atlandı/);
-    expect(out).toContain('Atlantis');
-    expect(plan.empty).toBe(true);
-  });
-
-  it('where two places go by one name, the better known one is meant', () => {
-    const { plan, tool } = setup();
-    tool('connect').execute({ from: 'Kayseri', to: 'Edirne', relation: 'trade' });
-    expect(plan.drawingAt(1).links[0]!.from).toMatchObject({ kind: 'city', id: 'kayseri' });
+    tool('step').execute({ n: 1, title: 'A', caption: 'Birinci cümle. İkinci cümle. Üçüncü cümle.' });
+    tool('show_event').execute({ step: 1, beat: 1, event: 'mohac-1526' });
+    tool('show_event').execute({ step: 1, beat: 3, event: 'caldiran-1514' });
+    const at = (beat: number) => plan.frameAt({ n: 1, beat, done: false, replay: 0 }).events.map((e) => [e.id, e.now]);
+    expect(at(0)).toEqual([['mohac-1526', true]]);
+    expect(at(1)).toEqual([['mohac-1526', false]]);
+    expect(at(2)).toEqual([
+      ['mohac-1526', false],
+      ['caldiran-1514', true],
+    ]);
   });
 
   it('mark needs a point on the map and a label', () => {
@@ -202,6 +218,7 @@ describe('the map tools', () => {
     expect(tool('mark').execute({ place: '38.08, 46.3', label: 'Gözcü kulesi' })).toBe('tamam');
     expect(tool('mark').execute({ place: 'Atlantis', label: 'X' })).toMatch(/^atlandı/);
     expect(tool('mark').execute({ place: 'ottoman-empire', label: 'X' })).toMatch(/^atlandı/); // a polity is not a point to mark
+    expect(tool('mark').execute({ place: 'sınır: ottoman-empire → Viyana', label: 'X' })).toMatch(/^atlandı/); // nor is a border
     const marks = plan.drawingAt(1).marks;
     expect(marks.map((m) => m.label)).toEqual(['Eski başkent', 'Edirne', 'Gözcü kulesi']);
     expect(marks[0]!.point).toEqual({ lon: 26.56, lat: 41.68 });
@@ -232,10 +249,38 @@ describe('the map tools', () => {
       { kind: 'city', id: 'budapest', name: 'Budapeşte' },
       { kind: 'city', id: 'vienna', name: 'Viyana' },
     ]);
-    // the animation is the model's choice; the default is none
+    // an arrow draws itself in unless the model says it should not
     tool('route').execute({ step: 2, via: ['Roma', 'Paris'], type: 'trade' });
-    expect(plan.drawingAt(2).routes[0]).toMatchObject({ type: 'trade', animate: false });
+    expect(plan.drawingAt(2).routes[0]).toMatchObject({ type: 'trade', animate: true });
     expect(plan.drawingAt(2).routes[0]).not.toHaveProperty('label');
+    tool('route').execute({ step: 3, via: ['Roma', 'Paris'], type: 'trade', animate: false });
+    tool('route').execute({ step: 4, via: ['Roma', 'Paris'], type: 'trade', animate: 'false' });
+    expect(plan.drawingAt(3).routes[0]!.animate).toBe(false);
+    expect(plan.drawingAt(4).routes[0]!.animate).toBe(false);
+  });
+
+  it('a stop of a route may be the border of a polity toward a place: where an army starts from a front, not from a capital', () => {
+    const { plan, tool } = setup();
+    expect(tool('route').execute({ step: 1, via: ['sınır: ottoman-empire → Viyana', 'Viyana'], type: 'advance' })).toBe(
+      'tamam',
+    );
+    expect(tool('route').execute({ step: 2, via: ['border: Osmanlı -> Kahire', '48.2, 16.4'], type: 'advance' })).toBe(
+      'tamam',
+    );
+    expect(plan.drawingAt(1).routes[0]!.via[0]).toEqual({
+      kind: 'border',
+      id: 'ottoman-empire',
+      toward: { kind: 'city', id: 'vienna', name: 'Viyana' },
+    });
+    expect(plan.drawingAt(2).routes[0]!.via[0]).toMatchObject({ kind: 'border', id: 'ottoman-empire' });
+    // a border toward nowhere, or of nobody, is no stop
+    expect(
+      tool('route').execute({ step: 3, via: ['sınır: ottoman-empire → Atlantis', 'Viyana'], type: 'advance' }),
+    ).toMatch(/^atlandı/);
+    expect(tool('route').execute({ step: 3, via: ['sınır: atlantis → Viyana', 'Viyana'], type: 'advance' })).toMatch(
+      /^atlandı/,
+    );
+    expect(plan.drawingAt(3).routes).toEqual([]);
   });
 
   it('a route stop is a city by any of its names, an event, a point or a polity (its capital); a route needs two', () => {
@@ -343,6 +388,20 @@ describe('the map tools', () => {
     expect(plan.drawingAt(2).sides).toEqual([]);
   });
 
+  it('sides names those who stand aside, and no polity is on a side and aside at once', () => {
+    const { plan, tool } = setup();
+    const out = tool('sides').execute({
+      sides: [{ name: 'A', polities: ['ottoman-empire'] }],
+      neutral: ['kingdom-of-france', 'atlantis', 'ottoman-empire'],
+    }) as string;
+    expect(out).toMatch(/^tamam/);
+    expect(out).toContain('atlantis');
+    expect(plan.drawingAt(1).neutral).toEqual(['kingdom-of-france']);
+    // those who stand aside do not make a side: a call with none is declined
+    expect(tool('sides').execute({ step: 2, neutral: ['kingdom-of-france'] })).toMatch(/^atlandı/);
+    expect(plan.drawingAt(2).neutral).toEqual([]);
+  });
+
   it('sides has at most three sides of eight polities, and a later call replaces the earlier in the same step', () => {
     const { plan, tool } = setup();
     const polities = [
@@ -391,28 +450,29 @@ describe('the map tools', () => {
     expect(tool('show_event').description).toContain('OLAYLAR listesindeki');
     expect(prop(tool('show_event'), 'event').description).toContain('OLAYLAR listesindeki');
     expect(tool('highlight').description).toContain('POLİTİLER listesindeki');
-    expect(tool('sides').description).toContain('POLİTİLER listesindeki');
-    for (const name of ['connect', 'route']) {
-      const text = tool(name).description;
-      expect(text, name).toContain('şehir adı');
-      expect(text, name).toContain('eski adlar da tanınır');
-      expect(text, name).toContain('"enlem, boylam"');
-      expect(text, name).toContain('devletin kimliği (o yılın başkenti)'); // a polity means its capital
-    }
+    expect(tool('sides').description).toContain('POLİTİLER listesinden');
+    expect(tool('territory_change').description).toContain('POLİTİLER listesindeki');
+    const text = tool('route').description;
+    expect(text).toContain('şehir adı');
+    expect(text).toContain('eski adlar da tanınır');
+    expect(text).toContain('"enlem, boylam"');
+    expect(text).toContain('devletin kimliği (o yılın başkenti)'); // a polity means its capital
+    expect(text).toContain('"sınır: devlet → yer"'); // or its border toward a place
     expect(tool('mark').description).toContain('"enlem, boylam"');
     expect(tool('mark').description).toContain('OLAYLAR'); // a place of the app's events is shown as that event
   });
 
   it('say what the app does with the input, so the model asks for what and never for how', () => {
     const { tool } = setup();
-    expect(tool('show_event').description).toContain('olayın tarafları öne çıkar'); // the app lights the parties...
-    expect(tool('show_event').description).toContain('başkentlerinden çıkan'); // ...and draws the war line itself
-    expect(tool('sides').description).toContain('tek bir blok'); // each side is painted as one bloc
-    expect(tool('route').description).toContain('her türün biçimi sabittir'); // the look of a route is the app's
-    expect(tool('connect').description).toContain('her ilişkinin çizgi biçimi sabittir');
+    expect(tool('show_event').description).toContain('küçük numaralı bir noktaya dönüşür'); // a marker, then a numbered dot
+    expect(tool('sides').description).toContain('yeniden boyanır'); // the app paints the map relative to the focus
+    expect(tool('sides').description).toContain('odak tarafı');
+    expect(tool('route').description).toContain('her türün biçimi sabittir'); // the look of an arrow is the app's
+    expect(tool('route').description).toContain('vuruş bitince solar'); // and so is its life
     expect(tool('highlight').description).toContain('haritanın geri kalanı solar');
-    expect(tool('step').description).toContain('harita, etkin sahnenin kendi gösterimini gösterir');
-    expect(tool('route').description).toContain('çizilerek belirir'); // what animate does
+    expect(tool('territory_change').description).toContain('canlandırır'); // the app animates what changed hands
+    expect(tool('territory_change').description).toContain('Sınır verisi yıllıktır');
+    expect(tool('step').description).toContain('her cümle'); // each sentence of the caption is a beat
   });
 
   it('the number of scenes is the model’s: a high sanity limit only, nothing near the twelve of before', () => {
@@ -490,9 +550,11 @@ describe('the map tools', () => {
     for (const t of tools) {
       for (const input of [
         {},
-        { step: null, polities: null, from: {}, to: [], lon: [], lat: {}, year: {}, label: 5, relation: 7 },
+        { step: null, polities: null, from: {}, to: [], lon: [], lat: {}, year: {}, label: 5, beat: {}, neutral: 7 },
         { points: 'x', polities: [{}] },
         { via: [null, {}, 5, [], 'x'], type: {}, sides: [null, 'a', 5, { name: {}, polities: {} }], place: {} },
+        { polity: {}, from: [], to: {}, beat: 'x' },
+        { via: ['sınır: → ', 'sınır: a → b → c'], type: 'advance' },
         { via: 'Roma', sides: 'x', from: 5, to: 6, relation: 'war', animate: 'yes', type: 'advance' },
       ]) {
         expect(() => t.execute(input as Record<string, unknown>)).not.toThrow();

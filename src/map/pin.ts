@@ -1,6 +1,6 @@
-import type { Map as MLMap } from 'maplibre-gl';
 import type { Rect } from '../domain/reveal';
 import type { PlacePoint } from '../domain/types';
+import type { Projector } from './projection';
 
 /** Half the room a place's dot takes (the glow around it is only a fade). */
 const DOT_REACH = 11;
@@ -18,7 +18,7 @@ export class PlacePins {
   private boxes: Rect[] = [];
 
   constructor(
-    private readonly map: MLMap,
+    private readonly projector: Projector,
     container: HTMLElement,
   ) {
     this.host = document.createElement('div');
@@ -52,7 +52,7 @@ export class PlacePins {
   layout() {
     const boxes: Rect[] = [];
     this.points.forEach((pt, i) => {
-      const p = this.map.project([pt.lon, pt.lat]);
+      const p = this.projector.near(pt.lon, pt.lat);
       if (Number.isFinite(p.x) && Number.isFinite(p.y)) {
         this.els[i]!.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
         boxes.push({ left: p.x - DOT_REACH, top: p.y - DOT_REACH, right: p.x + DOT_REACH, bottom: p.y + DOT_REACH });

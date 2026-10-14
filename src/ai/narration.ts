@@ -1,7 +1,10 @@
 import { isEmptyDrawing } from './drawing';
 import type { AssistantItem } from './session';
 import { withoutOpenReference } from '../ui/read/segments';
+import { sentencesOf } from './sentences';
 import { alignWithPlan, parseAnswer, type Section } from './steps';
+
+export { sentencesOf };
 
 /** The longest a subtitle made from a step's text may be. (The model's own captions are kept to LIMITS.caption.) */
 export const CAPTION_FROM_TEXT = 220;
@@ -15,6 +18,11 @@ export interface StepView {
   title: string;
   /** What the model wrote as the subtitle; else the first sentences of the step's text; else the title. */
   caption: string;
+  /**
+   * The sentences of the caption: the beats of the scene, each with what the map shows while it plays. A caption the model did
+   * not write (one made from the text) is one beat.
+   */
+  beats: string[];
   /** The full text, paragraphs separated by blank lines. Empty until the model has begun writing it. */
   body: string;
   /** The plan (titles, captions, scenes) arrives before the long texts: has this step's text begun? */
@@ -65,10 +73,12 @@ export function stepsOf(item: AssistantItem): StepView[] {
     const scene = item.plan.drawingAt(n);
     const body = section?.body ?? '';
     const title = section?.title || item.plan.titleOf(n) || '';
+    const caption = item.plan.captionOf(n) || captionFromText(body) || title;
     return {
       n,
       title,
-      caption: item.plan.captionOf(n) || captionFromText(body) || title,
+      caption,
+      beats: item.plan.captionOf(n) ? item.plan.beatsOf(n) : [caption],
       body,
       hasText: body.trim().length > 0,
       hasScene: !isEmptyDrawing(scene) || scene.year !== undefined,
@@ -94,24 +104,6 @@ const plainOf = (text: string) =>
     .trim();
 
 /* ------------------------------------------------------------ captions */
-
-/**
- * Sentences of a text. A full stop after a lone capital, a Roman numeral or a number of one or two digits ("I. Süleyman",
- * "II. Lajos", "6. Ordu", "2. Dünya Savaşı") is not an end.
- */
-export function sentencesOf(text: string): string[] {
-  const parts = text
-    .replace(/\s+/g, ' ')
-    .trim()
-    .split(/(?<=[.!?…])\s+(?=[A-ZÇĞİÖŞÜ0-9«“"'(])/);
-  const out: string[] = [];
-  for (const part of parts) {
-    const last = out[out.length - 1];
-    if (last && /(?:^|[\s[])(?:[A-ZÇĞİÖŞÜ]|[IVXL]+|\d{1,2})\.$/.test(last)) out[out.length - 1] = `${last} ${part}`;
-    else out.push(part);
-  }
-  return out.filter(Boolean);
-}
 
 /**
  * A subtitle made from a step's text, for a model that did not write one: its first sentence or two (as many as fit,

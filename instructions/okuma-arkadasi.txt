@@ -10,10 +10,11 @@ yapmak için araçların var. Neyi göstereceğine sen karar verirsin; nasıl g�
 kamera dahil, uygulama halleder.
 
 ## Biçim
-Cevabın sahnelerden oluşur; tek bir sahne de olabilir. Her sahnenin kısa bir altyazısı
-(kullanıcı haritayı izlerken okur, bir iki cümle) ve tam bir metni (okuma görünümünde
-okunur) vardır. Altyazı metnin özüdür. Veri setindeki bir olaydan söz ettiğinde onu
-olay olarak işaretle, kullanıcı tıklayıp haritada görebilsin.
+Cevabın sahnelerden oluşur; tek bir sahne de olabilir. Her sahnenin kısa bir başlığı,
+cümle cümle ilerleyen bir altyazısı ve tam bir metni vardır. Altyazının her cümlesi
+haritada bir vuruştur: o cümle okunurken haritada ne görüneceğini sen seçersin. Veri
+setindeki bir olaydan söz ettiğinde onu olay olarak işaretle, kullanıcı tıklayıp
+haritada görebilsin.
 
 Anlatımı nasıl kuracağın sana kalmış: kaç sahne, hangi sırayla, haritada neyi nasıl
 göstereceğin. Konuyu iyi bilen biri gibi anlat ve seçili aralığın tamamını göz önünde

@@ -3,6 +3,7 @@ import { placeMarkers } from '../domain/placement';
 import type { Rect } from '../domain/reveal';
 import type { HistoricalEvent } from '../domain/types';
 import { dotMarkup } from '../ui/dot';
+import type { Projector } from './projection';
 
 export interface MarkerCallbacks {
   onClick(id: string): void;
@@ -29,6 +30,13 @@ export interface MarkerStats {
 /** The one narrator the map has at a time. */
 export type Narrator = 'ai' | 'place';
 
+/** An event the AI talks about: the beat it appears with (the number of its dot) and whether that beat plays now. */
+export interface ToldEvent {
+  event: HistoricalEvent;
+  beat: number;
+  now: boolean;
+}
+
 /** The pointer target of every marker (WCAG 2.5.8 asks for at least 24 × 24 px); the dot itself is smaller. */
 const HIT = 24;
 /** Breathing room kept between a selected marker's label and the edge of the map. */
@@ -41,6 +49,8 @@ const CALLOUT_H = 28;
 const DOT_REACH = 9;
 const HALF_HEIGHT = 11;
 const YEAR_REACH = 13 + 30;
+/** A small numbered dot (an event whose beat is over) covers just itself. */
+const NUMBER_REACH = 10;
 
 /**
  * Event markers on the map: one kind of dot, coloured by category, nothing else. Which events exist
@@ -71,7 +81,7 @@ export class EventMarkers {
   private narrator = false;
   private who: Narrator = 'ai';
   /** The events the AI talks about now; each has a marker of its own however the range's set looks. */
-  private told: HistoricalEvent[] = [];
+  private told: ToldEvent[] = [];
   /** Where each drawn marker (and its name tag) lies, in map pixels, from the last layout. */
   private boxes: Rect[] = [];
   private focusYear = 0;
@@ -89,6 +99,7 @@ export class EventMarkers {
 
   constructor(
     private readonly map: MLMap,
+    private readonly projector: Projector,
     container: HTMLElement,
     cb: MarkerCallbacks,
   ) {
@@ -105,7 +116,7 @@ export class EventMarkers {
   private all(): HistoricalEvent[] {
     const have = new Set(this.events.map((e) => e.id));
     const extra: HistoricalEvent[] = [];
-    for (const ev of [this.selected, ...this.told]) {
+    for (const ev of [this.selected, ...this.told.map((t) => t.event)]) {
       if (ev && !have.has(ev.id)) {
         have.add(ev.id);
         extra.push(ev);
@@ -117,7 +128,7 @@ export class EventMarkers {
   /** What may be drawn now: all of it, or while the AI narrates only the opened event and the ones it talks about. */
   private drawable(): HistoricalEvent[] {
     if (!this.narrator) return this.all();
-    const ids = new Set([...this.told.map((e) => e.id), ...(this.selected ? [this.selected.id] : [])]);
+    const ids = new Set([...this.told.map((t) => t.event.id), ...(this.selected ? [this.selected.id] : [])]);
     return this.all().filter((e) => ids.has(e.id));
   }
 
@@ -158,14 +169,15 @@ export class EventMarkers {
    * Somebody narrates the map or nobody does, and the events the AI talks about right now. With a narrator the map
    * shows only those and the opened event; the range's other markers are gone until the narrator is.
    */
-  setNarrator(who: Narrator | null, told: readonly HistoricalEvent[]) {
+  setNarrator(who: Narrator | null, told: readonly ToldEvent[]) {
     const on = who !== null;
     const next = on ? told : [];
+    const same = (a: ToldEvent, b: ToldEvent) => a.event === b.event && a.beat === b.beat && a.now === b.now;
     if (
       on === this.narrator &&
       (who ?? this.who) === this.who &&
       next.length === this.told.length &&
-      next.every((e, i) => e === this.told[i])
+      next.every((t, i) => same(t, this.told[i]!))
     )
       return;
     this.narrator = on;
@@ -203,7 +215,7 @@ export class EventMarkers {
     // The opened event's name is drawn by CSS from data-title (generated content), so the button's own text
     // stays exactly its year: the visible label is then part of the accessible name, as WCAG 2.5.3 asks.
     el.dataset.title = ev.title;
-    el.innerHTML = `<span class="evt-mark">${dotMarkup(ev.category)}</span><span class="evt-year">${ev.year}</span>`;
+    el.innerHTML = `<span class="evt-mark">${dotMarkup(ev.category)}</span><span class="evt-year">${ev.year}</span><b class="evt-n" aria-hidden="true"></b>`;
     // A drag that happens to start and end on a marker is a pan, not a click. (A keyboard click has
     // detail 0 and no position, so it is never mistaken for one.)
     let downAt: [number, number] | null = null;
@@ -281,22 +293,37 @@ export class EventMarkers {
       zoom,
       focusYear: this.focusYear,
       selectedId,
-      keepIds: this.narrator ? new Set(this.told.map((e) => e.id)) : undefined,
+      keepIds: this.narrator ? new Set(this.told.map((t) => t.event.id)) : undefined,
       viewport: this.size,
-      project: (ev) => map.project([ev.location.lon, ev.location.lat]),
+      project: (ev) => this.projector.near(ev.location.lon, ev.location.lat),
     });
 
     const shown = new Set<string>();
     const boxes: Rect[] = [];
+    const toldBy = new Map(this.told.map((t) => [t.event.id, t]));
     for (const { ev, x, y } of placed) {
       shown.add(ev.id);
       const el = this.elements.get(ev.id);
       if (!el) continue;
       el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
       const isSelected = ev.id === selectedId;
-      el.style.zIndex = String(isSelected ? 30 : 10);
+      // an event whose beat is over is a small numbered dot (the number of its beat), no year, no name; the one that plays
+      // (and the opened one) is the full marker
+      const told = this.narrator ? toldBy.get(ev.id) : undefined;
+      const dotNow = !!told && !told.now && !isSelected;
+      el.classList.toggle('is-dot', dotNow);
+      el.classList.toggle('is-now', !!told && told.now);
+      if (dotNow) el.dataset.n = String(told!.beat);
+      else delete el.dataset.n;
+      const nEl = el.querySelector('.evt-n');
+      if (nEl) nEl.textContent = dotNow ? String(told!.beat) : '';
+      el.style.zIndex = String(isSelected ? 30 : told?.now ? 20 : 10);
       el.classList.remove('is-hidden');
-      boxes.push({ left: x - DOT_REACH, top: y - HALF_HEIGHT, right: x + YEAR_REACH, bottom: y + HALF_HEIGHT });
+      boxes.push(
+        dotNow
+          ? { left: x - NUMBER_REACH, top: y - NUMBER_REACH, right: x + NUMBER_REACH, bottom: y + NUMBER_REACH }
+          : { left: x - DOT_REACH, top: y - HALF_HEIGHT, right: x + YEAR_REACH, bottom: y + HALF_HEIGHT },
+      );
       if (isSelected) boxes.push(this.placeCallout(el, x, y));
     }
     this.boxes = boxes;

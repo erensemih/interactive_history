@@ -1,16 +1,19 @@
 import maplibregl, { type ExpressionSpecification, type GeoJSONSource, type Map as MLMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { AppData } from '../data/load';
-import { EMPTY_RESOLVED, type FrameTarget, type ResolvedDrawing } from '../ai/types';
-import { frameBounds, framePadding, isFramed, projectWith } from '../domain/camera';
+import { EMPTY_RESOLVED, type ColorKey, type FrameTarget, type ResolvedFrame } from '../ai/types';
+import { unwrapNear, wrapLon } from '../domain/antimeridian';
+import { frameBounds, framePadding, isFramed, projectWith, WIDE_LON } from '../domain/camera';
 import { isLand, primaryAt, rowsContaining } from '../domain/geo';
 import { revealMove, type Rect } from '../domain/reveal';
-import type { HistoricalEvent, PlacePoint } from '../domain/types';
+import type { Bounds, HistoricalEvent, PlacePoint } from '../domain/types';
 import { AiDrawingLayer } from './aiLayer';
 import { occupationKey, PolityLabels } from './labels';
-import { EventMarkers, type MarkerStats, type Narrator } from './markers';
+import { EventMarkers, type MarkerStats, type Narrator, type ToldEvent } from './markers';
 import { PlacePins } from './pin';
-import { hatchImage, readTheme, stippleImage, type MapTheme } from './theme';
+import { Projector } from './projection';
+import { TerritoryLayer, type ChangeFlash } from './territoryLayer';
+import { doubtImage, hatchImage, readTheme, stippleImage, type MapTheme } from './theme';
 
 export interface MapCallbacks {
   /** Markers drawn vs. map events in the range, and why the rest are not drawn. */
@@ -54,6 +57,17 @@ const INITIAL_BOUNDS: [[number, number], [number, number]] = [
   [146, 68],
 ];
 
+/** The limits of the map: strictly inside ±180° (MapLibre 5.24 throws on a full-world maxBounds). */
+const NORMAL_LIMITS: [[number, number], [number, number]] = [
+  [-179.9, -60],
+  [179.9, 82],
+];
+/** The limits of the wide view, which shows the world twice over so the Pacific is one piece: a world either side of Greenwich. */
+const WIDE_LIMITS: [[number, number], [number, number]] = [
+  [-WIDE_LON, -60],
+  [WIDE_LON, 82],
+];
+
 /** Gentle at both ends and never abrupt in the middle, so a long zoom-out stays easy to follow. */
 const easeInOutSine = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
 
@@ -88,6 +102,17 @@ export class MapView {
   private readonly markers: EventMarkers;
   private readonly ai: AiDrawingLayer;
   private readonly pins: PlacePins;
+  private readonly projector: Projector;
+  private territory: TerritoryLayer | null = null;
+  /**
+   * The wide view: the map repeats the world either side of the date line and may be taken past ±180°, so a scene that
+   * crosses the date line (Pearl Harbor and Japan) is framed as the one stretch of Pacific it is. It is on only while a scene
+   * needs it and goes when the view is back inside the plain world.
+   */
+  private wide = false;
+  private wantWide = false;
+  /** Where the camera is on its way to (the box of the scene it was sent to frame), until it arrives. */
+  private pendingFrame: Bounds | null = null;
   private year = 0;
   /** The years of rows in the map's border source: asked for ... */
   private borderWindow: [number, number] | null = null;
@@ -100,17 +125,17 @@ export class MapView {
   private rowsNow: AppData['rows'] = [];
   private selectedIds: string[] = [];
   private selectedLands: string[] = [];
-  /** Polities in the AI's spotlight: lit solid and vivid while the rest of the map fades back. */
-  private spotIds: string[] = [];
-  /** The paint of the spotlight's fill: each polity in its own vivid hue, or in its side's colour. */
-  private vividExpr: ExpressionSpecification | null = null;
-  /** The sides of the drawing on screen (kept so that a drawing set before the map is ready is painted when it is). */
-  private sides: ResolvedDrawing['sides'] = [];
-  private sidesKey = '';
+  /** The polities the AI paints in their actor colour (the rest of the map fades back while there are any). */
+  private aiPainted: ResolvedFrame['painted'] = [];
+  /** The polities the playing beat points at: they keep their colour and are outlined. */
+  private aiEmphasis: string[] = [];
+  /** The paint of the AI's fill: each painted polity in its actor's colour, the polities only pointed at in their own tint. */
+  private paintKey = '';
+  private tintExpr: ExpressionSpecification | null = null;
   private hoverId: string | null = null;
   /** Somebody narrates the map (the AI, else the selected place): the event markers other than the ones the narrator or the reader brings are off the map. */
   private narrator: Narrator | null = null;
-  private toldIds: string[] = [];
+  private told: ToldEvent[] = [];
   private selectedEventId: string | null = null;
   /** The controls lying over the map in map pixels; they only change when the map or the page is resized. */
   private controls: Rect[] | null = null;
@@ -152,11 +177,7 @@ export class MapView {
       },
       minZoom: 1.1,
       maxZoom: 9,
-      // Strictly inside ±180°: MapLibre 5.24 throws on a full-world maxBounds.
-      maxBounds: [
-        [-179.9, -60],
-        [179.9, 82],
-      ],
+      maxBounds: NORMAL_LIMITS,
       renderWorldCopies: false,
       attributionControl: false,
       // The panel changes the map's size by itself (PanelWidth resizes the map once, its left edge held in
@@ -178,11 +199,12 @@ export class MapView {
     );
 
     const canvasContainer = this.map.getCanvasContainer();
-    this.labels = new PolityLabels(this.map, canvasContainer, data);
+    this.projector = new Projector(this.map, () => this.wide);
+    this.labels = new PolityLabels(this.map, this.projector, canvasContainer, data);
     // Above the polity labels, below the pin and the event markers (the DOM order decides at equal z-index).
-    this.ai = new AiDrawingLayer(this.map, canvasContainer);
-    this.pins = new PlacePins(this.map, canvasContainer);
-    this.markers = new EventMarkers(this.map, canvasContainer, {
+    this.ai = new AiDrawingLayer(this.map, canvasContainer, this.projector);
+    this.pins = new PlacePins(this.projector, canvasContainer);
+    this.markers = new EventMarkers(this.map, this.projector, canvasContainer, {
       onClick: (id) => cb.onEventClick(id),
       onHover: (id, el) => cb.onEventHover(id, el),
       onStats: (stats) => cb.onMarkerStats?.(stats),
@@ -191,7 +213,7 @@ export class MapView {
     this.map.on('load', () => this.onLoad());
     // Layout runs inside the render event so DOM overlays move in the very frame the canvas does.
     this.map.on('render', () => this.layoutOverlays());
-    this.map.on('click', (e) => this.onMapClick(e.lngLat.lng, e.lngLat.lat));
+    this.map.on('click', (e) => this.onMapClick(wrapLon(e.lngLat.lng), e.lngLat.lat));
     this.map.on('mousemove', (e) => {
       if ((e.originalEvent.target as HTMLElement | null)?.closest?.('.evt')) {
         // Over an event marker: its own tooltip is showing, not the polity's.
@@ -213,6 +235,11 @@ export class MapView {
     this.map.on('dragstart', () => {
       this.map.getCanvas().style.cursor = '';
     });
+    // The camera has come to rest: the wide view goes when the view is back inside the plain world and nothing asks for it.
+    this.map.on('moveend', () => {
+      this.pendingFrame = null;
+      this.settleWide();
+    });
   }
 
   /** The container changed size by some other means (a window resize, a rotated phone): resize about the centre, as usual. */
@@ -229,6 +256,7 @@ export class MapView {
     const t = this.theme;
     const map = this.map;
     map.addImage('hatch', hatchImage(t.accent), { pixelRatio: 2 });
+    map.addImage('doubt', doubtImage(t.ink), { pixelRatio: 2 });
     map.addImage('stipple', stippleImage(t.ink3), { pixelRatio: 2 });
 
     map.addSource('land', { type: 'geojson', data: this.data.land, tolerance: 0.2, buffer: 16, maxzoom: 9 });
@@ -248,14 +276,7 @@ export class MapView {
       ...t.tints.flatMap((c, i) => [i, c]),
       t.tints[0] ?? '#e7dbc4',
     ] as unknown as ExpressionSpecification;
-    // the spotlight's twin of every tint: the same hue, darker and saturated
-    const vividExpr = [
-      'match',
-      ['get', 'tint'],
-      ...t.vivid.flatMap((c, i) => [i, c]),
-      t.vivid[0] ?? '#74c859',
-    ] as unknown as ExpressionSpecification;
-    this.vividExpr = vividExpr;
+    this.tintExpr = tintExpr;
     const zoomWidth = (a: number, b: number, c: number): ExpressionSpecification => [
       'interpolate',
       ['linear'],
@@ -268,18 +289,6 @@ export class MapView {
       c,
     ];
 
-    // Shallow-water glow: only the sea side shows, because land is painted over its inland half.
-    map.addLayer({
-      id: 'coast-glow',
-      type: 'line',
-      source: 'land',
-      paint: {
-        'line-color': t.seaDeep,
-        'line-width': zoomWidth(3, 9, 16),
-        'line-blur': zoomWidth(2, 6, 10),
-        'line-opacity': 0.55,
-      },
-    });
     map.addLayer({ id: 'land-base', type: 'fill', source: 'land', paint: { 'fill-color': t.nodata } });
     map.addLayer({ id: 'land-nodata', type: 'fill', source: 'land', paint: { 'fill-pattern': 'stipple' } });
     map.addLayer({
@@ -346,9 +355,11 @@ export class MapView {
       layout: { 'line-join': 'round' },
       paint: { 'line-color': t.coast, 'line-width': zoomWidth(0.5, 0.9, 1.5), 'line-opacity': 0.85 },
     });
-    // The spotlight. While the AI lights some polities, a veil of paper lies over everything below (the sea, the land,
-    // every polity, the coast) and fades it back; no blur, only less of everything. The lit polities are then drawn
-    // above it, solid in their own vivid hue, cut out of the veil by a paper rim and a pen outline.
+    // What the AI paints and points at. While it paints (the actors of a narration) or points at polities, a veil of paper lies
+    // over everything below (the sea, the land, every polity, the coast) and fades it back; no blur, only less of everything.
+    // The painted polities are then drawn above it, solid in their actor's colour (a polity that is only pointed at keeps its own
+    // tint), with thin borders; the ones whose side is unclear are hatched; the ones pointed at are cut out of the veil by a
+    // paper rim and a pen outline.
     map.addLayer({
       id: 'ai-veil',
       type: 'background',
@@ -362,14 +373,29 @@ export class MapView {
       id: 'ai-fill',
       type: 'fill',
       source: 'borders',
-      filter: idsFilter(this.filterYear(), this.spotIds),
-      paint: { 'fill-color': vividExpr, 'fill-opacity': 1 },
+      filter: idsFilter(this.filterYear(), this.aiIds()),
+      paint: { 'fill-color': tintExpr, 'fill-opacity': 1 },
+    });
+    map.addLayer({
+      id: 'ai-doubt',
+      type: 'fill',
+      source: 'borders',
+      filter: idsFilter(this.filterYear(), this.neutralIds()),
+      paint: { 'fill-pattern': 'doubt' },
+    });
+    map.addLayer({
+      id: 'ai-border',
+      type: 'line',
+      source: 'borders',
+      filter: idsFilter(this.filterYear(), this.aiIds()),
+      layout: { 'line-join': 'round' },
+      paint: { 'line-color': t.borderInk, 'line-width': zoomWidth(0.5, 1.1, 1.8), 'line-opacity': 0.8 },
     });
     map.addLayer({
       id: 'ai-casing',
       type: 'line',
       source: 'borders',
-      filter: idsFilter(this.filterYear(), this.spotIds),
+      filter: idsFilter(this.filterYear(), this.aiEmphasis),
       layout: { 'line-join': 'round' },
       paint: { 'line-color': t.paper, 'line-width': zoomWidth(3.8, 5.6, 7.6), 'line-opacity': 0.92 },
     });
@@ -377,10 +403,18 @@ export class MapView {
       id: 'ai-line',
       type: 'line',
       source: 'borders',
-      filter: idsFilter(this.filterYear(), this.spotIds),
+      filter: idsFilter(this.filterYear(), this.aiEmphasis),
       layout: { 'line-join': 'round' },
       paint: { 'line-color': t.ink, 'line-width': zoomWidth(1.4, 2.1, 2.9), 'line-opacity': 0.95 },
     });
+
+    this.territory = new TerritoryLayer(
+      map,
+      this.data,
+      () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      'ai-casing',
+      () => this.flashRegion(),
+    );
 
     this.ready = true;
     this.applyYear();
@@ -471,32 +505,43 @@ export class MapView {
     this.applyAi();
   }
 
-  private applyAi() {
-    if (!this.ready) return;
-    for (const id of ['ai-fill', 'ai-casing', 'ai-line']) {
-      this.map.setFilter(id, idsFilter(this.filterYear(), this.spotIds));
-    }
-    // the rest of the map fades only while something is lit
-    this.map.setPaintProperty('ai-veil', 'background-opacity', this.spotIds.length ? SPOT_VEIL : 0);
-    this.applySides();
+  /** Every polity the AI has something to say about: painted or pointed at. */
+  private aiIds(): string[] {
+    return [...new Set([...this.aiPainted.map((p) => p.id), ...this.aiEmphasis])];
   }
 
-  /** The lit polities of a conflict are painted by side, one colour for the whole bloc; without sides each keeps its own hue. */
-  private applySides() {
-    if (!this.ready || !this.vividExpr) return;
-    const sides = this.sides;
-    const colours = this.theme.sides;
-    const key = sides.map((s) => `${s.index}:${s.polities.join(',')}`).join('|');
-    if (key === this.sidesKey) return;
-    this.sidesKey = key;
-    const paint = sides.length
+  private neutralIds(): string[] {
+    return this.aiPainted.filter((p) => p.color === 'neutral').map((p) => p.id);
+  }
+
+  private applyAi() {
+    if (!this.ready) return;
+    const year = this.filterYear();
+    const ids = this.aiIds();
+    for (const id of ['ai-fill', 'ai-border']) this.map.setFilter(id, idsFilter(year, ids));
+    for (const id of ['ai-casing', 'ai-line']) this.map.setFilter(id, idsFilter(year, this.aiEmphasis));
+    this.map.setFilter('ai-doubt', idsFilter(year, this.neutralIds()));
+    // the rest of the map fades only while something is painted or pointed at
+    this.map.setPaintProperty('ai-veil', 'background-opacity', ids.length ? SPOT_VEIL : 0);
+    this.applyPaint();
+  }
+
+  /** The painted polities are one colour each, the colour of their actor; the others keep their own tint. */
+  private applyPaint() {
+    if (!this.ready || !this.tintExpr) return;
+    const key = this.aiPainted.map((p) => `${p.id}:${p.color}`).join('|');
+    if (key === this.paintKey) return;
+    this.paintKey = key;
+    const byColor = new Map<ColorKey, string[]>();
+    for (const p of this.aiPainted) byColor.set(p.color, [...(byColor.get(p.color) ?? []), p.id]);
+    const paint = byColor.size
       ? ([
           'match',
           ['get', 'id'],
-          ...sides.flatMap((s) => [s.polities, colours[s.index] ?? colours[0] ?? '#7d2250']),
-          this.vividExpr,
+          ...[...byColor].flatMap(([color, ids]) => [ids, this.theme.actors[color]]),
+          this.tintExpr,
         ] as unknown as ExpressionSpecification)
-      : this.vividExpr;
+      : this.tintExpr;
     this.map.setPaintProperty('ai-fill', 'fill-color', paint);
   }
 
@@ -636,11 +681,7 @@ export class MapView {
   }
 
   private syncNarrator() {
-    const told = this.toldIds.flatMap((id) => {
-      const ev = this.data.eventsById.get(id);
-      return ev ? [ev] : [];
-    });
-    this.markers.setNarrator(this.narrator, told);
+    this.markers.setNarrator(this.narrator, this.told);
     this.labels.setAvoid(this.narratorRoom());
   }
 
@@ -650,26 +691,96 @@ export class MapView {
   }
 
   /**
-   * The AI's drawing for the year shown (the polygons are map layers, lines and marks are an overlay).
-   * Replacing it never touches the camera.
+   * What the AI shows at this moment of its scene, for the year shown: the polygons (what it paints and points at) are map
+   * layers, the arrows and marks an overlay, the events markers. Replacing it never touches the camera.
    */
-  setAiDrawing(drawing: ResolvedDrawing | null, description = '') {
-    const d = drawing ?? EMPTY_RESOLVED;
-    const same = d.spotIds.length === this.spotIds.length && d.spotIds.every((id, i) => id === this.spotIds[i]);
-    if (!same) {
-      this.spotIds = d.spotIds;
-      this.labels.setEmphasis(this.spotIds);
+  setAiFrame(frame: ResolvedFrame | null, description = '') {
+    if (!frame) {
+      // nothing asks for the wide view any more: it goes as soon as the view is back inside the plain world
+      this.wantWide = false;
+      this.settleWide();
+    }
+    const f = frame ?? EMPTY_RESOLVED;
+    const same = (a: readonly string[], b: readonly string[]) =>
+      a.length === b.length && a.every((id, i) => id === b[i]);
+    const changed =
+      !same(f.emphasis, this.aiEmphasis) ||
+      !same(
+        f.painted.map((p) => `${p.id}:${p.color}`),
+        this.aiPainted.map((p) => `${p.id}:${p.color}`),
+      );
+    if (changed) {
+      this.aiPainted = f.painted;
+      this.aiEmphasis = f.emphasis;
+      this.labels.setEmphasis(this.aiIds());
       this.applyAi();
     }
-    this.sides = d.sides;
-    this.applySides();
-    this.ai.setDrawing(d, description);
-    const told = d.events.map((e) => e.id);
-    if (told.length !== this.toldIds.length || told.some((id, i) => id !== this.toldIds[i])) {
-      this.toldIds = told;
+    this.ai.setFrame(f, description);
+    this.territory?.setChanges(this.flashesOf(f), f.replay);
+    const told: ToldEvent[] = f.events.flatMap((e) => {
+      const event = this.data.eventsById.get(e.id);
+      return event ? [{ event, beat: e.beat, now: e.now }] : [];
+    });
+    const sameTold =
+      told.length === this.told.length &&
+      told.every(
+        (t, i) => t.event === this.told[i]!.event && t.beat === this.told[i]!.beat && t.now === this.told[i]!.now,
+      );
+    if (!sameTold) {
+      this.told = told;
       this.syncNarrator();
     }
     this.layoutOverlays(); // the new labels are placed around what is on the map now, with no map frame to wait for
+  }
+
+  /** The changes of borders whose beat plays now, each in its polity's colour on the map. */
+  private flashesOf(frame: ResolvedFrame): ChangeFlash[] {
+    return frame.changes
+      .filter((c) => c.now)
+      .map((c) => ({
+        key: `${c.beat}|${c.polity}|${c.from}|${c.to}`,
+        polity: c.polity,
+        from: c.from,
+        to: c.to,
+        color: this.colorOf(c.polity),
+      }));
+  }
+
+  /** The colour a polity is drawn in: its actor's while the narration paints it, else its own tint. */
+  private colorOf(id: string): string {
+    const painted = this.aiPainted.find((p) => p.id === id);
+    if (painted) return this.theme.actors[painted.color];
+    const tint = this.data.entities.get(id)?.tint;
+    return this.theme.tints[typeof tint === 'number' ? tint : 0] ?? this.theme.tints[0] ?? '#e7dbc4';
+  }
+
+  /**
+   * The year under a narration moved (a scene begins in another year, a beat changes the borders): whatever changed hands within
+   * view, and within the scene the camera is on its way to, is pointed at for a moment.
+   */
+  flashYears(from: number, to: number) {
+    if (!this.ready || !this.territory || from === to) return;
+    this.territory.flashYears(from, to, this.flashRegion());
+  }
+
+  /** The part of the world a flash is about: what is in view and what the camera is on its way to, inside the plain world. */
+  private flashRegion(): Bounds {
+    const view = this.map.getBounds();
+    let box: Bounds = [view.getWest(), view.getSouth(), view.getEast(), view.getNorth()];
+    const next = this.pendingFrame;
+    if (next)
+      box = [
+        Math.min(box[0], next[0]),
+        Math.min(box[1], next[1]),
+        Math.max(box[2], next[2]),
+        Math.max(box[3], next[3]),
+      ];
+    return [Math.max(-179.9, box[0]), Math.max(-60, box[1]), Math.min(179.9, box[2]), Math.min(82, box[3])];
+  }
+
+  /** Nothing of the AI's is on the map any more: the flashes go too. */
+  clearFlashes() {
+    this.territory?.clear();
   }
 
   /**
@@ -698,6 +809,9 @@ export class MapView {
     const canvas = map.getCanvas();
     const size = { width: canvas.clientWidth, height: canvas.clientHeight };
     if (size.width < 120 || size.height < 120) return false;
+    // a scene across the date line is framed in the wide view, as the one stretch of the Pacific it is
+    this.wantWide = bounds[0] < -180 || bounds[2] > 180;
+    if (this.wantWide) this.setWide(true);
     const padding = framePadding(this.controlRects(), size);
     const fit = map.cameraForBounds(
       [
@@ -708,16 +822,49 @@ export class MapView {
     );
     if (!fit?.center || fit.zoom === undefined || !Number.isFinite(fit.zoom)) return false;
     const c = map.getCenter();
-    const now = { lng: c.lng, lat: c.lat, zoom: map.getZoom() };
-    if (isFramed(bounds, now, fit.zoom, size, padding)) return false;
-    const centre = maplibregl.LngLat.convert(fit.center);
-    const to = projectWith(now, size, centre.lng, centre.lat);
+    const middle = maplibregl.LngLat.convert(fit.center);
+    // (the map may call the same place by another name, 190° or −170°: the camera is compared in the bounds' own terms)
+    const now = { lng: unwrapNear(c.lng, middle.lng), lat: c.lat, zoom: map.getZoom() };
+    if (isFramed(bounds, now, fit.zoom, size, padding)) {
+      this.settleWide();
+      return false;
+    }
+    const to = projectWith(now, size, middle.lng, middle.lat);
     const travel = Math.hypot(to.x - size.width / 2, to.y - size.height / 2);
     const duration = Math.round(
       Math.min(2400, Math.max(800, 700 + 420 * Math.abs(fit.zoom - now.zoom) + 0.7 * travel)),
     );
+    this.pendingFrame = bounds;
     map.easeTo({ center: fit.center, zoom: fit.zoom, duration, easing: easeInOutSine });
     return true;
+  }
+
+  /**
+   * The wide view on or off. On, the map shows the world twice over and may be taken past ±180°; off, it is the plain world with
+   * its edges. It goes off only when the view lies inside the plain world: taking the limits away from under a camera that is
+   * outside them makes the map pull its centre back with a jump.
+   */
+  private setWide(on: boolean) {
+    if (on === this.wide || !this.ready) return;
+    this.wide = on;
+    this.map.setRenderWorldCopies(on);
+    this.map.setMaxBounds(on ? WIDE_LIMITS : NORMAL_LIMITS);
+    this.layoutOverlays(true);
+  }
+
+  /** The view is inside the plain world and no scene asks for the wide one: back to the plain world. */
+  private settleWide() {
+    if (!this.wide || this.wantWide) return;
+    const view = this.map.getBounds();
+    const inside = view.getWest() >= NORMAL_LIMITS[0][0] && view.getEast() <= NORMAL_LIMITS[1][0];
+    const centred =
+      Math.abs(this.map.getCenter().lng) < NORMAL_LIMITS[1][0] && this.map.getZoom() <= this.map.getMinZoom() + 0.01;
+    if (inside || centred) this.setWide(false);
+  }
+
+  /** Is the map showing the world twice over, as it does for a scene across the date line? */
+  isWide(): boolean {
+    return this.wide;
   }
 
   private bringIntoView(points: PlacePoint[]) {
@@ -727,7 +874,7 @@ export class MapView {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
     const offsets = points.map((pt) => {
-      const p = map.project([pt.lon, pt.lat]);
+      const p = this.projector.near(pt.lon, pt.lat);
       return { dx: p.x - width / 2, dy: p.y - height / 2 };
     });
     // The map's limits in map pixels: the view stays inside them, so the centre cannot be moved past them.
@@ -798,8 +945,9 @@ export class MapView {
       const p = this.lastPointer;
       if (!p || !this.ready) return;
       const ll = this.map.unproject([p.x, p.y]);
-      const onLand = isLand(this.data.landParts, ll.lng, ll.lat);
-      const row = onLand ? this.pick(ll.lng, ll.lat) : null;
+      const lng = wrapLon(ll.lng);
+      const onLand = isLand(this.data.landParts, lng, ll.lat);
+      const row = onLand ? this.pick(lng, ll.lat) : null;
       this.setHoverPolity(row?.id ?? null);
       this.map.getCanvas().style.cursor = onLand ? 'pointer' : '';
       this.cb.onHoverPolity(row?.id ?? null, p.cx, p.cy, onLand && !row);

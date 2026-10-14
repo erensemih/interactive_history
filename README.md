@@ -108,54 +108,71 @@ yalnızca seçili aralığa bağlıdır.
 |---|---|
 | ![](docs/verification/ai-w2-oku-yan-panel.png) | ![](docs/verification/ai-w3-oku-tam-ekran.png) |
 
-| Tek adımlı yanıt: altyazı ve «Devamını oku» (Stalingrad) | Düz metin yanıt: altyazı ilk cümle, geri kalanı Oku'da | Zaman çizelgesi ilerleme çubuğu |
-|---|---|---|
-| ![](docs/verification/ai-2b-stalingrad-yaniti.png) | ![](docs/verification/ai-2c-duz-metin.png) | ![](docs/verification/ai-v1-ilerleme-cubugu.png) |
+| Tek adımlı yanıt: altyazı ve «Devamını oku» (Stalingrad) | Düz metin yanıt: altyazı ilk cümle, geri kalanı Oku'da |
+|---|---|
+| ![](docs/verification/ai-2b-stalingrad-yaniti.png) | ![](docs/verification/ai-2c-duz-metin.png) |
 
-**Bir anlatımı iki biçimde izlemek: İzle ve Oku.** Çok adımlı bir anlatım iki görünümde izlenir; ikisi de **aynı adımı** paylaşır.
+(Görseller bir önceki turun ekran görüntüleridir; görsel inceleme her yayından sonra elle yapılır ve betikler görüntüleri yalnızca
+`E2E_SHOTS=1` ile yeniler: sabit görsel dil, vuruşlar ve zaman çizelgesindeki sahne noktaları için yeni görüntüler henüz alınmadı.)
 
-- **İzle** (varsayılan): harita tam ekran kalır, anlatım adım adım ilerler. Her adımın **kısa altyazısı** (bir iki cümle) haritanın üstünde,
-  soru kutusunun hemen üzerindeki sabit bir yerde durur, altyazı gibi; kutunun yeri adımdan adıma değişmez. Adımlar **← / →** (ve
-  `Home` / `End`), *önceki* / *sonraki* düğmeleri, adım noktaları ya da zaman çizelgesindeki noktalarla gezilir. **Otomatik oynatma isteğe
-  bağlıdır** (kendiliğinden başlamaz) ve hızı seçilir: *Yavaş / Normal / Hızlı*. Bir adım, altyazısının okunma süresi kadar kalır
-  (2,2 sn + sözcük başına 0,36 sn, en az 4,5 en çok 16 sn; hıza bölünür: 0,65 / 1 / 1,8). Elle adım değiştirmek, görünümü değiştirmek ya da
-  duraklat oynatmayı durdurur; son adımın altyazısı da okunduktan sonra oynatma biter (başa dönmez). Oklar metin kutusunda, ayar
-  listesinde ve kaydırıcılarda kendi işlerini yapar; harita odaktayken de haritayı kaydırmaz.
+**Bir anlatımı iki biçimde izlemek: İzle ve Oku.** Çok sahneli bir anlatım iki görünümde izlenir; ikisi de **aynı sahneyi** paylaşır.
+
+- **İzle** (varsayılan): harita tam ekran kalır; anlatım **sahne sahne, sahnenin içinde de cümle cümle** ilerler. Her sahnenin
+  **altyazısı** haritanın üstünde, soru kutusunun hemen üzerindeki sabit bir yerde durur, altyazı gibi; kutunun yeri sahneden sahneye
+  değişmez. **Altyazının her cümlesi haritada bir vuruştur** (beat): o cümle okunurken haritada ne görüneceğini model seçer (araçlardaki
+  `beat`). Vuruşlar **okuma hızında, kendiliğinden** oynar (cümle başına 1,1 sn + sözcük başına 0,33 sn, en az 2,4, en çok 11 sn; sahnenin
+  ilk cümlesi kamera yerine varsın diye 0,9 sn daha uzun; hıza bölünür: *Yavaş* 0,65 / *Normal* 1 / *Hızlı* 1,8). Oynayan cümle
+  vurgulu (işaretleyici zemin), gelecek cümleler soluk, okunanlar olduğu gibidir. **Bir vuruş bitince okları söner, işaretleri adını
+  bırakıp küçük numaralı bir noktaya (vuruşun numarası) dönüşür;** kamera sahne boyunca yerinde kalır (sahnenin göstereceği her şey, bütün
+  vuruşlarıyla, bir kez, sahnenin başında çerçevelenir). Bütün cümleler oynayınca sahne biter: haritada işaretlerin numaralı noktaları,
+  taraf renkleri ve toprak değişiminin sonucu kalır, ok yoktur. **Oynat** (isteğe bağlı) yalnızca sahne bitince ne olacağını söyler:
+  açıksa kısa bir beklemeden (1,6 sn / hız) sonraki sahne başlar, kapalıysa harita okuru bekler. **Sonraki iki aşamalıdır:** sahne
+  oynarken önce sahnenin *sonunu* gösterir, bir daha basınca sonraki sahneyi başlatır; **Önceki** de öyle: sahne ilerlemişse ya da
+  bitmişse başına sarar, başındaysa bir önceki sahneyi bittiği hâliyle getirir. **Bir cümleye tıklamak** o vuruşu yeniden oynatır
+  (okun çizilişi yeniden başlar) ve oynatmayı orada tutar; *Oynat* tutulan yerden devam ettirir. Sahneler `←/→` (ve `Home` / `End`),
+  düğmeler ya da zaman çizelgesindeki sahne noktalarıyla gezilir; elle gezmek, görünümü değiştirmek ya da *Duraklat* oynatmayı durdurur
+  (cümleler yine kendi sahnelerinde kendiliğinden oynar); son sahnenin sonunda oynatma biter (başa dönmez). Oklar metin kutusunda, ayar
+  listesinde ve kaydırıcılarda kendi işlerini yapar; harita odaktayken de haritayı kaydırmaz. Bir vuruşun ne zaman bittiğine
+  `Pacer` karar verir (`src/ai/presentation.ts`): varsayılanı okuma hızıdır; sesli okuma eklendiğinde cümlenin okunup bittiği an olur
+  (sesli okuma henüz yok).
 - **Oku**: tam metin. **Kapalı**, **yan panel** (≈ 460 px, haritanın üstünde bir katman: harita yine tam ekrandır, çizim panelin
-  altında kalmayacak biçimde görünür kılınır) ya da **tam ekran** olur. Tam ekranda harita sağ üst köşede **küçük bir pencere** olur
-  (≈ 340×236) ve **o anki adımı** gösterir; pencerede yalnızca çizimin kendisi vardır (devlet adları, çizgiler, işaretler; ad
-  etiketleri metnin yanında olduğu için yazılmaz), köşedeki düğmeyle harita yeniden büyür. Metni kaydırmak okuma çizgisindeki adımı etkin
-  yapar ve harita (ya da küçük pencere) ona geçer. Telefonda metin her zaman tam ekrandır ve küçük harita başlığın altındadır.
-- **Geçişte adım korunur.** İzle'de 3. adımdayken *Metni oku*: metin açılır, 3. adım okuma konumundadır ve etkindir; geri dönünce
-  altyazı yine 3. adımındır. Yan panel ↔ tam ekran geçişinde de etkin adım okuma konumunda kalır (metin yeni genişlikte yeniden
-  dizilir). Okuyucu en son kullanılan kipte açılır. `Esc` önce açık olay kartını, sonra tam ekranı yan panele, sonra metni, sonra
+  altında kalmayacak biçimde görünür kılınır) ya da **tam ekran** olur. Okuyucuda hiçbir şey oynamaz: **sahneler bittiği hâliyle**
+  gösterilir (işaretlerin numaralı noktaları, taraf renkleri, toprak sonuçları). Tam ekranda harita sağ üst köşede **küçük bir pencere**
+  olur (≈ 340×236) ve **o anki sahneyi** gösterir; pencerede yalnızca çizimin kendisi vardır (devlet adları, oklar, noktalar; ad etiketleri
+  metnin yanında olduğu için yazılmaz), köşedeki düğmeyle harita yeniden büyür. Metni kaydırmak okuma çizgisindeki sahneyi etkin yapar ve
+  harita (ya da küçük pencere) ona geçer. Telefonda metin her zaman tam ekrandır ve küçük harita başlığın altındadır.
+- **Geçişte sahne korunur.** İzle'de 3. sahnedeyken *Metni oku*: metin açılır, 3. sahne okuma konumundadır ve etkindir (bitmiş hâliyle);
+  geri dönünce altyazı yine 3. sahnenindir. Yan panel ↔ tam ekran geçişinde de etkin sahne okuma konumunda kalır (metin yeni genişlikte
+  yeniden dizilir). Okuyucu en son kullanılan kipte açılır. `Esc` önce açık olay kartını, sonra tam ekranı yan panele, sonra metni, sonra
   ekrandaki yanıtı, en sonda yer seçimini kapatır.
 - **Okurken sorulan soru haritayı arka planda günceller:** yanıt metne eklenir, okuyucu açık kalır ve arkadaki harita (ya da küçük pencere)
-  yeni yanıtın sahnesine geçer.
-- **Zaman cetveli ilerleme çubuğudur** (adımlı bir anlatım ekrandayken): adımlar, **anlatıdaki tarihlerinde** (adımın gösterdiği en
-  erken olayın başladığı gün; olay yoksa adımın yılının ortası) numaralı noktalardır, görülenler dolu, etkin olan işaretli ve
-  ilkinden ona bir çizgi uzanır; bir noktaya tıklamak o adıma götürür ve okurun aralığına ya da imlecine dokunmaz. Tarihsiz adımlar
-  çubukta yoktur. **Noktalar seçili aralığın (fırçanın) içinde kalır, hiçbir zaman dışına yayılmaz.** 1939–1945 cetvelin yaklaşık 40
-  px'idir (cetvel 200 yılı taşır), sekiz nokta 22 px arayla oraya sığmaz; bu yüzden noktalar kendilerine düşen yere göre küçülür (15 px'ten
-  7 px'e; yalnızca ekrandaki noktanın numarası görünür) ve yan yana düşenler tarihlerinin çevresinde en az kayarak (en küçük kareler;
-  `placeStepPoints`, `src/domain/spread.ts`) fırçanın içinde açılır. Ekrandaki nokta tıklanamayan bir işarettir, böylece altında kalan
-  komşuları erişilebilir kalır. Noktalar fırçanın satırını kullandığı için fırçanın kendi aralık yazısı onlar varken gizlenir (aralık,
-  cetvelin yanındaki büyük yazıda durur). Adım noktaları ve zaman cetveli dışında adım gezinmesi İzle'nin düğmelerindedir.
+  yeni yanıtın sahnesine (bittiği hâliyle) geçer.
+- **Zaman çizelgesi ilerleme çubuğudur** (çok sahneli bir anlatım ekrandayken): sahneler, **anlatıdaki tarihlerinde** (sahnenin gösterdiği en
+  erken olayın başladığı gün; olay yoksa yılın ortası) **alttaki yakınlaştırılmış şeritte** (yer çizelgesinin kendisi: seçili aralık sayfanın
+  tam genişliğidir) numaralı noktalardır; üstteki 1800–2000 cetvelinde sahne noktası yoktur (cetvelde 1939–1945 yaklaşık 40 px'tir, sekiz
+  nokta oraya sığmıyordu). Görülenler dolu, etkin olan işaretli ve ilkinden ona bir çizgi uzanır; bir noktaya tıklamak o sahneyi başından
+  başlatır ve okurun aralığına ya da imlecine dokunmaz. Aralığın dışında kalan bir tarih en yakın uca konur; aynı tarihe düşenler en az
+  kayarak açılır (`placeStepPoints`, `src/domain/spread.ts`); bir nokta altındaki yıl yazısını örtecekse o yıl yazısı çizilmez (çentik
+  kalır). Ekrandaki nokta tıklanamayan bir işarettir, böylece altında kalan komşuları erişilebilir kalır. Tarihsiz sahneler çubukta yoktur.
 
-**Her yanıtın bir altyazısı ve bir tam metni vardır.** Her yanıt bir **anlatımdır** ve her adımın bir **başlığı**, bir **kısa altyazısı**
-(bir iki cümle) ve bir **tam metni** vardır. Adımlar **sahnedir**: her adım kendi harita durumunu bildirir. **Kaç sahne olacağı, nasıl
-bölüneceği ve hangi sırayla anlatılacağı modelin kararıdır**; sayfa yalnızca çok yüksek bir sağlık sınırı koyar (60 adım) ve biçimin
-sözleşmesini ister (altyazı + tam metin, olay işaretleri). Yanıtlar adım sayısıyla ayrışır:
+**Her yanıtın bir altyazısı ve bir tam metni vardır.** Her yanıt bir **anlatımdır** ve her **sahnenin** bir **başlığı**, **cümle cümle
+ilerleyen bir altyazısı** (en çok 640 karakter, en çok 12 cümle) ve bir **tam metni** vardır; sahneler **haritanın sahneleridir**: her
+sahne kendi haritasını bildirir ve altyazısının her cümlesi o haritanın bir vuruşudur. **Kaç sahne olacağı, nasıl bölüneceği ve hangi
+sırayla anlatılacağı modelin kararıdır**; sayfa yalnızca çok yüksek bir sağlık sınırı koyar (60 sahne) ve biçimin sözleşmesini ister
+(altyazı + tam metin, olay işaretleri). Yanıtlar sahne sayısıyla ayrışır:
 
-- **Çok adımlı** (bir süreç, bir dönem, birbirine bağlı olaylar): İzle'de adım gezintisi (oklar, düğmeler, oynat/hız) ve zaman cetvelinde
-  adım noktaları vardır.
-- **Tek adımlı** (bir olay, bir kişi, bir kavram, bir neden; yani kısa sorular): **tek sahnelik bir anlatım**dır. İzle'de yalnızca
-  altyazı ve altında **Devamını oku** durur (adım sayacı, oklar, oynat/hız ve cetvelde adım noktası yoktur); *Devamını oku* (ya da
-  *Metni oku*) aynı yanıtın tam metnini Oku'da açar, kapatınca altyazıya dönülür. Metin altyazıdan fazlasını taşımıyorsa
-  (tek kısa cümle) *Devamını oku* da çıkmaz.
+- **Çok sahneli** (bir süreç, bir dönem, birbirine bağlı olaylar): İzle'de sahne gezintisi (oklar, düğmeler, oynat/hız) ve zaman
+  çizelgesinde sahne noktaları vardır.
+- **Tek sahneli** (bir olay, bir kişi, bir kavram, bir neden; yani kısa sorular): **tek sahnelik bir anlatım**dır. İzle'de yalnızca
+  altyazı (cümleleri yine vuruşlardır) ve altında **Devamını oku** durur (sahne sayacı, oklar, oynat/hız ve çizelgede sahne noktası
+  yoktur); *Devamını oku* (ya da *Metni oku*) aynı yanıtın tam metnini Oku'da açar, kapatınca altyazıya dönülür. Metin altyazıdan
+  fazlasını taşımıyorsa (tek kısa cümle) *Devamını oku* da çıkmaz.
 - **Güvenlik ağı: düz metin.** Model biçimi hiç izlemez ve yalnızca düz metin yazarsa sayfa metnin **tamamını altyazıya koymaz**: ilk bir
   iki cümleyi (en çok ~220 karakter; tek uzun cümle bir sözcükten, olay adının ortasından değil, kesilir) altyazı yapar, geri kalanı
-  Oku'ya bırakır ve altyazının altına *Devamını oku* koyar (`captionFromText`, `hasMore`: `src/ai/narration.ts`).
+  Oku'ya bırakır ve altyazının altına *Devamını oku* koyar (`captionFromText`, `hasMore`: `src/ai/narration.ts`). Altyazı cümlelere
+  `sentencesOf` ile bölünür (`src/ai/sentences.ts`: nokta, ünlem ya da soru işaretinden sonra büyük harf, rakam ya da tırnakla başlayan
+  söz yeni cümledir; `[olay adı](olay:kimlik)` bağlantısının içindeki noktalama ile tek büyük harften, Roma rakamından ya da bir iki haneli
+sayıdan sonraki nokta — "I. Süleyman", "6. Ordu", "2. Dünya Savaşı" — cümleyi bölmez).
 
 **İzle, uzun metinler bitmeden başlar.** Model önce, hiç metin yazmadan, adımları ve sahnelerini bildirir; metin sonra akar. Sayfa plan
 gelir gelmez İzle'yi başlatır: ilk adımın altyazısı ve haritası hazırdır, "Metin yazılıyor…" yazar; okur o sırada adımlarda gezebilir
@@ -163,10 +180,11 @@ gelir gelmez İzle'yi başlatır: ilk adımın altyazısı ve haritası hazırd�
 
 **Nasıl çalışır**
 
-- **Her adım haritanın sahibidir:** etkin adım haritada yalnızca kendi çizimlerini gösterir (devlet vurguları, bağlantılar, olay
-  işaretçileri, işaretler, sınır yılı); bir önceki adımın çizimleri gider, geri dönülünce o adımın çizimi aynen gelir. Hiçbir adım ötekinden
-  bir şey devralmaz (yıl dahil: yıl istemeyen adımda yıl okurun kendi imlecidir); bu yüzden model her adımda gereken her şeyi kendisi
-  bildirir ve `clear` diye bir araç yoktur.
+- **Her sahne haritanın sahibidir:** etkin sahne haritada yalnızca kendi gösterimini gösterir (devlet vurguları, oklar, olay
+  işaretleri, işaretler, toprak değişimleri, sınır yılı); bir önceki sahnenin gösterimi gider, geri dönülünce o sahnenin gösterimi aynen
+  gelir. **İstisna renklerdir:** bir `sides` çağrısıyla boyanan taraflar sonraki sahnelerde, yeni bir çağrı onları değiştirene kadar aynı
+  renkte sürer (Almanya 1. sahnede maviyse 8. sahnede de mavidir). Yıl yalnızca sahnenindir: yıl istemeyen sahnede yıl okurun kendi
+  imlecidir. Model bu yüzden her sahnede gereken her şeyi kendisi bildirir ve `clear` diye bir araç yoktur.
 - **Bağlam.** Model her soruyla birlikte seçili yeri (o yıldaki devleti ve aralıktaki egemenlerini), aralığı, haritadaki yılı, açık
   olayı, aralıkta sınır verisinde bulunan devletlerin listesini (kimlik | ad) ve uygulamanın olay kayıtlarını alır. Bağlam bir **yer
   listesidir** ve her yerin kendi aralığı vardır (bugün hepsi seçili aralık; birden çok yer ya da dönem haritaya bir şey
@@ -174,87 +192,120 @@ gelir gelmez İzle'yi başlatır: ilk adımın altyazısı ve haritası hazırd�
   yer ya da aralık değişirse metinde bir **"Bağlam değişti"** ayırıcısı (eski → yeni) çıkar; okur eski konuya dönerse kalkar; model de
   bir sonraki istekte bunu bir cümleyle öğrenir. Yıl imlecini oynatmak ya da bir olay açmak "yeni konu" sayılmaz. Açık olay kartı
   soru kutusunda bağlam olarak görünür ("açık olay, soruya eklenir"); kartta *Bunu sohbette sor* olayı soruya ekler ve kartı kapatır.
-- **Model NEYİ gösterir, uygulama NASIL gösterir.** Haritaya çizim yalnızca araç çağrılarıyla olur ve **yedi araç** vardır; hiçbiri görünüşle
-  ya da kameralı ilgili değildir. Sırası önem sırasıdır (bir görünüm daha az araca izin verirse ilkleri kalır): `step` (adımı bildirir:
-  numara, başlık, altyazı ve isteğe bağlı `year`), `show_event` (verideki bir olayı gösterir), `highlight` (hangi devletlerin öne
-  çıkacağını söyler), `sides` (bir çatışmanın **taraflarını** devlet gruplarıyla tanımlar), `route` (sıralı yerlerden geçen **yönlü
-  bir yol**: sefer, ilerleyiş, göç, ticaret yolu), `connect` (veride olmayan bir ilişki için iki yer arasına savaş / ittifak /
-  ticaret / antlaşma çizgisi) ve `mark` (veride olmayan bir yer için kısa etiketli işaret). `set_year` ve `focus` kalktı: yıl
-  `step`'in parametresidir (olay gösteren adımda gerekmez), bölgeyi uygulama kendisi çerçeveler.
-  - **Olay-merkezli gösterim.** Anlatılan şey verideki bir olaysa model yalnızca *hangi olay* olduğunu söyler (`show_event`); uygulama onu
-    **olayın türüne göre, her seferinde aynı biçimde** çizer (`src/ai/eventKinds.ts`, `src/ai/drawing.ts`): olayın **tarafları** öne çıkar
-    ve olayın **kendi işareti** konur. **Savaşta** (`military`) iki taraf arasındaki çizgi, olayın işaretinin üzerinden geçer ve işaret
-    kâğıt renkli bir halkanın içinde durur: işaret ile çizgi tek şey okunur, aynı savaş her seferinde aynı görünür. Taraflar `parties`'ten
-    gelir: ilk taraf ile ikincisi arasında; ilk ikisi aynı safsa (Dunkirk: Britanya ve Fransa, Almanya'ya karşı; Normandiya
-    Çıkarması; Dresden'in bombalanması) olay kaydındaki isteğe bağlı **`versus`** alanı karşı safı söyler (`public/data/schema/events.schema.json`).
-    Çizgi her safın **ilk sayılan tarafının o yılki başkentinden** çıkar (olay kayıtlarında taraflar olaydaki paylarının sırasıyla yazılır;
-    Normandiya'da Britanya ilk sıradadır, çizgi Londra'dan çıkar), başkent tablosunda olmayan bir devlette olaya en yakın ana parçasının
-    ortasından. (Eskiden çizgi devletin çokgeninin ortasından çıkıyordu; ABD'nin çokgeni 1944'te Grönland'ı da içerdiği için Normandiya
-    çizgisi Grönland'dan başlıyordu.) Bir olay gösteren adımda haritada **olayın başlangıcındaki sınırlar** görünür, sonrasındakiler değil
-    (`Resolver.showYearOf`). Bir yılın sınırları o yılın sonudur: Fransa Üçüncü Cumhuriyeti veride 1939'da biter, bu yüzden 10 Mayıs 1940'ta
-    başlayan Fransa Muharebesi 1940'ın sınırlarında Fransa'sız kalır ve savaş çizgisi (taraflarından ilk sayılanda olduğu gibi) Britanya'ya
-    düşerdi. Kural: olayın yılı; ama olayın **ana taraflarından** (veride ilk ikisi ve savaşta her safın ilki) birinin önceki yılda sınırı
-    varken o yılda yoksa, o taraf yıl içinde bitmiş demektir ve olay başladığında oradaydı: bir önceki yıl gösterilir (Fransa Muharebesi,
-    Dunkirk, Paris'in işgali, Compiègne, Anschluss, Çekoslovakya'nın işgali). Olay bir tarafın sonu olduysa ve hiçbir yılda tarafları
-    yoksa en çok üç yıl geriye bakılır (Yugoslavya ve Yunanistan 1941, Waterloo 1815); savaş yine çizilir. Okurun gezdiği yıl değişmez.
+- **Model NEYİ gösterir, uygulama NASIL gösterir: sabit bir görsel dil.** Haritaya çizim yalnızca araç çağrılarıyla olur ve **yedi araç**
+  vardır; hiçbiri görünüşle ya da kameralı ilgili değildir. Sırası önem sırasıdır (bir görünüm daha az araca izin verirse ilkleri kalır):
+  `step` (sahneyi bildirir: numara, başlık, altyazı ve isteğe bağlı `year`), `show_event` (verideki bir olayı işaretiyle gösterir),
+  `highlight` (hangi devletlere işaret edileceğini söyler), `sides` (kim kimin tarafında), `route` (sıralı yerlerden geçen **yönlü ok**),
+  `territory_change` (bir devletin iki yıl arasında kazandığı ve kaybettiği toprak) ve `mark` (veride olmayan bir yer için kısa etiketli
+  nokta). Her çizim aracı **`beat`** alır: altyazının kaçıncı cümlesi okunurken göründüğü (1'den başlar; verilmezse 1). `set_year`,
+  `focus` ve `connect` kalktı: yıl `step`'in parametresidir, bölgeyi uygulama kendisi çerçeveler, iki yer arasına çizgi çekilmez.
+  **Her biçimin tek bir anlamı vardır ve bunu uygulama sahiplenir** (model bir görünüş seçmez; aynı şey her seferinde aynı görünür):
+
+  | Biçim | Anlamı | Araç |
+  |---|---|---|
+  | **Alan** (dolgu) | toprak, denetim | `sides` (taraf boyaması), `territory_change` (kazanılan ve kaybedilen alan); `highlight` alanı boyamaz, yalnızca **işaret eder** (kendi renginde belirginleşir, çevresi çizilir) |
+  | **Ok** | gerçek bir hareket: ilerleyiş, geri çekilme, göç, ticaret | `route` |
+  | **Nokta** | bir yer ya da olay | `show_event`, `mark` |
+  | **Tarama** | işgal ya da belirsizlik | tarafsız ya da tarafı belirsiz devletler (`sides`'ın `neutral`'ı), `territory_change`'in kaybedilen alanı |
+
+  **Olaydan başkente, ya da iki taraf arasında hiçbir çizgi yoktur.** Önceki sürüm her savaş olayına iki başkent arasında bir çizgi
+  çiziyor ve `connect` ile ilişki çizgileri ekleniyordu; çizgiler hareket gibi okunuyor, aynı haritada hem çizgi hem ok olunca "çok çizgi"
+  yüzünden harita karışıyordu. Şimdi çizgi yalnızca bir hareketi gösterir ve onu model `route` ile söyler.
+  - **Vuruşlar ve ömürleri.** Bir aracın `beat`i, çizimin hangi cümle oynarken göründüğünü söyler. **Ok** yalnızca kendi vuruşu oynarken
+    görünür ve vuruş bitince solar (hareket serbestken 0,5 sn; "hareketi azalt"ta hemen kalkar); **olay işareti ve `mark`** kendi vuruşunda
+    tam işarettir (olayın yılı, işaretin adı), sonra **vuruşun numarasını taşıyan küçük bir nokta** olur ve sahnenin sonuna kadar öyle
+    kalır (üstüne gelince adı yine görünür); **`highlight`** kendi vuruşunda belirgindir ve söner; **renkler** (`sides`) ve **toprak
+    değişimleri** sonraki vuruşlarda kalır. Sahne bitince yalnızca bunların kalıcı hâli vardır. Bir sahne bittikten sonra geri dönmek
+    sahneyi bittiği hâliyle getirir; sahneyi başa sarmak vuruşları yeniden oynatır.
+  - **Olay-merkezli gösterim.** Anlatılan şey verideki bir olaysa model yalnızca *hangi olay* olduğunu söyler (`show_event`); uygulama
+    olayın **kendi işaretini** koyar (`src/ai/drawing.ts`, `src/map/markers.ts`). Olayın tarafları kendiliğinden öne çıkarılmaz ve çizgi
+    çekilmez: hangi devletlerin boyanacağını ya da işaret edileceğini model `sides` / `highlight` ile söyler. Bir olay gösteren sahnede
+    haritada **olayın başlangıcındaki sınırlar** görünür, sonrasındakiler değil (`Resolver.showYearOf`). Bir yılın sınırları o yılın
+    sonudur: Fransa Üçüncü Cumhuriyeti veride 1939'da biter, bu yüzden 10 Mayıs 1940'ta başlayan Fransa Muharebesi 1940'ın sınırlarında
+    Fransa'sız kalırdı. Kural: olayın yılı; ama olayın **ana taraflarından** (veride ilk ikisi ve savaşta her safın ilki) birinin önceki
+    yılda sınırı varken o yılda yoksa, o taraf yıl içinde bitmiş demektir ve olay başladığında oradaydı: bir önceki yıl gösterilir
+    (Fransa Muharebesi, Dunkirk, Paris'in işgali, Compiègne, Anschluss, Çekoslovakya'nın işgali). Olay bir tarafın sonu olduysa ve hiçbir
+    yılda tarafları yoksa en çok üç yıl geriye bakılır (Yugoslavya ve Yunanistan 1941, Waterloo 1815). Bir **toprak değişimi** olan
+    sahne `from` yılının sınırlarıyla açılır ve değişimin vuruşunda `to` yılına geçer (aşağıya bakın). Okurun gezdiği yıl değişmez.
     (Nazi Almanyası'nın satırları Cliopatria'da 1944'te biter; küçük düzeltme katmanı 1945'i de ekler, bu yüzden Berlin Muharebesi 1945
-    sınırlarıyla görünür.) Zaman cetvelindeki adım noktası ise adımın **anlatıdaki tarihindedir** (Fransa Muharebesi için Mayıs 1940),
-    sınırların yılında değil. Savaş olmayan türler (siyaset, ekonomi,
-    toplum, kültür, afet) tarafları öne çıkarır ve işaretini koyar. Modelin kendi `connect`'i olayın zaten çizilen savaş çizgisiyle aynı
-    iki devleti bağlıyorsa ikinci kez çizilmez.
-  - **Çizgilerin uçları ve yolların durakları YERLERDİR, devletlerin ortası değil.** `connect`in iki ucu ve `route`un her durağı bir
-    *yer*dir: (1) bir **şehir** (adıyla; eski ve yerel adlar da aynı noktaya çözülür: "Stalingrad", "Danzig", "Königsberg", "Peking"),
-    (2) uygulamanın **olay kayıtlarından** birinin yeri (olay kimliği), (3) bir **koordinat** ("52.23, 21.01"), ya da (4) bir **devlet**:
-    o zaman gösterilen yılın **başkenti** kullanılır (`src/data/capitals.ts`; tabloda olmayan devlette diğer uca en yakın ana parçasının
-    ortası, bu da yoksa ana parçasının ortası). Bir şehir adı birden çok yere uyuyorsa en tanınmış olan seçilir (başkent, sonra nüfus;
-    `src/data/places.ts`); tanınmayan bir yer **sessizce atlanır** (modele "atlandı" denir) ve yanlış bir çizgi çizilmez. O yılda sınırı
-    olmayan bir devlet durak olamaz.
-  - **`route`: yönlü yol.** `via` en az iki, en çok sekiz yer, **sırayla**; `type` dört türden biridir ve her tür hep aynı görünür
+    sınırlarıyla görünür.) Zaman çizelgesindeki sahne noktası ise sahnenin **anlatıdaki tarihindedir** (Fransa Muharebesi için Mayıs
+    1940), sınırların yılında değil. Model verideki bir olayı `mark` ile çizerse (aynı yer adı ya da olay adı, olayın yerine ≤ 60 km,
+    aralıkta tek eşleşme) sayfa onu olay olarak gösterir ve modele bunu söyler.
+  - **Okların uçları ve durakları YERLERDİR.** `route`un her durağı bir *yer*dir: (1) bir **şehir** (adıyla; eski ve yerel adlar da aynı
+    noktaya çözülür: "Stalingrad", "Danzig", "Königsberg", "Peking"), (2) uygulamanın **olay kayıtlarından** birinin yeri (olay kimliği),
+    (3) bir **koordinat** ("52.23, 21.01"), (4) bir **devlet**: o zaman gösterilen yılın **başkenti** (`src/data/capitals.ts`), ya da
+    (5) **bir devletin sınırı, bir yere doğru**: `"sınır: nazi-germany → Varşova"` (ayraç `→`, `->`, `=>`, `>`, `;`, `,` ya da
+    `toward`/`doğru`/`yönünde` olabilir). Beşincisi, bir ordunun başkentten değil **cepheden** çıkmasını sağlar: ok, devletin o yılki
+    sınırının yere en yakın noktasından başlar (`Resolver.borderPoint`; boylam ölçeklenmiş uzaklık, tarih değişim çizgisinde kısa yoldan).
+    Bir şehir adı birden çok yere uyuyorsa en tanınmış olan seçilir (başkent, sonra nüfus; `src/data/places.ts`); tanınmayan bir yer
+    **sessizce atlanır** (modele "atlandı" denir) ve yanlış bir ok çizilmez. O yılda sınırı olmayan bir devlet durak olamaz.
+  - **`route`: yönlü ok.** `via` en az iki, en çok sekiz yer, **sırayla**; `type` dört türden biridir ve her tür hep aynı görünür
     (`src/styles/ai.css`): **ilerleyiş / sefer** (`advance`, kalın düz çizgi, dolu ok), **geri çekilme** (`retreat`, kesikli çizgi, açık
-    ok), **göç / sürgün** (`migration`, noktalı çizgi), **ticaret / ikmal yolu** (`trade`, nokta-çizgi). Yol iki yer arasında hafif bir
-    yay, daha çoksa duraklardan geçen yumuşak bir eğridir (Catmull-Rom → kübik Bézier, `routePath`) ve ucu hep okludur; çizgi okun
-    ucundan 9 px önce biter. Model yolun **çizilerek belirip belirmeyeceğine** (`animate: true`) karar verir; "hareketi azalt" isteyen
-    okurda hiçbir zaman canlandırılmaz. Etiket yolun üstünde kayarak boş bir yer bulur.
-  - **`sides`: kim kiminle.** Bir çatışmanın 2–3 tarafı, her biri `{name, polities}` ile bildirilir (örn. Mihver / Müttefikler). Uygulama her
-    tarafı **tek bir blok olarak, birbirinden belirgin tek renkle** boyar (`--side-0..2`: şarap kırmızısı, kehribar, yeşil; renk görme
-    farklılıklarında da ayrışır, `tests/palette.test.ts`) ve tarafların adını renkleriyle anlatım kutusunda gösterir (kutu: İzle'de altyazının
-    altı). Sırası adımın tarafları olduğu için bir taraf o yıl haritadan çıksa bile diğerlerinin rengi değişmez. Tarafların devletleri
-    zaten öne çıkar; taraf bildirilmemişse öne çıkan her devlet eskisi gibi kendi renginde kalır. Bir devlet tek tarafta olur.
-  - **Spot ışığı.** Bir adımda öne çıkan devletler (modelin `highlight`'ı + gösterilen olayların tarafları + kendi çizgilerinin uçları)
-    **dolgun ve canlı** çizilir: kendi renklerinin canlı ikizi (`--vivid-N`; aynı ton, daha koyu ve doygun), kâğıt rengi bir kenar ve mürekkep
-    çerçeve; haritanın geri kalanı **soluk**tur (üstüne %62 kâğıt rengi bir örtü; *bulanıklık yok*, yalnızca daha az renk) ve öne
-    çıkmayan devlet adları da soluklaşır. Önceki tarama kalktı. Örtü yalnızca bir şey öne çıkarılmışken vardır.
+    ok), **göç / sürgün** (`migration`, noktalı çizgi), **ticaret / ikmal yolu** (`trade`, nokta-çizgi). Ok iki yer arasında hafif bir yay,
+    daha çoksa duraklardan geçen yumuşak bir eğridir (Catmull-Rom → kübik Bézier, `routePath`) ve ucu hep okludur; çizgi okun ucundan 9 px
+    önce biter. Model okun **çizilerek belirip belirmeyeceğine** (`animate`) karar verir; "hareketi azalt" isteyen okurda hiçbir zaman
+    canlandırılmaz. Etiket okun üstünde kayarak boş bir yer bulur.
+  - **`sides`: ilişki kipi.** Model yalnızca *kim kimin tarafında* olduğunu söyler: en çok **üç taraf** (`{name, polities}`) ve
+    tarafsız ya da tarafı belirsiz devletler (`neutral`). Uygulama haritayı **anlatımın odağına göre** boyar (`src/ai/actors.ts`): odak
+    tarafı (seçili yerin devletinin tarafı; yoksa ilk taraf) **mavi** (`--side-focus`), karşıt taraflar **kehribar** (`--side-foe-1`) ve
+    **şarap kırmızısı** (`--side-foe-2`), tarafsızlar **taramalı** bej (`--side-neutral`). **Karşıt iki taraf asla aynı rengi paylaşmaz**
+    (bir tarafın rengi adıyla ya da devletleriyle hatırlanır; yeni bir taraf boş bir karşıt renk alır; odak daha önce boyandıysa ve şimdiki
+    taraflar arasında değilse hiçbiri odağın rengini almaz); **renk aktöre aittir ve anlatım boyunca aynı kalır**, bir devlet taraf
+    değiştirirse yeni tarafın rengini alır ("Britanya ve Fransa savaş ilan etti": o beat'te iki devlet karşıt renge geçer, aralarına çizgi
+    çizilmez). Çağrıda adı geçen boyanır, geçmeyen solar; çağrı yeni bir çağrı gelene kadar sonraki vuruşlarda ve sahnelerde sürer. Tarafların
+    adları renkleriyle **altyazının altında** durur (tarafsızlar "Tarafsız ya da belirsiz" adıyla). Anlatımda hiç `sides` çağrısı yoksa harita
+    boyanmaz.
+  - **`territory_change`: değişim hep görünür.** Model yalnızca *hangi devlet, hangi iki yıl* arasını söyler (`polity`, `from`, `to`);
+    uygulama iki yılın sınır verisini karşılaştırır (`src/domain/territory.ts`: Mercator ızgarasında devletin iki yıldaki alanını
+    rasterleştirip farkı bulur) ve **kazanılan alanı devletin renginde dolgu, kaybedilen alanı taramalı** gösterir (`src/map/territoryLayer.ts`;
+    görünür bölge ve kameranın gideceği bölge içinde, az sayıda uzak serpinti hücresi atılır); vuruş bitince harita `to` yılının sınırlarını
+    gösterir. Sınırlar hiçbir zaman **sessizce** değişmez: bir sahne ya da vuruş yılı değiştirdiğinde (bir toprak değişimiyle ya da `step`in
+    `year`'ıyla) görünümdeki el değiştiren toprak (yıl farkı ≤ 25, görünümdeki karanın %50'sinden azı) bir an taramayla işaret edilir
+    (`MapView.flashYears`); hareketi azalt ayarında vurgu sabittir ve birkaç saniye sonra kalkar. **Bilinen sınır:** sınır verisi
+    yıllıktır, aynı yıl içindeki değişiklikler ayrılamaz (Anschluss ile Sudetenland ikisi de 1938'dir; Eylül 1939'daki iki işgal de).
+  - **Örtü ve renkler.** Bir şey boyanmış ya da işaret edilmişken haritanın geri kalanı soluktur (üstüne %62 kâğıt rengi bir örtü;
+    *bulanıklık yok*) ve vurgulanmayan devlet adları da soluklaşır; işaret edilen devlet kâğıt rengi bir kenar ve mürekkep çerçeveyle örtünün
+    üstüne çıkar. **Deniz tek düz açık mavidir** (`--sea`, degrade yok); **mavi serbesttir**: odak tarafının rengi mavidir ve devlet
+    tonlarından biri (`--tint-5`) de mavimsidir (önceki sürümde mavi yalnızca denize aitti; renkler anlam değiştiriyordu).
   - **Olay işaretleri metinde.** Altyazıda ve metinde verideki bir olaydan söz edilince model adını `[olay adı](olay:KİMLİK)` biçiminde
     yazar; sayfa onu altı noktalı çizgili bir bağlantıya çevirir (`src/ui/read/segments.ts`). Tıklamak, çizelgedeki olaya tıklamakla
     **aynı şeyi** yapar (olay kartı açılır, görünüm dışındaysa harita yalnızca gerektiği kadar uzaklaşır; ikinci tıklama kapatır).
     Verideki bir olaya çözülmeyen kimlik düz metin kalır; yazılırken yarım kalmış bir bağlantı gösterilmez. Haritadaki olay işaretlerinin
-    yanında **ad kutusu yoktur**: ad, işaretin üstüne gelince görünür (açık olayın kendi adı hariç).
+    yanında **ad kutusu yoktur**: ad, işaretin (ya da numaralı noktanın) üstüne gelince görünür (açık olayın kendi adı hariç).
+  - **"Bu yerin tarihini anlat" düğmesi** modele **hem seçilen noktayı hem o yılın sınırlarında noktayı içeren devleti** söyler ("Seçtiğim
+    yer: 10.00°D, 53.50°K; 1942 sınırlarında bu noktayı içeren devlet: Nazi Almanyası"; işgal altındaki bir toprak çizilen devletle birlikte
+    gerçek durumunu da söyler) ve ikisinden hangisini anlatacağını söylemez: hikâyenin ne kadarının noktanın, ne kadarının devletin
+    olduğuna model karar verir (`narrationRequest`, `src/ai/prompt.ts`).
   - Modelin yazdığı her başvuru verideki bir şeye çözülmek zorundadır (devlet kimliği ya da adı, olay kimliği ya da adı, haritanın
-    içinde bir koordinat, aralığın içinde bir yıl); çözülmeyen çizim **sessizce atlanır** (yalnızca modele "atlandı" denir). Model
-    verideki bir olayı `mark` ile çizerse (aynı yer adı ya da olay adı, olayın yerine ≤ 60 km, aralıkta tek eşleşme) sayfa onu olay
-    olarak gösterir ve modele bunu söyler.
+    içinde bir koordinat, aralığın içinde bir yıl); çözülmeyen çizim **sessizce atlanır** (yalnızca modele "atlandı" denir).
 - **Haritada tek anlatıcı.** Bir anda yalnızca biri anlatır: ekranda bir yanıt varsa yapay zekâ, yoksa ve bir yer seçiliyse yer, ikisi de
   yoksa dünya olayları. Anlatıcı varken **dünya olayları haritadan çekilir** (hepsi yer çizelgesinde ve kartın *Aynı sırada, başka yerlerde* listesinde durur; sol alttaki not "Yer seçili · dünya olayları
   haritadan çekildi, seçimi kaldırınca döner", yapay zekâ anlatırken "N olay haritada · gerisi yanıt kapanınca döner" (yerle birlikte
   "gerisi çizelgede") der). Açık olay her zaman haritadadır; yapay
   zekâ bir olaydan söz ederse onun işareti de gelir. Yanıt kapanınca (✕ ya da `Esc`) çizim kalkar ve seçili yer yoksa olaylar geri gelir.
-- **Kamera: Harita takibi.** Açıkken (varsayılan) her adım etkin olduğunda harita o adımın çizimlerini **görünür kılar**: sahnenin
-  yerleri (olay işaretleri, savaş çizgisinin uçları, yolların durakları, çizgi uçları, işaretler) ve öne çıkan devletlerin o yerlerin
-  çevresine uzanan parçaları birlikte, gerektiği kadar kayarak *ve* yakınlaşıp uzaklaşarak,
-  yumuşakça (0,8–2,4 sn), haritanın üstündeki her şeyin (bilgi kartı, altyazı ya da kısa yanıt, soru kutusu, okuyucu paneli, yakınlaştırma
-  düğmeleri) altında kalmadan (`MapView.frameTarget`, `domain/camera.ts`; ekranın dibi daha çok yer ayırabilir, çünkü altyazı ve soru kutusu
-  oradadır). Kısa bir yanıt metninin büyüyebileceği yer baştan ayrılır, böylece harita tek kez çerçevelenir. Çizim zaten iyi çerçevedeyse
-  harita oynamaz. Hiçbir araç kamerayı oynatmaz; **kamera sayfanın işidir**: adımın gösterdiği her yer ve öne çıkan devletlerin o
-  yerlerin çevresindeki parçaları, altyazının ve soru kutusunun (ve ötekilerin) kapladığı yerin **üstündeki** görünür alana
-  sığdırılır; `npm run e2e:ai` bunu her adımda ölçer.
+- **Kamera: Harita takibi.** Açıkken (varsayılan) her sahne etkin olduğunda harita o sahnenin gösterimini **bir kez, sahnenin başında**
+  **görünür kılar**: sahnenin yerleri (olay işaretleri, okların durakları, işaretler) ve işaret edilen, boyanan ya da toprağı değişen
+  devletlerin o yerlerin çevresine uzanan parçaları, **bütün vuruşlarıyla birlikte**, gerektiği kadar kayarak *ve* yakınlaşıp
+  uzaklaşarak, yumuşakça (0,8–2,4 sn), haritanın üstündeki her şeyin (bilgi kartı, altyazı ya da kısa yanıt, soru kutusu, okuyucu paneli,
+  yakınlaştırma düğmeleri) altında kalmadan (`MapView.frameTarget`, `domain/camera.ts`; ekranın dibi daha çok yer ayırabilir, çünkü
+  altyazı ve soru kutusu oradadır). **Vuruşlar sürerken kamera oynamaz** (sahneyi baştan her şeyi içine alacak biçimde çerçevelemek,
+  bir vuruştan ötekine kaymaktan daha sakindir); sahne değişince yeni sahneye gider. Kısa bir yanıt metninin büyüyebileceği yer baştan
+  ayrılır, böylece harita tek kez çerçevelenir. Çizim zaten iyi çerçevedeyse harita oynamaz. Hiçbir araç kamerayı oynatmaz; **kamera
+  sayfanın işidir**; `npm run e2e:ai` bunu her sahnede ve her vuruşta ölçer.
   **Bir devletin hangi parçası?** Bütün toprağı değil, sahneyle ilgili parçası: sahnenin yerlerinin kutusu üçte bir kadar (en az 6° × 4°)
   büyütülür (`surroundings`, `src/domain/camera.ts`) ve devletin bu bölgeye uzanan parçaları, bölgenin kenarında kesilerek kadraja
   girer (`Resolver.boundsAt(kimlik, yıl, çevre)`). Sömürgeler, ada grupları, dışarıda kalmış parçalar ve kıtalar boyu uzanan bir toprağın
-  uzak ucu bakışı germez: Normandiya 1944'te ABD sahnededir ama toprağından hiçbir parça bölgede olmadığı için kadraja bir şey katmaz
+  uzak ucu bakışı germez: Normandiya 1944'te ABD vurgulanır ama toprağından hiçbir parça bölgede olmadığı için kadraja bir şey katmaz
   (eskiden Alaska ve Grönland yüzünden dünya görünümüne uzaklaşıyordu); Fransa Muharebesi'nde Fransa ile Birleşik Krallık'ın Guyana'sı,
-  Aden'i ya da Filistin'i değil, Batı Avrupa'daki toprakları görünür. Sahnede hiç yer yoksa (adım yalnızca devletleri öne çıkarıyorsa)
-  devletin **gövdesi** çerçevelenir: en büyük parçası ve ona bitişik (3° içindeki) parçalar. Çizilen bir çizgi görünmek zorunda
-  olduğundan uzak devletlerin savaşı (Pearl Harbor: Washington–Tokyo) yine dünyayı gösterir.
+  Aden'i ya da Filistin'i değil, Batı Avrupa'daki toprakları görünür. Sahnede hiç yer yoksa (sahne yalnızca devletleri işaret ediyorsa)
+  devletin **gövdesi** çerçevelenir: en büyük parçası ve ona bitişik (3° içindeki) parçalar.
+  **Tarih değişim çizgisi.** Bir ok ya da çerçeve 180° boylamını aşıyorsa kısa yol seçilir: Tokyo'dan Pearl Harbor'a ok Pasifik'i 62°'lik
+  yoldan geçer (298°'lik değil; `unwrapPath`, `narrowestArc`: `src/domain/antimeridian.ts`) ve kamera bu yola göre çerçeveler. Haritanın
+  doğu ve batı sınırı ±179,9° olduğu için, böyle bir sahne **geçici olarak dünyayı iki kez gösterir** (`setRenderWorldCopies(true)` ve
+  ±359,9° sınırı; oklar ve işaretler kopyalarda da çizilir: `src/map/projection.ts`); okur haritayı normal dünyaya
+  getirdiği anda (görünüm ±179,9° içine girince) normal harita geri gelir. Bilinen sınır: geniş görünüm yalnızca tarih değişim çizgisini
+  aşan sahnelerde açılır ve okur haritayı kendisi normal dünyaya getirene kadar sürer (görünüm çizginin üstündeyken kapatmak MapLibre'ın
+  merkezi sıçratmasına yol açar); o sırada okur çizginin ötesine kaydırabilir ve harita dünyayı iki kez gösterir.
   Okurun **küçük** hareketleri takibi kapatmaz: haritanın kısa kenarının üçte birinden az kaydırma, bir kez `+`/`−`. **Önemli** bir harekette
   (üçte bir ya da daha çok kaydırma, ya da `+/−` ile bir buçuk düzeyden çok; hareketler sayfanın bıraktığı kameradan itibaren toplanır)
   haritanın üstünde küçük bir soru çıkar: *Haritayı kendiniz gezdiniz. Adımlar haritayı izlemeyi bıraksın mı?* (*Bıraksın* / *İzlemeye
@@ -265,12 +316,11 @@ gelir gelmez İzle'yi başlatır: ilk adımın altyazısı ve haritası hazırd�
   kendi imlecinin üstüne biner (imleç değişmez); okur imleci ya da aralığı oynatırsa bir sonraki adıma kadar kendi yılı geçerlidir. Tam
   ekran okuyucunun küçük penceresinde etkin adım her zaman görünür kılınır; takip kapalıysa pencereden çıkınca kamera okurun bıraktığı
   yere döner.
-- **Etiketler birbirini örtmez.** Yapay zekâ etiketleri (bağlantı adı, serbest işaret adı) işaretçileri, yer noktasını,
-  haritanın kontrollerini, kendi çizimlerinin simgelerini ve devlet adlarını engel sayarak yerleşir (`src/map/flags.ts`): önce
-  noktasının dört yanını, sonra daha uzak yerleri (köşeler, bir bağlantı için çizgisi boyunca kayma, sonunda biraz daha açıkta) dener;
-  hiçbir boş yer yoksa altındaki devlet adı çekilir (vurgulananların adı çekilmez: onlar işaretçiden, olabildiğince az kayarak uzaklaşır).
-  Bağlantı simgesi (×, ◇…) de bir işaretçinin altında kalmaz, çizgisi boyunca kayar. `npm run e2e:ai` bunu sayfada ölçer (her adım, üç
-  kamera, iki ekran boyu).
+- **Etiketler birbirini örtmez.** Yapay zekâ etiketleri (okun etiketi, serbest işaretin adı) işaretçileri, numaralı noktaları, yer noktasını,
+  haritanın kontrollerini ve devlet adlarını engel sayarak yerleşir (`src/map/flags.ts`): önce noktasının dört yanını, sonra daha uzak
+  yerleri (köşeler, bir ok için çizgisi boyunca kayma, sonunda biraz daha açıkta) dener; hiçbir boş yer yoksa altındaki devlet adı çekilir
+  (işaret edilenlerin adı çekilmez: onlar işaretçiden, olabildiğince az kayarak uzaklaşır). Numaralı noktalar adsızdır ve küçüktür. `npm run
+  e2e:ai` bunu sayfada ölçer (her sahnenin ok oynayan vuruşları, son vuruşları ve sonu, üç kamera, iki ekran boyu).
 
 **Model: `sample` yeteneği, anahtar yok.** Uygulama bir Claude artifact'ı olarak yayınlanır ve artifact çalışma zamanının `sample`
 yeteneğini (`const sample = await claude.use("sample")`) kullanır: çağrı **okurun kendi Claude hesabına** gider, ilk çağrıda okurdan
@@ -317,6 +367,9 @@ eklenecek. Aşağıdaki liste, gerekirse geri getirilebilsin diye **kaldırılan
 | Araç açıklamaları | hepsi yeniden yazıldı (ne yapar, ne ister, ne döndürür). Kalkan emirler: `step` "her adım için bir kez, ilk turda çağır; olay gösteriyorsan yıl verme"; `show_event` "listede olay varsa her zaman bunu kullan"; `highlight`, `sides`, `connect`, `mark` "yalnızca …için kullan" kuralları; `route` "olaylar arasındaki yolu anlatırken kullan", `animate` "yalnızca yönü vurgulamak istediğinde ver"; `mark` "koordinatı iyi bilmiyorsan çağırma"; `mark` ve `connect`'in dönüş iletilerindeki "show_event kullan" yönlendirmesi |
 | Bağlam (isteğin altı) | "Seçili yer yok: yanıt dünya geneli ve seçili aralık için olsun" (şimdi bir olgu); işgal satırındaki "anlatırken işgalcinin toprağı gibi değil, işgal altındaki … olarak anlat" (olgu kaldı); `TEKRAR` notundaki "aynısını baştan yazma, atıf yap, neyi farklı yapacağını söyle" (olgu kaldı) |
 | Sınır | adım sınırı 12 → 60 (yalnızca sağlık sınırı; `LIMITS.steps`) |
+| Yönerge dosyası, "Biçim" (görsel dil turu) | "Her sahnenin kısa bir altyazısı (kullanıcı haritayı izlerken okur, bir iki cümle) ve tam bir metni (okuma görünümünde okunur) vardır. Altyazı metnin özüdür." yerine sahibin cümlesi geldi: sahnenin kısa başlığı, **cümle cümle ilerleyen** altyazısı ve tam metni; "altyazının her cümlesi haritada bir vuruştur: o cümle okunurken haritada ne görüneceğini sen seçersin". Dosyanın başka hiçbir yeri değişmedi |
+| Araç açıklamaları (görsel dil turu) | `connect` kalktı (iki yer arasına ilişki çizgisi çekmek); `show_event`in "olayın taraflarını öne çıkarır, savaşsa iki taraf arasına çizgi çizer" kısmı kalktı (artık yalnızca olayın işaretini gösterir); açıklamalar vuruşlar için yeniden yazıldı (her çizim aracı `beat` alır, ok vuruş bitince söner, işaret numaralı noktaya döner). **İlke aynı:** bir açıklama aracın ne yaptığını, ne istediğini ve ne döndürdüğünü söyler; ne zaman kullanılacağını söylemez (`tests/ai-tools.test.ts`) |
+| Sayfa notları (görsel dil turu) | savaş çizgisi ve `connect` sözleri; notlar şimdi vuruşları, bir vuruş bitince ne kaldığını ve görsel dilin dört anlamını (alan = toprak/denetim, ok = hareket, nokta = yer/olay, tarama = işgal/belirsizlik) söyler; *nasıl kurulacağını* söylemez |
 
 **Modelin yönergeleri ayrı bir düz metin dosyasıdır: [`instructions/okuma-arkadasi.txt`](instructions/okuma-arkadasi.txt).** Siz düzenlersiniz;
 uygulama onu **her çağrıda, olduğu gibi** gönderir (baştaki kullanıcı turunun başı; arkasına sayfanın kendi "UYGULAMA NOTLARI"
@@ -348,12 +401,17 @@ ya da `tools_unavailable` gelirse) aynı soru yalnızca metin olarak sorulur (he
 **Claude olmayan yerde: deneme kipi.** `claude.use("sample")` boş dönerse (yerel geliştirme, kaydedilmiş dosya, başka bir ev sahibi)
 sohbet **komut dosyalı bir sağlayıcıya** düşer ve bunu açıkça yazar (soru kutusunun üstünde "Deneme kipi"). Komut dosyalı sağlayıcı gerçek
 bir çağrının yaptığını yapar: düşünür, birinci turdaki araç çağrılarını gerçekten çalıştırır, metni parça parça akıtır. Almanya'nın savaşı
-(Nazi Almanyası'ndan bir yer, aralık 1941–1944'ü kapsıyorsa: 8 adım; dördüncü adımda iki taraf (`sides`) ve Brest-Litovsk'tan
-Moskova'ya bir ilerleyiş yolu (`route`, canlandırılır), yedincide Alman geri çekilişi yolu), Stalingrad sorusu (tek adım), Almanya–İtalya
-ittifakı sorusu (tek adım, veride olmayan bir ilişki: Berlin ile Roma arasında `connect`), Mihver ve Müttefikler sorusu (tek adım,
-`sides`), batıdan iki sahne (tek adım: "Fransa 1940" → Fransa Muharebesi, 1939'un sınırlarında, çizgisi Berlin–Paris; "Normandiya" →
-çıkarma, ABD sahnede ama kadraj Batı Avrupa), **düz metin** yanıtı (biçimi izlemeyen bir model: güvenlik ağını sınamak için; soruda "düz
-metin" geçerse) ve açık olay sorusu için hazır yanıtları vardır; geri kalan her yer ve aralık için yanıtı uygulamanın kendi
+(Nazi Almanyası'ndan bir yer, aralık 1941–1944'ü kapsıyorsa: 8 sahne. İlk sahne, "Savaş başlıyor", dört cümle ve dört vuruştur: Molotov–Ribbentrop
+Paktı Moskova'da bir olay işaretiyle gösterilir ve taraflar boyanır (Almanya mavi, Polonya karşıt renk; Sovyetler, Britanya ve Fransa tarafsız,
+taramalı); Alman ordusu Polonya'ya **Almanya'nın sınırından çıkan iki kısa okla** girer; Britanya ve Fransa savaş ilan eder (çizgi yok:
+ikisi Polonya'nın rengine geçer); Kızıl Ordu doğu sınırından girer ve Sovyetler Birliği'nin 1939'dan 1940'a kazandığı toprak vurgulanır
+(`territory_change`); 1940'ın sınırlarında Polonya'nın toprağı Almanya'nın mavisi ile Sovyetler'in şarap kırmızısı arasında bölünmüş görünür. Dördüncü sahnede iki taraf (`sides`: Mihver ve ortakları / Sovyetler Birliği) ve
+cepheden Minsk ile Smolensk üzerinden Moskova'ya bir ilerleyiş oku, yedincide Alman geri çekilişi oku, sekizincide Almanya'nın 1944'ten
+1945'e yitirdiği toprak), Stalingrad sorusu (tek sahne, iki cümle), Almanya–İtalya ittifakı sorusu (iki cümle: Çelik Pakt tek taraf olarak
+boyanır, ikincisinde Üçlü Pakt'ın işareti gelir ve Japonya aynı tarafa katılır; aralarında çizgi çizilmez), Mihver ve Müttefikler sorusu
+(iki taraf; ikinci cümlede kenarda kalanlar taramalı), batıdan iki sahne ("Fransa 1940" → Fransa Muharebesi, 1939'un sınırlarında;
+"Normandiya" → çıkarma, ABD vurgulanır ama kadraj Batı Avrupa), **düz metin** yanıtı (biçimi izlemeyen bir model: güvenlik ağını sınamak için;
+soruda "düz metin" geçerse) ve açık olay sorusu için hazır yanıtları vardır; geri kalan her yer ve aralık için yanıtı uygulamanın kendi
 verisinden (yerin egemenleri, olay kayıtları) üretir. Soru metnine `[hata:rate_limited]` gibi bir işaret eklemek hata ekranlarını görmek
 için o hatayı üretir.
 
@@ -379,23 +437,32 @@ anınca). Bağlamın şekli (yer listesi, yer başına aralık) ve `SourceProvid
 | **Yer başlığı haritanın üstündedir, haritanın içinde değil** | Başlık ve "… yılının sınırları" notu, haritanın üstündeki sabit yükseklikli bir şeritte durur; hiçbir sınırı ya da işaretçiyi örtemez ve adın uzunluğu haritayı yeniden boyutlandırıp kaymış gibi göstermez. |
 | **Bilgi kartı seçimlerle yönlenir: yer bağlam, olay odak** | Kart, `{ type: 'place' \| 'event', id }` başvurularının listesini bölümlere çevirir. Yalnızca yer seçiliyse kart yeri anlatır (ayrıntılar ve "aynı sırada, başka yerlerde" listesi kapalı bölümlerdedir: kart kısa kalır); olay açıksa olayı anlatır ve yer tek satırlık bir başlığa (ad + aralık) küçülür; başlığa tıklamak ya da olayı kapatmak yer görünümüne döndürür. Kart küçüktür, ✕ ile kapanır ve okur bir şey sorunca kendiliğinden bir sekmeye çekilir. |
 | **Çizelge yalnızca seçili aralığı gösterir** | Yerin çizelgesinin ekseni tam olarak seçili aralıktır: aralığın öncesinde ve sonrasında ne yıl ne olay vardır (önceki sürüm aralığın iki yanını soluk bağlam olarak gösteriyordu; kaldırıldı). Aralıktan önce başlayıp aralığa uzanan bir olay sol kenarda tam bir nokta olarak durur. Çakışan noktalar (en çok 2 sıra) üst üste biner ama hiçbiri düşürülmez; her olay gerçek tarihinde çizilir. |
-| **Model neyi gösterir, uygulama nasıl gösterir** | Anlatımın tutarsızlığı modelin görseli her seferinde serbestçe seçmesindendi. Şimdi model yalnızca *neyi* (hangi olay, hangi devletler öne çıksın, veride olmayan bir çizgi ya da yer) söyler; olayların türüne göre çizimi, spot ışığı ve kamera uygulamanındır (`src/ai/eventKinds.ts`, `src/map/aiLayer.ts`, `src/map/mapView.ts`). Aynı tür olay her seferinde aynı görünür. |
+| **Model neyi gösterir, uygulama nasıl gösterir** | Anlatımın tutarsızlığı modelin görseli her seferinde serbestçe seçmesindendi. Şimdi model yalnızca *neyi* (hangi olay, hangi devletler hangi tarafta, hangi yerler arasında bir hareket, hangi devletin toprağı hangi yıllar arasında değişti, veride olmayan bir yer) söyler; görünüş (dört biçim ve anlamları, aktör renkleri, olay işaretinin tam işaretten numaralı noktaya dönmesi, okun sönmesi), spot ışığı ve kamera uygulamanındır (`src/map/aiLayer.ts`, `src/map/mapView.ts`, `src/ai/actors.ts`). Aynı şey her seferinde aynı görünür. |
 | **Harita sahnenin tamamıdır; geri kalan her şey onun üstünde bir katmandır** | Bilgi kartı, altyazı ya da kısa yanıt, soru kutusu ve okuyucu paneli haritayı yeniden boyutlandırmaz: üstüne biner. Yalnızca tam ekran okuyucuda harita köşede küçük bir pencere olur. Bir yer seçilince başlık şeridinin ya da alt bölümün boyu değişseydi harita kaymış gibi görünürdü; bu yüzden onların boyu durumdan bağımsızdır. Kamera, çizimi bu katmanların altında kalmayacak biçimde çerçeveler. |
 
 ### Görsel dil
 
 Basılı bir atlas: sıcak kâğıt, kahverengi-siyah mürekkep, sakin pastel devlet dolguları ve **tek canlı renk**
 (vermilyon): "seçtiğiniz şey". Seçili yer halkasız, dolu kırmızı bir nokta ve çevresinde yarıçapsal sönen yumuşak bir
-ışımadır; seçili devlet taramalı çizilir; açık olay vermilyon halkayla vurgulanır. Devlet dolgularının rengi yalnızca
-komşuları ayırır (derleme sırasında komşuluk grafiği boyanır; kimlik etiket ve sınırla taşınır). Dokuz ton (`--tint-0…8`; sonuncusu
-yedek, veri kullanmaz) **gri ya da kum gibi değildir** (gri bir devlet, noktalı "veri yok" zemini gibi okunuyordu: her ton
-belirgin biçimde renklidir ve zeminden en az ΔE 11 uzaktadır), **hiçbiri mavi, turkuaz ya da mor değildir** (haritada mavi
-yalnızca deniz ve göllere aittir) ve **birbirinden en az ΔE 8,5 uzaktadır**: komşu iki devlet net ayrışır. Tonlar, hangi iki
-ton çiftinin haritada en çok yan yana geldiği sayılarak (921 komşuluk) dağıtılmıştır: en sık komşu olan çiftler birbirinden en
-uzak renklerdir. Vermilyondan (seçim) da en az ΔE 15 uzaktadırlar. Spot ışığı her ton için **canlı bir ikiz** kullanır
-(`--vivid-0…8`: aynı ton, daha koyu ve doygun; yine mavisiz, vermilyondan en az ΔE 11, kendi tonundan en az ΔE 12 uzak).
-`tests/palette.test.ts` bunların hepsini sayıyla korur. Olay noktalarının çevresindeki kâğıt halkası, noktanın hangi dolgunun
-üstüne düştüğüne bakmaksızın okunmasını sağlar. Yazı: okuma
+ışımadır; seçili devlet taramalı çizilir; açık olay vermilyon halkayla vurgulanır. **Deniz tek düz açık mavidir** (`--sea`; kıyı
+sığlığı, derin deniz ya da degrade yok: önceki sürümdeki ikinci mavi, `--sea-deep`, kalktı). Devlet dolgularının rengi yalnızca
+komşuları ayırır (derleme sırasında komşuluk grafiği boyanır; kimlik etiket ve sınırla taşınır). Dokuz ton (`--tint-0…8`;
+sonuncusu yedek, veri kullanmaz) **gri ya da kum gibi değildir** (gri bir devlet, noktalı "veri yok" zemini gibi okunuyordu: her ton
+belirgin biçimde renklidir ve zeminden en az ΔE 11 uzaktadır) ve **birbirinden en az ΔE 8,5 uzaktadır**: komşu iki devlet net ayrışır.
+**Mavi artık serbesttir:** önceki sürümde haritada mavi yalnızca denize aitti ve devlet renkleri bu yüzden mavisizdi; şimdi
+anlatımın odağı mavi boyanıyor ve renk anlam değiştirmesin diye devlet tonları arasında da bir mavi (`--tint-5`, menekşe mavisi) ve bir
+turkuaz var — yalnız hiçbiri denizin düz mavisine yaklaşmaz (mavimsi tonlar için ΔE ≥ 15, ötekiler için ≥ 11). Tonlar, hangi iki ton
+çiftinin haritada en çok yan yana geldiği sayılarak (921 komşuluk) dağıtılmıştır: en sık komşu olan çiftler birbirinden en uzak
+renklerdir. Vermilyondan (seçim) da en az ΔE 15, anlatımın aktör renklerinden en az ΔE 8 uzaktadırlar.
+
+**Anlatımda renk aktöre aittir.** Dört aktör rengi vardır (`src/styles/tokens.css`, `src/ai/actors.ts`): **odak** mavi (`--side-focus`),
+karşıt iki taraf kehribar (`--side-foe-1`) ve şarap kırmızısı (`--side-foe-2`), tarafsız ya da belirsiz olanlar bej ve **taramalı**
+(`--side-neutral`). Model yalnızca kimin hangi tarafta olduğunu söyler; hangi tarafın hangi rengi alacağına uygulama karar verir ve
+renk anlatım boyunca değişmez. Üç aktör rengi normal görüşte birbirinden ΔE ≥ 20, protan ve deutan görüşünde ≥ 12 ayrışır; denizden,
+kâğıttan, "veri yok" zemininden ve vermilyondan ΔE ≥ 15 uzaktadır. Spot ışığı için ayrı "canlı ikiz" renkler (`--vivid-0…8`) ve eski
+taraf renkleri (`--side-0…2`: şarap, kehribar, yeşil) kalktı: boyalı bir devlet doğrudan aktörünün renginde, tam dolgundur ve
+haritanın geri kalanı üstüne çekilen kâğıt rengi bir örtüyle solar. `tests/palette.test.ts` bunların hepsini sayıyla korur. Olay
+noktalarının çevresindeki kâğıt halkası, noktanın hangi dolgunun üstüne düştüğüne bakmaksızın okunmasını sağlar. Yazı: okuma
 metinleri ve başlıklar için **Newsreader**, denetimler için **Instrument Sans**; ikisi de uygulamayla paketlenir.
 
 **Olay işaretçileri haritada, çizelgede, lejantta ve panelde aynı tek işarettir:** aynı şekil (daire), aynı boyut (13 px);
@@ -699,13 +766,15 @@ kaynak yokluğu, Türkçe ad eksikliği…).
 
 ```
 src/
-  domain/   saf mantık (arayüzsüz, testli): time, geo, events, lanes, categories, placement, reveal, camera, names (adların anahtarı)
+  domain/   saf mantık (arayüzsüz, testli): time, geo, events, lanes, categories, placement, reveal, camera, names (adların anahtarı),
+            antimeridian (tarih değişim çizgisinde kısa yol), territory (iki yılın sınırından kazanılan ve kaybedilen alan)
   data/     veri yükleyici (`loadData`) ve saf birleştirme (`assembleData`); sınırlar için `borderCodec` (tamsayı fark biçimi),
             `borderStore` (satırları tembel çözen, yıl penceresini veren depo) ve `gzip` (tek dosya sürümündeki sıkıştırılmış bloklar);
             `places` (şehir göstergeliği), `capitals` (devletin o yılki başkenti), `corrections` (düzeltme katmanı: satır düzeltmeleri
             ve işgal adları)
   state/    store (durum + eylemler), derive (görünüm modeli), url (adres çubuğu), panelLayout
-  map/      MapLibre görünümü, DOM etiketleri, işaretçiler, yer noktası, yapay zekâ çizim katmanı (aiLayer, flags)
+  map/      MapLibre görünümü, DOM etiketleri, işaretçiler, yer noktası, yapay zekâ çizim katmanı (aiLayer, flags), toprak değişimi
+            vurgusu (territoryLayer) ve coğrafi koordinatı kopyalara/ekrana taşıyan projection
   ui/       cetvel (adım noktalarıyla), zaman çizelgesi, bilgi kartı (infoCard), harita üstü öğeler, ipucu kutusu,
             ask/ (soru kutusu), watch/ (İzle), read/ (Oku)
   styles/   tasarım belirteçleri ve bileşen stilleri (layout, card, ask, watch, read, dock, map, ai)
@@ -713,13 +782,14 @@ src/
 instructions/okuma-arkadasi.txt   modelin yönergeleri (düz metin; sahibi düzenler, derlemede uygulamaya gömülür)
 ```
 
-`src/ai/`: `resolve` (modelin yazdıklarını verideki devletlere, olaylara, şehirlere, noktalara çözer: `placeRef`, `placePoint`; devletlerin ana parçalarının kutusu),
-`tools` (yedi sayfa işlevi), `eventKinds` (bir olayın türüne göre nasıl çizileceği: savaş mı, değil mi; savaşın iki safı), `drawing` (her adımın
-**kendi** çizimi: `TurnPlan`, `drawingOf`; spot ışığındaki devletler, taraflar, yollar, çizgiler ve savaş çizgisi, kamera hedefi `frameTargetOf`: sahnenin yerleri ve devletlerin o yerlerin çevresindeki parçaları), `steps`
+`src/ai/`: `resolve` (modelin yazdıklarını verideki devletlere, olaylara, şehirlere, noktalara çözer: `placeRef`, `placePoint`, bir devletin sınırındaki nokta `borderPoint`; devletlerin ana parçalarının kutusu),
+`tools` (yedi sayfa işlevi), `eventKinds` (savaş olayının iki safı: sahnenin hangi yılın sınırlarıyla açılacağını seçerken her iki safın da haritada olması istenir; çizim türü seçmez), `sentences` (altyazıyı cümlelere böler: her cümle bir vuruştur), `actors`
+(`sides` çağrısından aktör renklerini ve tarafları çıkarır: odak mavi, karşıt iki taraf, tarafsızlar; renk bellek tutar), `drawing` (her sahnenin **kendi** çizimi ve
+vuruşları: `TurnPlan`, `drawingOf`, `frameAt(saat)`; yani sahnenin bir vuruştaki hâli; kamera hedefi `frameTargetOf`: sahnenin yerleri ve devletlerin o yerlerin çevresindeki parçaları), `steps`
 (metni adımlara ayırır), `narration` (bir yanıtın adımları: plan + metin birleşimi, altyazı, adımlı mı tek parça mı), `presentation`
-(İzle / Oku görünümü, okuyucu kipi, otomatik oynatma ve hız; adım gezintisi; başsız ve testli), `activeStep` (okuma çizgisi), `context`,
-`prompt`, `instructions` (yönerge dosyası), `sources`, `provider` (arayüz + hata kodları), `sampleProvider`, `mockProvider` + `mockScripts`,
-`session` (sohbet, geçmiş, durdurma, hata), `director` (etkin adım → çizim, yıl, kamera takibi ve "bıraksın mı" sorusu) ve `settings`. `src/domain/camera.ts`: kamerayı ölçen saf işlevler (sapma, önemli hareket,
+(İzle / Oku görünümü, okuyucu kipi; vuruşların kendiliğinden oynaması, otomatik oynatma ve hız, `Pacer` ile okuma hızı; adım gezintisi; başsız ve testli), `activeStep` (okuma çizgisi), `context`,
+`prompt` (istekler, `narrationRequest`), `instructions` (yönerge dosyası), `sources`, `provider` (arayüz + hata kodları), `sampleProvider`, `mockProvider` + `mockScripts`,
+`session` (sohbet, geçmiş, durdurma, hata), `director` (etkin sahne ve vuruşu → çizim, yıl, kamera takibi ve "bıraksın mı" sorusu) ve `settings`. `src/domain/camera.ts`: kamerayı ölçen saf işlevler (sapma, önemli hareket,
 çerçeve, dolgu) ve `CameraWatch`.
 
 - Durumda **harita kamerası yoktur**; harita görünümünü yalnızca kullanıcının kendi eylemleri değiştirir: sürükleme,
@@ -770,15 +840,15 @@ koşulur.** Görsel inceleme her yayından sonra elle yapılır; bu yüzden beti
 
 | Komut | Ne koşar | Ölçülen süre |
 |---|---|---|
-| `npm run smoke` | tsc, birim (614 test), veri doğrulama, derleme, hızlı e2e: base bölüm 0–3 (39 denetim) + AI A, B (iki tek adımlı yanıt), G (gerçek `sample` bağdaştırıcısı), H (telefon) senaryoları (129 denetim) | **2 dk 4 sn** (e2e kısmı ≈ 1 dk 36 sn) |
+| `npm run smoke` | tsc, birim (698 test), veri doğrulama, derleme, hızlı e2e: base bölüm 0–3 (39 denetim) + AI A, B (iki tek adımlı yanıt), G (gerçek `sample` bağdaştırıcısı), H (telefon) ve M (vuruşlar: altyazı okuma hızında oynar) senaryoları (145 denetim) | **≈ 3 dk** (e2e kısmı 2 dk 23 sn: base 12 sn, AI 131 sn) |
 | `E2E_ONLY=7,9 node scripts/verify-e2e.mjs` | yalnızca bu base bölümleri (0–6 tek bloktur: biri istenirse hepsi koşar) | bölüm süreleri aşağıda |
 | `E2E_ONLY=A3,K node scripts/verify-ai-e2e.mjs` | yalnızca bu AI grupları (harfler raporun başlıklarındaki gibi) | grup süreleri aşağıda |
-| `npm run full` | smoke'un ön adımları + tam base e2e + tam AI e2e | iki tur önce **31 dk 2 sn** (154 + 437 denetim; base 5 dk 34 sn, AI 24 dk 51 sn); yer/yol/taraf ve serbest model turlarında koşulmadı, denetim sayısı o günden beri büyüdü |
+| `npm run full` | smoke'un ön adımları + tam base e2e + tam AI e2e | bu turda koşulmadı (kural gereği); grup sürelerinin toplamı ≈ 29 dk (base 4 dk 24 sn, AI 24 dk 15 sn; 166 + 513 denetim). Son gerçek tam koşu iki tur önce: 31 dk 2 sn |
 
-Tek koşuda ölçülen süreler (sn, hareket azaltılmış kip): base e2e 0–6 bloğu 39 (yalnız 0–3: 7) · 7: 96 · 8: 34 · 9: 53 · 10: 42 ·
-11: 25 · 12: 61; AI e2e L 18 · S 24 · A 31 · V 74 · W 38 · A2 17 · A3 53 · A4 21 · B 32 · C 7 · C2 12 · D 7 · J 46 · K 74 · P 269 ·
-R 68 · T 92 · F 88 · E 97 · G 60 · H 41 · Y 43 · N 19. (Süreler farklı günlerde, farklı yükte ölçüldü; en son, serbest model
-turunda yeniden ölçülenler: 0–6, 11, 12, L, S, A, V, W, A2–A4, B, C, C2, D, J, K, R, T, F, G, H, Y, N; P ve E önceki turlardan.)
+Tek koşuda ölçülen süreler (sn, hareket azaltılmış kip): base e2e 0–6 bloğu 34 (yalnız 0–3: 6) · 7: 64 · 8: 21 · 9: 34 · 10: 28 ·
+11: 24 · 12: 59; AI e2e L 18 · S 23 · A 53 · V 119 · W 45 · A2 19 · A3 60 · A4 25 · B 41 · C 8 · C2 13 · D 6 · J 49 · K 123 · P 212 ·
+R 82 · T 99 · F 100 · E 80 · G 64 · H 42 · Y 47 · N 20 · M 63 · Q 22 · Z 22. (Süreler bu turun koşularından alındı, farklı yüklerde
+ölçüldü.) C ve D, B'nin ilk senaryosunun sayfasını kullanır: `E2E_ONLY` ile koşarken B'yle birlikte verilmeli (`E2E_ONLY=B,C,C2,D`).
 (Öncesi, animasyonlu kamerayla: base ≈9 dk, AI ≈30 dk, birlikte ≈40 dk.)
 
 Testler varsayılan olarak **"hareketi azalt" kipinde** koşar: her sayfa `reducedMotion: 'reduce'` ile açılır, kamera anında gider
@@ -798,8 +868,9 @@ zamanlayıcılara (otomatik oynatma, akış) gider. Makine tek tarayıcı koşus
 2. Sovyetler Birliği'nde bir nokta → **Sovyetler Birliği** görünür; **harita kamerası (merkez, yakınlaştırma, açı) birebir aynı kalır.**
 3. Aralık 1938–1942 → haritanın olay kümesi (veri), aralıktan bağımsız hesaplanan kümeyle birebir aynıdır; yer bırakılınca haritadaki
    işaretçiler bu kümenin görünen kısmıdır.
-4. Başlık haritanın üstündeki şeritte, küçük ve "SEÇİLİ YER" etiketsizdir; hiçbir devlet mavi değildir (CSS belirteçleri, harita
-   boya ifadesi ve ekranda çizilmiş devlet pikselleri ölçülür); alt bölüm ≈ 80 px'dir (ilk sürümde 286 px) ve çizelgede kalıcı olay
+4. Başlık haritanın üstündeki şeritte, küçük ve "SEÇİLİ YER" etiketsizdir; devlet tonlarının hepsi belirgin renklidir (gri ya da kum
+   gibi değil), mavi serbesttir ama denizin renginden ayrışır ve deniz tek düz açık mavidir (CSS belirteçleri, harita boya ifadesi ve ekranda
+   çizilmiş devlet pikselleri ölçülür); alt bölüm ≈ 80 px'dir (ilk sürümde 286 px) ve çizelgede kalıcı olay
    adı yoktur (üzerine gelince ve dokununca görünür); seçili yer halkasız dolu bir noktadır ve çevresinde sönen ışıma vardır;
    tüm olay noktaları aynı şekil ve boyuttadır, renkleri lejanttaki türüyle birebir aynıdır; lejant başlıksızdır ve yalnızca
    renkleri anlatır.
@@ -829,10 +900,13 @@ yakınlaştırdığı, telefon genişliğinde taşma olmadığı, dokunuşun ola
    hâlâ Nazi Almanyası** (sınır yılı 1945, haritada en üstte çizilen devlet o); Singapur 1943'te "Singapur · Japon işgali", 1941'de ve
    1946'da İngiliz.
 
-Son tam base koşusu (iki tur önce): **154 / 154 denetim geçti** (hareket azaltılmış kip, 5 dk 34 sn). Serbest model turunda tam takım
-koşulmadı (kural gereği): son ağaçta `npm run smoke` (614 birim testi, base 39 + AI 129 denetim) ve değişikliği kapsayan gruplar
-geçti: base 0–6, 11, 12 (87 denetim) ve AI L, S, A, V, W, A2–A4, B, C, C2, D, J, K, R, T, F, G, H, Y, N (437 denetim). Koşulmayanlar:
-P (renkler) ve E (durdurma, hatalar, ayarlar); bu turda ikisine de dokunulmadı.
+Bu turda tam takım (`npm run full`) koşulmadı (kural gereği). Son ağaçta `npm run smoke` (698 birim testi, base 39 + AI 145 denetim)
+ve değişikliği kapsayan gruplar geçti: **base bölüm 0–12'nin hepsi, 166 / 166 denetim** (bölüm 8'in renk denetimleri yeni renk kuralına
+göre yazıldı: mavi serbest, deniz tek düz açık mavi) ve **AI e2e'nin 26 grubunun hepsi, 512 denetim** (artı her koşuda bir "konsolda
+hata yok" denetimi). Bu turda e2e'nin bulduğu ve düzeltilen gerçek uygulama hataları: (1) yanıt kapanıp okur haritayı normal dünyaya
+getirince "dünya iki kez" görünümü geri dönmüyordu (`MapView.setAiFrame(null)`); (2) zaman çizelgesindeki sahne noktaları yıl
+yazılarını yarım örtüyordu (artık noktanın altında kalan yıl yazısı çizilmez); (3) etkin (büyük) sahne noktası şeridin ucunda 2,5 px
+taşıyordu (artık içeri çekilir). Geri kalan düzeltmeler denetimlerin kendisindeydi (yeni görsel dile ve vuruşlara göre beklentiler).
 
 ### Okuma arkadaşı ve temiz harita: `npm run e2e:ai`
 
@@ -841,17 +915,20 @@ sınar (`ai-*.png` ve `AI-RAPOR.md` yalnızca `E2E_SHOTS=1` ile yazılır; grupl
 yalnızca o grupları çalıştırır, `E2E_SUITE=smoke` (ya da `--smoke`) hızlı kipi, `E2E_TIMES=1` her senaryonun süresini,
 `E2E_VERBOSE=1` duran bir senaryonun hatasını tam yazar). Senaryo, uygulamanın açıldığı dönemdedir: **1800–2000,
 savaş yılları** (aralık 1939–1945, sınırlar 1942'nin). Örnek yer Almanya'da bir noktadır (Hamburg: üstünde olay işaretçisi olmayan boş
-kara; Berlin, Wannsee'nin işaretçisinin tam altındadır) ve **Nazi Almanyası**dır; komut dosyalı model onu sekiz adımda anlatır (1939'dan
-1945'te Berlin'e; dördüncüde Barbarossa, altıncıda Stalingrad ve El Alamein). Olay sayıları, satır sayıları ve yer çizelgesinin uzunluğu
-sayfadan sayılır, betikte sabit sayı yoktur.
+kara; Berlin, Wannsee'nin işaretçisinin tam altındadır) ve **Nazi Almanyası**dır; komut dosyalı model onu **sekiz sahnede, on yedi
+vuruşta** anlatır (1939'da "Savaş başlıyor"dan 1945'te Berlin'e; dördüncüde Barbarossa, altıncıda Stalingrad ve El Alamein). Betikler her
+sahneyi **vuruş vuruş** denetlemek için sahneyi bir cümlede tutar (`presentation.replayBeat`) ve sonunu da (`complete`) okur; bu, bir okurun
+cümleye tıklamasıyla aynıdır. Olay sayıları, satır sayıları ve yer çizelgesinin uzunluğu sayfadan sayılır, betikte sabit sayı yoktur.
 
 1. **P. Renkler (ekran görüntüsünden okunur).** Stilin istediği renk değil, haritanın **gerçekten gösterdiği** renk ölçülür: harita
    görüntüsü (üstündeki her şey gizlenmiş) bir ızgarada örneklenir, her örneğin hangi devletin içinde olduğu sorulur (yedi görünüm:
    1939–1945'te dünya, Avrupa, Doğu Asya, Hindistan–İran; palet 200 yıla dağıtıldığı için Avrupa 1910–1916, Afrika 1960–1966 ve Avrasya
-   1990–1996 da; 259 devlet rengi): hiçbiri gri/grimsi (OKLCH doygunluğu ≥ 0,07; ölçülen en düşüğü 0,090) ya da mavi/turkuaz/mor
-   (hiçbir renk 180°–310° tonunda değil) değildir; komşu devletler birbirinden ayrışır (her devletin iç rengi karşılaştırılır; ΔE ≥ 8,
-   paletin en yakın çifti 8,59: ton 2 ile 5); anlatımda öne çıkan devletlerin pikselleri kendi canlı renginde (doygunluk ≥ 0,10; ölçülen
-   0,14–0,17), geri kalanı kâğıt örtüyle solmuş ve canlıların doygunluğu solukların ≥ 2 katıdır (ölçülen 2,9–3,7).
+   1990–1996 da; 259 devlet rengi): hiçbiri gri/grimsi değildir (OKLCH doygunluğu ≥ 0,07; ölçülen en düşüğü 0,093); komşu devletler
+   birbirinden ayrışır (her devletin iç rengi karşılaştırılır; ΔE ≥ 8, paletin en yakın çifti 8,9); **mavi artık serbesttir** (eski
+   "hiçbir renk mavi değil" denetimi kalktı); **deniz tek düz açık mavidir** (deniz örneklerinin %99'undan fazlası `--sea` renginde,
+   degrade yok). Anlatımda her sahnenin sonunda boyalı devletlerin pikselleri **aktörünün renginde** (tam dolgun, saydam değil; odak mavi:
+   ton 254°), geri kalanı kâğıt örtüyle solmuştur; aktör renkleri birbirinden ΔE ≥ 20 ayrışır; deniz anlatımda da tek düz (örtüyle solmuş)
+   renktir. (Toprak değişiminin vurgusu kalkana kadar beklenir: vurgu renkleri bozar.)
 2. **L. Düzen ve açılış.** Uygulama savaş yıllarında açılır (aralık 1939–1945, sınır yılı 1942) ve başlıkta "yükleniyor…" kalmaz. Harita
    ekranın %85'inden fazlası ve sayfa kaymaz; üstte tek ince çubuk, altta ≤ 84 px zaman çizelgesi, soru kutusu onun hemen üstünde ve
    ortada; bilgi kartı sağda, 340 px'ten dar, haritanın yarısından küçük, ✕ ve `Esc` ile kapanır, yer seçmek haritayı oynatmaz; kısa
@@ -863,40 +940,52 @@ sayfadan sayılır, betikte sabit sayı yoktur.
    sonda hiçbir şey takılı kalmaz.
 4. **A. İzle: Almanya, 1942.** Almanya'da bir nokta → **Nazi Almanyası**, 1942'nin sınırları, anlatım. **Yer seçilince dünya olayları
    haritadan çekilir** (çizelgede dururlar, not nedenini söyler). **İzle, uzun metinler bitmeden başlar** (ilk altyazı ve "Metin
-   yazılıyor…"). Her adımda yalnızca o adımın istediği çizilir: modelin `highlight`'ı ve olayların tarafları öne çıkar (spot ışığı: örtü
-   > 0,5, öne çıkanlar dolgun, öteki adlar soluk, tarama yok); olay **türüne göre** çizilir (savaşta işaret ile iki taraf arasındaki
-   çizgi tek birimdir); olay işaretlerinin yanında **ad kutusu yok**. **Bir savaş olayı doğru görünür:** 4. adımda Barbarossa'nın işareti,
-   çizgisi, Almanya ve Sovyetler Birliği öne çıkmış, sınır yılı 1941; **4. adımda ayrıca iki taraf** (Mihver ve ortakları: Almanya, Romanya,
-   Finlandiya, Macaristan, İtalya; Sovyetler Birliği) iki ayrı blok renginde boyanır, taraf adları renkleriyle anlatım kutusunda durur ve
-   Brest'ten Moskova'ya **canlandırılan bir ilerleyiş yolu** (kıvrımlı, uçta oklu) çizilir; 6. adımda Stalingrad ve El Alamein; 7. adımda
-   Normandiya çizgisi **Londra'dan** başlar (Grönland'dan değil), ayrıca bir geri çekilme yolu (kesikli, açık oklu) vardır; 8. adımda Berlin
-   1945, **1945 sınırlarıyla** (veri setinde Nazi Almanyası'nın satırları 1944'te biter; düzeltme katmanı 1938 sınırlarını 1945'e taşır).
-   Her savaş çizgisi taraflarının başkentinden çıkar; **2. adımda** Fransa Muharebesi 1939'un sınırlarında (Fransa Üçüncü Cumhuriyeti
-   veride 1939'a kadar) görünür ve çizgisi **Berlin'den Paris'e** gider (1940'ın sınırlarında Fransa yoktu ve çizgi Londra'ya düşüyordu).
-   Kamera adımın **adlandırdığı her yeri** (olaylar, işaretler, çizgi uçları) ve öne çıkan devletlerin **o yerlerin çevresindeki
-   parçalarını** altyazının ve soru kutusunun **üstündeki** görünür alana sığdırır (devletin bütün toprağını değil: sömürgeler, Alaska,
-   Grönland kadraja girmez); çok uzak iki devletin savaşında (Washington–Tokyo) çizgi uçları dünyayı kaplar ve kutular en küçük
-   yakınlaştırmada tümüyle sığmaz: öne çıkan her parçanın ≥ %75'i görünür. Altyazı her adımda aynı yerde ve modelin `step` çağrısındaki altyazıdır;
-   önceki adımlara dönmek o adımın çizimini aynen getirir; etiketler örtüşmez.
-5. **V. İzle'de gezinme.** Düğmeler (uçlarda kapanır), `←/→/Home/End` (metin kutusunda ve haritada odak varken yalnızca yazı imleci /
-   adım; harita kaymaz); sekiz adımı baştan sona ve sondan başa gezmek her adımda sayacı, başlığı, altyazıyı, çizimi ve yılı denetler;
-   **otomatik oynatma isteğe bağlıdır** (kendiliğinden başlamaz), hızda adım altyazısının süresi kadar kalır, hız değişince bekleme
-   yeniden ölçülür, duraklat ve elle gezinme durdurur, son adımda biter, sonda yeniden oynat baştan başlar; **zaman cetveli ilerleme
-   çubuğudur** (adım noktaları anlatıdaki tarihlerinde ve seçili aralığın içinde, görülenler dolu, dar aralıkta küçük ve yalnızca ekrandaki
-   numaralı; tıklamak adıma götürür ve okurun aralığına dokunmaz).
+   yazılıyor…"). **Her sahne vuruş vuruş denetlenir** (sekiz sahne, on yedi vuruş, sekiz sahne sonu): her vuruşta harita yalnızca o vuruşa
+   kadar anlatılanı gösterir (o vuruşun olayı tam işaret, öncekiler **numaralı küçük nokta**, o vuruşun okları, vurgusu, taraflar ve renkleri,
+   sınır yılı, altyazıda oynayan cümlenin vurgusu); **kamera vuruşlar sürerken yerinde kalır**; etiketler örtüşmez; olay işaretlerinin
+   yanında ad kutusu yoktur; **olaydan başkente ya da taraflar arasında çizgi yoktur**. 1. sahne ("Savaş başlıyor"): Molotov–Ribbentrop
+   işareti ve taraflar (Almanya mavi, Polonya karşıt renk; Sovyetler, Britanya ve Fransa tarafsız); Polonya saldırısının **iki oku
+   Almanya'nın sınırından çıkar** (Berlin'den değil: ilk durak Berlin'e 150 km'den uzak, Varşova ve Kraków'a varır); Britanya ve Fransa
+   savaş ilan edince ikisi Polonya'nın rengine geçer; Kızıl Ordu'nun oku Sovyet sınırından (Moskova'dan değil) Lviv'e gider ve **Sovyetler
+   Birliği'nin 1939'dan 1940'a kazandığı toprak haritada belirir** (kazanılan ve kaybedilen alan devletin renginde; sınırlar sessizce
+   değişmez), taraflar üçe çıkar. 2. sahnede Fransa Muharebesi **1939'un sınırlarında** (Fransa Üçüncü Cumhuriyeti veride 1939'a kadar);
+   4. sahnede Mihver ve ortakları ile Sovyetler iki blok, Britanya boyanmaz (son `sides` çağrısı adını anmadı) ve Alman ilerleyişi
+   cepheden Moskova'ya dört duraklı bir oktur; 6. sahnede Stalingrad ve El Alamein (2 numaralı nokta); 7. sahnede geri çekilme oku; 8. sahnede
+   Berlin 1945: sahne 1944'ün sınırlarıyla açılır, teslim cümlesinde **1945'e geçer ve Almanya'nın yitirdiği toprak gösterilir** (veri
+   setinde Nazi Almanyası'nın satırları 1944'te biter; düzeltme katmanı 1938 sınırlarını 1945'e taşır). **Sahne sonunda** tüm olaylar
+   numaralı noktadır, ok yoktur, toprak sonucu ve renkler kalır. **Renkler aktörlerindir:** Almanya her sahnede odak mavisi, Britanya
+   boyandığı her sahnede aynı karşıt renk, iki karşıt taraf hiçbir yerde aynı rengi paylaşmaz. Kamera sahnenin **adlandırdığı her yeri**
+   (olaylar, işaretler, okların durakları) ve işaret edilen ya da boyanan devletlerin **o yerlerin çevresindeki parçalarını**,
+   bütün vuruşlarıyla, altyazının ve soru kutusunun **üstündeki** görünür alana bir kez sığdırır (devletin bütün toprağını değil:
+   sömürgeler, Alaska, Grönland kadraja girmez; devlet kutularının ≥ %75'i görünür). Altyazı her sahnede aynı yerde ve modelin `step`
+   çağrısındaki altyazıdır; önceki sahnelere dönmek o sahnenin **sonunu aynen** getirir; sahne kapanınca toprak vurgusu da kalkar.
+5. **V. İzle'de gezinme.** **Sonraki ve Önceki iki aşamalıdır:** sahne oynarken *Sonraki* sahnenin sonunu, ikinci basış sonraki sahneyi
+   başından gösterir; sahnenin başındayken *Önceki* bir önceki sahneyi bittiği hâliyle, bitmiş bir sahnede sahneyi başa sarar (uçlarda
+   kapanır). `←/→/Home/End` aynı iki aşamayı izler (metin kutusunda ve haritada odak varken yalnızca yazı imleci / sahne; harita kaymaz);
+   sekiz sahneyi baştan sona ve sondan başa gezmek (her sahne için iki basış) her durumda sayacı, başlığı, altyazıyı, çizimi, sınır yılını
+   ve tarafları denetler. **Zaman çizelgesi ilerleme çubuğudur:** sahne noktaları **alttaki yakınlaştırılmış şeritte** (çizelgenin içinde;
+   üstteki 1800–2000 cetvelinde hiçbiri yok), anlatıdaki tarihlerinde (her biri kendi tarihinden ≤ 24 px), soldan sağa sıralı, numaraları
+   görünür (≥ 15 px), görülenler dolu ve ilkinden etkin olana bir çizgi uzanır; bir noktaya tıklamak o sahneyi başından başlatır ve okurun
+   aralığına dokunmaz. **Cümleler kendiliğinden oynar:** *Oynat* kapalıyken de tek cümlelik bir sahne okunma süresi kadar sürüp biter ve
+   sonunda okuru bekler; *Oynat* açıkken bitince kısa bir beklemeden sonra sonraki sahne başlar; hız değişince bekleme yeniden ölçülür;
+   duraklat ve elle gezinme oynatmayı durdurur; son sahnenin cümleleri de oynar ve oynatma orada biter (başa dönmez), sonda yeniden *Oynat*
+   baştan oynatır.
 6. **T. Çizelge.** Yer çizelgesi **yalnızca seçili aralığı** gösterir (1939–1945 ve 1942–1944; cetvel tutamaçları klavyeyle daraltılınca
    çizelge de izler): yıl etiketlerinin hepsi aralıkta ve yerleri aralığa göre, her olay noktası aralıkla kesişir (dışarıdan olay yok;
    aralıktan önce başlayan İspanya İç Savaşı ve Leningrad kuşatması sol kenarda tam bir nokta olarak durur), egemenlik şeridi ve imleç
-   aralığın içinde, "bağlam" bandı yok. Cetvelde adım noktaları aralık yazısına ve cetvel yıllarına binmez ve **seçili aralığın (fırçanın) içinde, tarihlerinin
-   yanında, soldan sağa sıralı** durur (1939–1945'te sekiz nokta, 1942–1944'te beş, 1931–1945'te sekiz nokta; aralığın dışına yayılmaz,
-   dar aralıkta küçülür).
-7. **W. Oku.** *Metni oku*: yan panel (harita yine tam ekran, çizim panelin altında değil, soru kutusu panelin soluna çekilir); **İzle'de
-   adımdayken Oku'ya geçip geri dönmek adımı korur**; metni kaydırmak etkin adımı ve haritayı taşır; **tam ekran**: harita sağ üst köşede
-   küçük bir pencere olur ve o anki adımı gösterir (görünüm dışı ve örtülü nokta yok; ad etiketi yok; savaş tek birim; pencere yalnızca
-   küçük sahneleri tam tutabilir), metin sütunu pencereyle çakışmaz, metinde *Haritada göster* ve kaydırma pencereyi taşır, `Esc` adım
-   adım kapatır, *Haritayı büyüt* geri döner; **okurken sorulan soru haritayı (ya da küçük pencereyi) arka planda günceller**; yan panel ↔
-   tam ekran geçişinde etkin adım okuma konumunda kalır. (Haritanın doğu sınırı 179,9°D olduğu için, yan panelin altında kalan en doğu
-   — Japonya, Çukotka — kameradan kaçamaz; bu sahneler "okurken harita" denetimlerine alınmaz.)
+   aralığın içinde, "bağlam" bandı yok. **Sahne noktaları alttaki şeritte** (üç aralıkta: 1939–1945'te sekiz, 1942–1944'te beş,
+   1931–1945'te sekiz nokta; hiçbiri 1800–2000 cetvelinde değil) tarihlerinde ve sıralı durur, çizelgenin ve dock'un dışına taşmaz,
+   birbirini örtmez; aralığın dışındaki bir tarih en yakın uca konur; **bir noktanın altında kalacak yıl yazısı çizilmez** (yarım kapalı
+   yazı okunmaz).
+7. **W. Oku.** *Metni oku*: yan panel (harita yine tam ekran, çizim panelin altında değil, soru kutusu panelin soluna çekilir); **okuyucuda
+   sahneler bittiği hâliyle gösterilir** (dört olay numaralı nokta, ok yok, Sovyetler Birliği'nin kazandığı toprak, 1940 sınırları);
+   **İzle'de sahnedeyken Oku'ya geçip geri dönmek sahneyi korur**; metni kaydırmak etkin sahneyi ve haritayı taşır; **tam ekran**: harita
+   sağ üst köşede küçük bir pencere olur ve o anki sahnenin sonunu gösterir (görünüm dışı ve örtülü nokta yok; ad etiketi yok; yalnızca
+   numaralı noktalar; pencere yalnızca küçük sahneleri tam tutabilir), metin sütunu pencereyle çakışmaz, metinde *Haritada göster* ve
+   kaydırma pencereyi taşır, `Esc` adım adım kapatır, *Haritayı büyüt* geri döner; **okurken sorulan soru haritayı (ya da küçük
+   pencereyi) arka planda günceller** (yanıtın sahnesi bittiği hâliyle: serbest işaret adsız numaralı nokta); yan panel ↔ tam ekran
+   geçişinde etkin sahne okuma konumunda kalır. (Haritanın doğu sınırı 179,9°D olduğu için, yan panelin altında kalan en doğu — Japonya,
+   Çukotka — kameradan kaçamaz; bu sahneler "okurken harita" denetimlerine alınmaz.)
 8. **R. Olay adları.** Haritadaki bir olay işaretinin adı yalnızca üzerine gelince görünür (yanında ad kutusu yok). Altyazıda ve
    metinde verideki olayların adları **tıklanabilir bağlantıdır** (altı noktalı çizili, işaretçi imleç; `[ad](olay:kimlik)` işareti
    görünmez; sekiz altyazının hepsi ve her adımın metni). Altyazıdan, yan panelden ve tam ekran metinden bir olay adına tıklamak,
@@ -904,13 +993,15 @@ sayfadan sayılır, betikte sabit sayı yoktur.
    adım ve görünüm); başka bir ada tıklamak olayı değiştirir, aynı ada bir daha tıklamak kapatır; metindeki bir bağlantı olayı açar ama
    adımı ve sahnesini korur; tek adımlı Stalingrad yanıtının altyazı bağlantısı da aynısını yapar; bir bağlantıya tıklayıp `Esc`'e basıp
    hemen boyut değiştirmek okunan adımı oynatmaz (bu sınama sırasında bulunan bir hata).
-9. **B. Her yanıtın altyazısı ve tam metni var.** Bir şeyi soran soru (Almanya–İtalya ittifakı; Stalingrad) **tek adımlı** yanıt alır:
-   `[data-testid=watch][data-steps="1"]`, altyazı haritanın üstünde ve soru kutusunun hemen üzerinde, adım sayacı/oklar/oynat/hız yok,
-   **"Devamını oku"** tam metni Oku'da açar (kapatınca altyazıya dönülür), harita o tek sahneyi gösterir (ittifak sorusunda iki devlet
-   vurgulanır ve bağlanır: veride olmayan ilişki, yıl 1939); altyazının ve kutunun yüksekliği "Devamını oku" göründüğünde değişmez
-   (kamera çerçeveledikten sonra kutu büyümez; sınama sırasında bulunan bir hata). **Güvenlik ağı:** model düz metin yazarsa ("düz metin
-   ver") altyazı metnin tamamı değil ilk bir iki cümlesidir (≤ ~220 karakter, metnin başıdır, metnin yarısından kısadır), "Devamını oku"
-   görünür ve Oku'da üç paragrafın hepsi vardır.
+9. **B. Her yanıtın altyazısı ve tam metni var.** Bir şeyi soran soru (Almanya–İtalya ittifakı; Stalingrad) **tek sahneli** yanıt alır:
+   `[data-testid=watch][data-steps="1"]`, altyazı haritanın üstünde ve soru kutusunun hemen üzerinde, sahne sayacı/oklar/oynat/hız yok,
+   **"Devamını oku"** tam metni Oku'da açar (kapatınca altyazıya dönülür); altyazı iki cümle, yani iki vuruştur: ittifak sorusunda ilk
+   cümlede Almanya ve İtalya "Çelik Pakt" adıyla odak renginde boyanır (aralarında çizgi yok), ikincisinde Üçlü Pakt'ın işareti gelir ve
+   Japonya aynı tarafa katılır, sahne bitince işaret 2 numaralı nokta olur; Stalingrad'ın ilk cümlesinde yalnızca olayın işareti vardır
+   (tarafları kendiliğinden öne çıkmaz), ikincisinde model iki tarafı vurgular ve işaret 1 numaralı nokta olur; altyazının ve kutunun
+   yüksekliği "Devamını oku" göründüğünde değişmez (kamera çerçeveledikten sonra kutu büyümez; sınama sırasında bulunan bir hata).
+   **Güvenlik ağı:** model düz metin yazarsa ("düz metin ver") altyazı metnin tamamı değil ilk bir iki cümlesidir (≤ ~220 karakter,
+   metnin başıdır, metnin yarısından kısadır), "Devamını oku" görünür ve Oku'da üç paragrafın hepsi vardır.
 10. **A2–A4. Harita takibi.** Kısa sürükleme ve bir kez `+` takibi kapatmaz; iki düzey yakınlaşma ya da haritanın üçte biri kadar
     sürükleme küçük bir soru getirir (haritanın %6'sından az, telefonda %22'sinden az, odağı çalmaz, iletişim kutusu değil; *Ayarlar ⚙ →
     Harita takibi* bağlantısı ayarı açıp satırı işaretler; en geniş görünümde sürükleme sınıra dayandığı için sınama önce sayfayı
@@ -918,62 +1009,88 @@ sayfadan sayılır, betikte sabit sayı yoktur.
     etkin adım hemen görünür kılınır. *İzlemeye devam*: o sohbette bir daha sorulmaz. Cevaplanmayan soru hiçbir şeye karar vermeden kalkar
     ve yeni bir uzak hareketten sonra döner. Ayar anahtarı aynı şeyi yapar; yeni sohbet takibi yeniden açar.
 11. **J. Haritada tek anlatıcı.** Anlatıcı yoksa dünya olayları haritadadır ("11 / 44 olay haritada": sayılar veriden); **yanıt ekrana gelince
-    ya da bir yer seçilince** hepsi çekilir, yalnızca yanıtın adını andığı olay kalır (Stalingrad zaten haritadaydı, Üçlü Pakt değildi ama
-    tek başına gelir; çizelge aynen kalır, not nedenini söyler); çizelgeden ya da karttaki listeden tıklanan olay (yerel bir olay dahil:
-    Anne Frank) açık kaldığı sürece haritadadır, kapanınca çekilir; yer bırakılınca ve yanıt kapanınca dünya olayları döner. Adım bir olaydan
-    söz ederse haritada yalnızca o olayın kendi işareti olur (adı hover'da, tıklayınca kart). Model verideki bir olay için `mark` çağırırsa
-    (Belgrad) olayın kendi işaretine çevrilir; veride olmayan bir yer (Smolensk) serbest işaret olarak kalır.
+    ya da bir yer seçilince** hepsi çekilir, yalnızca yanıtın adını andığı olay kalır (sahne bittiğinde: Stalingrad zaten haritadaydı, Üçlü
+    Pakt değildi ama tek başına gelir; çizelge aynen kalır, not nedenini söyler); çizelgeden ya da karttaki listeden tıklanan olay (yerel
+    bir olay dahil: Anne Frank) açık kaldığı sürece haritadadır, kapanınca çekilir; yer bırakılınca ve yanıt kapanınca dünya olayları döner
+    (kamera yanıtın çerçevesinde kaldığı için küme o görünüme göredir). Bir sahne bir olaydan söz ederse haritada yalnızca o olayın kendi
+    işareti olur (cümle oynarken tam işaret: yıl yazılı, düğme; adı hover'da, tıklayınca kart). Model verideki bir olay için `mark`
+    çağırırsa (Belgrad) olayın kendi işaretine çevrilir; veride olmayan bir yer (Smolensk) serbest işaret olarak kalır (cümle oynarken
+    etiketli eşkenar dörtgen; sonra numaralı nokta).
 12. **C, C2, D.** Yanıt ekrandayken olaya tıklamak: kart sağda açılır (yanıtı ve soru kutusunu örtmez), işaretçisi haritaya gelir;
-    kapatınca (✕ ya da `Esc`) yanıt yerinde kalır, kart sekmeye döner; *Bunu sohbette sor* olayı soruya ekler ve yanıtta olay kendi
-    türüne göre çizilir (Barbarossa: iki taraf öne çıkar, savaş çizgisi işaretin üstünden geçer, olayın yılı). Yanıt yokken olay kartı sağda
+    kapatınca (✕ ya da `Esc`) yanıt yerinde kalır, kart sekmeye döner; *Bunu sohbette sor* olayı soruya ekler ve yanıtta olayın kendi işareti
+    çizilir (Barbarossa: olayın yılı; tarafları kendiliğinden öne çıkmaz, çizgi çekilmez). Yanıt yokken olay kartı sağda
     açılır; `Esc` sırası: olay, yanıt, yer. Sohbet sürerken yer ya da aralık değişince metinde "Bağlam değişti" ayırıcısı çıkar (ikinci yer
     Moskova), güncellenir, geri dönülünce kalkar ve model "Konu değişti"yi öğrenir.
 13. **F. Metnin sonu.** Tam ekran okumada, yan panelde, dar pencerede (1024×700) ve telefonda metni sonuna kadar kaydırınca son satır
     soru kutusu yığınının (not, olay çipi, kutu) üstünde kalır ve hiçbir şey onu örtmez; olay açıkken de; Almanya anlatımının son adımı ve
     tek adımlı düz metin yanıtı (en uzun tek adımlı metin) için.
-14. **K. Etiketler örtüşmez:** 8 adım × 3 kamera (çerçeve, yakınlaştırılmış, uzaklaştırılmış) × 2 ekran boyunda ne bir etiket bir etiketi, ne
-    bir işaretçiyi, ne yer noktasını, ne bir devlet adını, ne haritanın kontrollerini örter (sayfada ölçülür; dört yüz elli kadar etiket
-    benzeri öğe sayılır); ek olarak yapay zekânın kendi `mark` etiketi ve yolunun etiketi için kalabalık bir adım (üç olay, üç savaş çizgisi, ilerleyiş yolu) ve
-    Çelik Pakt yanıtı (Berlin–Roma çizgisi).
+14. **K. Etiketler örtüşmez:** her sahnenin ok oynayan vuruşları, son vuruşları ve sonu (19 an) × 3 kamera (çerçeve, yakınlaştırılmış,
+    uzaklaştırılmış) × 2 ekran boyunda ne bir etiket bir etiketi, ne bir işaretçiyi ya da numaralı noktayı, ne yer noktasını, ne bir devlet
+    adını, ne haritanın kontrollerini örter (sayfada ölçülür; bin iki yüz kadar etiket benzeri öğe sayılır); ek olarak yapay zekânın
+    kendi `mark` etiketi ve okunun etiketi için kalabalık bir vuruş (ilk olayın noktası, ikinci olay, ilerleyiş oku ve etiketi, serbest
+    işaret ve etiketi) ve Çelik Pakt yanıtı (haritada yapay zekâ etiketi yok: taraflar altyazının altında).
 15. **E. Durdurma, hatalar, ayarlar:** Durdur (adımlar ve yazılan kısım kalır; tek adımlı yanıtta altyazı, "Devamını oku" ve "Durduruldu ·
     Yeniden dene" kalır), hata ekranları ve "Yeniden dene" (tek istek), `not_granted`, kalıcı hata (`sampling_disabled`: izin düğmesi ve
     yeniden deneme yok), hız ayarı (soru kutusunun üstündeki menü: Hızlı / Dengeli / Derin, tarayıcıda saklanır; saklanamazsa bozulmaz),
     **"Sohbeti temizle" her zaman görünür** (ayar menüsü kapalıyken de), yazışma varken etkin; basınca yazışmayı, yanıtı ve çizimi siler
     (yanıt sürerken de).
 16. **G. Gerçek `sample` bağdaştırıcısı**, tarayıcıda sahte bir artifact çalışma zamanıyla: **ilk tur, yönerge dosyasıyla birebir
-    başlar**; yedi araç, önem sırasıyla (`step`, `show_event`, `highlight`, `sides`, `route`, `connect`, `mark`) ve `step` aracının numara + başlık + altyazı (+ isteğe bağlı
-    yıl) istemesi; sayfa notlarında yalnızca biçim (iki tur, "## n. Başlık", olay işareti, içeriksiz biçim örneği) ve **anlatım kuralı,
-    iskelet ya da "araç ne zaman" kuralı yok**; anlatım isteğinin öteki isteklerle aynı biçimde gitmesi (olay listesi aralıktaki bütün
-    olayları kimlikleriyle bilgi olarak verir); `cache` gönderilmemesi; **konuşmanın tamamının her çağrıyla gitmesi**
-    (önceki soru, önceki yanıtın tam metni ve o yanıtın haritada ne gösterdiği; tek adımlı yanıt "1. adım:" olmadan), "Sohbeti temizle"den
-    sonra hiçbir şeyin gitmemesi; `modelTier`; metin tutulurken (yalnızca plan geldiğinde) İzle'nin başlaması (tek adımlı yanıtta
-    "Devamını oku"nun yeri ayrılmıştır ama gizlidir, metin gelince görünür, kutu ve kamera oynamaz); **düz metin yazan model** (araç
-    çağrısı yok, başlık yok): altyazı ilk cümleler, "Devamını oku", Oku'da üç paragraf; araçsız ortamda "yalnızca metin" notu;
-    `not_granted` / `rate_limited` ve `permissions.manage` düğmesi.
+    başlar**; yedi araç, önem sırasıyla (`step`, `show_event`, `highlight`, `sides`, `route`, `territory_change`, `mark`; kamera ya da
+    görünüş aracı yok, olaydan başkente çizgi çeken `connect` yok) ve `step` aracının numara + başlık + altyazı (+ isteğe bağlı yıl)
+    istemesi; sayfa notlarında yalnızca biçim (iki tur, "## n. Başlık", olay işareti, içeriksiz biçim örneği) ve **anlatım kuralı,
+    iskelet ya da "araç ne zaman" kuralı yok**; **"Bu yerin tarihini anlat" isteği** seçilen noktayı (derece olarak) ve o yılın
+    sınırlarında bu noktayı içeren devleti birlikte söyler, hangisine odaklanılacağını söylemeden (metin birebir denetlenir);
+    anlatım isteğinin öteki isteklerle aynı biçimde gitmesi (olay listesi aralıktaki bütün olayları kimlikleriyle bilgi olarak verir);
+    `cache` gönderilmemesi; **konuşmanın tamamının her çağrıyla gitmesi** (önceki soru, önceki yanıtın tam metni ve o yanıtın haritada ne
+    gösterdiği; tek adımlı yanıt "1. adım:" olmadan), "Sohbeti temizle"den sonra hiçbir şeyin gitmemesi; `modelTier`; metin
+    tutulurken (yalnızca plan geldiğinde) İzle'nin başlaması (tek adımlı yanıtta "Devamını oku"nun yeri ayrılmıştır ama gizlidir,
+    metin gelince görünür, kutu ve kamera oynamaz); **düz metin yazan model** (araç çağrısı yok, başlık yok): altyazı ilk cümleler,
+    "Devamını oku", Oku'da üç paragraf; araçsız ortamda "yalnızca metin" notu; `not_granted` / `rate_limited` ve `permissions.manage`
+    düğmesi.
 17. **H. Telefon:** harita tüm sahne (yatay taşma yok), bilgi kartı üstte küçük bir sayfa, altyazı ve soru kutusu altta (kontroller tek
     satırda ve kutudan taşmadan, düğmeler ≥ 30 px), yakınlaştırma düğmeleri ve sayaç bu sütunun üstünde; metin tam ekran, küçük harita
     başlığın altında ve adım korunur; tek adımlı yanıtta altyazı ve görünür "Devamını oku", adım denetimi yok; hata ve izin kutuları
     ekranın içinde; Harita takibi sorusu telefonda küçük kalır.
-18. **Y. Yerler, yollar ve taraflar** (sahte çalışma zamanıyla; model yerleri adlarıyla söyler): `connect`in uçları **yerdir** ("Stalingrad" ve
-    "Danzig" eski adlardır; çizgi bugünkü Volgograd'ın ve Gdańsk'ın noktalarında başlar ve biter, devletlerin ortasında değil); dört yol
-    türünün (ilerleyiş, geri çekilme, göç, ticaret yolu) çizgi deseni, kalınlığı ve ok ucu birbirinden farklıdır, ok **son duraktadır** ve
-    yolun gittiği yönü gösterir, etiketler örtüşmez, kamera her durağı sığdırır; **canlandırılması istenen yol** "hareketi azalt"ta hiç
-    canlanmaz ve baştan sona görünür, hareket serbestken çizilerek belirir (animasyon yarıda durdurulup ekran görüntüsünde çizginin
-    yalnızca başı göründüğü, bitince hepsi göründüğü ölçülür: maske yolu kapatmaz); **taraflar** tek blok olarak iki renkte boyanır (ekran
-    görüntüsünden: öne çıkan örneklerin %95'inden fazlası tarafının renginde), adları renkleriyle anlatım kutusundadır ve taraf bildirmeyen
-    adıma dönünce boyama ve kutu gider; "Mihver ve Müttefikler kimdi?" sorusu tek adımlı bir yanıtla bu iki bloğu gösterir.
+18. **Y. Yerler, yollar ve taraflar** (sahte çalışma zamanıyla; model yerleri adlarıyla söyler): okun uçları ve duraklar **yerdir**
+    ("Stalingrad" ve "Danzig" eski adlardır; ok bugünkü Volgograd'ın ve Gdańsk'ın noktalarında başlar ve biter, devletlerin ortasında
+    değil); dört yol türünün (ilerleyiş, geri çekilme, göç, ticaret yolu) çizgi deseni, kalınlığı ve ok ucu birbirinden farklıdır, ok
+    **son duraktadır** ve yolun gittiği yönü gösterir, etiketler örtüşmez, kamera her durağı sığdırır; **canlandırılması istenen yol**
+    "hareketi azalt"ta hiç canlanmaz ve baştan sona görünür, hareket serbestken çizilerek belirir (animasyon yarıda durdurulup ekran
+    görüntüsünde çizginin yalnızca başı göründüğü, bitince hepsi göründüğü ölçülür: maske yolu kapatmaz); **taraflar** (en çok üç blok ve
+    tarafsızlar) tek blok olarak, aktörünün renginde boyanır (ekran görüntüsünden: boyalı örneklerin %95'inden fazlası tarafının
+    renginde, iki taraf birbirinden ΔE ≥ 20), adları renkleriyle anlatım kutusundadır ve taraf bildirmeyen sahneye dönünce boyama ve kutu
+    gider; "Mihver ve Müttefikler kimdi?" sorusu tek adımlı bir yanıtla bu iki bloğu, ikinci cümlede kenarda kalanları (İsveç, İsviçre,
+    Türkiye: taramalı) gösterir.
 19. **N. Olay sahneleri** (sınırlar olayın başlangıcında, kamera sahnenin yerlerinde): "Fransa 1940" sahnesinde olay Mayıs 1940'ta
-    başlar ama haritada **1939'un sınırları** vardır (Fransa Üçüncü Cumhuriyeti veride 1939'a kadar); Fransa, Hollanda, Belçika, Birleşik
-    Krallık ve Almanya öne çıkar; savaş çizgisi **Berlin'den Paris'e** gider (Londra'ya düşmez); kamera Batı Avrupa'yı çerçeveler
-    (yakınlaştırma ≥ 3,8; dünya görünümü ≈ 2), Paris, Berlin ve Londra görünür alandadır, sömürgeler kadraja girmez. "Normandiya"
-    sahnesinde ABD öne çıkar ama toprağından hiçbir parça kadraja girmez (en batıdaki kutu −15°'den doğuda); çizgi Londra'dan Berlin'e;
-    kamera yine Batı Avrupa'dadır. (Ayrıca A grubunda 2. adım aynı çizgiyi ve 1939 sınırını, T grubunda adım noktaları aralığın
-    içinde kalmayı sınar.)
+    başlar ama haritada **1939'un sınırları** vardır (Fransa Üçüncü Cumhuriyeti veride 1939'a kadar); ikinci cümlede model Fransa ve
+    Birleşik Krallık'ı vurgular (olayın tarafları kendiliğinden öne çıkmaz, olaydan başkente çizgi çekilmez); kamera Batı Avrupa'yı
+    çerçeveler (yakınlaştırma ≥ 3,8; dünya görünümü ≈ 2), Paris ve Londra görünür alandadır, sömürgeler kadraja girmez. "Normandiya"
+    sahnesinde ikinci cümlede Birleşik Krallık, ABD ve Almanya vurgulanır ama ABD'nin toprağından hiçbir parça kadraja girmez (Alaska ve
+    Grönland yüzünden dünyaya uzaklaşılmaz); kamera yine Batı Avrupa'dadır. (Ayrıca A grubunda 2. sahne aynı sınırı ve çizgisizliği, T
+    grubunda adım noktaları aralığın içinde kalmayı sınar.)
+20. **M. Vuruşlar** (altyazının her cümlesi bir vuruştur): sahne **kendiliğinden** başlar (Oynat kapalıyken de) ve cümleler okuma hızında
+    oynar: oynayan cümle işaretleyici zeminde, gelecekler solgun, okunanlar normal; süre sözcük sayısından hesaplanır (hız ayarı
+    uygulanır) ve ölçülen süre hesaplanana yakındır. **Biten vuruşun oku söner, işareti küçük numaralı
+    noktaya döner**, sahne bitince tüm olaylar numaralı nokta, ok yok ve bütün cümleler okunmuştur; *Oynat* kapalıyken sahne
+    bitince okuru bekler (bekleme süresi dolsa da sonda kalır). **Bir cümleye tıklamak** o vuruşu yeniden oynatır (oku yeniden çizilir,
+    işareti yeniden tam işaret) ve orada **tutar** (süre geçse de ilerlemez); aynı cümleye bir daha tıklamak baştan oynatır, *Oynat*
+    tutulan cümleden devam ettirir. Hareket serbestken biten vuruşun oku hemen silinmez, solar (`.is-leaving`) ve bir an sonra kalkar;
+    **kamera vuruşlar arasında oynamaz** (sahnenin başında bir kez çerçevelenir).
+21. **Q. Değişim hep görünür:** anlatım sınırların yılını sahneden sahneye değiştirdiğinde (2. sahne 1939, 3. sahne 1940) o aralıktaki
+    toprak değişimi, görünümde kalan kısmıyla, haritada **bir an vurgulanır** (`terr-*` katmanları: hareketi azaltta sabit, birkaç
+    saniye; hareket serbestken yumuşak) ve kendiliğinden kalkar; öncesinde sessizdir; anlatım kapanınca vurgu da kalkar. (Toprak değişimi
+    aracının kendisi A grubunda sahne sahne denetlenir: 1. sahnede Sovyetler Birliği'nin 1939'dan 1940'a, 8. sahnede Almanya'nın 1944'ten
+    1945'e değişimi.)
+22. **Z. Tarih değişim çizgisi:** model Tokyo'dan Pearl Harbor'a ok çekince çizgi **kısa yoldan** gider (62° boylam farkı; ikinci durak
+    ≈ 202°D, −158° değil), harita sahne boyunca **dünyayı iki kez gösterir** (geniş görünüm) ve kamera iki ucu birlikte altyazının ve soru
+    kutusunun üstündeki görünür alana sığdırır, olay işareti dünya kopyasındaki yerinde görünür, hiçbir etiket başka bir etiketi
+    örtmez; okur haritayı normal dünyaya (±179,9° içine) getirince geniş görünüm kapanır ve sınırlar eskisi gibi bir kez çizilir.
 
-Bu turda (modelin serbest bırakılması, olayın başlangıç sınırları, kameranın ilgili parça çerçevelemesi, adım noktaları) tam takım
-koşulmadı; doğrulama kuralı gereği smoke ve değişikliği kapsayan gruplar koşuldu: **AI L, S, A, V, W, A2–A4, B, C, C2, D, J, K, R, T,
-F, G, H, Y, N: 437 denetimin hepsi geçti** (P ve E koşulmadı: renklere ve durdurma/hata akışına bu turda dokunulmadı). Son tam AI
-koşusu iki tur önce yapıldı (tüm gruplar, hareket azaltılmış kip, 24 dk 51 sn).
+Bu turda (sabit görsel dil, ilişki kipi, vuruşlar, toprak değişimi, tarih değişim çizgisi, çizelge şeridindeki sahne noktaları) tam
+takım koşulmadı; doğrulama kuralı gereği smoke ve değişikliği kapsayan gruplar koşuldu ve hepsi geçti: **AI e2e'nin 26 grubu, 512
+denetim** (L 17 · S 13 · A 94 · V 34 · W 30 · A2 3 · A3 19 · A4 4 · B 29 · C 13 · C2 6 · D 10 · J 24 · K 6 · P 8 · R 25 · T 19 · F 20 ·
+E 30 · G 45 · H 18 · Y 20 · N 4 · M 13 · Q 3 · Z 5; sonuncuları bu turda eklenen M, Q ve Z). Son tam AI koşusu iki tur önce
+yapıldı (tüm gruplar, hareket azaltılmış kip, 24 dk 51 sn).
 
 **Neyi sınamıyor:** gerçek bir modelin istemi ne kadar iyi izlediğini. Gerçek `sample` bu ortamdan çağrılamaz; model çıktısı biçimine
 karşı bağışlayıcı okunur (yukarıya bakın) ama ilk gerçek kullanımda gözle bakılmalıdır.
@@ -983,34 +1100,45 @@ karşı bağışlayıcı okunur (yukarıya bakın) ama ilk gerçek kullanımda g
 - Karşılaştırma modu henüz yok (veri yapıları ve panel yapısı hazır; yukarıya bakın).
 - **1800–2000 senaryolarının bulduğu, düzeltilmeyen sınırlar** (`npm run e2e:ai` bunları sözleriyle denetimlere yazar):
   haritanın doğu sınırı 179,9°D olduğu için yan okuyucu panelin altında kalan en doğudaki içerik (Japonya, Çukotka) kameradan
-  kaçamaz; uzak iki devletin savaşında (Pearl Harbor, Hiroşima, Sicilya ve Ardenler'de ABD: çizgi başkentlerden çıktığı için Washington'dan)
-  çizgi uçları dünyayı kaplar ve kutular en küçük yakınlaştırmada tümüyle sığmaz (kamera adın andığı olayları, işaretleri ve çizgi
-  uçlarını garanti eder; öne çıkan devletin kutusunun en az %75'ini
-  gösterir); savaş çizgisi her safın ilk sayılan tarafının **başkentinden** çıkar, bu yüzden uzak bir savaşta (Pasifik) çizgi iki
-  başkent arasındaki yarım küreyi kaplar ve kamera iki ucu da sığdırmak için uzaklaşır; yer noktası bazen bir olay işaretinin yıl
-  yazısına biner (Hamburg ve Dover); haritaya hiçbir şey çizmeyen (düz metin) bir yanıt, yer seçili
-  değilken dünya olaylarını yanıt kapanana kadar haritadan çeker (tek anlatıcı kuralı) ve daha önce çizilmiş bir sahnenin üstüne
-  gelirse o sahneyi olduğu gibi bırakır.
+  kaçamaz (tarih değişim çizgisini aşan bir sahne hariç: orada harita geçici olarak dünyayı iki kez gösterir); birbirinden çok uzak
+  yerler arasındaki bir ok (Pasifik'te Tokyo–Pearl Harbor, Atlantik'te Londra–Washington) kamerayı iki ucu birlikte sığdırmak için
+  uzaklaştırır ve devlet kutuları en küçük yakınlaştırmada tümüyle sığmaz (kamera sahnenin adlandırdığı her yeri garanti eder; işaret
+  edilen devletin kutusunun en az %75'ini gösterir); yer noktası bazen bir olay işaretinin yıl yazısına biner (Hamburg ve Dover);
+  haritaya hiçbir şey çizmeyen (düz metin) bir yanıt, yer seçili değilken dünya olaylarını yanıt kapanana kadar haritadan çeker (tek
+  anlatıcı kuralı) ve daha önce çizilmiş bir sahnenin üstüne gelirse o sahneyi olduğu gibi bırakır.
 - Okuma arkadaşı: gerçek model çıktısı bu ortamda sınanamadı (yukarıya bakın); serbest bırakılan modelin anlatımlarının derinliği
-  (ör. Nazi Almanyası 1931–1945) ilk gerçek kullanımda gözle bakılmalı, gözlenen her sorun için kural teker teker geri eklenmeli (yukarıdaki
-  kaldırılanlar tablosu). Bir aralıkta çok adım varsa nokta cetvelde 7 px'e kadar küçülür ve üst üste biner (1939–1945: 1440 px'lik pencerede
-  ≈ 42 px, 1180 px'te ≈ 34 px, telefonda ≈ 9 px; telefonda sekiz nokta 2–3 px'e sığar, tek nokta gibi durur ve ayrı ayrı tıklanamaz). Noktalar
-  tarihlerinde durduğu için bu bir sınırdır, hata değil; gezinme için İzle'nin düğmeleri ve oklar zaten vardır (testler de telefonda öyle gezer). Yönerge dosyasını düzenlemek uygulamayı yeniden
-  derlemeyi ve yeniden yayınlamayı gerektirir (dosya derlemede gömülür). Otomatik oynatma süreleri (2,2 sn + sözcük başına
-  0,36 sn; hızlar 0,65 / 1 / 1,8) ve ilerleme çubuğundaki nokta boyları (15 px'ten 7 px'e) ilk sürümün varsayılanlarıdır
-  (`src/ai/presentation.ts` ve `src/ui/ruler.ts` başındaki sabitler); gerçek kullanımda ayarlanması gerekebilir. Yüklenmiş belge
-  kaynağı henüz yok.
-- **Yerler, yollar, taraflar (bu turun sınırları).** Başkent tablosu elle derlendi ve makalelerle tek tek karşılaştırılamadı; 131 devletin
-  başkenti yoktur (o zaman çizgi, devletin en büyük parçasının ortasından çıkar). Yolların en çok 8 durağı, bir çatışmanın en çok 3 tarafı
-  vardır; taraf kutusu yalnızca İzle'dedir (Oku'da yoktur). Tarafların renkleri sabit üç renktir (şarap kırmızısı, kehribar, yeşil). Bir
-  şehir adı birden çok yere uyuyorsa en tanınmış olan seçilir ("Salamanca" İspanya'dakidir); göstergelik ~3.300 yerdir, Natural Earth'te
-  olmayan küçük bir yer tanınmaz ve atlanır. İşgal adları "doğruluk turu" değildir: bazı ifadeler tartışmaya açıktır (Çin ve Çinhindi'si
-  için "Japon işgali" kukla yönetimleri de kapsar; Lüksemburg ve Alsace-Lorraine fiilen ilhak edilmişti; Arnavutluk'un 1939'daki
-  şahsi birliği bir işgal olarak adlandırılır; Zadar ve Rijeka "İtalyan işgali"dir) ve bazı işgaller **adlandırılmaz** (Macaristan 1944,
-  Kuzey İtalya 1943–45, Libya ve Tunus'taki Mihver elleri, Mançurya, Slovakya, Hırvatistan Bağımsız Devleti, Baltık'ın 1940 Sovyet işgali;
-  tam liste `corrections/ww2.json` içindeki `meta.knownGaps`). 1942 anlık görüntüsünde Burma, Java ve Sumatra hâlâ İngiliz ve Hollanda
-  çizilir (veri yıl başındaki durumu gösterir gibidir); 1945'te Varşova ve Prag verinin kendi sahibinde (Sovyetler Birliği) kalır, 1946'dan
-  sonraki işgal bölgeleri işgalcinin toprağı olarak çizilmeye devam eder.
+  (ör. Nazi Almanyası 1931–1945) ve yeni görsel dilin (vuruşlar, taraf renkleri, toprak değişimi) gerçek bir modelle nasıl göründüğü ilk
+  gerçek kullanımda gözle bakılmalı, gözlenen her sorun için kural teker teker geri eklenmeli (yukarıdaki kaldırılanlar tablosu).
+  Zaman çizelgesindeki sahne noktaları tarihlerinde durur; aralık çok genişse ve sahneler birkaç yıla toplanmışsa noktalar küçülür
+  (15 px'ten 7 px'e), tarihlerinden en az kayarak açılır ve yine sığmazsa üst üste biner. Gezinme için İzle'nin düğmeleri ve oklar
+  zaten vardır (testler de telefonda öyle gezer). Yönerge dosyasını düzenlemek uygulamayı yeniden derlemeyi ve yeniden yayınlamayı
+  gerektirir (dosya derlemede gömülür). Vuruşların süresi (cümle başına 1,1 sn + sözcük başına 0,33 sn, en az 2,4 en çok 11 sn;
+  sahnenin ilk cümlesine 0,9 sn; sahneler arası 1,6 sn; hızlar 0,65 / 1 / 1,8) ve nokta boyları ilk sürümün varsayılanlarıdır
+  (`src/ai/presentation.ts` ve `src/domain/spread.ts` başındaki sabitler); gerçek kullanımda ayarlanması gerekebilir. **Sesli
+  okuma yok:** bir vuruşun ne zaman bittiğini `Pacer` söyler (şimdi okuma süresi), sesli okuma eklenirse cümlenin okunup bittiği an
+  olur. Yüklenmiş belge kaynağı henüz yok.
+- **Yerler, yollar, taraflar.** Başkent tablosu elle derlendi ve makalelerle tek tek karşılaştırılamadı; 131 devletin başkenti yoktur
+  (bir yol durağı olarak o devlet söylenirse nokta, devletin en büyük parçasının ortasıdır; model "sınır: devlet → yer" ile cepheyi de
+  söyleyebilir). Bir yolun en çok 8 durağı, bir anlatımın en çok 3 tarafı (ve tarafsızlar) vardır; üçten fazla taraf boyanmaz; taraf
+  kutusu yalnızca İzle'dedir (Oku'da yoktur). Bir şehir adı birden çok yere uyuyorsa en tanınmış olan seçilir ("Salamanca" İspanya'dakidir);
+  göstergelik ~3.300 yerdir, Natural Earth'te olmayan küçük bir yer tanınmaz ve atlanır. İşgal adları "doğruluk turu" değildir: bazı
+  ifadeler tartışmaya açıktır (Çin ve Çinhindi'si için "Japon işgali" kukla yönetimleri de kapsar; Lüksemburg ve Alsace-Lorraine fiilen
+  ilhak edilmişti; Arnavutluk'un 1939'daki şahsi birliği bir işgal olarak adlandırılır; Zadar ve Rijeka "İtalyan işgali"dir) ve bazı
+  işgaller **adlandırılmaz** (Macaristan 1944, Kuzey İtalya 1943–45, Libya ve Tunus'taki Mihver elleri, Mançurya, Slovakya, Hırvatistan
+  Bağımsız Devleti, Baltık'ın 1940 Sovyet işgali; tam liste `corrections/ww2.json` içindeki `meta.knownGaps`). 1942 anlık görüntüsünde
+  Burma, Java ve Sumatra hâlâ İngiliz ve Hollanda çizilir (veri yıl başındaki durumu gösterir gibidir); 1945'te Varşova ve Prag verinin
+  kendi sahibinde (Sovyetler Birliği) kalır, 1946'dan sonraki işgal bölgeleri işgalcinin toprağı olarak çizilmeye devam eder.
+- **Görsel dil, vuruşlar ve toprak değişimi (bu turun sınırları).** (1) **Sınır verisi yıllıktır:** bir yıl içindeki değişiklikler
+  (Anschluss ile Sudetenland ikisi de 1938; Eylül 1939'daki iki işgal) ayrılamaz; `territory_change` iki *yıl* arasını karşılaştırır ve
+  kazanılan ya da kaybedilen alanın tarihi o yıllardır, günü değil. (2) Toprak farkı bir ızgarada (uzun kenarda en çok 1600 hücre)
+  hesaplanır: kıyı şeritleri ve çok küçük adalar farkta kaybolabilir; çok küçük serpinti hücreleri atılır. (3) **Yıl değişimi vurgusu**
+  yalnızca yıl farkı ≤ 25 ve görünümdeki karanın %50'sinden azı el değiştiriyorsa gösterilir; bir toprak değişimi aracı o vuruşta zaten
+  oynuyorsa ikinci bir vurgu yapılmaz; haritada hiç görünmeyen bir değişim vurgulanamaz. (4) **Tarih değişim çizgisi:** geniş görünüm
+  (dünya iki kez) okur haritayı normal dünyaya getirene kadar sürer ve o sırada okur çizginin ötesine kaydırabilir. (5) **Tek vuruşlu
+  sahne** bittiğinde olayın işareti de küçük numaralı bir noktaya döner: tek sahneli bir yanıt sonunda vurgusuz, küçük bir numaralı
+  nokta bırakır (üstüne gelince adı görünür). (6) Bir cümleye tıklamak vuruşu orada tutar; sahne kendi başına bitmez, *Oynat* ya da
+  *Sonraki* gerekir. (7) README'deki ekran görüntüleri bir önceki turdandır (görsel dil ve vuruşlar için yeniler `E2E_SHOTS=1` ile
+  alınacak).
 - Görünüm dışındaki bir olayı açınca harita yalnızca uzaklaşır; uzaklaşmak yetmezse (en geniş görünüm) merkezi olayı güvenli alana sokan
   en kısa yoldan kaydırır, sınırların dışına çıkmaz ve aynı olayı yeniden açmak haritayı bir daha oynatmaz (yukarıya bakın).
 - Renk-körlüğü payı dardır: protan/deutan simülasyonunda iki kategori rengi arasındaki en küçük ΔE 7,7'dir (6–8 "uyarı" bandı).

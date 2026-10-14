@@ -1,32 +1,27 @@
-import type { Map as MLMap } from 'maplibre-gl';
-import {
-  RELATION_WORD,
-  ROUTE_WORD,
-  type Relation,
-  type ResolvedDrawing,
-  type ResolvedLink,
-  type ResolvedRoute,
-  type ResolvedWar,
-  type RouteType,
-} from '../ai/types';
+import { ROUTE_WORD, type ResolvedFrame, type ResolvedRoute, type RouteType } from '../ai/types';
 import type { Rect } from '../domain/reveal';
 import type { PlacePoint } from '../domain/types';
 import { placeFlags, type FlagAnchor, type FlagRequest } from './flags';
+import type { Projector } from './projection';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 /** The label font, as in the stylesheet (`.ai-flag`): the width is measured, not guessed. */
 const FLAG_FONT = {
   mark: '500 13px "Newsreader Variable", Georgia, serif',
-  link: '600 12px "Instrument Sans Variable", system-ui, sans-serif',
+  route: '600 12px "Instrument Sans Variable", system-ui, sans-serif',
 };
 const FLAG_PAD_X = 16; // padding and border on both sides
 const FLAG_H = 22;
 
 /** What a point of the drawing takes up around itself, so no label is hung over it. */
 const DIAMOND_REACH = 9;
+const NUMBER_REACH = 10;
 const GLYPH_REACH = 12;
 const END_REACH = 6;
+
+/** How long an arrow takes to fade away once its beat is over (it is gone at once for a reader who asked for reduced motion). */
+const FADE_MS = 520;
 
 const svg = <K extends keyof SVGElementTagNameMap>(
   tag: K,
@@ -37,12 +32,10 @@ const svg = <K extends keyof SVGElementTagNameMap>(
   return el;
 };
 
-const keyOfLink = (l: ResolvedLink) =>
-  `${l.relation}|${l.a.lon.toFixed(2)},${l.a.lat.toFixed(2)}|${l.b.lon.toFixed(2)},${l.b.lat.toFixed(2)}|${l.label ?? ''}`;
 const keyOfMark = (m: { point: PlacePoint; label: string }) =>
   `${m.point.lon.toFixed(3)},${m.point.lat.toFixed(3)}|${m.label}`;
-const keyOfRoute = (r: ResolvedRoute) =>
-  `${r.type}|${r.points.map((p) => `${p.lon.toFixed(2)},${p.lat.toFixed(2)}`).join('>')}|${r.label ?? ''}|${r.animate}`;
+const keyOfRoute = (r: ResolvedRoute, replay: number) =>
+  `${r.type}|${r.points.map((p) => `${p.lon.toFixed(2)},${p.lat.toFixed(2)}`).join('>')}|${r.label ?? ''}|${r.animate}|${replay}`;
 
 /** The arrowhead of each route type, its tip at the origin and pointing along +x. */
 const HEAD_SHAPE: Record<RouteType, string> = {
@@ -54,57 +47,46 @@ const HEAD_SHAPE: Record<RouteType, string> = {
 /** How far the stroke stops short of the tip, so that its end does not show past the arrowhead. */
 const HEAD_BACK = 9;
 
-interface LinkEl {
-  link: ResolvedLink;
-  group: SVGGElement;
-  casing: SVGPathElement;
-  line: SVGPathElement;
-  inner: SVGPathElement | null;
-  glyph: SVGGElement;
-  heads: SVGPathElement[];
-  flag: HTMLElement;
-  flagW: number;
-}
-
 /**
- * A route: a curved arrow through its stops, one look per type (src/styles/ai.css). The arrowhead sits on the last stop;
- * the other stops are small dots. An animated route draws itself in (a mask that a stroke opens along the path).
+ * One drawing of an arrow: the arrow itself, or (where it crosses the date line) its copy on the other side of the world, so
+ * the part that leaves the map at one edge comes in at the other.
  */
-interface RouteEl {
-  route: ResolvedRoute;
+interface RouteCopy {
   group: SVGGElement;
   casing: SVGPathElement;
   line: SVGPathElement;
   head: SVGPathElement;
   dots: SVGCircleElement[];
+  /** Which copy of the world it lies in, relative to the arrow's own longitudes: 0, or ±1 (−1: 360° to the west). */
+  shift: -1 | 0 | 1;
+}
+
+/**
+ * A route: a curved arrow through its stops, one look per type (src/styles/ai.css). The arrowhead sits on the last stop;
+ * the other stops are small dots. An animated route draws itself in (a mask that a stroke opens along the path). It is there
+ * while its beat plays and fades away when the beat is over.
+ */
+interface RouteEl {
+  route: ResolvedRoute;
+  copies: RouteCopy[];
   reveal: SVGPathElement | null;
   maskId: string | null;
   flag: HTMLElement;
   flagW: number;
   /** The path as the last layout drew it, so a label can slide along it. */
   samples: { x: number; y: number }[];
+  leaving: boolean;
 }
 
+/** A point the AI marks: a diamond with its label while its beat plays, a small numbered dot afterwards. */
 interface MarkEl {
-  mark: { point: PlacePoint; label: string };
+  point: PlacePoint;
+  label: string;
+  beat: number;
+  now: boolean;
   pt: HTMLElement;
   flag: HTMLElement;
   flagW: number;
-}
-
-/**
- * A war event the step shows: one line from the first side's polity, through the event's own marker (src/map/markers.ts),
- * to the second side's. The marker sits on a paper ring where the line passes, so line and marker read as one thing; every
- * war looks like this, and it has no name box and no glyph of its own (the marker is the glyph).
- */
-interface WarEl {
-  war: ResolvedWar;
-  at: PlacePoint;
-  group: SVGGElement;
-  casing: SVGPathElement;
-  line: SVGPathElement;
-  ring: SVGCircleElement;
-  ends: SVGCircleElement[];
 }
 
 /**
@@ -120,27 +102,20 @@ export interface AiLayoutEnv {
 
 const NO_ENV: AiLayoutEnv = { hard: [], soft: [] };
 
-/** Where along its line a relation's glyph may sit, the middle first: it slides off a marker or a name rather than hide under it. */
-const GLYPH_AT = [0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74, 0.18, 0.82, 0.12, 0.88];
-
-const crosses = (a: Rect, b: Rect) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
-
-const coverage = (a: Rect, b: Rect) =>
-  Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
-  Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
-
 /** A label whose point lies more than this far outside the map is not shown: pushed back inside it would name nothing. */
 const OFFSCREEN_SLACK = 14;
 
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 /**
- * What the AI draws on the map, in pen and ink: the war lines of the events it shows, its own relation lines between
- * polities and its own labelled marks. It follows the map's projection like every other overlay and never touches the
- * camera. Polygons (the spotlight) are map layers drawn by MapView; this is the part that does not belong to a polygon.
- * (The events a step talks about have their own markers; they carry no name box here, the name shows on hover.)
+ * What the AI draws on the map, in pen and ink: the arrows of the beat that plays and its own labelled marks. It follows
+ * the map's projection like every other overlay and never touches the camera. Areas (what it paints and points at) are map
+ * layers drawn by MapView, and the events have their own markers (src/map/markers.ts); this is the part that does not belong to
+ * a polygon. An arrow is a movement and nothing else: the only line the map draws.
  *
- * The drawing looks different from the data layers on purpose, in the same visual language: ink on paper,
- * told apart by pattern (solid, double, dashed, dotted) and never by hue, so it does not compete with the
- * vermilion that means "your selection" or with the colours of the event dots.
+ * The drawing looks different from the data layers on purpose, in the same visual language: ink on paper, told apart by
+ * pattern (solid, dashed, dotted) and never by hue, so it does not compete with the vermilion that means "your
+ * selection" or with the colours of the event dots.
  *
  * Every label of it keeps clear of the other labels and of the markers: it is hung where nothing else is
  * (see `placeFlags`), on the first side of its point that is free, and then at a few places further out.
@@ -150,10 +125,9 @@ export class AiDrawingLayer {
   private readonly lines: SVGSVGElement;
   private readonly flags: HTMLElement;
   private readonly measure = document.createElement('canvas').getContext('2d')!;
-  private readonly links = new Map<string, LinkEl>();
   private readonly marks = new Map<string, MarkEl>();
-  private readonly wars = new Map<string, WarEl>();
   private readonly routes = new Map<string, RouteEl>();
+  private readonly leaving = new Set<RouteEl>();
   private readonly defs: SVGDefsElement;
   private routeSeq = 0;
   private compact = false;
@@ -161,8 +135,9 @@ export class AiDrawingLayer {
   private height = 0;
 
   constructor(
-    private readonly map: MLMap,
+    private readonly map: import('maplibre-gl').Map,
     container: HTMLElement,
+    private readonly projector: Projector,
   ) {
     this.host = document.createElement('div');
     this.host.className = 'ai-layer';
@@ -182,58 +157,62 @@ export class AiDrawingLayer {
     return Math.ceil(this.measure.measureText(text).width);
   }
 
-  /** Shows this drawing: elements of what stays are kept (so they do not blink), the rest come and go. Call `layout` after. */
-  setDrawing(drawing: ResolvedDrawing, description = '') {
-    const wanted = new Set(drawing.links.map(keyOfLink));
-    for (const [k, el] of this.links) {
-      if (wanted.has(k)) continue;
-      el.group.remove();
-      el.flag.remove();
-      this.links.delete(k);
-    }
-    for (const link of drawing.links) {
-      const k = keyOfLink(link);
-      if (!this.links.has(k)) this.links.set(k, this.createLink(link));
-    }
-    const wantedRoutes = new Set(drawing.routes.map(keyOfRoute));
+  /**
+   * Shows this frame: the arrows of the beat that plays (the ones of a beat that is over fade away) and the marks, each
+   * prominent or a numbered dot. Elements of what stays are kept (so they do not blink), the rest come and go. Call `layout`
+   * after.
+   */
+  setFrame(frame: ResolvedFrame, description = '') {
+    const wantedRoutes = new Set(frame.routes.map((r) => keyOfRoute(r, frame.replay)));
     for (const [k, el] of this.routes) {
       if (wantedRoutes.has(k)) continue;
-      el.group.remove();
-      el.flag.remove();
-      if (el.maskId) this.defs.querySelector(`#${el.maskId}`)?.remove();
       this.routes.delete(k);
+      this.retire(el);
     }
-    for (const route of drawing.routes) {
-      const k = keyOfRoute(route);
+    for (const route of frame.routes) {
+      const k = keyOfRoute(route, frame.replay);
       if (!this.routes.has(k)) this.routes.set(k, this.createRoute(route));
     }
-    const wantedMarks = new Set(drawing.marks.map(keyOfMark));
+    const wantedMarks = new Set(frame.marks.map(keyOfMark));
     for (const [k, el] of this.marks) {
       if (wantedMarks.has(k)) continue;
       el.pt.remove();
       el.flag.remove();
       this.marks.delete(k);
     }
-    for (const mark of drawing.marks) {
+    for (const mark of frame.marks) {
       const k = keyOfMark(mark);
-      if (!this.marks.has(k)) this.marks.set(k, this.createMark(mark));
+      const had = this.marks.get(k);
+      if (had) {
+        had.now = mark.now;
+        had.beat = mark.beat;
+        this.styleMark(had);
+      } else this.marks.set(k, this.createMark(mark));
     }
-    const wars = drawing.events.flatMap((e) => (e.war ? [{ id: e.id, at: e.point, war: e.war }] : []));
-    const wantedWars = new Set(wars.map((w) => `${w.id}|${warKey(w.war)}`));
-    for (const [k, el] of this.wars) {
-      if (wantedWars.has(k)) continue;
-      el.group.remove();
-      this.wars.delete(k);
-    }
-    for (const w of wars) {
-      const k = `${w.id}|${warKey(w.war)}`;
-      if (!this.wars.has(k)) this.wars.set(k, this.createWar(w.war, w.at));
-    }
-    const empty = !drawing.links.length && !drawing.routes.length && !drawing.marks.length && !wars.length;
-    this.host.hidden = empty;
+    this.host.hidden = !frame.routes.length && !frame.marks.length && !this.leaving.size;
     if (description) this.host.setAttribute('aria-label', `Yapay zekâ çizimi: ${description}`);
     else this.host.removeAttribute('aria-label');
     // The caller lays everything out next (it knows what else lies on the map): see `layout`.
+  }
+
+  /** An arrow whose beat is over: it fades away (and is gone at once for a reader who asked for reduced motion). */
+  private retire(el: RouteEl) {
+    if (reducedMotion()) return this.dispose(el);
+    el.leaving = true;
+    el.flag.hidden = true;
+    for (const c of el.copies) c.group.classList.add('is-leaving');
+    this.leaving.add(el);
+    window.setTimeout(() => {
+      this.leaving.delete(el);
+      this.dispose(el);
+      if (!this.routes.size && !this.marks.size && !this.leaving.size) this.host.hidden = true;
+    }, FADE_MS);
+  }
+
+  private dispose(el: RouteEl) {
+    for (const c of el.copies) c.group.remove();
+    el.flag.remove();
+    if (el.maskId) this.defs.querySelector(`#${el.maskId}`)?.remove();
   }
 
   /** On a small map (the little window of the full-screen reader) the drawing goes without its name tags, which would crowd it. */
@@ -243,57 +222,25 @@ export class AiDrawingLayer {
 
   /* ------------------------------------------------------------- creation */
 
-  private createLink(link: ResolvedLink): LinkEl {
-    const group = svg('g', { class: 'ai-link', 'data-relation': link.relation });
-    const casing = svg('path', { class: 'casing' });
-    const line = svg('path', { class: 'line' });
-    const inner = link.relation === 'alliance' ? svg('path', { class: 'inner' }) : null;
-    const glyph = svg('g', { class: 'glyph' });
-    const heads: SVGPathElement[] = [];
-    group.append(casing, line);
-    if (inner) group.append(inner);
-    if (link.relation === 'trade') {
-      for (let i = 0; i < 2; i++) {
-        const head = svg('path', { class: 'head', d: 'M0 0L-10 -5.2L-10 5.2Z' });
-        heads.push(head);
-        group.append(head);
-      }
-    } else {
-      group.append(svg('circle', { class: 'end', r: '3.6' }), svg('circle', { class: 'end', r: '3.6' }));
-    }
-    glyph.append(...glyphShapes(link.relation));
-    group.append(glyph);
-    this.lines.appendChild(group);
-
-    const text = link.label ?? RELATION_WORD[link.relation];
-    const flag = document.createElement('span');
-    flag.className = 'ai-flag is-link';
-    flag.dataset.relation = link.relation;
-    flag.textContent = text;
-    this.flags.appendChild(flag);
-    return {
-      link,
-      group,
-      casing,
-      line,
-      inner,
-      glyph,
-      heads,
-      flag,
-      flagW: this.textWidth(text, FLAG_FONT.link) + FLAG_PAD_X,
-    };
-  }
-
-  private createRoute(route: ResolvedRoute): RouteEl {
+  private createCopy(route: ResolvedRoute, shift: RouteCopy['shift'], maskId: string | null): RouteCopy {
     const group = svg('g', { class: 'ai-route', 'data-type': route.type });
     const casing = svg('path', { class: 'casing' });
     const line = svg('path', { class: 'line' });
     const head = svg('path', { class: 'head', d: HEAD_SHAPE[route.type] });
     const dots = route.points.slice(0, -1).map(() => svg('circle', { class: 'stop', r: '3.8' }));
     group.append(casing, line, ...dots, head);
+    if (maskId) {
+      group.classList.add('is-animated');
+      group.setAttribute('mask', `url(#${maskId})`);
+    }
+    this.lines.appendChild(group);
+    return { group, casing, line, head, dots, shift };
+  }
+
+  private createRoute(route: ResolvedRoute): RouteEl {
     let reveal: SVGPathElement | null = null;
     let maskId: string | null = null;
-    if (route.animate) {
+    if (route.animate && !reducedMotion()) {
       // the path draws itself in: a mask over the whole route, opened by a stroke that grows along the same path
       maskId = `ai-route-mask-${++this.routeSeq}`;
       const mask = svg('mask', {
@@ -307,10 +254,13 @@ export class AiDrawingLayer {
       reveal = svg('path', { class: 'reveal', pathLength: '1' });
       mask.appendChild(reveal);
       this.defs.appendChild(mask);
-      group.classList.add('is-animated');
-      group.setAttribute('mask', `url(#${maskId})`);
     }
-    this.lines.appendChild(group);
+    // a route over the date line is drawn twice: where it leaves the map at one edge it comes in at the other
+    const lons = route.points.map((p) => p.lon);
+    const shifts: RouteCopy['shift'][] = [0];
+    if (Math.max(...lons) > 180) shifts.push(-1);
+    if (Math.min(...lons) < -180) shifts.push(1);
+    const copies = shifts.map((s) => this.createCopy(route, s, maskId));
     const text = route.label ?? ROUTE_WORD[route.type];
     const flag = document.createElement('span');
     flag.className = 'ai-flag is-route';
@@ -319,20 +269,17 @@ export class AiDrawingLayer {
     this.flags.appendChild(flag);
     return {
       route,
-      group,
-      casing,
-      line,
-      head,
-      dots,
+      copies,
       reveal,
       maskId,
       flag,
-      flagW: this.textWidth(text, FLAG_FONT.link) + FLAG_PAD_X,
+      flagW: this.textWidth(text, FLAG_FONT.route) + FLAG_PAD_X,
       samples: [],
+      leaving: false,
     };
   }
 
-  private createMark(mark: { point: PlacePoint; label: string }): MarkEl {
+  private createMark(mark: { point: PlacePoint; label: string; beat: number; now: boolean }): MarkEl {
     const pt = document.createElement('i');
     pt.className = 'ai-pt';
     this.flags.appendChild(pt);
@@ -340,18 +287,23 @@ export class AiDrawingLayer {
     flag.className = 'ai-flag is-mark';
     flag.textContent = mark.label;
     this.flags.appendChild(flag);
-    return { mark, pt, flag, flagW: this.textWidth(mark.label, FLAG_FONT.mark) + FLAG_PAD_X };
+    const el: MarkEl = {
+      point: mark.point,
+      label: mark.label,
+      beat: mark.beat,
+      now: mark.now,
+      pt,
+      flag,
+      flagW: this.textWidth(mark.label, FLAG_FONT.mark) + FLAG_PAD_X,
+    };
+    this.styleMark(el);
+    return el;
   }
 
-  private createWar(war: ResolvedWar, at: PlacePoint): WarEl {
-    const group = svg('g', { class: 'ai-war' });
-    const casing = svg('path', { class: 'casing' });
-    const line = svg('path', { class: 'line' });
-    const ring = svg('circle', { class: 'ring', r: '11' });
-    const ends = [svg('circle', { class: 'end', r: '3.8' }), svg('circle', { class: 'end', r: '3.8' })];
-    group.append(casing, line, ...ends, ring);
-    this.lines.appendChild(group);
-    return { war, at, group, casing, line, ring, ends };
+  /** A mark is a diamond with its label while its beat plays, and a small numbered dot (the number of its beat) after it. */
+  private styleMark(el: MarkEl) {
+    el.pt.classList.toggle('is-dot', !el.now);
+    el.pt.dataset.n = String(el.beat);
   }
 
   /* --------------------------------------------------------------- layout */
@@ -379,43 +331,42 @@ export class AiDrawingLayer {
       pt.y <= height + OFFSCREEN_SLACK;
     const requests: FlagRequest[] = [];
     const pending: { id: string; el: HTMLElement }[] = [];
-    // What the drawing itself takes up: its own points, glyphs and line ends. No label is hung over them.
+    // What the drawing itself takes up: its own points and arrow ends. No label is hung over them.
     const own: Rect[] = [];
     const reach = (x: number, y: number, r: number): Rect => ({ left: x - r, top: y - r, right: x + r, bottom: y + r });
+    const world = this.projector.worldWidth();
 
-    // The war lines first (they have no label to place), then the marks, then the model's own lines, whose labels can slide along them.
-    for (const el of this.wars.values()) {
-      const a = this.map.project([el.war.a.lon, el.war.a.lat]);
-      const b = this.map.project([el.war.b.lon, el.war.b.lat]);
-      const p = this.map.project([el.at.lon, el.at.lat]);
-      if (![a.x, a.y, b.x, b.y, p.x, p.y].every(Number.isFinite)) continue;
-      const d = throughPoint(a, p, b);
-      el.casing.setAttribute('d', d);
-      el.line.setAttribute('d', d);
-      el.ends[0]!.setAttribute('transform', `translate(${a.x.toFixed(1)} ${a.y.toFixed(1)})`);
-      el.ends[1]!.setAttribute('transform', `translate(${b.x.toFixed(1)} ${b.y.toFixed(1)})`);
-      el.ring.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`);
-      own.push(reach(a.x, a.y, END_REACH), reach(b.x, b.y, END_REACH));
-    }
-
-    for (const [k, el] of this.routes) {
-      const pts = el.route.points.map((pt) => this.map.project([pt.lon, pt.lat]));
-      if (!pts.every((pt) => Number.isFinite(pt.x) && Number.isFinite(pt.y))) continue;
-      const path = routePath(pts);
-      el.casing.setAttribute('d', path.d);
-      el.line.setAttribute('d', path.d);
-      el.reveal?.setAttribute('d', path.d);
-      el.head.setAttribute(
-        'transform',
-        `translate(${path.tip.x.toFixed(1)} ${path.tip.y.toFixed(1)}) rotate(${path.angle.toFixed(1)})`,
-      );
-      el.dots.forEach((dot, i) =>
-        dot.setAttribute('transform', `translate(${pts[i]!.x.toFixed(1)} ${pts[i]!.y.toFixed(1)})`),
-      );
-      el.samples = path.samples;
-      for (const pt of pts) own.push(reach(pt.x, pt.y, END_REACH));
-      own.push(reach(path.tip.x, path.tip.y, GLYPH_REACH));
-      const where = (f: number) => pointAlong(path.samples, f);
+    for (const [k, el] of [...this.routes, ...[...this.leaving].map((r) => ['', r] as const)]) {
+      const leaving = el.leaving;
+      // the stops as the arrow runs: longitudes run on over the date line, so the path is where the short way goes
+      const base = el.route.points.map((pt) => this.projector.exact(pt.lon, pt.lat));
+      if (!base.every((pt) => Number.isFinite(pt.x) && Number.isFinite(pt.y))) continue;
+      let primary: ReturnType<typeof routePath> | null = null;
+      for (const copy of el.copies) {
+        const dx = copy.shift * -world;
+        const pts = base.map((pt) => ({ x: pt.x + dx, y: pt.y }));
+        const path = routePath(pts);
+        if (copy.shift === 0) primary = path;
+        copy.casing.setAttribute('d', path.d);
+        copy.line.setAttribute('d', path.d);
+        // the head only where the tip is: the other copy shows the part of the path that crosses over
+        copy.head.setAttribute(
+          'transform',
+          `translate(${path.tip.x.toFixed(1)} ${path.tip.y.toFixed(1)}) rotate(${path.angle.toFixed(1)})`,
+        );
+        copy.head.style.display =
+          el.route.points[el.route.points.length - 1]!.lon > 180 === (copy.shift === -1) ? '' : 'none';
+        copy.dots.forEach((dot, i) =>
+          dot.setAttribute('transform', `translate(${pts[i]!.x.toFixed(1)} ${pts[i]!.y.toFixed(1)})`),
+        );
+        if (!leaving) for (const pt of pts) own.push(reach(pt.x, pt.y, END_REACH));
+        if (copy.shift === 0 && el.reveal) el.reveal.setAttribute('d', path.d);
+      }
+      if (!primary) continue;
+      el.samples = primary.samples;
+      if (leaving) continue;
+      own.push(reach(primary.tip.x, primary.tip.y, GLYPH_REACH));
+      const where = (f: number) => pointAlong(primary!.samples, f);
       const spots = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8].map(where).filter(onMap);
       el.flag.hidden = this.compact || !spots.length;
       if (el.flag.hidden) continue;
@@ -435,11 +386,11 @@ export class AiDrawingLayer {
     }
 
     for (const [k, el] of this.marks) {
-      const p = this.map.project([el.mark.point.lon, el.mark.point.lat]);
+      const p = this.projector.near(el.point.lon, el.point.lat);
       if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
       el.pt.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
-      own.push(reach(p.x, p.y, DIAMOND_REACH));
-      el.flag.hidden = this.compact || !onMap(p);
+      own.push(reach(p.x, p.y, el.now ? DIAMOND_REACH : NUMBER_REACH));
+      el.flag.hidden = this.compact || !el.now || !onMap(p);
       if (el.flag.hidden) continue;
       requests.push({
         id: `mark:${k}`,
@@ -457,77 +408,6 @@ export class AiDrawingLayer {
         ],
       });
       pending.push({ id: `mark:${k}`, el: el.flag });
-    }
-
-    for (const [k, el] of this.links) {
-      const a = this.map.project([el.link.a.lon, el.link.a.lat]);
-      const b = this.map.project([el.link.b.lon, el.link.b.lat]);
-      if (![a.x, a.y, b.x, b.y].every(Number.isFinite)) continue;
-      const arc = arcBetween(a, b);
-      const d = `M${a.x.toFixed(1)} ${a.y.toFixed(1)}Q${arc.cx.toFixed(1)} ${arc.cy.toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
-      el.casing.setAttribute('d', d);
-      el.line.setAttribute('d', d);
-      el.inner?.setAttribute('d', d);
-      // The glyph sits in the middle of its line, or nearby where the middle is taken by a marker or a name.
-      const along = GLYPH_AT.map((t) => pointOn(a, arc, b, t));
-      const spots = along.filter(onMap);
-      const clearOf = (rects: readonly Rect[]) =>
-        spots.find((pt) => {
-          const box = reach(pt.x, pt.y, GLYPH_REACH);
-          return !rects.some((o) => crosses(box, o));
-        });
-      // Where nothing is clear (a short line with markers along it), the place that covers the least.
-      const leastCovered = () => {
-        const rects = [...env.hard, ...own];
-        const cost = (pt: { x: number; y: number }) =>
-          rects.reduce((sum, o) => sum + coverage(reach(pt.x, pt.y, GLYPH_REACH), o), 0);
-        return spots.reduce<{ x: number; y: number } | undefined>(
-          (best, pt) => (!best || cost(pt) < cost(best) ? pt : best),
-          undefined,
-        );
-      };
-      const glyph =
-        clearOf([...env.hard, ...env.soft, ...own]) ?? clearOf([...env.hard, ...own]) ?? leastCovered() ?? along[0]!;
-      el.glyph.setAttribute('transform', `translate(${glyph.x.toFixed(1)} ${glyph.y.toFixed(1)})`);
-      const ends = el.group.querySelectorAll<SVGCircleElement>('circle.end');
-      if (ends.length === 2) {
-        ends[0]!.setAttribute('transform', `translate(${a.x.toFixed(1)} ${a.y.toFixed(1)})`);
-        ends[1]!.setAttribute('transform', `translate(${b.x.toFixed(1)} ${b.y.toFixed(1)})`);
-      }
-      if (el.heads.length === 2) {
-        // arrowheads at both ends, pointing outward along the arc
-        const angleB = (Math.atan2(b.y - arc.cy, b.x - arc.cx) * 180) / Math.PI;
-        const angleA = (Math.atan2(a.y - arc.cy, a.x - arc.cx) * 180) / Math.PI;
-        el.heads[0]!.setAttribute(
-          'transform',
-          `translate(${b.x.toFixed(1)} ${b.y.toFixed(1)}) rotate(${angleB.toFixed(1)})`,
-        );
-        el.heads[1]!.setAttribute(
-          'transform',
-          `translate(${a.x.toFixed(1)} ${a.y.toFixed(1)}) rotate(${angleA.toFixed(1)})`,
-        );
-      }
-      own.push(reach(glyph.x, glyph.y, GLYPH_REACH), reach(a.x, a.y, END_REACH), reach(b.x, b.y, END_REACH));
-      el.flag.hidden = this.compact || !spots.length; // (off the map, the line's label would name nothing)
-      if (el.flag.hidden) continue;
-      const prefer: FlagAnchor['prefer'] = arc.bulgesUp
-        ? ['above', 'below', 'right', 'left']
-        : ['below', 'above', 'right', 'left'];
-      requests.push({
-        id: k,
-        x: glyph.x,
-        y: glyph.y,
-        w: el.flagW,
-        h: FLAG_H,
-        prefer,
-        gap: 14,
-        // the label may slide along its line: nearer one end, then the other, then further out
-        alternates: [0.4, 0.6, 0.3, 0.7, 0.22, 0.78, 0.14, 0.86]
-          .map((t) => pointOn(a, arc, b, t))
-          .filter(onMap)
-          .map((at) => ({ x: at.x, y: at.y, gap: 12, prefer: prefer.slice(0, 2) })),
-      });
-      pending.push({ id: k, el: el.flag });
     }
 
     const placed = placeFlags(requests, { width, height }, [...env.hard, ...own], env.soft);
@@ -629,28 +509,6 @@ export function routePath(pts: readonly { x: number; y: number }[]): {
   return { d, tip, angle, samples };
 }
 
-const warKey = (w: ResolvedWar) =>
-  `${w.aId}>${w.bId}|${w.a.lon.toFixed(2)},${w.a.lat.toFixed(2)}|${w.b.lon.toFixed(2)},${w.b.lat.toFixed(2)}`;
-
-/**
- * The war line: from `a` through `p` (the event's marker) to `b`, smooth where it passes `p`. Two curves that meet there
- * with the same direction (that of the line from `a` to `b`), so it reads as one line with the marker on it.
- */
-function throughPoint(a: { x: number; y: number }, p: { x: number; y: number }, b: { x: number; y: number }): string {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const ux = dx / len;
-  const uy = dy / len;
-  const before = Math.hypot(p.x - a.x, p.y - a.y) * 0.5;
-  const after = Math.hypot(b.x - p.x, b.y - p.y) * 0.5;
-  const f = (n: number) => n.toFixed(1);
-  return (
-    `M${f(a.x)} ${f(a.y)}Q${f(p.x - ux * before)} ${f(p.y - uy * before)} ${f(p.x)} ${f(p.y)}` +
-    `Q${f(p.x + ux * after)} ${f(p.y + uy * after)} ${f(b.x)} ${f(b.y)}`
-  );
-}
-
 /** The four places diagonally beside a point, for a label that finds no free side. */
 function diagonals(x: number, y: number, r: number): FlagAnchor[] {
   return [
@@ -678,32 +536,4 @@ function arcBetween(a: { x: number; y: number }, b: { x: number; y: number }) {
   const cx = mx0 + nx * bulge * 2; // the control point lies twice as far as the curve's middle
   const cy = my0 + ny * bulge * 2;
   return { cx, cy, mx: 0.25 * a.x + 0.5 * cx + 0.25 * b.x, my: 0.25 * a.y + 0.5 * cy + 0.25 * b.y, bulgesUp: ny <= 0 };
-}
-
-/** The point at `t` (0..1) along the arc. */
-function pointOn(
-  a: { x: number; y: number },
-  arc: { cx: number; cy: number },
-  b: { x: number; y: number },
-  t: number,
-): { x: number; y: number } {
-  const u = 1 - t;
-  return {
-    x: u * u * a.x + 2 * u * t * arc.cx + t * t * b.x,
-    y: u * u * a.y + 2 * u * t * arc.cy + t * t * b.y,
-  };
-}
-
-/** The mark in the middle of a relation line: crossed swords' ×, a diamond for a treaty, a dot for the rest. */
-function glyphShapes(relation: Relation): SVGElement[] {
-  if (relation === 'war') {
-    return [
-      svg('circle', { class: 'disc', r: '9.5' }),
-      svg('path', { class: 'cross', d: 'M-4.2 -4.2L4.2 4.2M4.2 -4.2L-4.2 4.2' }),
-    ];
-  }
-  if (relation === 'treaty') return [svg('path', { class: 'diamond', d: 'M0 -8L8 0L0 8L-8 0Z' })];
-  if (relation === 'alliance')
-    return [svg('circle', { class: 'disc', r: '5.2' }), svg('circle', { class: 'core', r: '2.4' })];
-  return [svg('circle', { class: 'disc', r: '4.4' })];
 }

@@ -14,54 +14,38 @@
  *
  * The scenarios count what the data holds (events, rows, the place timeline) in the page instead of fixed numbers. The
  * example place is a free point in Germany (Hamburg): "Nazi Almanyası" with the borders of 1942, narrated in eight
- * steps (from 1939 to Berlin in 1945; Barbarossa in the fourth, Stalingrad and El Alamein in the sixth).
+ * scenes (from 1939 to Berlin in 1945; Barbarossa in the fourth, Stalingrad and El Alamein in the sixth). Every scene is
+ * checked beat by beat (a beat is one sentence of its caption: `presentation.replayBeat`) and at its end (`complete`): what
+ * the map shows is read from the page (markers, arrows, the colours of the polities, the territory that changed hands, the
+ * year, the sentences), never taken from the script.
  *
- * The round that freed the model (what the UI needs of an answer and how the app draws stay; how to build a narration is the
- * model's):
- *   G. The request carries no skeleton and no rule about how many scenes to make or which tool to use when: the page's notes are about
- *      the format only, the events of the range are listed as information, and the tools are described by what they do.
- *   A, V, T. A step about the Battle of France shows the borders at its start (1939: the Third Republic is in the data up to that year)
- *      and its war line runs between Germany and France; the ruler's step points stand at their dates (the Battle of France is
- *      May 1940) inside the selected range, never spread beyond it.
- *   N. Scenes of the war years: the fall of France and the Normandy landings frame Western Europe (a lit polity brings the part of its
- *      land around the scene, not its colonies, Alaska or Greenland).
+ * The round about the map's visual language ("the model says WHAT, the app decides HOW"; one fixed language: area = territory
+ * and control, arrow = real movement only, point = place or event, hatching = occupation or doubt):
+ *   G. The "narrate this place" request carries the selected point and the polity whose borders hold it in the year shown, and
+ *      does not say which to focus on; the seven tools (no `connect`: nothing joins an event to a capital, or two sides) are
+ *      described by what they do, need and return.
+ *   A, Y. Arrows start at a polity's border ("sınır: devlet → yer") or at a place, never at a capital by themselves; the colours
+ *      belong to the actors for the whole narration (the focus is blue, the sides against it amber and wine, who stands aside is
+ *      hatched beige) and two opposing sides never share one; the sea is one flat light blue.
+ *   P. The colours the map really shows (read from screenshots): no polity is grey, blue is allowed, neighbours differ, the sea is
+ *      flat; in a narration the painted polities are solid in their actor's colour and the rest is faded.
+ *   M. Beats: the caption plays sentence by sentence at the pace of reading (the playing one stressed, the coming ones dimmed);
+ *      when a beat ends its arrow fades and its marker shrinks to a numbered dot; the camera stays where it is; at the end of the
+ *      scene "Oynat" decides whether the next one begins; a click on a sentence plays that beat again and holds it.
+ *   Q. Change is always visible: when a narration moves the borders from one year to another the land that changed hands is
+ *      marked for a moment, never swapped silently (`territory_change`: the app diffs the border data of two years).
+ *   Z. Across the date line: an arrow over the Pacific takes the short way, the camera frames both ends, the map shows the world
+ *      twice while the scene lasts and goes back when the reader brings it back.
+ *   V, T. The scene points of the progress bar stand on the lower, zoomed strip of the place timeline (not on the 1800–2000
+ *      ruler), at their dates, inside the range, and no year label is left half-covered by one.
+ *   W, B, J, K, R, N. The reader and the reading (side panel, full screen, one-scene answers, one narrator on the map, no label over
+ *      another, event names as links, scenes of the war years framed around their places) with the beats and the new look.
  *
- * The round about a richer vocabulary for war narratives ("the model says WHAT, the app decides HOW"):
- *   Y. Places, routes and sides: the ends of a line and the stops of a route are places (a city by any of its names, an event, a
- *      point; a polity is its capital), a war line leaves from a capital (the Normandy line starts in London, not in
- *      Greenland), the four kinds of route each have their own look, an animated route draws itself in only when motion is
- *      allowed, and the sides of a conflict are painted as blocs with their names in the caption box. The mock narration
- *      (A) uses a route and sides too: the Eastern Front, and the retreat of 1944.
- *
- * The round about a cleaner map ("the model decides WHAT to show, the app decides HOW it looks"):
- *   P. Colours: the colours the map really shows (read from screenshots) are never grey or blue and neighbours differ; in a
- *      narration the lit polities are solid and vivid and the rest is faded.
- *   A, J. A place selected (or the AI narrating) takes the world's events off the map; one narrator at a time. In a step
- *      only what it names is drawn: the event by its kind (a war is one unit: marker and line), no name boxes beside
- *      markers, the camera fits all of it above the caption and the question box.
- *   R. The names of events in captions and texts are links that do what a click on the event in the timeline does.
- *   T. The place timeline shows the selected range and nothing beyond it; the ruler's step points do not overlap
- *      each other or the range's writing.
- *   F. The end of a text is not under the question box (full screen, beside the map, small windows, phones).
- *   G, E. The whole conversation reaches the model (and "Sohbeti temizle" always works).
- *
- * The map-first round before it:
- *   L. Layout: the map is almost the whole screen, a thin timeline at the bottom, the question box just above it,
- *      a small info card on the right that closes easily and steps aside by itself when something is asked.
- *   S. Borders come with the year window: at the start and after every change of year (a far range, a pasted link, the
- *      ruler, quick changes) the "· yükleniyor…" note goes away and the borders drawn are those of the year shown.
- *   A, V. Watch: a multi-step narration moves step by step with its short caption in one fixed place, stepped by
- *      buttons or the arrow keys, with optional autoplay at a chosen speed; the ruler is its progress bar; Watch
- *      starts as soon as the plan is in, before the long texts are written.
- *   W. Read: the full text, beside the map or full screen with a small map in the corner showing the current step;
- *      switching between the views keeps the step; a question asked while reading updates the map behind.
- *   B. Every answer has a short caption and a full text: a question about one thing gets a one-step answer (the caption
- *      over the map, no step controls, "Devamını oku" opens the full text, the map shows its one scene); a model that
- *      answers in plain text gets the first sentences of its text as the caption.
+ * The rounds before it (kept): the model freed from rules of how to build a narration (G); places, routes and sides (Y);
+ * a cleaner map (P, J, K, R, T, F); the map-first layout (L, S, V, W, B).
  *
  * And what already worked (kept): each step owns the map (A), "Harita takibi" (A2–A4), events (C, C2), the subject
- * changing mid-conversation (D), no label covering another (K), stopping, failing and settings (E), the real `sample`
- * adapter (G) and the phone (H).
+ * changing mid-conversation (D), stopping, failing and settings (E), the real `sample` adapter (G) and the phone (H).
  *
  * Switches (all optional):
  *   E2E_SUITE=smoke  (or --smoke) the quick pass: only the scenarios marked `guard.smoke` (a few minutes in all);
@@ -239,28 +223,6 @@ const PLACES = {
   paris: { lon: 2.35, lat: 48.86 },
   greenland: { lon: -42, lat: 72 },
 };
-/**
- * The war line drawn through the marker of an event: the places of its two ends (as the map shows them), and how far (px) its ring is
- * from that marker. Null when there is no line.
- */
-const warLineOf = (page, eventId) =>
-  page.evaluate((id) => {
-    const m = window.__ayni.map;
-    const box = document.querySelector('#map').getBoundingClientRect();
-    const mark = document.querySelector(`.evt[data-id="${id}"] .evt-mark`)?.getBoundingClientRect();
-    if (!mark) return null;
-    const c = { x: mark.left + mark.width / 2, y: mark.top + mark.height / 2 };
-    const lines = [...document.querySelectorAll('.ai-layer .ai-war')].map((g) => {
-      const ring = g.querySelector('circle.ring').getBoundingClientRect();
-      const ends = [...g.querySelectorAll('circle.end')].map((e) => {
-        const r = e.getBoundingClientRect();
-        const ll = m.unproject([r.left + r.width / 2 - box.left, r.top + r.height / 2 - box.top]);
-        return { lon: ll.lng, lat: ll.lat };
-      });
-      return { d: Math.hypot(ring.left + ring.width / 2 - c.x, ring.top + ring.height / 2 - c.y), ends };
-    });
-    return lines.sort((a, b) => a.d - b.d)[0] ?? null;
-  }, eventId);
 const pixelOf = (page, lon, lat) =>
   page.evaluate(
     ([lo, la]) => {
@@ -321,31 +283,38 @@ const drawing = (page) =>
 const active = (page) => page.evaluate(() => window.__ayni.ai.director.active);
 const aiDom = (page) =>
   page.evaluate(() => ({
-    links: [...document.querySelectorAll('.ai-layer .ai-link')].map((e) => e.dataset.relation),
-    wars: document.querySelectorAll('.ai-layer .ai-war').length,
+    routes: [...document.querySelectorAll('.ai-layer .ai-route:not(.is-leaving)')].map((e) => e.dataset.type),
     flags: [...document.querySelectorAll('.ai-layer .ai-flag')].filter((e) => !e.hidden).map((e) => e.textContent),
     marks: document.querySelectorAll('.ai-layer .ai-pt').length,
+    dots: document.querySelectorAll('.ai-layer .ai-pt.is-dot').length,
     hidden: document.querySelector('.ai-layer')?.hidden ?? true,
   }));
-/** The spotlight: the veil over the rest of the map, the polities lit, the names faded and lit. */
+/**
+ * What the map paints of the AI's: the veil over the rest of the map, the polities drawn in an actor's colour (`painted`, with the
+ * colour key each has) and the ones pointed at (`emphasis`), the ones hatched as unclear, and the names faded and lit.
+ */
 const spotlight = (page) =>
   page.evaluate(() => {
     const m = window.__ayni.map;
-    let ids = [];
-    try {
-      ids = m.getFilter('ai-fill')[3][2][1].filter((x) => x !== '\u0000none');
-    } catch {
-      /* no layer yet */
-    }
+    const idsOf = (layer) => {
+      try {
+        return m.getFilter(layer)[3][2][1].filter((x) => x !== '\u0000none');
+      } catch {
+        return [];
+      }
+    };
+    const frame = window.__ayni.ai.frame();
     const names = [...document.querySelectorAll('.plabel:not(.is-hidden)')];
     return {
       veil: Number(m.getPaintProperty('ai-veil', 'background-opacity')),
-      solid: m.getPaintProperty('ai-fill', 'fill-opacity'),
-      ids,
+      ids: idsOf('ai-fill'),
+      emphasis: idsOf('ai-line'),
+      doubt: idsOf('ai-doubt'),
+      painted: frame?.painted ?? [],
+      colors: Object.fromEntries((frame?.painted ?? []).map((p) => [p.id, p.color])),
       faded: names.filter((e) => e.classList.contains('is-faded')).length,
       lit: names.filter((e) => e.classList.contains('is-ai')).length,
       unfaded: names.filter((e) => !e.classList.contains('is-faded') && !e.classList.contains('is-ai')).length,
-      hatch: !!m.getLayer('ai-hatch'),
     };
   });
 const headYear = (page) => text(page, '[data-testid=title-year]');
@@ -435,14 +404,14 @@ async function cameraRests(page, timeout = 8000) {
 }
 
 /**
- * Where the point of a step on the ruler (the narration's progress bar) can be clicked: a place where it is the one on top.
- * In a range of a few years the points of a narration crowd and overlap (the later one lies over the earlier), so the middle of
- * a point may belong to its neighbour; on a phone the whole narration can lie within a few pixels, and the points but the last
- * have no such place (null).
+ * Where the point of a scene on the timeline's strip (the narration's progress: at the scene's date, inside the selected range) can
+ * be clicked: a place where it is the one on top. In a range of a few years the points of a narration crowd and overlap (the later
+ * one lies over the earlier), so the middle of a point may belong to its neighbour; on a phone the whole narration can lie within a
+ * few pixels, and the points but the last have no such place (null).
  */
 const stepReach = (page, n) =>
   page.evaluate((k) => {
-    const el = document.querySelector(`[data-testid=ruler-step][data-n="${k}"]`);
+    const el = document.querySelector(`[data-testid=tl-step][data-n="${k}"]`);
     const r = el.getBoundingClientRect();
     const y = r.top + r.height / 2;
     const xs = [];
@@ -451,27 +420,34 @@ const stepReach = (page, n) =>
     return xs.length ? { x: xs[Math.floor(xs.length / 2)], y } : null;
   }, n);
 
-/** Clicks the point of a step on the ruler, where it is on top. */
+/** Clicks the point of a scene on the timeline's strip, where it is on top. */
 async function clickStep(page, n) {
   const at = await stepReach(page, n);
   if (at) await page.mouse.click(at.x, at.y);
-  else await page.click(`[data-testid=ruler-step][data-n="${n}"]`); // (says what is in the way)
+  else await page.click(`[data-testid=tl-step][data-n="${n}"]`); // (says what is in the way)
 }
 
 /**
- * Goes to a step through its point on the ruler, and waits until the camera has come to rest. Where the point cannot be
- * reached (the narration lies within a few pixels of a phone's ruler) it goes there with the narration's own "Sonraki" and
- * "Önceki", as a reader would.
+ * Goes to a scene through its point on the timeline's strip, and waits until the camera has come to rest. The scene then ends
+ * (the map shows what its beats left behind: the markers as numbered dots, no arrows, the colours and the territory results);
+ * with `beat` the scene stops at that beat instead (0-based), as when its sentence is clicked. Where the point cannot be reached
+ * (the narration lies within a few pixels of a phone's strip) it goes there with the narration's own "Sonraki" and "Önceki", as a
+ * reader would.
  */
-async function showStep(page, n) {
+async function showStep(page, n, beat = null) {
   const now = () => page.evaluate(() => window.__ayni.ai.presentation.step?.n ?? 0);
-  // (the point of the step on screen is a mark, not a button: it lets clicks through to the points it covers)
+  // (the point of the scene on screen is a mark, not a button: it lets clicks through to the points it covers)
   if ((await now()) !== n) {
     if (await stepReach(page, n)) await clickStep(page, n);
     else
       for (let at = await now(), left = 60; at !== n && left > 0; left--, at = await now())
         await page.click(`[data-testid=${n > at ? 'watch-next' : 'watch-prev'}]`);
   }
+  await page.evaluate((k) => {
+    const p = window.__ayni.ai.presentation;
+    if (k === null) p.complete();
+    else p.replayBeat(k);
+  }, beat);
   await cameraRests(page);
 }
 
@@ -515,8 +491,6 @@ const OVERLAPS = () => {
       r.left < map.left - 1 || r.right > map.right + 1 || r.top < map.top - 1 || r.bottom > map.bottom + 1;
   }
   for (const el of document.querySelectorAll('.ai-pt')) push('diamond', 'işaret', el.getBoundingClientRect());
-  for (const el of document.querySelectorAll('.ai-glyph, .ai-link .glyph'))
-    push('glyph', 'simge', el.getBoundingClientRect());
   for (const el of document.querySelectorAll('.pin:not([hidden]) .pin-dot'))
     push('pin', 'yer noktası', el.getBoundingClientRect());
   const controls = [
@@ -541,13 +515,7 @@ const OVERLAPS = () => {
       if (a.kind === 'marker' && b.kind === 'marker') continue;
       if (a.kind === 'name' && b.kind === 'name') continue;
       if (a.cut || b.cut) continue;
-      if (a.kind === 'glyph' || b.kind === 'glyph') {
-        if (kinds !== 'flag+glyph' && kinds !== 'glyph+flag' && kinds !== 'glyph+marker' && kinds !== 'marker+glyph')
-          continue;
-      }
       const c = cover(a, b);
-      // the symbol in the middle of a line touching the edge of a marker's year (under 120 px²) does not cover it
-      if (c && kinds.includes('glyph') && kinds.includes('marker') && c.w * c.h < 120) continue;
       if (c) clash.push(`${a.kind}:${a.name} × ${b.kind}:${b.name} (${c.text})`);
     }
   }
@@ -568,7 +536,7 @@ const MAP_STATE = () => {
   const box = document.querySelector('#map').getBoundingClientRect();
   let ids = [];
   try {
-    ids = map.getFilter('ai-line')[3][2][1].filter((x) => x !== '\u0000none');
+    ids = map.getFilter('ai-fill')[3][2][1].filter((x) => x !== '\u0000none');
   } catch {
     /* no layer yet */
   }
@@ -600,9 +568,12 @@ const MAP_STATE = () => {
   // the foot of the screen (the caption, and the question box): the step is shown above it
   const foot = document.querySelector('#bottom').getBoundingClientRect();
   const belowFoot = asked.filter((pt) => box.top + at(pt).y > foot.top).length;
-  const warEnds = [...document.querySelectorAll('.ai-layer .ai-war .end')].map((e) => e.getBoundingClientRect());
-  const warOutside = warEnds.filter(
-    (e) => e.left < box.left || e.right > box.right || e.top < box.top || e.bottom > foot.top,
+  // the arrows of the beat that plays (and the dots of the beats that played) are inside the map, above the foot of the screen
+  const drawn = [...document.querySelectorAll('.ai-layer .ai-pt, .ai-layer .ai-route:not(.is-leaving) .head')].map(
+    (e) => e.getBoundingClientRect(),
+  );
+  const warOutside = drawn.filter(
+    (e) => e.left < box.left - 1 || e.right > box.right + 1 || e.top < box.top - 1 || e.bottom > foot.top + 1,
   ).length;
   // what the step puts on the map must not end up under the cards, the caption, the question box or the reader
   const overs = [
@@ -632,10 +603,12 @@ const MAP_STATE = () => {
   const c = map.getCenter();
   return {
     ids,
-    links: [...document.querySelectorAll('.ai-layer .ai-link')].map((e) => e.dataset.relation),
-    routes: [...document.querySelectorAll('.ai-layer .ai-route')].map((e) => e.dataset.type),
+    routes: [...document.querySelectorAll('.ai-layer .ai-route:not(.is-leaving)')].map((e) => e.dataset.type),
     sides: [...document.querySelectorAll('[data-testid=watch-sides] li span')].map((e) => e.textContent.trim()),
-    wars: document.querySelectorAll('.ai-layer .ai-war').length,
+    blocs: (window.__ayni.ai.frame()?.blocs ?? []).map((b) => `${b.name}:${b.color}`),
+    dots:
+      document.querySelectorAll('.ai-layer .ai-pt.is-dot').length +
+      document.querySelectorAll('.evt:not(.is-hidden).is-dot').length,
     flags: [...document.querySelectorAll('.ai-layer .ai-flag')].filter((e) => !e.hidden).map((e) => e.textContent),
     eventFlags: [...document.querySelectorAll('.ai-layer .ai-flag.is-event')]
       .filter((e) => !e.hidden)
@@ -656,6 +629,97 @@ const MAP_STATE = () => {
 const mapState = (page) => page.evaluate(MAP_STATE);
 
 /**
+ * What the map and the caption show at one moment of a scene (a beat, or the end of the scene), read from the page: the border year,
+ * the event markers (the one that plays is the full marker, the ones whose beat is over are small numbered dots), the arrows of the
+ * beat that plays, what it points at, the sides under the caption (each name with the colour it is painted in), the colours of the
+ * polities, the changes of borders so far, and which sentence of the caption plays.
+ */
+const BEAT_STATE = () => {
+  const frame = window.__ayni.ai.frame();
+  const shown = [...document.querySelectorAll('.evt:not(.is-hidden)')];
+  return {
+    year: document.querySelector('[data-testid=title-year]')?.textContent,
+    markers: shown.map((e) => e.dataset.id).sort(),
+    now: shown
+      .filter((e) => e.classList.contains('is-now'))
+      .map((e) => e.dataset.id)
+      .sort(),
+    dots: shown
+      .filter((e) => e.classList.contains('is-dot'))
+      .map((e) => `${e.dataset.id}#${e.dataset.n}=${e.querySelector('.evt-n')?.textContent}`)
+      .sort(),
+    routes: [...document.querySelectorAll('.ai-layer .ai-route:not(.is-leaving)')].map((e) => e.dataset.type),
+    emphasis: (frame?.emphasis ?? []).slice().sort().join(),
+    sides: [...document.querySelectorAll('[data-testid=watch-sides] li')]
+      .map((li) => `${li.querySelector('span').textContent.trim()}:${li.dataset.side}`)
+      .join('|'),
+    colors: Object.fromEntries((frame?.painted ?? []).map((p) => [p.id, p.color])),
+    changes: (frame?.changes ?? []).map((c) => `${c.polity}:${c.from}>${c.to}${c.now ? '*' : ''}`).join(),
+    sentences: [...document.querySelectorAll('[data-testid=watch-beat]')]
+      .map((b) => ({ now: 'n', past: 'p', next: 'x' })[b.dataset.state])
+      .join(''),
+    // (the app draws no line between an event and a capital, and none between two sides: these are gone for good)
+    lines: document.querySelectorAll('.ai-war, .ai-link').length,
+  };
+};
+const beatState = (page) => page.evaluate(BEAT_STATE);
+/** The flashes of territory on the map right now (the image layers `terr-*`) and the opacity each has. */
+const flashLayers = (page) =>
+  page.evaluate(() =>
+    window.__ayni.map
+      .getStyle()
+      .layers.filter((l) => l.id.startsWith('terr-'))
+      .map((l) => Number(window.__ayni.map.getPaintProperty(l.id, 'raster-opacity'))),
+  );
+/**
+ * What a scene shows at its beat `k` (0-based; null: at its end) by the table: the markers on the map so far (the one of the beat that
+ * plays is the full marker), the numbered dots of the earlier beats, and the sentences of the caption (the one that plays, the ones
+ * that have, the ones to come).
+ */
+function expectedAt(scene, k) {
+  const upTo = k === null ? scene.beats.length : k + 1;
+  const events = scene.events.filter(([, beat]) => beat <= upTo);
+  const now = k === null ? [] : events.filter(([, beat]) => beat === upTo).map(([id]) => id);
+  return {
+    markers: events.map(([id]) => id).sort(),
+    now: now.sort(),
+    dots: events
+      .filter(([id]) => !now.includes(id))
+      .map(([id, beat]) => `${id}#${beat}=${beat}`)
+      .sort(),
+    sentences:
+      k === null ? 'p'.repeat(scene.beats.length) : `${'p'.repeat(k)}n${'x'.repeat(scene.beats.length - k - 1)}`,
+  };
+}
+/** Checks a state read from the page against the scene's table; returns what differs (empty: nothing). */
+function beatDiff(state, scene, k, { legend = true } = {}) {
+  const want = expectedAt(scene, k);
+  const at = k === null ? { ...scene.end } : scene.beats[k];
+  const lastBeat = k === null ? scene.beats.at(-1) : at;
+  const diffs = [];
+  const eq = (name, got, exp) => {
+    if (JSON.stringify(got) !== JSON.stringify(exp))
+      diffs.push(`${name}: ${JSON.stringify(got)} ≠ ${JSON.stringify(exp)}`);
+  };
+  eq('yıl', state.year, at.year);
+  eq('işaretçiler', state.markers, want.markers);
+  eq('öndeki işaret', state.now, want.now);
+  eq('noktalar', state.dots, want.dots);
+  eq('oklar', state.routes.join(), k === null ? '' : at.routes);
+  eq('vurgu', state.emphasis, k === null ? '' : at.emphasis);
+  if (legend) {
+    eq('cümleler', state.sentences, want.sentences);
+    eq('taraflar', state.sides, lastBeat.sides ?? scene.beats.at(-1).sides);
+  }
+  eq('değişim', state.changes, at.change);
+  for (const [id, color] of Object.entries(at.paint ?? {}))
+    if (state.colors[id] !== color) diffs.push(`${id}: ${state.colors[id] ?? 'boyanmadı'} ≠ ${color}`);
+  for (const id of at.unpainted ?? []) if (state.colors[id]) diffs.push(`${id} boyanmamalıydı (${state.colors[id]})`);
+  if (state.lines) diffs.push(`${state.lines} çizgi (olay–başkent ya da ilişki çizgisi olmamalı)`);
+  return diffs;
+}
+
+/**
  * What Watch shows of an answer that is ONE step (the answer to a plain question): its parts, the controls for stepping it must not
  * have, and the text behind it. "Devamını oku" is always in the page for such an answer (the box keeps its height) and is
  * invisible until the text has more than the caption, so what counts is whether it is shown, not whether it is there.
@@ -671,7 +735,7 @@ const ONE_STEP = () => {
   return {
     steps: watch?.dataset.steps ?? null,
     title: q('[data-testid=watch-title]')?.textContent ?? null,
-    caption: q('[data-testid=watch-caption]')?.innerText ?? null,
+    caption: q('[data-testid=watch-caption]')?.innerText.replace(/\s+/g, ' ') ?? null,
     refs: [...document.querySelectorAll('[data-testid=watch-caption] button.evt-ref')].map((b) => b.dataset.event),
     more: more
       ? {
@@ -683,7 +747,7 @@ const ONE_STEP = () => {
     controls: ['watch-count', 'watch-prev', 'watch-next', 'watch-play', 'watch-speed', 'watch-read'].filter(
       (id) => n(`[data-testid=${id}]`) > 0,
     ),
-    ruler: n('[data-testid=ruler-step]'),
+    ruler: n('[data-testid=tl-step]'),
     close: n('[data-testid=watch-close]'),
     captionRect: rect(q('[data-testid=watch-caption]')),
     watchRect: rect(watch),
@@ -738,7 +802,7 @@ const firstSentences = (text, max = 220, most = 2) => {
 };
 /** The caption of the mock's answer to the Stalingrad question, as the reader sees it (the event's name is a link). */
 const STALINGRAD_CAPTION =
-  "Stalingrad Muharebesi'nde Alman 6. Ordusu kuşatılıp teslim oldu; doğu cephesinde inisiyatif Sovyetlere geçti.";
+  "Stalingrad Muharebesi'nde Alman 6. Ordusu kuşatılıp teslim oldu. Doğu cephesinde inisiyatif Sovyetlere geçti.";
 
 /** A drag on the map with the mouse, symmetric about the middle of the map so it never leaves it. */
 async function dragMap(page, dx, dy) {
@@ -770,117 +834,170 @@ const STALINGRAD_QUESTION = 'Stalingrad neden önemliydi?';
 const PLAIN_QUESTION = 'Hava gücü hakkında düz metin ver.';
 const JAPAN_QUESTION = 'Peki Japonya?';
 /**
- * The "Germany at war" narration of the mock, step by step: what each step asks for (and so what it alone shows). The model only
- * names the events, the polities that stand out and the sides of a conflict; the app lights the events' parties (so `ids` is the
- * spotlight: the model's highlights, then the polities of its sides, then the parties of its events) and draws every war as one
- * line through its marker (`wars`), from the capital of each side's first party. `routes` are the model's own directed paths (by
- * type) and `sides` the names of the sides it painted as blocs (`|` apart). `year` is the border year the step shows: the earliest
- * of its events' years; Cliopatria's Nazi Germany ends in 1944 and the small correction layer (public/data/corrections/ww2.json)
- * carries its 1938 borders over 1945, so the Battle of Berlin (1945) is drawn on the borders of 1945. Of the Battle of France's
- * sides only Britain has borders in 1940 (France is German or Vichy then), so its line joins Germany and Britain.
+ * The "Germany at war" narration of the mock, scene by scene: what each scene shows at each of its beats (the sentences of its
+ * caption) and how it ends. The model says WHAT to show and when (every drawing action names its beat); the app decides how.
+ *  - `events`: the events the scene shows, each with the beat it appears at. While its beat plays an event's marker is the full
+ *    marker; after it, a small numbered dot (the number of its beat). The scene's end state is all of them as dots.
+ *  - per beat: `year` (the border year on the map), `routes` (the types of the arrows that play, from the border of a polity, one
+ *    beat each: they fade when the beat is over), `emphasis` (the polities the beat points at), `sides` (the legend under the caption:
+ *    each side's name and the colour it is painted in, `|` apart; the colour belongs to the actor for the whole narration),
+ *    `change` (the gain and loss of territory that plays: polity, years), `paint` (some polities and the colour they are painted).
+ *  - `end`: the border year and `change` the scene ends with (nothing plays; no arrows).
+ * Cliopatria's Nazi Germany ends in 1944 and the small correction layer (public/data/corrections/ww2.json) carries its 1938 borders
+ * over 1945, so the Battle of Berlin (1945) is drawn on the borders of 1944 and the surrender shows what Germany lost to 1945. The
+ * Battle of France begins on the borders of 1939 (the Third Republic is in the data up to that year).
  */
-/** The year of each step of the German narration in the story (what the ruler's points are placed by): the Battle of France is May 1940. */
+/** The year of each step of the German narration in the story (what the timeline's points are placed by): the Battle of France is May 1940. */
 const GERMANY_DATES = ['1939', '1940', '1940', '1941', '1942', '1942', '1944', '1945'];
+const SIDES_TWO = 'Almanya:focus|Polonya:foe-1|Tarafsız ya da belirsiz:neutral';
+const SIDES_ALLIES = 'Almanya:focus|Polonya ve müttefikleri:foe-1|Tarafsız ya da belirsiz:neutral';
+const SIDES_THREE = 'Almanya:focus|Polonya ve müttefikleri:foe-1|Sovyetler Birliği:foe-2';
+const SIDES_EAST = 'Mihver ve ortakları:focus|Sovyetler Birliği:foe-2';
+const SIDES_LATE = 'Almanya ve ortakları:focus|Müttefikler:foe-1';
+const NO_BEAT = { routes: '', emphasis: '', change: '' };
 const GERMANY = [
   {
     n: 1,
-    title: 'Polonya’ya saldırı',
-    ids: 'nazi-germany,second-polish-republic',
-    links: '',
-    wars: 1,
-    events: ['polonya-isgali-1939'],
-    routes: '',
-    sides: '',
-    marks: 0,
-    year: '1939',
+    title: 'Savaş başlıyor',
+    events: [
+      ['molotov-ribbentrop-1939', 1],
+      ['polonya-isgali-1939', 2],
+      ['savas-ilani-1939', 3],
+      ['sovyet-polonya-isgali-1939', 4],
+    ],
+    beats: [
+      {
+        ...NO_BEAT,
+        year: '1939',
+        sides: SIDES_TWO,
+        paint: { 'nazi-germany': 'focus', 'second-polish-republic': 'foe-1' },
+      },
+      { ...NO_BEAT, year: '1939', sides: SIDES_TWO, routes: 'advance,advance', emphasis: 'second-polish-republic' },
+      {
+        ...NO_BEAT,
+        year: '1939',
+        sides: SIDES_ALLIES,
+        paint: {
+          'kingdom-of-great-britain': 'foe-1',
+          'french-third-republic': 'foe-1',
+          'union-of-soviet-socialist-republics': 'neutral',
+        },
+      },
+      {
+        ...NO_BEAT,
+        year: '1940',
+        sides: SIDES_THREE,
+        routes: 'advance',
+        change: 'union-of-soviet-socialist-republics:1939>1940*',
+        paint: { 'union-of-soviet-socialist-republics': 'foe-2', 'kingdom-of-great-britain': 'foe-1' },
+      },
+    ],
+    end: { year: '1940', change: 'union-of-soviet-socialist-republics:1939>1940' },
   },
   {
     n: 2,
     title: 'Batıda yıldırım savaşı',
+    events: [
+      ['fransa-muharebesi-1940', 1],
+      ['compiegne-ateskesi-1940', 2],
+    ],
     // the borders at the start of the Battle of France (10 May 1940): the Third Republic is in the data up to 1939 (and Vichy, which
     // the armistice names, does not exist yet)
-    ids: 'nazi-germany,french-third-republic,netherlands,kingdom-of-belgium,kingdom-of-great-britain',
-    links: '',
-    wars: 1,
-    events: ['fransa-muharebesi-1940', 'compiegne-ateskesi-1940'],
-    routes: '',
-    sides: '',
-    marks: 0,
-    year: '1939',
+    beats: [
+      { ...NO_BEAT, year: '1939', sides: SIDES_THREE, routes: 'advance' },
+      { ...NO_BEAT, year: '1939', sides: SIDES_THREE },
+    ],
+    end: { year: '1939', change: '' },
   },
   {
     n: 3,
     title: 'Britanya direniyor',
-    ids: 'kingdom-of-great-britain,nazi-germany',
-    links: '',
-    wars: 1,
-    events: ['britanya-muharebesi-1940'],
-    routes: '',
-    sides: '',
-    marks: 0,
-    year: '1940',
+    events: [['britanya-muharebesi-1940', 1]],
+    beats: [{ ...NO_BEAT, year: '1940', sides: SIDES_THREE, emphasis: 'kingdom-of-great-britain' }],
+    end: { year: '1940', change: '' },
   },
   {
     n: 4,
     title: 'Doğuya saldırı',
-    ids: 'nazi-germany,romania,republic-of-finland,hungary,kingdom-of-italy,union-of-soviet-socialist-republics',
-    links: '',
-    wars: 2,
-    events: ['barbarossa-1941', 'leningrad-kusatmasi-1941'],
-    routes: 'advance',
-    sides: 'Mihver ve ortakları|Sovyetler Birliği',
-    marks: 0,
-    year: '1941',
+    events: [
+      ['barbarossa-1941', 1],
+      ['leningrad-kusatmasi-1941', 3],
+    ],
+    beats: [
+      {
+        ...NO_BEAT,
+        year: '1941',
+        sides: SIDES_EAST,
+        paint: { 'nazi-germany': 'focus', romania: 'focus', 'union-of-soviet-socialist-republics': 'foe-2' },
+      },
+      { ...NO_BEAT, year: '1941', sides: SIDES_EAST, routes: 'advance' },
+      { ...NO_BEAT, year: '1941', sides: SIDES_EAST },
+    ],
+    end: { year: '1941', change: '' },
   },
   {
     n: 5,
     title: 'Berlin’de verilen karar',
-    ids: 'nazi-germany',
-    links: '',
-    wars: 0,
-    events: ['wannsee-1942'],
-    routes: '',
-    sides: '',
-    marks: 0,
-    year: '1942',
+    events: [['wannsee-1942', 1]],
+    beats: [{ ...NO_BEAT, year: '1942', sides: SIDES_EAST, emphasis: 'nazi-germany' }],
+    end: { year: '1942', change: '' },
   },
   {
     n: 6,
     title: 'Dönüm noktası: Stalingrad',
-    ids: 'union-of-soviet-socialist-republics,nazi-germany,kingdom-of-great-britain,kingdom-of-egypt,kingdom-of-italy',
-    links: '',
-    wars: 2,
-    events: ['stalingrad-1942', 'el-alamein-1942'],
-    routes: '',
-    sides: '',
-    marks: 0,
-    year: '1942',
+    events: [
+      ['stalingrad-1942', 1],
+      ['el-alamein-1942', 2],
+    ],
+    beats: [
+      { ...NO_BEAT, year: '1942', sides: SIDES_EAST },
+      { ...NO_BEAT, year: '1942', sides: SIDES_EAST },
+    ],
+    end: { year: '1942', change: '' },
   },
   {
     n: 7,
     title: 'İkinci cephe',
-    ids: 'kingdom-of-great-britain,united-states-of-america,free-french,nazi-germany,union-of-soviet-socialist-republics',
-    links: '',
-    wars: 2,
-    events: ['normandiya-1944', 'bagration-1944'],
-    routes: 'retreat',
-    sides: '',
-    marks: 0,
-    year: '1944',
+    events: [
+      ['normandiya-1944', 1],
+      ['bagration-1944', 2],
+    ],
+    beats: [
+      {
+        ...NO_BEAT,
+        year: '1944',
+        sides: SIDES_LATE,
+        paint: {
+          'nazi-germany': 'focus',
+          'kingdom-of-great-britain': 'foe-1',
+          'united-states-of-america': 'foe-1',
+          'union-of-soviet-socialist-republics': 'foe-1',
+        },
+      },
+      { ...NO_BEAT, year: '1944', sides: SIDES_LATE, routes: 'retreat' },
+    ],
+    end: { year: '1944', change: '' },
   },
   {
     n: 8,
     title: 'Berlin ve teslim',
-    ids: 'union-of-soviet-socialist-republics,nazi-germany,united-states-of-america,kingdom-of-great-britain',
-    links: '',
-    wars: 1,
-    events: ['berlin-muharebesi-1945', 'almanya-teslimi-1945'],
-    routes: '',
-    sides: '',
-    marks: 0,
-    year: '1945',
+    events: [
+      ['berlin-muharebesi-1945', 1],
+      ['almanya-teslimi-1945', 2],
+    ],
+    beats: [
+      { ...NO_BEAT, year: '1944', sides: SIDES_LATE },
+      { ...NO_BEAT, year: '1945', sides: SIDES_LATE, change: 'nazi-germany:1944>1945*' },
+    ],
+    end: { year: '1945', change: 'nazi-germany:1944>1945' },
   },
 ];
+for (const g of GERMANY) {
+  g.eventIds = g.events.map(([id]) => id);
+  g.last = g.beats.at(-1);
+}
+/** The events a scene shows by its end, sorted, as one string (what `idsNow` reads from the map). */
+const eventsKey = (scene) => [...scene.eventIds].sort().join();
 /** A caption as the reader sees it: the names of events are links, but the words are the same. */
 const plainCaption = (text) => text.replace(/\[([^\]]+)\]\(olay:[A-Za-z0-9_-]+\)/g, '$1');
 const sameSet = (a, b) => a.length === b.length && [...a].sort().join() === [...b].sort().join();
@@ -1342,6 +1459,8 @@ await guard.smoke(async () => {
   );
   // Watch starts as soon as the plan (the tool round: captions and scenes) is in, before the long texts are written
   await page.waitForSelector('[data-testid=watch-caption]', { timeout: 20000 });
+  // (the narration plays by itself, a sentence of the caption at a time: the scenario holds it on the sentence it looks at)
+  await page.evaluate(() => window.__ayni.ai.presentation.replayBeat(0));
   const early = await page.evaluate(() => {
     const a = window.__ayni.ai.session.items.filter((i) => i.kind === 'assistant').at(-1);
     return {
@@ -1363,7 +1482,7 @@ await guard.smoke(async () => {
   check(
     'Metin bitince “Metin yazılıyor…” kalkar; adım sayısı 8; altyazılar ve başlıklar dolu',
     !(await visible(page, '[data-testid=watch-writing]')) &&
-      (await count(page, '[data-testid=ruler-step]')) === 8 &&
+      (await count(page, '[data-testid=tl-step]')) === 8 &&
       (await text(page, '[data-testid=watch-count]')).replace(/\s+/g, ' ').trim() === '1 / 8' &&
       (await text(page, '[data-testid=watch-title]')).length > 3 &&
       (await text(page, '[data-testid=watch-caption]')).length > 40,
@@ -1390,10 +1509,14 @@ await guard.smoke(async () => {
     const a = window.__ayni.ai.session.items.filter((i) => i.kind === 'assistant').at(-1);
     return a.plan.numbers().map((n) => ({ n, caption: a.plan.captionOf(n), title: a.plan.titleOf(n) }));
   });
+  const sentencesAt = await count(page, '[data-testid=watch-beat]');
   check(
-    'Altyazı modelin step çağrısındaki altyazıdır, bir iki cümle (en çok ~220 karakter) ve metinden kısa',
-    cap1 === plainCaption(plan[0].caption) && cap1.length <= 220 && cap1.length > 40,
-    `${cap1.length} karakter`,
+    'Altyazı modelin step çağrısındaki altyazıdır, cümle cümle (her cümle bir vuruş: 1. sahnede 4) ve metinden kısa',
+    cap1.replace(/\s+/g, ' ') === plainCaption(plan[0].caption) &&
+      sentencesAt === 4 &&
+      cap1.length <= 640 &&
+      cap1.length > 40,
+    `${cap1.length} karakter · ${sentencesAt} cümle`,
   );
   const st0 = await page.evaluate(() => window.__ayni.store.state);
   check(
@@ -1403,9 +1526,9 @@ await guard.smoke(async () => {
   );
   const markersChat = await markerIds(page);
   check(
-    'Anlatım sürerken dünya olayları haritada yok (çizelgede duruyorlar); yalnızca anlatılan olay haritada',
+    'Anlatım sürerken dünya olayları haritada yok (çizelgede duruyorlar); yalnızca anlatılan olay haritada (1. vuruşun olayı)',
     markersWorld.length >= 5 &&
-      markersChat.join() === 'polonya-isgali-1939' &&
+      markersChat.join() === 'molotov-ribbentrop-1939' &&
       (await count(page, '.dock [data-id]')) === timelineN,
     `${markersWorld.length} → ${markersBefore.length} → ${markersChat.length} işaretçi`,
   );
@@ -1414,102 +1537,72 @@ await guard.smoke(async () => {
     /Deneme kipi/.test(await text(page, '[data-testid=ask-mock-note]')),
   );
 
-  // --- every step shows only what it asks for, its caption is in the same place, and the camera brings it into view
-  const states = {};
+  // --- every scene shows, beat by beat, only what its beats ask for; its caption stays in the same place and the camera, which
+  // brings the whole scene into view once as it begins, does not move while its beats play
+  const ends = {};
   const drawings = {};
   const cameras = [];
   const boxes = [];
-  for (const exp of GERMANY) {
-    if (exp.n !== 1) await showStep(page, exp.n);
-    const state = await mapState(page);
-    states[exp.n] = state;
-    drawings[exp.n] = await drawing(page);
-    cameras.push(state.camera);
-    boxes.push(await rectOf(page, '[data-testid=watch]'));
-    const expected = exp.events;
-    check(
-      `${exp.n}. adım yalnızca kendi çizimini gösteriyor: ${exp.ids.split(',').length} devlet öne çıkar, ${exp.wars} savaş çizgisi, ${exp.links || 'kendi çizgisi yok'}, ${exp.routes ? `${exp.routes} yolu` : 'yolu yok'}, ${exp.sides ? `taraflar: ${exp.sides.replace('|', ' / ')}` : 'taraf boyaması yok'}, ${expected.length} olay işareti, ${exp.marks} serbest işaret, ${exp.year}`,
-      state.ids.join() === exp.ids &&
-        state.links.join() === exp.links &&
-        state.routes.join() === exp.routes &&
-        state.sides.join('|') === exp.sides &&
-        state.wars === exp.wars &&
-        sameSet(state.markers, expected) &&
-        state.eventFlags.length === 0 &&
-        state.diamonds === exp.marks &&
-        state.year === exp.year,
-      `${state.ids.length} devlet · işaretçiler: ${state.markers.join(', ') || '—'} · ${state.flags.join(' | ')}`,
-    );
-    const spot = await spotlight(page);
-    check(
-      `${exp.n}. adım spot ışığı: öne çıkan ${spot.ids.length} devlet dolgun ve canlı, haritanın geri kalanı soluk (örtü ${spot.veil}), öne çıkmayan adlar soluk, tarama yok`,
-      spot.ids.join() === exp.ids &&
-        spot.veil > 0.5 &&
-        spot.solid === 1 &&
-        spot.faded > 3 &&
-        spot.lit >= 1 &&
-        spot.unfaded === 0 &&
-        !spot.hatch,
-      `soluk ad ${spot.faded} · öne çıkan ad ${spot.lit} · soluk olmayan ${spot.unfaded}`,
-    );
-    const names = await page.evaluate(() => ({
-      boxes: document.querySelectorAll('.ai-layer .ai-flag.is-event, .evt-label, .evt-name').length,
-      callouts: [...document.querySelectorAll('.evt')].filter((e) => getComputedStyle(e, '::after').display !== 'none')
-        .length,
-    }));
-    check(
-      `${exp.n}. adım: olay işaretlerinin yanında ad kutusu yok (ad üstüne gelince görünür)`,
-      names.boxes === 0 && names.callouts === 0,
-      `${names.boxes} kutu · ${names.callouts} açık olay adı`,
-    );
-    if (exp.wars > 0) {
-      const unit = await page.evaluate(() => {
-        const out = [];
-        for (const g of document.querySelectorAll('.ai-layer .ai-war')) {
-          const path = g.querySelector('path.line');
-          const ring = g.querySelector('circle.ring').getBoundingClientRect();
-          const ringC = { x: ring.left + ring.width / 2, y: ring.top + ring.height / 2 };
-          const svg = path.ownerSVGElement.getBoundingClientRect();
-          // the marker whose centre is nearest the ring
-          let best = null;
-          for (const e of document.querySelectorAll('.evt:not(.is-hidden) .evt-mark')) {
-            const r = e.getBoundingClientRect();
-            const c = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-            const d = Math.hypot(c.x - ringC.x, c.y - ringC.y);
-            if (!best || d < best.d) best = { d, c };
-          }
-          // how far the marker's centre is from the line itself
-          let off = Infinity;
-          const len = path.getTotalLength();
-          for (let i = 0; i <= 200; i++) {
-            const pt = path.getPointAtLength((len * i) / 200);
-            off = Math.min(off, Math.hypot(svg.left + pt.x - best.c.x, svg.top + pt.y - best.c.y));
-          }
-          out.push({
-            markerToRing: best.d,
-            markerToLine: off,
-            ringR: ring.width / 2,
-            width: parseFloat(getComputedStyle(path).strokeWidth),
-          });
-        }
-        return out;
-      });
+  for (const scene of GERMANY) {
+    const n = scene.n;
+    await showStep(page, n, 0);
+    const start = await camera(page);
+    cameras.push(start);
+    for (let k = 0; k < scene.beats.length; k++) {
+      if (k > 0) await showStep(page, n, k);
+      const state = await beatState(page);
+      const diff = beatDiff(state, scene, k);
+      const want = scene.beats[k];
       check(
-        `${exp.n}. adım: savaş çizgisi ile olay işareti tek birim: işaret çizginin üzerinde (≤ 2 px) ve halkanın ortasında (≤ 1 px)`,
-        unit.length === exp.wars && unit.every((u) => u.markerToLine <= 2 && u.markerToRing <= 1 && u.ringR >= 10),
-        unit.map((u) => `çizgi ${u.markerToLine.toFixed(1)} · halka ${u.markerToRing.toFixed(1)}`).join(' | '),
+        `${n}. sahne, ${k + 1}. vuruş: harita yalnızca bu vuruşa kadar anlatılanı gösteriyor: ${want.year} sınırları, ${expectedAt(scene, k).markers.length} olay (öndeki ${expectedAt(scene, k).now.length}, sayılı nokta ${expectedAt(scene, k).dots.length}), ${want.routes ? `ok: ${want.routes}` : 'ok yok'}, ${want.emphasis ? 'vurgu' : 'vurgu yok'}, taraflar: ${want.sides.split('|').length}, altyazıda ${k + 1}. cümle öne çıkar`,
+        diff.length === 0,
+        diff.join(' · ') || `${state.markers.join(', ')}`,
       );
+      const lap = await overlapReport(page);
+      const cam = await camera(page);
+      check(
+        `${n}. sahne, ${k + 1}. vuruş: kamera sahnenin başındaki yerinde (vuruşlar sürerken oynamaz); hiçbir etiket başka bir etiketi ya da işaretçiyi örtmüyor (${lap.count} öğe)`,
+        !camCompare(start, cam).moved &&
+          lap.clash.length === 0 &&
+          lap.out.length === 0 &&
+          lap.underControl.length === 0,
+        [...lap.clash, ...lap.out, ...lap.underControl].join(' | ') ||
+          `${cam.lng.toFixed(1)}, ${cam.lat.toFixed(1)} · ${cam.zoom.toFixed(2)}`,
+      );
+      if (want.change.endsWith('*')) {
+        const lit = await eventually(
+          page,
+          () =>
+            window.__ayni.map
+              .getStyle()
+              .layers.some(
+                (l) =>
+                  l.id.startsWith('terr-') && Number(window.__ayni.map.getPaintProperty(l.id, 'raster-opacity')) > 0.3,
+              ),
+          null,
+          8000,
+        );
+        check(
+          `${n}. sahne, ${k + 1}. vuruş: ${want.change.replace('*', '')} değişimi görünür: kazanılan ve yitirilen toprak devletin renginde haritada belirir (sınırlar sessizce değişmiyor)`,
+          lit,
+          `${(await flashLayers(page)).map((o) => o.toFixed(2)).join(' ')}`,
+        );
+      }
     }
-    const cap = await text(page, '[data-testid=watch-caption]');
+    // the end of the scene: every beat has played; markers are small numbered dots, no arrows, the territorial results stay
+    await showStep(page, n);
+    const end = await beatState(page);
+    ends[n] = end;
+    drawings[n] = await drawing(page);
+    const diff = beatDiff(end, scene, null);
     check(
-      `${exp.n}. adım: altyazı, başlık ve sayaç bu adımın (“${exp.n} / 8”, “${exp.title}”)`,
-      cap === plainCaption(plan[exp.n - 1].caption) &&
-        (await text(page, '[data-testid=watch-count]')).replace(/\s+/g, ' ').trim() === `${exp.n} / 8` &&
-        (await text(page, '[data-testid=watch-title]')) === plan[exp.n - 1].title &&
-        plan[exp.n - 1].title === exp.title,
+      `${n}. sahne sonu: tüm olaylar sayılı küçük noktalar (${scene.events.map(([, b]) => b).join(', ')}), ok yok, ${scene.end.year} sınırları${scene.end.change ? ` ve ${scene.end.change} değişiminin sonucu` : ''}, taraflar altyazının altında, cümlelerin hepsi okunmuş`,
+      diff.length === 0 && end.now.length === 0,
+      diff.join(' · ') || end.dots.join(' '),
     );
+    const state = await mapState(page);
     check(
-      `${exp.n}. adım: kamera adımın gösterdiği her şeyi (${state.targets} nokta: öne çıkan devletlerin kutuları, olaylar, çizgi uçları) altyazı ve soru kutusunun ÜSTÜNDEKİ görünür alana sığdırdı: görünüm dışında ${state.outside}, ekranın dibindeki sütunun altında ${state.belowFoot}, savaş çizgisi uçları dışarıda ${state.warOutside}, örtülen ${state.covered}, devlet kutularının en az görünen payı %${Math.round(state.boxShare * 100)}`,
+      `${n}. sahne: kamera sahnenin gösterdiği her şeyi (${state.targets} nokta: öne çıkan devletlerin kutuları, olaylar, okların uçları) altyazı ve soru kutusunun ÜSTÜNDEKİ görünür alana sığdırdı: görünüm dışında ${state.outside}, ekranın dibindeki sütunun altında ${state.belowFoot}, çizimler dışarıda ${state.warOutside}, örtülen ${state.covered}, devlet kutularının en az görünen payı %${Math.round(state.boxShare * 100)}`,
       state.targets > 0 &&
         state.outside === 0 &&
         state.belowFoot === 0 &&
@@ -1518,179 +1611,137 @@ await guard.smoke(async () => {
         state.boxShare >= 0.75,
       `merkez ${state.camera.lng.toFixed(1)}, ${state.camera.lat.toFixed(1)} · yakınlaştırma ${state.camera.zoom.toFixed(2)}${state.widest ? ' · en geniş görünüm' : ''}`,
     );
-    const lap = await overlapReport(page);
+    const names = await page.evaluate(() => ({
+      boxes: document.querySelectorAll('.ai-layer .ai-flag.is-event, .evt-label, .evt-name').length,
+      callouts: [...document.querySelectorAll('.evt')].filter((e) => getComputedStyle(e, '::after').display !== 'none')
+        .length,
+    }));
     check(
-      `${exp.n}. adım: hiçbir etiket başka bir etiketi ya da işaretçiyi örtmüyor (${lap.count} öğe)`,
-      lap.clash.length === 0 && lap.out.length === 0 && lap.underControl.length === 0,
-      [...lap.clash, ...lap.out, ...lap.underControl].join(' | '),
+      `${n}. sahne: olay işaretlerinin yanında ad kutusu yok (ad üstüne gelince görünür)`,
+      names.boxes === 0 && names.callouts === 0,
+      `${names.boxes} kutu · ${names.callouts} açık olay adı`,
     );
-    // --- a war of the Second World War shows right: its own marker, the line between its two sides, the sides lit, the year's borders
-    if (exp.n === 2 || exp.n === 4 || exp.n === 6 || exp.n === 7 || exp.n === 8) {
-      const war = await page.evaluate(
-        ([id, sides]) => {
-          const m = window.__ayni.map;
-          const box = document.querySelector('#map').getBoundingClientRect();
-          const el = document.querySelector(`.evt[data-id="${id}"]`);
-          const mark = el.querySelector('.evt-mark').getBoundingClientRect();
-          const c = { x: mark.left + mark.width / 2, y: mark.top + mark.height / 2 };
-          // the war line whose ring lies on this event's marker, and the polity under each of its two ends (as the map draws them)
-          const lines = [...document.querySelectorAll('.ai-layer .ai-war')].map((g) => {
-            const ring = g.querySelector('circle.ring').getBoundingClientRect();
-            const d = Math.hypot(ring.left + ring.width / 2 - c.x, ring.top + ring.height / 2 - c.y);
-            const ends = [...g.querySelectorAll('circle.end')].map((e) => {
-              const r = e.getBoundingClientRect();
-              const x = r.left + r.width / 2 - box.left;
-              const y = r.top + r.height / 2 - box.top;
-              return [
-                ...new Set(m.queryRenderedFeatures([x, y], { layers: ['polity-fill'] }).map((f) => f.properties.id)),
-              ];
-            });
-            return { d, ends };
-          });
-          const mine = lines.sort((a, b) => a.d - b.d)[0];
-          const names = [...document.querySelectorAll('.plabel.is-ai:not(.is-hidden)')].map((e) =>
-            e.textContent.replace(/\s+/g, ' ').trim(),
-          );
-          const joins = (a, b) =>
-            !!mine &&
-            mine.d <= 1 &&
-            mine.ends.length === 2 &&
-            ((mine.ends[0].includes(a) && mine.ends[1].includes(b)) ||
-              (mine.ends[0].includes(b) && mine.ends[1].includes(a)));
-          return {
-            there: !!el,
-            tag: el.tagName,
-            selected: el.classList.contains('is-selected'),
-            year: el.querySelector('.evt-year')?.textContent,
-            joined: sides.map(([a, b]) => joins(a, b)).some(Boolean),
-            ends: mine?.ends.map((e) => e.join('+')).join(' ↔ '),
-            names,
-          };
-        },
-        {
-          2: ['fransa-muharebesi-1940', [['nazi-germany', 'french-third-republic']]],
-          4: ['barbarossa-1941', [['nazi-germany', 'union-of-soviet-socialist-republics']]],
-          6: ['stalingrad-1942', [['union-of-soviet-socialist-republics', 'nazi-germany']]],
-          7: ['normandiya-1944', [['kingdom-of-great-britain', 'nazi-germany']]],
-          8: ['berlin-muharebesi-1945', [['union-of-soviet-socialist-republics', 'nazi-germany']]],
-        }[exp.n],
+    const cap = (await text(page, '[data-testid=watch-caption]')).replace(/\s+/g, ' ');
+    check(
+      `${n}. sahne: altyazı, başlık ve sayaç bu sahnenin (“${n} / 8”, “${scene.title}”)`,
+      cap === plainCaption(plan[n - 1].caption) &&
+        (await text(page, '[data-testid=watch-count]')).replace(/\s+/g, ' ').trim() === `${n} / 8` &&
+        (await text(page, '[data-testid=watch-title]')) === plan[n - 1].title &&
+        plan[n - 1].title === scene.title,
+    );
+    boxes.push(await rectOf(page, '[data-testid=watch]'));
+
+    // --- what the arrows of a scene start from: the border of a polity toward a place, not a capital
+    if (n === 1) {
+      await showStep(page, 1, 1);
+      const arrows = await page.evaluate(() =>
+        window.__ayni.ai.frame().routes.map((r) => ({
+          type: r.type,
+          from: r.points[0],
+          to: r.points.at(-1),
+          stops: r.points.length,
+        })),
       );
-      const label = {
-        2: 'Fransa Muharebesi',
-        4: 'Barbarossa',
-        6: 'Stalingrad',
-        7: 'Normandiya Çıkarması',
-        8: 'Berlin Muharebesi',
-      }[exp.n];
-      // (the marker tells the event's own year; the borders under it are those of its start)
-      const want = { 2: '1940', 4: '1941', 6: '1942', 7: '1944', 8: '1945' }[exp.n];
-      const sidesOf = {
-        2: 'Nazi Almanyası ile Fransa',
-        4: 'Sovyetler Birliği ile Nazi Almanyası',
-        6: 'Sovyetler Birliği ile Nazi Almanyası',
-        7: 'Britanya ile Nazi Almanyası',
-        8: 'Sovyetler Birliği ile Nazi Almanyası',
-      }[exp.n];
+      const warsaw = { lon: 21.0, lat: 52.23 };
+      const krakow = { lon: 19.94, lat: 50.06 };
+      const [toWarsaw, toKrakow] = [arrows[0], arrows[1]];
       check(
-        `${exp.n}. adım, ${label}: olayın kendi işareti haritada (düğme, yılı ${want}, seçili değil: yalnızca anlatılan olay), çizgisi iki tarafı (${sidesOf}) birleştiriyor: uçları o iki devletin içinde`,
-        war.there && war.tag === 'BUTTON' && war.year === want && !war.selected && war.joined,
-        `${war.year} · ${war.ends}`,
+        '1. sahne, 2. vuruş: Polonya saldırısının okları Almanya’nın sınırından çıkar (başkenti Berlin’den değil: ilk durak Berlin’e 150 km’den uzak, Polonya’daki varış yerine 400 km’den yakın), Varşova’ya ve Kraków’a varır',
+        arrows.length === 2 &&
+          arrows.every((a) => a.type === 'advance' && a.stops === 2) &&
+          kmBetween(toWarsaw.from, PLACES.berlin) > 150 &&
+          kmBetween(toWarsaw.from, warsaw) < 400 &&
+          kmBetween(toWarsaw.to, warsaw) < 30 &&
+          kmBetween(toKrakow.from, PLACES.berlin) > 150 &&
+          kmBetween(toKrakow.to, krakow) < 30,
+        arrows
+          .map(
+            (a) =>
+              `Berlin’e ${Math.round(kmBetween(a.from, PLACES.berlin))} km · varış ${a.to.lon.toFixed(1)}, ${a.to.lat.toFixed(1)}`,
+          )
+          .join(' | '),
       );
-    }
-    // --- the war line of the Normandy landings leaves from a place, not from the middle of a polity: London, not Greenland
-    if (exp.n === 7) {
-      const line = await warLineOf(page, 'normandiya-1944');
+      await showStep(page, 1, 3);
+      const east = await page.evaluate(() => {
+        const r = window.__ayni.ai.frame().routes[0];
+        return { from: r.points[0], to: r.points.at(-1) };
+      });
+      const moscow = { lon: 37.62, lat: 55.75 };
+      const lviv = { lon: 24.03, lat: 49.84 };
       check(
-        'Normandiya Çıkarması’nın savaş çizgisi Londra’dan başlar (Grönland’dan değil: ABD’nin çokgeni 1944’te Grönland’ı da içerir) ve Berlin’de biter; olayın işareti çizginin üzerinde',
-        !!line &&
-          kmBetween(line.ends[0], PLACES.london) < 25 &&
-          kmBetween(line.ends[1], PLACES.berlin) < 25 &&
-          kmBetween(line.ends[0], PLACES.greenland) > 2500 &&
-          line.d <= 1,
-        line
-          ? `Londra’ya ${Math.round(kmBetween(line.ends[0], PLACES.london))} km · Berlin’e ${Math.round(kmBetween(line.ends[1], PLACES.berlin))} km · Grönland’a ${Math.round(kmBetween(line.ends[0], PLACES.greenland))} km`
-          : 'çizgi yok',
+        '1. sahne, 4. vuruş: Sovyet saldırısının oku Sovyetler Birliği’nin doğu sınırından (başkenti Moskova’dan değil) Lviv’e gider',
+        kmBetween(east.from, moscow) > 500 && kmBetween(east.from, lviv) < 400 && kmBetween(east.to, lviv) < 30,
+        `Moskova’ya ${Math.round(kmBetween(east.from, moscow))} km · Lviv’e ${Math.round(kmBetween(east.from, lviv))} km`,
       );
+      await showStep(page, 1); // (back to the end of the scene for the checks that follow)
     }
-    // --- the Battle of France is on the borders of its start (the Third Republic is in the data up to 1939), so its line runs between
-    // Germany and France; on the borders of 1940, where France no longer is, it fell back to the next party of its side: London
-    if (exp.n === 2) {
-      const line = await warLineOf(page, 'fransa-muharebesi-1940');
+    // the Eastern Front: a longer arrow from the German border through three cities
+    if (n === 4) {
+      await showStep(page, 4, 1);
+      const front = await page.evaluate(() => {
+        const r = window.__ayni.ai.frame().routes[0];
+        return { stops: r.points.length, from: r.points[0], to: r.points.at(-1) };
+      });
       check(
-        'Fransa Muharebesi’nin savaş çizgisi Almanya ile Fransa arasında: Berlin’den Paris’e (Londra’ya düşmüyor); olayın işareti çizginin üzerinde; haritada 1939’un sınırları (Fransa o yıla kadar verideydi)',
-        !!line &&
-          kmBetween(line.ends[0], PLACES.berlin) < 25 &&
-          kmBetween(line.ends[1], PLACES.paris) < 25 &&
-          kmBetween(line.ends[1], PLACES.london) > 200 &&
-          line.d <= 1 &&
-          state.year === '1939',
-        line
-          ? `Berlin’e ${Math.round(kmBetween(line.ends[0], PLACES.berlin))} km · Paris’e ${Math.round(kmBetween(line.ends[1], PLACES.paris))} km · Londra’ya ${Math.round(kmBetween(line.ends[1], PLACES.london))} km · sınır yılı ${state.year}`
-          : 'çizgi yok',
+        '4. sahne, 2. vuruş: Doğu Cephesi’ndeki ilerleyiş ok Almanya’nın ve ortaklarının sınırından çıkar, Minsk ve Smolensk üzerinden Moskova’ya varır (4 durak)',
+        front.stops === 4 && kmBetween(front.to, { lon: 37.62, lat: 55.75 }) < 30,
+        `${front.stops} durak · Moskova’ya ${Math.round(kmBetween(front.to, { lon: 37.62, lat: 55.75 }))} km`,
       );
+      await showStep(page, 4);
     }
-    if (exp.n === 4) {
+    if (n === 4) {
       const lit = await page.evaluate(() =>
         [...document.querySelectorAll('.plabel.is-ai:not(.is-hidden)')].map((e) =>
           e.textContent.replace(/\s+/g, ' ').trim(),
         ),
       );
       check(
-        '4. adım: Sovyetler Birliği ve Nazi Almanyası öne çıkarılmış (canlı renk, adları mürekkep renginde) ve sınırlar 1941’in',
-        lit.some((n) => /Sovyetler Birliği/i.test(n)) &&
-          lit.some((n) => /Nazi Almanyası/i.test(n)) &&
-          state.ids.includes('nazi-germany') &&
-          state.ids.includes('union-of-soviet-socialist-republics') &&
-          state.year === '1941',
+        '4. sahne: Sovyetler Birliği ve Nazi Almanyası kendi aktör renginde boyalı (odak mavi, Sovyetler Birliği ayrı bir renk), sınırlar 1941’in; Britanya bu sahnenin tarafları arasında değil, boyanmadı',
+        ends[4].colors['nazi-germany'] === 'focus' &&
+          ends[4].colors['union-of-soviet-socialist-republics'] === 'foe-2' &&
+          !ends[4].colors['kingdom-of-great-britain'] &&
+          ends[4].year === '1941',
         lit.join(' | '),
       );
     }
-    if (exp.n === 6) {
+    if (n === 6) {
       const alamein = await page.evaluate(() => {
         const el = document.querySelector('.evt[data-id="el-alamein-1942"]');
         return {
-          there: !!el,
-          year: el?.querySelector('.evt-year')?.textContent,
-          selected: el?.classList.contains('is-selected'),
+          there: !!el && !el.classList.contains('is-hidden'),
+          dot: el?.classList.contains('is-dot'),
+          n: el?.dataset.n,
         };
       });
       check(
-        '6. adım, El Alamein: Stalingrad’ın yanında El Alamein de kendi işaretiyle (1942, seçili değil); iki olay iki savaş çizgisi; sınırlar 1942’nin',
-        alamein.there && alamein.year === '1942' && !alamein.selected && state.wars === 2 && state.year === '1942',
-        `${alamein.year}`,
+        '6. sahne, El Alamein: Stalingrad’ın yanında El Alamein de haritada, 2. vuruşun sayılı noktası (2); sınırlar 1942’nin',
+        alamein.there && alamein.dot && alamein.n === '2' && ends[6].year === '1942',
+        JSON.stringify(alamein),
       );
     }
-    if (exp.n === 8) {
-      const end = await page.evaluate(() => {
+    if (n === 8) {
+      const last = await page.evaluate(() => {
         const r = window.__ayni.ai.session.resolver;
-        const year = (id) => document.querySelector(`.evt[data-id="${id}"] .evt-year`)?.textContent;
         return {
           germany1944: !!r.rowAt('nazi-germany', 1944),
           germany1945: !!r.rowAt('nazi-germany', 1945),
           soviet1945: !!r.rowAt('union-of-soviet-socialist-republics', 1945),
-          berlin: year('berlin-muharebesi-1945'),
-          surrender: year('almanya-teslimi-1945'),
           drawing: window.__ayni.ai.director.drawing?.year,
+          end: window.__ayni.ai.director.sceneYears,
         };
       });
       check(
-        '8. adım, Berlin 1945: iki olay 1945’in olayı (işaret yılları 1945); Cliopatria’da Nazi Almanyası 1944’te biter ama düzeltme katmanı 1938 sınırlarını 1945’e taşır, bu yüzden sınır yılı 1945 (başlıkta 1945) ve savaşın iki tarafı da o yılda var',
-        end.berlin === '1945' &&
-          end.surrender === '1945' &&
-          end.germany1944 &&
-          end.germany1945 &&
-          end.soviet1945 &&
-          end.drawing === 1945 &&
-          state.year === '1945',
-        `işaretler ${end.berlin}, ${end.surrender} · sınır yılı ${state.year}`,
+        '8. sahne, Berlin 1945: sahne 1944’ün sınırlarıyla başlar, teslim cümlesinde 1945’e geçer ve Almanya’nın yitirdiği toprak gösterilir; Cliopatria’da Nazi Almanyası 1944’te biter ama düzeltme katmanı 1938 sınırlarını 1945’e taşır, bu yüzden iki yılda da verisi var',
+        last.germany1944 && last.germany1945 && last.soviet1945 && ends[8].year === '1945',
+        `sahne yılları ${last.end.join('→')}`,
       );
     }
-    if (exp.n === 1) await shot(page, 'ai-1a-anlatim-adim1.png');
-    if (exp.n === 2) await shot(page, 'ai-1b-anlatim-adim2.png');
-    if (exp.n === 3) await shot(page, 'ai-1d-anlatim-adim3.png');
-    if (exp.n === 4) await shot(page, 'ai-1e-anlatim-adim4.png');
-    if (exp.n === 6) await shot(page, 'ai-1c-anlatim-adim6.png');
-    if (exp.n === 8) await shot(page, 'ai-1g-anlatim-adim8.png');
+    if (n === 1) await shot(page, 'ai-1a-anlatim-adim1.png');
+    if (n === 2) await shot(page, 'ai-1b-anlatim-adim2.png');
+    if (n === 3) await shot(page, 'ai-1d-anlatim-adim3.png');
+    if (n === 4) await shot(page, 'ai-1e-anlatim-adim4.png');
+    if (n === 6) await shot(page, 'ai-1c-anlatim-adim6.png');
+    if (n === 8) await shot(page, 'ai-1g-anlatim-adim8.png');
   }
   const fixed = boxes.every(
     (b) =>
@@ -1699,47 +1750,63 @@ await guard.smoke(async () => {
       Math.abs(b.width - boxes[0].width) < 1,
   );
   check(
-    'Altyazı sabit bir yerde: kutunun alt kenarı ve yatay konumu her adımda aynı (altyazı gibi)',
+    'Altyazı sabit bir yerde: kutunun alt kenarı ve yatay konumu her sahnede aynı (altyazı gibi)',
     fixed,
     boxes.map((b) => Math.round(b.bottom)).join(' '),
   );
   const camStart = camCompare(camBefore, cameras[0]);
   check(
-    'Anlatım başlayınca kamera ilk adımın çizimine gitti (dünya görünümünden yakınlaştı)',
+    'Anlatım başlayınca kamera ilk sahnenin çizimine gitti (dünya görünümünden yakınlaştı)',
     cameras[0].zoom > camBefore.zoom + 1 && camStart.moved,
     `${camBefore.zoom.toFixed(2)} → ${cameras[0].zoom.toFixed(2)}`,
   );
   const changes = cameras.slice(1).filter((c, i) => camCompare(cameras[i], c).moved).length;
   check(
-    'Adım değiştikçe kamera adımı izliyor: komşu adımların çoğunda harita kaydı ya da yakınlaştı/uzaklaştı',
+    'Sahne değiştikçe kamera sahneyi izliyor: komşu sahnelerin çoğunda harita kaydı ya da yakınlaştı/uzaklaştı',
     changes >= 4,
     `${changes}/7 geçişte oynadı`,
   );
+  // the colours belong to the actors: Germany has the focus colour and Britain its amber wherever they are painted, in every scene
+  const colorsAcross = (id) =>
+    Object.values(ends)
+      .map((e) => e.colors[id])
+      .filter(Boolean);
+  check(
+    'Renkler aktörlerindir: Almanya anlatım boyunca hep odak rengi; Britanya boyandığı her sahnede aynı karşıt renk; hiçbir sahnede iki karşıt taraf aynı rengi paylaşmıyor',
+    colorsAcross('nazi-germany').length === 8 &&
+      colorsAcross('nazi-germany').every((c) => c === 'focus') &&
+      new Set(colorsAcross('kingdom-of-great-britain')).size === 1 &&
+      Object.values(ends).every((e) => {
+        const bloc = (color) =>
+          new Set(
+            Object.entries(e.colors)
+              .filter(([, c]) => c === color)
+              .map(([id]) => id),
+          );
+        const sidesList = e.sides.split('|').filter((x) => !x.endsWith(':neutral'));
+        return new Set(sidesList.map((x) => x.split(':')[1])).size === sidesList.length && bloc('focus').size > 0;
+      }),
+    `Britanya: ${colorsAcross('kingdom-of-great-britain').join(', ')}`,
+  );
 
-  // --- going back to any earlier step brings exactly that step's drawings back, and nothing of the others
+  // --- going back to any earlier scene brings exactly that scene's end back, and nothing of the others
   let exact = true;
   const diffs = [];
   for (const n of [4, 2, 7, 3, 8, 5, 6, 1]) {
     await showStep(page, n);
-    const again = await mapState(page);
-    const before = states[n];
+    const again = await beatState(page);
+    const mapAgain = await mapState(page);
     const same =
       JSON.stringify(await drawing(page)) === JSON.stringify(drawings[n]) &&
-      again.ids.join() === before.ids.join() &&
-      again.links.join() === before.links.join() &&
-      again.wars === before.wars &&
-      sameSet(again.markers, before.markers) &&
-      sameSet(again.flags, before.flags) &&
-      again.diamonds === before.diamonds &&
-      again.year === before.year &&
-      again.outside === 0;
+      JSON.stringify(again) === JSON.stringify(ends[n]) &&
+      mapAgain.outside === 0;
     if (!same) {
       exact = false;
       diffs.push(`${n}`);
     }
   }
   check(
-    'Önceki adımlara dönmek (4, 2, 7, 3, 8, 5, 6, 1) her seferinde yalnızca o adımın çizimini aynen getiriyor',
+    'Önceki sahnelere dönmek (4, 2, 7, 3, 8, 5, 6, 1) her seferinde yalnızca o sahnenin sonunu aynen getiriyor',
     exact,
     diffs.length ? `farklı: ${diffs.join(',')}` : '',
   );
@@ -1764,6 +1831,7 @@ await guard.smoke(async () => {
     (await aiDom(page)).hidden &&
       (await aiIds(page)).length === 0 &&
       (await spotlight(page)).veil === 0 &&
+      (await flashLayers(page)).length === 0 &&
       markersClosed.length === 0 &&
       (await visible(page, '[data-testid=place-card]')) &&
       !(await visible(page, '[data-testid=watch]')),
@@ -1781,14 +1849,27 @@ await guard.smoke(async () => {
 });
 /* ================================================= V. İzle'de gezinme */
 const SPEED_FACTOR = { slow: 0.65, normal: 1, fast: 1.8 };
-/** The wait the page keeps on a step when the narration plays by itself (the same rule as the page's). */
-const dwell = (caption, speed) => {
-  const words = caption.trim().split(/\s+/).filter(Boolean).length;
-  return Math.round(Math.min(16_000, Math.max(4_500, 2_200 + words * 360)) / SPEED_FACTOR[speed]);
+/** How long a sentence of a caption plays when the narration goes by itself (the same rule as the page's). */
+const beatTime = (sentence, speed) => {
+  const words = sentence.trim().split(/\s+/).filter(Boolean).length;
+  return Math.round(Math.min(11_000, Math.max(2_400, 1_100 + words * 330)) / SPEED_FACTOR[speed]);
 };
+/** The first sentence of a scene waits a little longer: the camera is on its way there. */
+const leadTime = (speed) => Math.round(900 / SPEED_FACTOR[speed]);
+/** How long a scene that has ended stays as it is before the next one begins, when the narration plays by itself. */
+const lingerTime = (speed) => Math.round(1600 / SPEED_FACTOR[speed]);
 const countText = async (page) => (await text(page, '[data-testid=watch-count]')).replace(/\s+/g, ' ').trim();
 const stepNow = async (page) => (await pres(page)).step;
-const idsNow = async (page) => (await mapState(page)).ids.join();
+/** The scene on screen and where it is in its beats: "3:0" (the first sentence plays), "3:D" (the scene has ended). */
+const where = async (page) => {
+  const p = await page.evaluate(() => {
+    const pr = window.__ayni.ai.presentation;
+    return { n: pr.step?.n ?? 0, beat: pr.beat, done: pr.done };
+  });
+  return `${p.n}:${p.done ? 'D' : p.beat}`;
+};
+/** The events on the map (sorted): which scene, up to which sentence, is on screen. */
+const idsNow = async (page) => (await mapState(page)).markers.sort().join();
 
 /** The layout of the stage as it is now: which view, where the reader is, where the map is. */
 const layout = (page) =>
@@ -1834,69 +1915,98 @@ const stepInText = (page, n) =>
     };
   }, n);
 
-section('V. İzle’de gezinme: düğmeler, ok tuşları, isteğe bağlı otomatik oynatma ve hız; çizelgede ilerleme çubuğu');
+section(
+  'V. İzle’de gezinme: düğmeler (iki aşamalı Sonraki/Önceki), ok tuşları, isteğe bağlı otomatik oynatma ve hız; zaman çizelgesinde sahne noktaları',
+);
 await guard(async () => {
   const page = await open(AT_HAMBURG);
   await page.click('[data-testid=place-narrate]');
   await finalStatus(page);
   await cameraRests(page, 12000);
-  await settle(page, 1800);
   const p0 = await pres(page);
   check(
-    'Otomatik oynatma isteğe bağlı: kendiliğinden başlamaz (yanıt bittikten sonra da 1. adımda, oynatma kapalı)',
+    'Otomatik oynatma (Oynat) isteğe bağlı: kendiliğinden başlamaz (yanıt bittikten sonra da 1. sahnede, oynatma kapalı)',
     p0.stepped && p0.steps === 8 && p0.step === 1 && !p0.playing && p0.view === 'watch',
-    `adım ${p0.step}/${p0.steps} · oynatma ${p0.playing}`,
+    `sahne ${p0.step}/${p0.steps} · oynatma ${p0.playing}`,
   );
+  // (the sentences of a caption play by themselves: the scenario holds the scene at its first sentence, as a click on it would)
+  await page.evaluate(() => window.__ayni.ai.presentation.replayBeat(0));
+  await settle(page, 300);
   const off = (id) => page.locator(`[data-testid=${id}]`).isDisabled();
-  check('1. adımda “Önceki” kapalı, “Sonraki” açık', (await off('watch-prev')) && !(await off('watch-next')));
+  check(
+    '1. sahnenin başında “Önceki” kapalı, “Sonraki” açık',
+    (await where(page)) === '1:0' && (await off('watch-prev')) && !(await off('watch-next')),
+  );
+  await page.click('[data-testid=watch-next]');
+  await cameraRests(page);
+  const first = await beatState(page);
+  check(
+    '“Sonraki”, sahne oynarken önce sahnenin SONUNU gösterir (aynı sahne, “1 / 8”): olaylar sayılı noktalar, ok yok, sınırlar 1940’ın; “Önceki” açıldı',
+    (await where(page)) === '1:D' &&
+      (await countText(page)) === '1 / 8' &&
+      beatDiff(first, GERMANY[0], null).length === 0 &&
+      !(await off('watch-prev')) &&
+      !(await off('watch-next')),
+    beatDiff(first, GERMANY[0], null).join(' · '),
+  );
   await page.click('[data-testid=watch-next]');
   await cameraRests(page);
   check(
-    '“Sonraki” 2. adıma geçirir: sayaç “2 / 8”, harita 2. adımın çizimi (Nazi Almanyası, Birleşik Krallık ve Vichy Fransası, Fransa Muharebesi’nin savaş çizgisi); “Önceki” açıldı',
-    (await stepNow(page)) === 2 &&
+    'İkinci “Sonraki” 2. sahneyi ilk cümlesinden başlatır: sayaç “2 / 8”, harita 2. sahnenin ilk vuruşu (yalnızca Fransa Muharebesi’nin işareti ve oku)',
+    (await where(page)) === '2:0' &&
       (await countText(page)) === '2 / 8' &&
-      (await idsNow(page)) === GERMANY[1].ids &&
-      !(await off('watch-prev')),
+      beatDiff(await beatState(page), GERMANY[1], 0).length === 0,
   );
   await page.click('[data-testid=watch-prev]');
   await cameraRests(page);
   check(
-    '“Önceki” 1. adıma döndürür ve kendini yeniden kapatır',
-    (await stepNow(page)) === 1 && (await countText(page)) === '1 / 8' && (await off('watch-prev')),
+    '2. sahnenin başındayken “Önceki” bir önceki sahneyi bittiği hâliyle getirir (1. sahnenin sonu)',
+    (await where(page)) === '1:D' && beatDiff(await beatState(page), GERMANY[0], null).length === 0,
+  );
+  await page.click('[data-testid=watch-prev]');
+  await cameraRests(page);
+  check(
+    'Bir sahne bitmişken “Önceki” o sahneyi başa sarar (1. sahne ilk cümlesinde) ve kendini yeniden kapatır',
+    (await where(page)) === '1:0' && (await off('watch-prev')) && (await countText(page)) === '1 / 8',
   );
 
-  // --- the arrow keys
+  // --- the arrow keys (the same two stages)
   await page.evaluate(() => document.activeElement?.blur?.());
+  await page.evaluate(() => window.__ayni.ai.presentation.replayBeat(0));
   const key = async (k) => {
     await page.keyboard.press(k);
     await cameraRests(page);
   };
-  await key('ArrowRight');
-  const k1 = await stepNow(page);
-  await key('ArrowRight');
-  const k2 = await stepNow(page);
-  await key('ArrowLeft');
-  const k3 = await stepNow(page);
+  const walked = [];
+  for (const k of ['ArrowRight', 'ArrowRight', 'ArrowRight', 'ArrowRight', 'ArrowLeft', 'ArrowLeft']) {
+    await key(k);
+    walked.push(await where(page));
+  }
   check(
-    'Ok tuşları: → sonraki, ← önceki adım (1 → 2 → 3 → 2)',
-    k1 === 2 && k2 === 3 && k3 === 2,
-    `${k1}, ${k2}, ${k3}`,
+    'Ok tuşları düğmelerle aynı: → sahnenin sonu, sonraki sahne, onun sonu, sonraki; ← o sahnenin başı, bir önceki sahne (bitmiş)',
+    walked.join(' ') === '1:D 2:0 2:D 3:0 2:D 2:0',
+    walked.join(' '),
   );
   await key('End');
-  const kEnd = { step: await stepNow(page), ids: await idsNow(page), next: await off('watch-next') };
+  const kEnd = {
+    at: await where(page),
+    end: beatDiff(await beatState(page), GERMANY[7], null),
+    next: await off('watch-next'),
+  };
   await key('Home');
-  const kHome = { step: await stepNow(page), ids: await idsNow(page) };
+  const kHome = { at: await where(page), start: beatDiff(await beatState(page), GERMANY[0], 0) };
   check(
-    'End son adıma, Home ilk adıma götürür; harita her seferinde o adımın çizimini gösterir; son adımda “Sonraki” kapalı',
-    kEnd.step === 8 && kEnd.ids === GERMANY[7].ids && kEnd.next && kHome.step === 1 && kHome.ids === GERMANY[0].ids,
-    `${kEnd.ids} | ${kHome.ids}`,
+    'End son sahnenin sonuna, Home ilk sahnenin başına götürür; harita her seferinde o anı gösterir; son sahnenin sonunda “Sonraki” kapalı',
+    kEnd.at === '8:D' && kEnd.end.length === 0 && kEnd.next && kHome.at === '1:0' && kHome.start.length === 0,
+    `${kEnd.at} ${kEnd.end.join(' · ')} | ${kHome.at} ${kHome.start.join(' · ')}`,
   );
+  await page.evaluate(() => window.__ayni.ai.presentation.replayBeat(0));
   await page.focus('[data-testid=chat-input]');
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowLeft');
   await page.keyboard.press('End');
   await settle(page, 400);
-  check('Soru kutusundayken ok tuşları yazı imlecinindir: anlatım yerinde kalır', (await stepNow(page)) === 1);
+  check('Soru kutusundayken ok tuşları yazı imlecinindir: anlatım yerinde kalır', (await where(page)) === '1:0');
   await page.evaluate(() => document.activeElement?.blur?.());
   await key('End');
   const camEnd = await camera(page);
@@ -1908,85 +2018,104 @@ await guard(async () => {
   await page.keyboard.press('ArrowRight');
   await settle(page, 800);
   check(
-    'Harita odaktayken de oklar anlatımındır: haritayı kaydırmaz (son adımda → hiçbir şey yapmaz, kamera yerinde)',
-    focusedCanvas && sameCamera(camEnd, await camera(page)) && (await stepNow(page)) === 8,
+    'Harita odaktayken de oklar anlatımındır: haritayı kaydırmaz (son sahnenin sonunda → hiçbir şey yapmaz, kamera yerinde)',
+    focusedCanvas && sameCamera(camEnd, await camera(page)) && (await where(page)) === '8:D',
     `harita odakta: ${focusedCanvas}`,
   );
   await page.evaluate(() => document.activeElement?.blur?.());
   await key('Home');
+  await page.evaluate(() => window.__ayni.ai.presentation.replayBeat(0));
 
-  // --- the whole narration step by step: "Sonraki" from 1 to 8, then the arrow keys back from 8 to 1. Each step has its own
-  // counter, title, caption, drawing and border year, and the buttons give out at the two ends.
+  // --- the whole narration with "Sonraki": two presses a scene (its end, then the next scene's start); then the arrow keys back
   const planNow = await page.evaluate(() => {
     const a = window.__ayni.ai.session.items.filter((i) => i.kind === 'assistant').at(-1);
     return a.plan.numbers().map((n) => ({ caption: a.plan.captionOf(n), title: a.plan.titleOf(n) }));
   });
   const here = async () => ({
-    step: await stepNow(page),
+    at: await where(page),
     count: await countText(page),
     title: await text(page, '[data-testid=watch-title]'),
-    caption: await text(page, '[data-testid=watch-caption]'),
-    ids: await idsNow(page),
-    year: await headYear(page),
+    caption: (await text(page, '[data-testid=watch-caption]')).replace(/\s+/g, ' '),
+    state: await beatState(page),
     prev: !(await off('watch-prev')),
     next: !(await off('watch-next')),
   });
-  const rightOf = (h, n) => {
-    const [canPrev, canNext] = [n > 1, n < 8];
+  const rightOf = (h, n, at) => {
+    const scene = GERMANY[n - 1];
+    const diff = beatDiff(h.state, scene, at === 'D' ? null : Number(at));
     return (
-      h.step === n &&
+      h.at === `${n}:${at}` &&
       h.count === `${n} / 8` &&
-      h.title === GERMANY[n - 1].title &&
+      h.title === scene.title &&
       h.caption === plainCaption(planNow[n - 1].caption) &&
-      h.ids === GERMANY[n - 1].ids &&
-      h.year === GERMANY[n - 1].year &&
-      h.prev === canPrev &&
-      h.next === canNext
+      diff.length === 0 &&
+      h.prev === (n > 1 || at !== '0') &&
+      h.next === (n < 8 || at !== 'D')
     );
   };
   const forward = [await here()];
   for (let n = 2; n <= 8; n++) {
     await page.click('[data-testid=watch-next]');
+    await page.click('[data-testid=watch-next]');
     await cameraRests(page);
     forward.push(await here());
   }
   check(
-    '“Sonraki” ile 1’den 8’e: her adımda sayaç, başlık, altyazı, harita çizimi ve sınır yılı o adımın; “Önceki” yalnızca 1’de, “Sonraki” yalnızca 8’de kapalı',
-    forward.every((h, i) => rightOf(h, i + 1)),
-    forward.map((h) => `${h.step}:${h.year}`).join(' '),
+    '“Sonraki” ile 1’den 8’e (sahne başına iki basış): her sahnenin başında sayaç, başlık, altyazı, harita (ilk vuruşun işareti, sınır yılı, taraflar) o sahnenin; “Önceki” yalnızca 1. sahnenin başında kapalı',
+    forward.every((h, i) => rightOf(h, i + 1, '0')),
+    forward.map((h) => `${h.at}:${h.state.year}`).join(' '),
+  );
+  await page.click('[data-testid=watch-next]');
+  await cameraRests(page);
+  const last = await here();
+  check(
+    'Son sahnenin başında “Sonraki” sahnenin sonunu gösterir; ondan sonra “Sonraki” kapalıdır',
+    rightOf(last, 8, 'D') && !last.next,
+    `${last.at}`,
   );
   await page.evaluate(() => document.activeElement?.blur?.());
-  const backward = [await here()];
-  for (let n = 7; n >= 1; n--) {
+  const backward = [last];
+  const expectBack = [];
+  for (let n = 8; n >= 1; n--) {
+    expectBack.push([n, '0']);
+    if (n > 1) expectBack.push([n - 1, 'D']);
+  }
+  for (const [n, at] of expectBack) {
     await key('ArrowLeft');
-    backward.push(await here());
+    backward.push({ ...(await here()), want: [n, at] });
   }
   check(
-    '← ile 8’den 1’e: her adımda yine o adımın sayacı, başlığı, altyazısı, çizimi ve sınır yılı',
-    backward.every((h, i) => rightOf(h, 8 - i)),
-    backward.map((h) => `${h.step}:${h.year}`).join(' '),
+    '← ile 8’in sonundan 1’in başına: her sahne önce başa sarılır, sonra bir önceki sahne bitmiş hâliyle gelir; her durumda o sahnenin sayacı, başlığı, altyazısı ve çizimi',
+    backward.slice(1).every((h) => rightOf(h, h.want[0], h.want[1])),
+    backward.map((h) => h.at).join(' '),
   );
   const forwardKeys = [];
-  for (let n = 2; n <= 8; n++) {
+  const expectFwd = [];
+  for (let n = 1; n <= 8; n++) {
+    expectFwd.push([n, 'D']);
+    if (n < 8) expectFwd.push([n + 1, '0']);
+  }
+  for (const [n, at] of expectFwd) {
     await key('ArrowRight');
-    forwardKeys.push(await here());
+    forwardKeys.push({ ...(await here()), want: [n, at] });
   }
   check(
-    '→ ile 1’den 8’e de aynı: her adım kendi altyazısı ve çiziminde; sonda → bir şey yapmaz',
-    forwardKeys.every((h, i) => rightOf(h, i + 2)) && (await stepNow(page)) === 8,
-    forwardKeys.map((h) => `${h.step}`).join(' '),
+    '→ ile 1’in başından 8’in sonuna da aynı: her sahne önce sonunu, sonra sonraki sahne başını gösterir; sonda → bir şey yapmaz',
+    forwardKeys.every((h) => rightOf(h, h.want[0], h.want[1])) && (await where(page)) === '8:D',
+    forwardKeys.map((h) => h.at).join(' '),
   );
   await key('Home');
+  await page.evaluate(() => window.__ayni.ai.presentation.replayBeat(0));
 
-  // --- the ruler as the progress bar: the steps are points at their dates, inside the selected range
+  // --- the timeline as the narration's progress: the scenes are points at their dates on the zoomed strip, inside the selected range
   await showStep(page, 3);
   const bar = await page.evaluate(() => {
-    const track = document.querySelector('.ruler-track').getBoundingClientRect();
-    const brush = document.querySelector('.brush').getBoundingClientRect();
-    const ext = window.__ayni.data.extent;
-    const span = ext.to - ext.from + 1;
+    const plot = document.querySelector('.tl-plot').getBoundingClientRect();
+    const strip = document.querySelector('[data-testid=tl-steps]').getBoundingClientRect();
+    const domain = window.__ayni.view().domain;
+    const span = domain.to - domain.from + 1;
     const steps = window.__ayni.ai.presentation.steps;
-    const pts = [...document.querySelectorAll('[data-testid=ruler-step]')].map((e) => {
+    const pts = [...document.querySelectorAll('[data-testid=tl-step]')].map((e) => {
       const r = e.getBoundingClientRect();
       const n = Number(e.dataset.n);
       return {
@@ -2001,66 +2130,53 @@ await guard(async () => {
         top: r.top,
         bottom: r.bottom,
         width: r.width,
-        want: track.left + ((steps[n - 1].when - ext.from) / span) * track.width,
+        want: plot.left + ((steps[n - 1].when - domain.from) / span) * plot.width,
         date: /· (\d{4})$/.exec(e.title)?.[1],
+        inPlot: !!e.closest('.tl-plot'),
       };
     });
-    const run = document.querySelector('.ruler-run')?.getBoundingClientRect();
+    const run = document.querySelector('.tl-run')?.getBoundingClientRect();
     const dock = document.querySelector('.dock').getBoundingClientRect();
-    const label = document.querySelector('.brush-label');
     return {
       pts,
       run: run ? { left: run.left, right: run.right } : null,
       dock: dock.toJSON(),
-      track: track.toJSON(),
-      brush: brush.toJSON(),
-      label: label ? getComputedStyle(label).display : 'yok',
-      labelRect: label ? label.getBoundingClientRect().toJSON() : null,
+      plot: plot.toJSON(),
+      strip: strip.toJSON(),
+      onRuler: document.querySelectorAll('.ruler [data-testid=tl-step], [data-testid=ruler-step], .ruler-run').length,
+      rangeLabel: document.querySelector('.brush-label')
+        ? getComputedStyle(document.querySelector('.brush-label')).display
+        : 'yok',
     };
   });
   const gaps = bar.pts.slice(1).map((p, i) => p.cx - bar.pts[i].cx);
   check(
-    'Çizelge ilerleme çubuğu: 8 adımın 8 noktası, 1’den 8’e soldan sağa, anlatıdaki tarihleriyle (1939, 1940, 1940, 1941, 1942, 1942, 1944, 1945; Fransa Muharebesi Mayıs 1940’tadır, haritada 1939’un sınırları olsa da)',
+    'Zaman çizelgesinde sahne noktaları: 8 sahnenin 8 noktası, alttaki yakınlaştırılmış şeritte (çizelgenin içinde; üstteki 1800–2000 cetvelinde hiçbiri yok), 1’den 8’e soldan sağa, anlatıdaki tarihleriyle (1939, 1940, 1940, 1941, 1942, 1942, 1944, 1945; Fransa Muharebesi Mayıs 1940’tadır)',
     bar.pts.length === 8 &&
-      bar.pts.every((p, i) => p.label === String(i + 1) && p.date === GERMANY_DATES[i]) &&
+      bar.onRuler === 0 &&
+      bar.pts.every((p, i) => p.inPlot && p.label === String(i + 1) && p.date === GERMANY_DATES[i]) &&
       gaps.every((g) => g > 0),
     bar.pts.map((p) => `${p.n}:${p.date}`).join(' '),
   );
-  // seven years are about 40 px of the ruler (a year is about 6 px): eight points cannot stand 22 px apart inside them. They stand at
-  // their dates, as near as they can be, inside the range (the brush), and are smaller than usual; only the one on screen shows its number
-  const inBrush = bar.pts.filter((p) => p.cx >= bar.brush.left - 0.5 && p.cx <= bar.brush.right + 0.5);
-  const bodyIn = bar.pts
-    .filter((p) => !p.on)
-    .every((p) => p.left >= bar.brush.left - 1 && p.right <= bar.brush.right + 1);
   const shifts = bar.pts.map((p) => p.cx - p.want);
-  const meanShift = shifts.reduce((a, b) => a + b, 0) / shifts.length;
   check(
-    'Adım noktaları seçili aralığın içinde (1939–1945: fırçanın içinde), tarihlerinde: hiçbiri aralığın dışına taşmıyor (merkezleri fırçanın içinde, gövdeleri de), tarihlerinin fırça içindeki yerinden en çok fırça genişliğinin yarısı kadar kayıyor (ortalama kayma ≤ 4 px)',
-    inBrush.length === 8 &&
-      bodyIn &&
-      bar.pts.every((p) => p.want >= bar.brush.left - 1 && p.want <= bar.brush.right + 1) &&
-      shifts.every((x) => Math.abs(x) <= bar.brush.width / 2) &&
-      Math.abs(meanShift) <= 4,
-    `fırça ${bar.brush.left.toFixed(0)}–${bar.brush.right.toFixed(0)} px · merkezler ${bar.pts.map((p) => p.cx.toFixed(0)).join(' ')} · tarihler ${bar.pts.map((p) => p.want.toFixed(0)).join(' ')}`,
+    'Noktalar tarihlerinin üstünde: seçili aralık (1939–1945) çizelgenin tüm genişliği olduğundan sekiz nokta rahat sığar; her biri kendi tarihinden en çok 24 px uzakta, hiçbiri çizelgenin dışına taşmıyor',
+    bar.pts.every((p) => p.left >= bar.plot.left - 1 && p.right <= bar.plot.right + 1) &&
+      shifts.every((x) => Math.abs(x) <= 24),
+    `kayma ${shifts.map((x) => x.toFixed(0)).join(' ')} px`,
   );
   check(
-    'Dar aralıkta noktalar küçülür (7–14 px) ve yalnızca ekrandaki noktanın numarası görünür; ekrandaki nokta numarasını gösterecek kadar büyük (en az 15 px)',
-    bar.pts.filter((p) => !p.on).every((p) => p.width >= 7 && p.width < 15 && !p.digits) &&
-      bar.pts.filter((p) => p.on).every((p) => p.width >= 15 && p.digits),
+    'Noktalar okunur boyda (en az 15 px, ekrandaki daha büyük) ve hepsinin numarası görünür',
+    bar.pts.every((p) => p.width >= 15 && p.digits),
     bar.pts.map((p) => `${p.n}:${p.width.toFixed(0)}`).join(' '),
   );
   check(
-    'Noktalar aralık yazısının üstüne binmiyor: fırçanın kendi yazısı noktalar varken gizli (aralık, cetvelin yanındaki büyük yazıda duruyor)',
-    bar.label === 'none' && /\d{4}/.test(await text(page, '[data-testid=range-readout]')),
-    `fırça yazısı: ${bar.label}`,
-  );
-  check(
-    'Noktalar zaman çizelgesi bandının içinde ve band ince kalıyor (en çok 84 px)',
+    'Noktalar çizelgenin şeridinde ve çizelge ince kalıyor (en çok 84 px); fırçanın yazısı noktalarla örtüşmüyor',
     bar.pts.every((p) => p.top >= bar.dock.top - 1 && p.bottom <= bar.dock.bottom + 1) && bar.dock.height <= 84,
     `${Math.round(bar.dock.height)} px`,
   );
   check(
-    'İlerleme: 3. adımdayken 1–2 dolu (görüldü), 3 işaretli, 4–8 boş; çizgi birinci noktadan üçüncüye uzanıyor',
+    'İlerleme: 3. sahnedeyken 1–2 dolu (görüldü), 3 işaretli, 4–8 boş; çizgi birinci noktadan üçüncüye uzanıyor',
     bar.pts.map((p) => (p.on ? 'on' : p.past ? 'past' : '-')).join() === 'past,past,on,-,-,-,-,-' &&
       bar.run &&
       Math.abs(bar.run.left - bar.pts[0].cx) < 3 &&
@@ -2079,20 +2195,20 @@ await guard(async () => {
     cursor: window.__ayni.store.state.cursor,
   }));
   check(
-    'Çizelgedeki 5 numaralı noktaya tıklamak 5. adıma götürür (altyazı “5 / 8”, harita 5. adımın çizimi, başlıkta 1942)',
-    (await stepNow(page)) === 5 &&
+    'Çizelgedeki 5 numaralı noktaya tıklamak 5. sahneye götürür (başından: altyazı “5 / 8”, harita 5. sahnenin ilk vuruşu, başlıkta 1942)',
+    (await where(page)) === '5:0' &&
       (await countText(page)) === '5 / 8' &&
-      (await idsNow(page)) === GERMANY[4].ids &&
+      beatDiff(await beatState(page), GERMANY[4], 0).length === 0 &&
       (await headYear(page)) === '1942',
   );
   check(
-    'Bu tıklama okurun kendi aralığına ve imlecine dokunmaz (ilerleme çubuğu zaman seçimi değildir)',
+    'Bu tıklama okurun kendi aralığına ve imlecine dokunmaz (ilerleme zaman seçimi değildir)',
     JSON.stringify(mine) === JSON.stringify(mine2),
     JSON.stringify(mine2),
   );
 
-  // --- autoplay: optional, with a speed the reader chooses
-  await showStep(page, 1);
+  // --- the sentences play by themselves; "Oynat" decides only what happens when a scene has ended
+  await showStep(page, 3, 0); // (held at its sentence)
   const speedUi = await page.evaluate(() => ({
     options: [...document.querySelectorAll('[data-testid=watch-speed] option')].map(
       (o) => `${o.value}:${o.textContent}`,
@@ -2113,46 +2229,60 @@ await guard(async () => {
   const afterSpeed = await pres(page);
   check(
     'Hızı değiştirmek tek başına oynatmaz',
-    afterSpeed.speed === 'fast' && !afterSpeed.playing && afterSpeed.step === 1,
+    afterSpeed.speed === 'fast' && !afterSpeed.playing && afterSpeed.step === 3,
   );
-  const cap1 = await text(page, '[data-testid=watch-caption]');
-  const wantFast = dwell(cap1, 'fast');
+  // scene 3 is one sentence: at the fast speed it plays for its lead and its reading time, then stays as it ended (Oynat is off)
+  const sentence3 = await page.evaluate(() => window.__ayni.ai.presentation.steps[2].beats[0]);
+  const want3 = leadTime('fast') + beatTime(sentence3, 'fast');
+  await showStep(page, 4, 0);
   const t0 = Date.now();
+  await clickStep(page, 3); // (the scene begins, and plays: its point on the strip is a mark while it is on screen, so go from another)
+  await page.waitForFunction(() => window.__ayni.ai.presentation.done, null, { timeout: want3 + 8000 });
+  const took = Date.now() - t0;
+  check(
+    `Oynat kapalıyken de cümleler kendiliğinden oynar: tek cümlelik 3. sahne, cümlenin okunma süresi (~${(want3 / 1000).toFixed(1)} sn) kadar sürüp biter`,
+    took >= want3 * 0.8 && took <= want3 + 3500,
+    `${took} ms`,
+  );
+  await settle(page, lingerTime('fast') + 1800);
+  check(
+    'Biten sahne Oynat kapalıyken okuru bekler: süre ve bekleme dolsa da 3. sahnenin sonunda kalır, oynatma kapalı',
+    (await where(page)) === '3:D' && !(await pres(page)).playing,
+    await where(page),
+  );
+  const t1 = Date.now();
   await page.click('[data-testid=watch-play]');
-  await settle(page, 200);
+  await settle(page, 150);
   const pl = await page.evaluate(() => ({
     pressed: document.querySelector('[data-testid=watch-play]').getAttribute('aria-pressed'),
     label: document.querySelector('[data-testid=watch-play]').innerText.trim(),
     playing: window.__ayni.ai.presentation.playing,
   }));
   check(
-    'Oynat’a basınca düğme “Duraklat” olur, basılı görünür ve anlatım oynar',
+    'Oynat’a basınca düğme “Duraklat” olur, basılı görünür ve anlatım kaldığı yerden sürer',
     pl.playing && pl.pressed === 'true' && /Duraklat/.test(pl.label),
+    JSON.stringify(pl),
   );
-  await page.waitForFunction(() => window.__ayni.ai.presentation.index === 1, null, { timeout: wantFast + 6000 });
-  const took = Date.now() - t0;
+  await page.waitForFunction(() => window.__ayni.ai.presentation.step?.n === 4, null, {
+    timeout: lingerTime('fast') + 6000,
+  });
+  const tookLinger = Date.now() - t1;
   check(
-    `Hızlıda adım, altyazısının okunma süresi kadar (~${(wantFast / 1000).toFixed(1)} sn) kalıp kendiliğinden 2. adıma geçer`,
-    took >= wantFast * 0.85 && took <= wantFast + 3000,
-    `${took} ms`,
+    `Oynat açıkken biten sahneden sonra kısa bir bekleme (~${(lingerTime('fast') / 1000).toFixed(1)} sn) ve sonraki sahne kendiliğinden başlar`,
+    tookLinger >= lingerTime('fast') * 0.7 && tookLinger <= lingerTime('fast') + 3000 && (await where(page)) === '4:0',
+    `${tookLinger} ms · ${await where(page)}`,
   );
-  // a slower speed measures the wait again: the time the fast speed would have taken passes and the step stays. (The speed is
-  // changed at once: a caption of two lines is read in about four seconds at the fast speed, which is what the camera needs
-  // to arrive and the checks to run, so a late change would find the step already gone.)
-  const cap2 = await text(page, '[data-testid=watch-caption]');
+  // a slower speed measures the wait again: the time the fast speed would have taken passes and the sentence stays
+  const sentence4 = await page.evaluate(() => window.__ayni.ai.presentation.steps[3].beats[0]);
   await page.selectOption('[data-testid=watch-speed]', 'slow');
   const slowAt = Date.now();
   await cameraRests(page);
-  check(
-    'Oynarken 2. adımın çizimi haritada; oynatma sürüyor',
-    (await idsNow(page)) === GERMANY[1].ids && (await pres(page)).playing,
-  );
-  await settle(page, Math.max(0, dwell(cap2, 'fast') + 1500 - (Date.now() - slowAt)));
+  await settle(page, Math.max(0, leadTime('fast') + beatTime(sentence4, 'fast') + 1500 - (Date.now() - slowAt)));
   const slow = await pres(page);
   check(
-    'Hız “Yavaş” yapılınca bekleme yeniden ölçülür: hızlıda geçecek süre dolduğu hâlde adım hâlâ 2 ve oynatma sürüyor',
-    slow.step === 2 && slow.playing && slow.speed === 'slow',
-    `${slow.step}. adım`,
+    'Hız “Yavaş” yapılınca bekleme yeniden ölçülür: hızlıda geçecek süre dolduğu hâlde 4. sahne hâlâ ilk cümlesinde ve oynatma sürüyor',
+    (await where(page)) === '4:0' && slow.playing && slow.speed === 'slow',
+    `${await where(page)}`,
   );
   // pausing, and stepping by hand, both stop it
   await page.click('[data-testid=watch-play]');
@@ -2164,34 +2294,30 @@ await guard(async () => {
   await cameraRests(page);
   const manual = await pres(page);
   check(
-    'Elle adım değiştirmek (Sonraki) oynatmayı durdurur: okur kontrolü alır',
-    manual.step === 3 && !manual.playing,
-    `${manual.step}. adım · oynatma ${manual.playing}`,
+    'Elle gezinmek (Sonraki) oynatmayı durdurur: okur kontrolü alır; 4. sahne bitmiş hâlde',
+    (await where(page)) === '4:D' && !manual.playing,
+    `${await where(page)} · oynatma ${manual.playing}`,
   );
-  await settle(page, dwell(await text(page, '[data-testid=watch-caption]'), 'fast') + 800);
-  check('Durdurulmuş anlatım, süre dolsa da yerinde kalır', (await stepNow(page)) === 3);
-  // the end: it plays the last step's caption and stops there
-  await showStep(page, 7);
+  await settle(page, lingerTime('fast') + 1500);
+  check('Durdurulmuş anlatım, süre dolsa da yerinde kalır', (await where(page)) === '4:D');
+  // the end: the last scene plays out and the narration stops there
+  await showStep(page, 8, 0);
   await page.click('[data-testid=watch-play]');
-  await page.waitForFunction(() => window.__ayni.ai.presentation.index === 7, null, {
-    timeout: dwell(await text(page, '[data-testid=watch-caption]'), 'fast') + 6000,
-  });
-  // the last step is given the time its caption takes, and then the narration stops there
-  const lastCaption = await text(page, '[data-testid=watch-caption]');
+  await page.waitForFunction(() => window.__ayni.ai.presentation.done, null, { timeout: 25000 });
   const reachedLast = await pres(page);
   await page.waitForFunction(() => !window.__ayni.ai.presentation.playing, null, {
-    timeout: dwell(lastCaption, 'fast') + 5000,
+    timeout: lingerTime('fast') + 5000,
   });
   await settle(page, 700);
   const end = await pres(page);
   check(
-    'Oynatma son adımda biter: son adımın altyazısına da süre tanır, sonra 8. adımda durur (başa dönmez); düğme yeniden “Oynat”',
+    'Oynatma son sahnede biter: son sahnenin cümleleri de oynar, sonra 8. sahnenin sonunda durur (başa dönmez); düğme yeniden “Oynat”',
     reachedLast.step === 8 &&
       reachedLast.playing &&
       end.step === 8 &&
       !end.playing &&
       /Oynat/.test(await text(page, '[data-testid=watch-play]')),
-    `${end.step}. adım · oynatma ${end.playing}`,
+    `${await where(page)} · oynatma ${end.playing}`,
   );
   await page.click('[data-testid=watch-play]');
   await settle(page, 400);
@@ -2199,12 +2325,12 @@ await guard(async () => {
   check('Sonda yeniden Oynat’a basmak anlatımı baştan oynatır', again.step === 1 && again.playing);
   await page.click('[data-testid=watch-play]');
 
-  // --- closing the answer takes the progress bar away
+  // --- closing the answer takes the scene points away
   await page.click('[data-testid=watch-close]');
   await settle(page, 500);
   check(
-    'Anlatımı kapatmak çizelgedeki adım noktalarını kaldırır',
-    (await count(page, '[data-testid=ruler-steps]')) === 0 && (await count(page, '[data-testid=ruler-step]')) === 0,
+    'Anlatımı kapatmak çizelgedeki sahne noktalarını kaldırır',
+    (await count(page, '[data-testid=tl-steps]')) === 0 && (await count(page, '[data-testid=tl-step]')) === 0,
   );
   await page.context().close();
 });
@@ -2219,7 +2345,7 @@ await guard(async () => {
   await finalStatus(page);
   await cameraRests(page, 12000);
   await settle(page, 400);
-  await showStep(page, 1);
+  await showStep(page, 1, 0);
   const L0 = await layout(page);
   check(
     'İzle’de harita tüm sahne; metin kapalı (Oku paneli yok), altyazı haritanın üstünde; soru kutusunda metin düğmesi basılı değil',
@@ -2268,16 +2394,15 @@ await guard(async () => {
     t1 ? `üstten ${Math.round(t1.top)} px / ${Math.round(t1.height)}` : 'adım yok',
   );
   const sideMap = await mapState(page);
+  const sideDiff = beatDiff(await beatState(page), GERMANY[0], null, { legend: false });
   check(
-    'Arkadaki harita 1. adımın çiziminde kaldı (Almanya + Polonya, Polonya’nın işgalinin savaş çizgisi, 1939) ve panelin altında kalan bir şey yok',
-    sideMap.ids.join() === GERMANY[0].ids &&
-      sideMap.year === '1939' &&
-      sideMap.wars === 1 &&
-      sameSet(sideMap.markers, GERMANY[0].events) &&
+    'Okuyucuda sahneler bittiği hâliyle gösterilir: arkadaki harita 1. sahnenin sonunda (4 olay sayılı noktalar, ok yok, Sovyetler Birliği’nin kazandığı toprak, 1940 sınırları) ve panelin altında kalan bir şey yok',
+    sideDiff.length === 0 &&
+      sideMap.dots === 4 &&
       sideMap.outside === 0 &&
       sideMap.covered === 0 &&
       sideMap.boxShare >= 0.75,
-    `görünüm dışı ${sideMap.outside}, örtülü ${sideMap.covered}`,
+    `${sideDiff.join(' · ')} görünüm dışı ${sideMap.outside}, örtülü ${sideMap.covered}`,
   );
   check(
     'Soru kutusu panelin soluna çekildi (örtüşmüyor); başlıkta yer ve aralık yazıyor',
@@ -2307,7 +2432,7 @@ await guard(async () => {
       back.step === 1 &&
       (await countText(page)) === '1 / 8' &&
       !(await visible(page, '[data-testid=chat]')) &&
-      (await idsNow(page)) === GERMANY[0].ids,
+      (await idsNow(page)) === eventsKey(GERMANY[0]),
     `${back.view} · ${back.step}`,
   );
 
@@ -2333,10 +2458,10 @@ await guard(async () => {
     'Metni kaydırdıkça okuma çizgisindeki adım haritaya gelir (aşağı kaydırarak 5. adıma ya da ötesine ulaşıldı); etkin adım tek',
     reached >= 5 &&
       stepBefore === reached &&
-      read5.ids.join() === GERMANY[reached - 1].ids &&
+      read5.markers.sort().join() === eventsKey(GERMANY[reached - 1]) &&
       (await count(page, '[data-testid=chat-step][data-active="true"]')) === 1 &&
       read5.outside === 0,
-    `${reached}. adım · ${read5.ids.join('+')}`,
+    `${reached}. sahne · ${read5.markers.join('+')}`,
   );
   const keptStep = await stepNow(page);
   await page.click('[data-testid=read-watch]');
@@ -2347,7 +2472,7 @@ await guard(async () => {
     (await stepNow(page)) === keptStep && (await countText(page)) === `${keptStep} / 8`,
     `${keptStep}. adım`,
   );
-  await showStep(page, 1);
+  await showStep(page, 1, 0);
 
   // --- the text button in the question box opens and closes the reader as well
   await page.click('[data-testid=read-toggle]');
@@ -2390,10 +2515,9 @@ await guard(async () => {
     `pencere ${Math.round(L2.map.width)}×${Math.round(L2.map.height)} px, sağ üstte (${Math.round(L2.map.left)}, ${Math.round(L2.map.top)})`,
   );
   check(
-    'Küçük harita o anki adımı gösteriyor: 1. adımın çizimi (Almanya + Polonya, 1939), tamamı pencerenin içinde (ya da pencere dünyanın en geniş görünümündeyse her devletin kutusunun çoğu) ve hiçbir şeyin altında değil',
+    'Küçük harita o anki sahneyi gösteriyor: 1. sahnenin sonu (4 olay sayılı noktalar, 1940 sınırları), tamamı pencerenin içinde (ya da pencere dünyanın en geniş görünümündeyse her devletin kutusunun çoğu) ve hiçbir şeyin altında değil',
     full.step === 1 &&
-      mini.ids.join() === GERMANY[0].ids &&
-      mini.year === '1939' &&
+      beatDiff(await beatState(page), GERMANY[0], null, { legend: false }).length === 0 &&
       mini.targets > 0 &&
       mini.outside === 0 &&
       mini.covered === 0 &&
@@ -2426,14 +2550,14 @@ await guard(async () => {
   );
   const lapMini = await overlapReport(page);
   check(
-    'Küçük haritada çizimin ad etiketleri yok (pencereyi kalabalıklaştırmaz; metin yanında); savaş tek parça (işaret + çizgi), serbest işaret ve kendi çizgisi yok',
+    'Küçük haritada çizimin ad etiketleri yok (pencereyi kalabalıklaştırmaz; metin yanında); olaylar yalnızca sayılı noktalar, ok ve serbest işaret yok',
     lapMini.flags === 0 &&
       lapMini.clash.length === 0 &&
       mini.diamonds === 0 &&
-      mini.wars === 1 &&
-      mini.links.length === 0 &&
-      mini.markers.join() === 'polonya-isgali-1939',
-    `${lapMini.flags} etiket · ${mini.wars} savaş · ${mini.markers.join()}`,
+      mini.routes.length === 0 &&
+      mini.dots === 4 &&
+      mini.markers.sort().join() === eventsKey(GERMANY[0]),
+    `${lapMini.flags} etiket · ${mini.dots} nokta · ${mini.markers.join()}`,
   );
   await shot(page, 'ai-w3-oku-tam-ekran.png');
 
@@ -2441,15 +2565,13 @@ await guard(async () => {
   await readShowStep(page, 5);
   const mini5 = await mapState(page);
   check(
-    'Metindeki 5. adımda “Haritada göster”: küçük harita 5. adımın çizimine geçer (Nazi Almanyası, Wannsee Konferansı, 1942) ve onu tam gösterir',
+    'Metindeki 5. sahnede “Haritada göster”: küçük harita 5. sahnenin sonuna geçer (Wannsee Konferansı sayılı nokta, 1942) ve onu tam gösterir',
     (await stepNow(page)) === 5 &&
-      mini5.ids.join() === GERMANY[4].ids &&
-      sameSet(mini5.markers, GERMANY[4].events) &&
-      mini5.year === '1942' &&
+      beatDiff(await beatState(page), GERMANY[4], null, { legend: false }).length === 0 &&
       mini5.outside === 0 &&
       mini5.covered === 0 &&
       mini5.boxShare >= 0.75,
-    `${mini5.ids.join('+')} · görünüm dışı ${mini5.outside}`,
+    `${mini5.markers.join('+')} · görünüm dışı ${mini5.outside}`,
   );
   // scrolling the text up moves the window's step too
   const sc2 = await rectOf(page, '[data-testid=chat-scroll]');
@@ -2464,8 +2586,11 @@ await guard(async () => {
   const miniUp = await mapState(page);
   check(
     'Tam ekranda metni yukarı kaydırmak küçük haritadaki adımı da geri götürür',
-    up <= 3 && miniUp.ids.join() === GERMANY[up - 1].ids && miniUp.outside === 0 && miniUp.boxShare >= 0.75,
-    `${up}. adım`,
+    up <= 3 &&
+      miniUp.markers.sort().join() === eventsKey(GERMANY[up - 1]) &&
+      miniUp.outside === 0 &&
+      miniUp.boxShare >= 0.75,
+    `${up}. sahne`,
   );
 
   // --- the ways out of full screen
@@ -2503,13 +2628,12 @@ await guard(async () => {
       bigMap.covered === 0 &&
       lapBig.clash.length === 0 &&
       tagsBack.flags === 0 &&
-      bigMap.wars === GERMANY[escStep - 1].wars &&
-      sameSet(bigMap.markers, GERMANY[escStep - 1].events),
-    `${expandState.step}. adım · ${bigMap.wars} savaş · işaretçi ${bigMap.markers.join() || '—'} · ${tagsBack.flags} ad kutusu`,
+      bigMap.markers.sort().join() === eventsKey(GERMANY[escStep - 1]),
+    `${expandState.step}. sahne · işaretçi ${bigMap.markers.join() || '—'} · ${tagsBack.flags} ad kutusu`,
   );
 
   // --- a question asked while reading updates the map in the background
-  await showStep(page, 4);
+  await showStep(page, 4, 0);
   await page.click('[data-testid=watch-read]');
   await settle(page, 600);
   const reopened = await pres(page);
@@ -2546,16 +2670,17 @@ await guard(async () => {
     `${lastAnswer.n} yanıt`,
   );
   check(
-    'Arkadaki harita yeni soruya geçti (yerin devleti Nazi Almanyası öne çıkar, yerin noktası serbest işaretle ve adıyla; yanıt olay da yıl da vermediği için okurun kendi yılı, 1942) ve çizim paneli ile soru kutusunun dışında',
-    qMap.ids.join() === 'nazi-germany' &&
+    'Arkadaki harita yeni soruya geçti: yanıtın sahnesi bittiği hâliyle (yerin noktası numaralı küçük nokta, adı kutusu yok, vurgu yalnızca cümle oynarken olduğundan yok; yanıt olay da yıl da vermediği için okurun kendi yılı, 1942) ve çizim paneli ile soru kutusunun dışında',
+    qMap.ids.length === 0 &&
       qMap.diamonds === 1 &&
-      qMap.flags.includes('Nazi Almanyası') &&
+      qMap.dots === 1 &&
+      qMap.flags.length === 0 &&
       qMap.markers.length === 0 &&
       qMap.year === '1942' &&
       qMap.outside === 0 &&
       qMap.covered === 0 &&
       qMap.boxShare >= 0.75,
-    `${qMap.ids.join('+')} · ${qMap.year}`,
+    `${qMap.ids.join('+') || '—'} · ${qMap.year}`,
   );
   await shot(page, 'ai-w4-oku-sirasinda-soru.png');
   // the same in full screen, in the little map
@@ -2571,17 +2696,18 @@ await guard(async () => {
   const qFull = await pres(page);
   const qMini = await mapState(page);
   check(
-    'Tam ekranda okurken soru: küçük harita yeni yanıtın sahnesine geçer (yeni yerin devleti Birleşik Krallık ve serbest işareti; adı kutusu yok; görünür, örtülü değil); okuyucu açık',
+    'Tam ekranda okurken soru: küçük harita yeni yanıtın sahnesine geçer (yeni yerin serbest işareti numaralı nokta olarak; adı kutusu yok; görünür, örtülü değil); okuyucu açık',
     qFull.view === 'read' &&
       qFull.read === 'full' &&
       !qFull.stepped &&
-      qMini.ids.join() === 'kingdom-of-great-britain' &&
+      qMini.ids.length === 0 &&
       qMini.diamonds === 1 &&
+      qMini.dots === 1 &&
       qMini.flags.length === 0 &&
       qMini.outside === 0 &&
       qMini.covered === 0 &&
       qMini.boxShare >= 0.75,
-    `${qMini.ids.join('+') || '—'} · işaret ${qMini.diamonds} · kutu payı %${Math.round(qMini.boxShare * 100)}`,
+    `${qMini.ids.join('+') || '—'} · işaret ${qMini.diamonds} · nokta ${qMini.dots} · kutu payı %${Math.round(qMini.boxShare * 100)}`,
   );
   await page.click('[data-testid=mini-expand]');
   await settle(page, 700);
@@ -2758,7 +2884,9 @@ await guard(async () => {
   const afterFree = await mapState(page);
   check(
     'Takip kapalıyken adım değişince çizim değişir ama kamera oynamaz (okurla savaşmaz)',
-    sameCamera(camFree, afterFree.camera) && afterFree.ids.join() === GERMANY[3].ids && afterFree.year === '1941',
+    // (the drawing is read from what is painted and from the year: the marker of Barbarossa is not on a map left on Britain)
+    sameCamera(camFree, afterFree.camera) && afterFree.blocs.join('|') === SIDES_EAST && afterFree.year === '1941',
+    `kamera ${JSON.stringify(camFree)} → ${JSON.stringify(afterFree.camera)} · taraflar ${afterFree.blocs.join('|')} · yıl ${afterFree.year}`,
   );
   await shot(page, 'ai-9c-harita-takibi-kapali.png');
 
@@ -2796,7 +2924,7 @@ await guard(async () => {
   const reframed = await mapState(page);
   check(
     'Takip açıkken sonraki adım haritayı yeniden çizime getirir (okurun uzak gezintisi geri alınır)',
-    reframed.outside === 0 && reframed.ids.join() === GERMANY[4].ids,
+    reframed.outside === 0 && reframed.markers.sort().join() === eventsKey(GERMANY[4]),
   );
 
   // the setting in the menu is the same switch
@@ -2897,7 +3025,7 @@ await guard(async () => {
     `adımlı: ${pr.stepped} · olan denetimler: ${one.controls.join() || '—'}`,
   );
   check(
-    'Her yanıtın altyazısı var: modelin kendi altyazısı (bir iki cümle, en çok 220 karakter), başlığı “Almanya ve İtalya” ve tam metnin (iki paragraf) çok altında; olay adı (Üçlü Pakt) bağlantı',
+    'Her yanıtın altyazısı var: modelin kendi altyazısı (iki cümle, her biri bir vuruş), başlığı “Almanya ve İtalya” ve tam metnin (iki paragraf) çok altında; olay adı (Üçlü Pakt) bağlantı',
     one.title === 'Almanya ve İtalya' &&
       one.caption === plainCaption(one.planCaption) &&
       one.caption.length > 40 &&
@@ -2929,19 +3057,25 @@ await guard(async () => {
     one.watchRect.bottom <= one.askRect.top && one.askRect.top - one.watchRect.bottom <= 24,
     `aralık ${Math.round(one.askRect.top - one.watchRect.bottom)} px`,
   );
+  // (the answer's one scene plays by itself, a sentence at a time: the scenario looks at each sentence by holding the scene there)
+  await showStep(page, 1, 0);
   const state = await mapState(page);
   const dr = await drawing(page);
+  const s0 = await beatState(page);
   check(
-    'Haritada o yanıtın tek sahnesi: Nazi Almanyası ile İtalya ittifak çizgisiyle bağlı (“Çelik Pakt, 1939”, modelin kendi çizgisi), Üçlü Pakt’ın taraflarıyla (Japonya da) öne çıkarılmış ve işareti konmuş; adımın adını koyduğu 1939’un sınırları; serbest işaret yok',
-    state.ids.join() === 'nazi-germany,kingdom-of-italy,empire-of-japan' &&
-      state.links.join() === 'alliance' &&
-      state.flags.includes('Çelik Pakt, 1939') &&
-      state.markers.join() === 'uclu-pakt-1940' &&
-      state.year === '1939' &&
+    'Haritada o yanıtın tek sahnesi, ilk cümlesinde: Nazi Almanyası ile İtalya “Çelik Pakt” adıyla aynı renkte boyalı (odak tarafı; altyazının altında tek taraf), aralarında çizgi yok, olay işareti henüz yok; sınırlar 1939’un',
+    s0.sides === 'Çelik Pakt:focus' &&
+      s0.colors['nazi-germany'] === 'focus' &&
+      s0.colors['kingdom-of-italy'] === 'focus' &&
+      !s0.colors['empire-of-japan'] &&
+      s0.lines === 0 &&
+      s0.markers.length === 0 &&
+      s0.year === '1939' &&
+      s0.sentences === 'nx' &&
       dr.marks.length === 0 &&
       dr.events.length === 1 &&
       pr.step === 1,
-    `${state.ids.join('+')} · ${state.flags.join(', ')} · ${state.year}`,
+    `${JSON.stringify(s0.colors)} · ${s0.sides} · ${s0.year}`,
   );
   const labels = await page.evaluate(() =>
     [...document.querySelectorAll('.plabel.is-ai')]
@@ -2967,6 +3101,27 @@ await guard(async () => {
     'Etiketler birbirini, işaretçileri ve altyazıyı örtmüyor',
     lap.clash.length === 0 && lap.out.length === 0 && lap.underControl.length === 0,
     [...lap.clash, ...lap.out, ...lap.underControl].join(' | '),
+  );
+  await showStep(page, 1, 1);
+  const s1 = await beatState(page);
+  check(
+    'İkinci cümlede Üçlü Pakt’ın işareti gelir (tam işaret) ve Japonya da aynı tarafa boyanır (“Çelik Pakt ve Üçlü Pakt”)',
+    s1.markers.join() === 'uclu-pakt-1940' &&
+      s1.now.join() === 'uclu-pakt-1940' &&
+      s1.colors['empire-of-japan'] === 'focus' &&
+      s1.sides === 'Çelik Pakt ve Üçlü Pakt:focus' &&
+      s1.sentences === 'pn',
+    `${s1.markers.join()} · ${s1.sides}`,
+  );
+  await showStep(page, 1);
+  const s2 = await beatState(page);
+  check(
+    'Sahne bitince Üçlü Pakt’ın işareti 2 numaralı küçük nokta olur (adı ve yılı yok), boyalı devletler yerinde',
+    s2.dots.join() === 'uclu-pakt-1940#2=2' &&
+      s2.now.length === 0 &&
+      s2.colors['empire-of-japan'] === 'focus' &&
+      s2.sentences === 'pp',
+    s2.dots.join(),
   );
   const tab = await visible(page, '[data-testid=card-tab]');
   check(
@@ -3011,7 +3166,7 @@ await guard(async () => {
       !!back.more &&
       back.more.shown &&
       back.caption === one.caption &&
-      (await mapState(page)).ids.join() === state.ids.join(),
+      (await beatState(page)).dots.join() === 'uclu-pakt-1940#2=2',
   );
   qaPage = page;
 });
@@ -3059,18 +3214,33 @@ await guard.smoke(async () => {
       tops.length === 1,
     `${frames.length} kare · kutu ${heights.join('/')} px · sütunun üstü ${tops.join('/')} px`,
   );
+  await showStep(page, 1, 0);
   const state = await mapState(page);
+  const st0 = await beatState(page);
   check(
-    'Haritada olayın sahnesi: Stalingrad’ın kendi işareti (1942, yalnızca o), iki tarafı (Sovyetler Birliği, Nazi Almanyası) öne çıkarılmış ve aralarında tek savaş çizgisi; modelin kendi çizgisi ve serbest işareti yok',
-    state.ids.join() === 'union-of-soviet-socialist-republics,nazi-germany' &&
-      state.markers.join() === 'stalingrad-1942' &&
-      state.wars === 1 &&
-      state.links.length === 0 &&
+    'Haritada olayın sahnesi, ilk cümlesinde: Stalingrad’ın kendi işareti (1942, yalnızca o, tam işaret); olayın tarafları kendiliğinden öne çıkarılmaz, olaydan başkente çizgi de çekilmez; modelin kendi okları ve serbest işareti yok',
+    st0.markers.join() === 'stalingrad-1942' &&
+      st0.now.join() === 'stalingrad-1942' &&
+      st0.emphasis === '' &&
+      Object.keys(st0.colors).length === 0 &&
+      st0.routes.length === 0 &&
+      st0.lines === 0 &&
       state.diamonds === 0 &&
       state.eventFlags.length === 0 &&
-      state.year === '1942',
-    `${state.ids.join('+')} · ${state.markers.join()} · ${state.year}`,
+      st0.year === '1942' &&
+      st0.sentences === 'nx',
+    `${st0.markers.join()} · ${st0.year} · vurgu ${st0.emphasis || '—'}`,
   );
+  await showStep(page, 1, 1);
+  const st1 = await beatState(page);
+  check(
+    'İkinci cümlede model iki tarafı (Sovyetler Birliği, Nazi Almanyası) vurgular; Stalingrad’ın işareti 1 numaralı küçük nokta olur',
+    st1.emphasis === 'nazi-germany,union-of-soviet-socialist-republics' &&
+      st1.dots.join() === 'stalingrad-1942#1=1' &&
+      st1.sentences === 'pn',
+    `${st1.emphasis} · ${st1.dots.join()}`,
+  );
+  await showStep(page, 1, 0);
   check(
     'Kamera sahneyi altyazının ve soru kutusunun ÜSTÜNDEKİ alana sığdırdı (savaş çizgisinin uçları, işaret, iki devletin kutuları): görünüm dışında yok, altında ve örtülen yok; harita yerinden oynadı',
     state.outside === 0 &&
@@ -3302,19 +3472,18 @@ await guard(async () => {
   );
   const state = await mapState(page);
   check(
-    'Yanıtın haritası: yalnızca olay söylendi; uygulama onu kendi işaretiyle (ad kutusu yok), tarafları öne çıkarılmış ve savaş çizgisiyle çizdi; olayın yılı; serbest işaret yok',
+    'Yanıtın haritası: yalnızca olay söylendi; uygulama onu kendi işaretiyle çizdi (ad kutusu yok; olaydan başkente çizgi yok; tarafları kendiliğinden öne çıkarılmaz); olayın yılı; serbest işaret yok',
     state.markers.join() === id &&
       state.eventFlags.length === 0 &&
-      state.wars === 1 &&
-      state.links.length === 0 &&
+      (await beatState(page)).lines === 0 &&
       state.diamonds === 0 &&
-      state.ids.join() === 'nazi-germany,union-of-soviet-socialist-republics' &&
+      state.ids.length === 0 &&
       state.year === '1941' &&
       state.outside === 0 &&
       state.belowFoot === 0 &&
       state.covered === 0 &&
       state.boxShare >= 0.75,
-    `${state.ids.join('+')} · ${state.markers.join()} · ${state.flags.join(', ')} · ${state.year} · işaret ${state.diamonds} · görünüm dışı ${state.outside} · örtülü ${state.covered}`,
+    `${state.ids.join('+') || '—'} · ${state.markers.join()} · ${state.flags.join(', ')} · ${state.year} · işaret ${state.diamonds} · görünüm dışı ${state.outside} · örtülü ${state.covered}`,
   );
   await shot(page, 'ai-3b-bunu-sor.png');
   // the question, with the event it was about, is in the text
@@ -3519,6 +3688,7 @@ await guard(async () => {
   ]) {
     await ask(page, question);
     await cameraRests(page, 12000);
+    await showStep(page, 1); // (the answer's scene ends: every event it names is on the map)
     await settle(page, 600);
     const told = (await drawing(page))?.events ?? [];
     const alone = await markerIds(page);
@@ -3538,7 +3708,8 @@ await guard(async () => {
     after = await markerIds(page);
     check(
       `${name} kapatılınca (✕) dünya olayları haritaya geri gelir (kamera yanıtın çerçevesinde kaldığı için küme o görünüme göre), yapay zekâ çizimi gider, eski not döner`,
-      after.length >= 5 &&
+      after.length >= 3 &&
+        after.length > alone.length &&
         after.every((id) => world.includes(id)) &&
         (await aiDom(page)).hidden &&
         /\/\s*\d+ olay haritada/.test(note2) &&
@@ -3660,9 +3831,9 @@ await guard(async () => {
   await page.click('[data-testid=place-narrate]');
   await finalStatus(page);
   await cameraRests(page, 12000);
-  await showStep(page, 3);
+  await showStep(page, 3, 0);
   const s3 = await mapState(page);
-  const battle = GERMANY[2].events[0];
+  const battle = GERMANY[2].eventIds[0];
   const title = await page.evaluate((id) => window.__ayni.data.eventsById.get(id).title, battle);
   const year = await page.evaluate((id) => String(window.__ayni.data.eventsById.get(id).year), battle);
   check(
@@ -3724,19 +3895,18 @@ await guard(async () => {
   );
 
   // a mark for something the data has an event for is shown as that event; a place the data does not know stays a mark
-  await showStep(page, 4);
   const calls = await page.evaluate(() => {
     const req = window.__ayni.ai.session.provider.requests.at(-1);
     const mark = req.tools.find((t) => t.name === 'mark');
     return [
-      mark.execute({ step: 4, lon: 20.46, lat: 44.82, label: 'Belgrad' }),
-      mark.execute({ step: 4, lon: 32.04, lat: 54.78, label: 'Smolensk' }),
+      mark.execute({ step: 4, beat: 1, lon: 20.46, lat: 44.82, label: 'Belgrad' }),
+      mark.execute({ step: 4, beat: 1, lon: 32.04, lat: 54.78, label: 'Smolensk' }),
     ];
   });
-  await cameraRests(page, 8000);
+  await showStep(page, 4, 0);
   await settle(page, 400);
   const s4 = await mapState(page);
-  // the data's own event for Belgrade (the invasion of Yugoslavia and Greece, a war: so it brings its own line too)
+  // the data's own event for Belgrade (the invasion of Yugoslavia and Greece)
   const known = await page.evaluate(() =>
     window.__ayni.data.events.filter((e) => e.location.name === 'Belgrad').map((e) => ({ id: e.id, title: e.title })),
   );
@@ -3745,11 +3915,10 @@ await guard(async () => {
     known.length === 1 &&
       /^tamam/.test(calls[0]) &&
       /olay kaydı/.test(calls[0]) &&
-      sameSet(s4.markers, [...GERMANY[3].events, known[0].id]) &&
+      sameSet(s4.markers, ['barbarossa-1941', known[0].id]) &&
       !s4.flags.includes('Belgrad') &&
-      s4.eventFlags.length === 0 &&
-      s4.wars === GERMANY[3].wars + 1,
-    `${calls[0]} · ${s4.wars} savaş çizgisi`,
+      s4.eventFlags.length === 0,
+    `${calls[0]} · ${s4.markers.join()}`,
   );
   check(
     'Verinin bilmediği bir yer (Smolensk) serbest işaret olarak kalır: mürekkep eşkenar dörtgen ve etiketi',
@@ -3758,7 +3927,7 @@ await guard(async () => {
   );
   const lap4 = await overlapReport(page);
   check(
-    'Bu kalabalık adımda da (3 olay + 1 işaret) etiketler birbirini ve işaretçileri örtmüyor',
+    'Bu kalabalık vuruşta da (2 olay + 1 işaret) etiketler birbirini ve işaretçileri örtmüyor',
     lap4.clash.length === 0 && lap4.out.length === 0 && lap4.underControl.length === 0,
     [...lap4.clash, ...lap4.out, ...lap4.underControl].join(' | '),
   );
@@ -3822,17 +3991,23 @@ for (const vp of [
     await page.click('[data-testid=place-narrate]');
     await finalStatus(page);
     await cameraRests(page, 12000);
-    // the narration: every step at three cameras. Its steps draw no name boxes of their own (the events are only
-    // named), so what is measured is every label-like thing there: the polities' names, the event marks with their
-    // years, the place's pin
+    // the narration: the beats that carry the most (an arrow plays; the last one, with all its markers on the map) and the end of every
+    // scene, each at three cameras. Its scenes draw no name boxes of their own (the events are only marked), so what is measured is
+    // every label-like thing there: the polities' names, the event marks with their years and numbers, the arrows' labels, the pin
     const rows = [];
-    for (const exp of GERMANY) {
-      if (exp.n !== 1) await showStep(page, exp.n);
-      rows.push(...(await kReadOverlaps(page, `adım ${exp.n}`)));
+    for (const scene of GERMANY) {
+      const picks = new Set([scene.beats.length - 1]);
+      scene.beats.forEach((b, k) => b.routes && picks.add(k));
+      for (const k of [...picks].sort()) {
+        await showStep(page, scene.n, k);
+        rows.push(...(await kReadOverlaps(page, `sahne ${scene.n}, ${k + 1}. vuruş`)));
+      }
+      await showStep(page, scene.n);
+      rows.push(...(await kReadOverlaps(page, `sahne ${scene.n} sonu`)));
     }
     const things = rows.reduce((t, r) => t + r.count, 0);
     check(
-      `${vp.name}: ${GERMANY.length} adım × 3 kamera (çerçeve, +0,9, −0,9) = ${rows.length} durumda ${things} öğe (devlet adları, olay işaretleri ve yılları, yer noktası) hiçbir etiketi ya da işaretçiyi örtmüyor`,
+      `${vp.name}: ${GERMANY.length} sahnenin ${rows.length / 3} anı (ok oynayan vuruşlar, son vuruşlar, sahne sonları) × 3 kamera (çerçeve, +0,9, −0,9) = ${rows.length} durumda ${things} öğe (devlet adları, olay işaretleri ve yılları ya da sayılı noktaları, yer noktası) hiçbir etiketi ya da işaretçiyi örtmüyor`,
       rows.every((r) => !r.bad) && things > 0,
       rows
         .filter((r) => r.bad)
@@ -3840,21 +4015,20 @@ for (const vp of [
         .map((r) => r.bad)
         .join(' | '),
     );
-    // the crowded step of J (3 events, the war lines of all of them, the advance on Moscow with its label, and a free mark
-    // with its label), at three cameras too: the label of a mark the data knows nothing of keeps clear of the markers, the
-    // names and the war lines' ends. (The third event comes in as a mark at Stalingrad's place, which the page turns into
-    // that event; the Eastern Front already lights its allies, so the third event is one away from their names.)
-    await showStep(page, 4);
+    // the crowded beat (the arrow of the Eastern Front with its label, a second event and a free mark with its label, and the
+    // dot of the first event), at three cameras too: the label of a mark the data knows nothing of keeps clear of the markers, the
+    // names and the arrow's end. (The second event comes in as a mark at Stalingrad's place, which the page turns into that event.)
+    await showStep(page, 4, 1);
     await page.evaluate(() => {
       const mark = window.__ayni.ai.session.provider.requests.at(-1).tools.find((t) => t.name === 'mark');
-      mark.execute({ step: 4, lon: 44.51, lat: 48.71, label: 'Stalingrad' });
-      mark.execute({ step: 4, lon: 32.04, lat: 54.78, label: 'Smolensk' });
+      mark.execute({ step: 4, beat: 2, lon: 44.51, lat: 48.71, label: 'Stalingrad' });
+      mark.execute({ step: 4, beat: 2, lon: 32.04, lat: 54.78, label: 'Smolensk' });
     });
-    await cameraRests(page, 8000);
+    await showStep(page, 4, 1);
     await settle(page, 400);
-    const crowded = await kReadOverlaps(page, 'kalabalık 4. adım');
+    const crowded = await kReadOverlaps(page, 'kalabalık 4. sahne');
     check(
-      `${vp.name}: kalabalık 4. adım (${GERMANY[3].events.length + 1} olay, ${GERMANY[3].wars + 1} savaş çizgisi, yolu ve etiketi, serbest işaret ve etiketi) × 3 kamera = ${crowded.length} durumda ${crowded.reduce((t, r) => t + r.flags, 0)} yapay zekâ etiketi hiçbir etiketi ya da işaretçiyi örtmüyor ve harita dışına taşmıyor`,
+      `${vp.name}: kalabalık vuruş (4. sahne, 2. cümle: ilk olayın noktası, ikinci olay, oku ve etiketi, serbest işaret ve etiketi) × 3 kamera = ${crowded.length} durumda ${crowded.reduce((t, r) => t + r.flags, 0)} yapay zekâ etiketi hiçbir etiketi ya da işaretçiyi örtmüyor ve harita dışına taşmıyor`,
       crowded.every((r) => !r.bad) && crowded[0].flags === 2,
       crowded.some((r) => r.bad)
         ? crowded
@@ -3864,19 +4038,16 @@ for (const vp of [
             .join(' | ')
         : `kamera başına etiket: ${crowded.map((r) => r.flags).join(' / ')}`,
     );
-    // the answer with a line of its own: the Pact of Steel has the label "Çelik Pakt, 1939" and the symbol of an
-    // alliance in the middle of its line, and the event it names has a marker: the AI's own labels and what they must
-    // keep clear of
+    // the answer about the Pact of Steel has no line of its own and no label on the map: its sides are under the caption, the event
+    // it names has a marker
     await ask(page, AXIS_QUESTION);
     await cameraRests(page, 12000);
+    await showStep(page, 1, 1);
     await settle(page, 400);
     const axis = await kReadOverlaps(page, 'Çelik Pakt yanıtı');
-    const own = axis.reduce((t, r) => t + r.flags, 0);
-    // (zoomed in, the line's two ends leave the map and its label with them: a label that names nothing on screen is
-    // not shown)
     check(
-      `${vp.name}: Çelik Pakt yanıtı × 3 kamera = ${axis.length} durumda ${own} yapay zekâ etiketi (bağlantı etiketi; çerçevede var) hiçbir etiketi ya da işaretçiyi örtmüyor ve harita dışına taşmıyor`,
-      axis.every((r) => !r.bad) && axis[0].flags === 1,
+      `${vp.name}: Çelik Pakt yanıtı × 3 kamera = ${axis.length} durumda hiçbir etiketi ya da işaretçiyi örtmüyor; haritada yapay zekâ etiketi yok (taraflar altyazının altında)`,
+      axis.every((r) => !r.bad) && axis.every((r) => r.flags === 0),
       axis.some((r) => r.bad)
         ? axis
             .filter((r) => r.bad)
@@ -3892,8 +4063,9 @@ for (const vp of [
 /**
  * What the map really shows, read from a screenshot and not from the style: everything above the map's canvas is hidden,
  * the screenshot is sampled on a grid, and under each sample lies the one polity found there (a sample on a border, or
- * where two polities overlap, is left out). With `lit` (the polities of a narration step) the colours are judged against
- * the spotlight instead: the lit ones solid and vivid, all the rest veiled with paper.
+ * where two polities overlap, is left out). With `lit` (what a scene paints: the polities in their actor's colour, and the ones it
+ * points at) the colours are judged against the narration instead: the painted ones solid in their actor's colour, the ones
+ * pointed at in their own tint, all the rest veiled with paper. The sea is read too: it is one flat colour.
  */
 const SAMPLE = async ({ b64, lit }) => {
   const m = window.__ayni.map;
@@ -3915,8 +4087,9 @@ const SAMPLE = async ({ b64, lit }) => {
     return [1, 3, 5].map((k) => parseInt(v.slice(k, k + 2), 16));
   };
   const tints = [...Array(9).keys()].map((i) => hex(`--tint-${i}`));
-  const vivid = [...Array(9).keys()].map((i) => hex(`--vivid-${i}`));
   const paper = hex('--paper');
+  const painted = new Map((lit?.painted ?? []).map((p) => [p.id, p.color]));
+  const pointed = new Set(lit?.emphasis ?? []);
   const veil = lit ? Number(m.getPaintProperty('ai-veil', 'background-opacity')) : 0;
   const lin = (c) => {
     const v = c / 255;
@@ -3952,15 +4125,18 @@ const SAMPLE = async ({ b64, lit }) => {
       if (!fs.length || new Set(fs.map((f) => f.properties.id)).size !== 1) continue;
       const f = fs[0].properties;
       // well inside its polity: the borders and their casing (a few pixels wide) are not what the colour statistics judge
-      const inside = [
-        [-5, -5],
-        [5, -5],
-        [-5, 5],
-        [5, 5],
-      ].every(([dx, dy]) => {
-        const near = m.queryRenderedFeatures([i * STEP + dx, j * STEP + dy], { layers: ['polity-fill'] });
-        return near.length > 0 && near.every((g) => g.properties.id === f.id);
-      });
+      // (the ones hatched as unclear are left out too: a pattern is not one colour)
+      const inside =
+        painted.get(f.id) !== 'neutral' &&
+        [
+          [-5, -5],
+          [5, -5],
+          [-5, 5],
+          [5, 5],
+        ].every(([dx, dy]) => {
+          const near = m.queryRenderedFeatures([i * STEP + dx, j * STEP + dy], { layers: ['polity-fill'] });
+          return near.length > 0 && near.every((g) => g.properties.id === f.id);
+        });
       grid.set(`${i},${j}`, {
         i,
         j,
@@ -3968,16 +4144,19 @@ const SAMPLE = async ({ b64, lit }) => {
         tint: f.tint,
         inside,
         rgb: rgbAt(i * STEP, j * STEP),
-        lit: !!lit && lit.includes(f.id),
+        lit: painted.has(f.id) || pointed.has(f.id),
+        color: painted.get(f.id) ?? null,
       });
     }
   const everything = [...grid.values()];
-  // the polities a step painted by side are in their side's colour (one for the whole bloc), the other lit ones in their vivid twin
-  const sideColour = new Map();
-  (window.__ayni.ai.director.drawing?.sides ?? []).forEach((side, i) => {
-    for (const id of side.polities) sideColour.set(id, hex(`--side-${i}`));
-  });
-  const want = (s) => (s.lit ? (sideColour.get(s.id) ?? vivid[s.tint]) : blend(tints[s.tint], paper, veil));
+  // the polities a scene paints are in their actor's colour (one for the whole side), the ones it only points at in their own tint,
+  // everything else is faded under the veil
+  const want = (s) =>
+    s.color && s.color !== 'neutral'
+      ? hex(`--side-${s.color}`)
+      : s.lit
+        ? tints[s.tint]
+        : blend(tints[s.tint], paper, veil);
   for (const s of everything) s.dev = dE(s.rgb, want(s));
   const samples = everything.filter((s) => s.inside);
   const good = samples.filter((s) => s.dev <= 3);
@@ -4024,6 +4203,34 @@ const SAMPLE = async ({ b64, lit }) => {
   const close = [...pairs].filter(([, d]) => d < 8).map(([k, d]) => `${k} ${d.toFixed(1)}`);
   const weakest = [...pairs].sort((x, y) => x[1] - y[1])[0];
   const mean = (a, f) => a.reduce((t, s) => t + f(s.rgb), 0) / (a.length || 1);
+  // the sea: points with no land under them (nor within a few pixels), all of one colour
+  const seaAt = [];
+  for (let j = 1; j < rows; j++)
+    for (let i = 1; i < cols; i++) {
+      const bare = [
+        [0, 0],
+        [-6, -6],
+        [6, -6],
+        [-6, 6],
+        [6, 6],
+      ].every(
+        ([dx, dy]) => m.queryRenderedFeatures([i * STEP + dx, j * STEP + dy], { layers: ['land-base'] }).length === 0,
+      );
+      if (bare) seaAt.push(rgbAt(i * STEP, j * STEP));
+    }
+  const seaWant = blend(hex('--sea'), paper, veil);
+  const seaOff = seaAt.filter((c) => dE(c, seaWant) > 2).length;
+  // the colour each actor shows (the mean of its samples) and how far apart those are
+  const shown = {};
+  for (const key of ['focus', 'foe-1', 'foe-2']) {
+    const of = good.filter((s) => s.color === key);
+    if (of.length) shown[key] = { n: of.length, rgb: [0, 1, 2].map((k) => Math.round(mean(of, (c) => c[k]))) };
+  }
+  const keys = Object.keys(shown);
+  let actorsMin = Infinity;
+  for (let a = 0; a < keys.length; a++)
+    for (let b = a + 1; b < keys.length; b++)
+      actorsMin = Math.min(actorsMin, dE(shown[keys[a]].rgb, shown[keys[b]].rgb));
   const litS = good.filter((s) => s.lit);
   const restS = good.filter((s) => !s.lit);
   // what the palette itself allows: the two colours of the eight in use that lie nearest to each other
@@ -4042,6 +4249,10 @@ const SAMPLE = async ({ b64, lit }) => {
     minDE: weakest ? weakest[1] : null,
     weakest: weakest ? weakest[0] : '',
     close,
+    sea: { n: seaAt.length, off: seaOff },
+    actors: shown,
+    actorsMin,
+    focusHue: shown.focus ? hue(shown.focus.rgb) : null,
     nLit: samples.filter((s) => s.lit).length,
     nRest: samples.filter((s) => !s.lit).length,
     litOff: samples.filter((s) => s.lit && s.dev > 3).length,
@@ -4067,7 +4278,7 @@ async function sampleMap(page, lit = null) {
 }
 
 section(
-  'P. Devlet renkleri: ekranda görünen renkler gri/grimsi ya da mavi değil, komşular birbirinden ayrışıyor; spot ışığında öne çıkanlar canlı, gerisi soluk',
+  'P. Devlet renkleri: ekranda görünen renkler gri/grimsi değil ve komşular birbirinden ayrışıyor; deniz tek düz açık mavi; anlatımda boyalı devletler aktörlerinin renginde (odak mavi), gerisi soluk',
 );
 await guard(async () => {
   const views = [
@@ -4098,6 +4309,7 @@ await guard(async () => {
     got.push({ ...v, ...(await sampleMap(page)) });
     await page.context().close();
   }
+  for (const g of got) g.seaN = g.sea.n;
   const total = (k) => got.reduce((t, g) => t + g[k], 0);
   const all = (f) => got.every(f);
   const fmt = (g) => `${g.name} (sınırlar ${g.year}): ${g.polities} devlet, ${g.good}/${g.n} örnek`;
@@ -4113,9 +4325,9 @@ await guard(async () => {
     got.flatMap((g) => g.greys).join(', '),
   );
   check(
-    'Hiçbir devlet mavi, turkuaz ya da mor değil (ton 180°–310° dışında; mavi yalnızca deniz ve göllerin)',
-    all((g) => g.blues.length === 0),
-    got.flatMap((g) => g.blues).join(', '),
+    `Deniz tek düz açık mavi: ${got.length} görünümde ${total('seaN')} deniz örneğinin %99’undan fazlası aynı renkte (ΔE ≤ 2, --sea; kıyıdaki birkaç piksel hariç); degrade, ışık ya da derinlik farkı yok`,
+    all((g) => g.sea.n >= 30 && g.sea.off <= g.sea.n * 0.01),
+    got.map((g) => `${g.name}: ${g.sea.n} örnek, ${g.sea.off} sapma`).join(' · '),
   );
   const minDE = Math.min(...got.map((g) => g.minDE ?? 99));
   const weakest = got.find((g) => g.minDE === minDE)?.weakest;
@@ -4132,41 +4344,56 @@ await guard(async () => {
 });
 
 await guard(async () => {
-  // the spotlight, from the pixels: the polities a step lights are solid in their vivid colour, everything else is faded
+  // the narration, from the pixels: the polities a scene paints are solid in their actor's colour (the focus is blue), everything
+  // else is faded under the veil
   const page = await open(AT_HAMBURG);
   await page.click('[data-testid=place-narrate]');
   await finalStatus(page);
   await cameraRests(page, 12000);
   const rows = [];
-  for (const exp of GERMANY) {
-    if (exp.n !== 1) await showStep(page, exp.n);
+  for (const scene of GERMANY) {
+    await showStep(page, scene.n); // (the scene ends: what it painted stays)
     await settle(page, 800); // the veil fades in over a third of a second
+    // (the borders that changed hands are pointed at for a moment as the year moves: the colours are read when that has gone)
+    await eventually(
+      page,
+      () => !window.__ayni.map.getStyle().layers.some((l) => l.id.startsWith('terr-')),
+      null,
+      6000,
+    );
     const spot = await spotlight(page);
-    rows.push({ ...(await sampleMap(page, spot.ids)), step: exp.n, lit: spot.ids });
+    rows.push({ ...(await sampleMap(page, spot)), step: scene.n, painted: spot.painted });
   }
   const fmt = (r) =>
-    `${r.step}. adım: ${r.nLit} öne çıkan örnek (renk sapması ${r.litOff}), ${r.nRest} soluk örnek (sapma ${r.restOff}), doygunluk ${r.chromaLit.toFixed(2)} → ${r.chromaRest.toFixed(2)}`;
+    `${r.step}. sahne: ${r.nLit} boyalı örnek (renk sapması ${r.litOff}), ${r.nRest} soluk örnek (sapma ${r.restOff}), doygunluk ${r.chromaLit.toFixed(2)} → ${r.chromaRest.toFixed(2)}`;
   check(
-    'Spot ışığı, ekran görüntüsünden: her adımda öne çıkan devletlerin pikselleri kendi canlı renginde (tam dolgun, saydam değil), haritanın geri kalanı kâğıt örtüyle solmuş renkte',
+    'Boyama, ekran görüntüsünden: her sahnede boyalı devletlerin pikselleri aktörünün renginde (tam dolgun, saydam değil), haritanın geri kalanı kâğıt örtüyle solmuş renkte',
     rows.every((r) => r.nLit >= 15 && r.nRest >= 100 && r.litOff / r.nLit < 0.05 && r.restOff / r.nRest < 0.05),
     rows.map(fmt).join(' · '),
   );
   check(
-    'Öne çıkanlar belirgin ayrışıyor: canlı devletlerin doygunluğu soluk devletlerinkinin en az iki katı, soluk olanlar daha açık',
-    rows.every((r) => r.chromaLit >= 2 * r.chromaRest && r.lightRest > r.lightLit + 0.04),
+    'Boyalılar belirgin ayrışıyor: boyalı devletlerin doygunluğu soluk devletlerinkinin en az bir buçuk katı',
+    rows.every((r) => r.chromaLit >= 1.5 * r.chromaRest),
+    rows.map((r) => `${r.step}: ${(r.chromaLit / r.chromaRest).toFixed(1)}×`).join(' · '),
+  );
+  // (the borders of 1945 hold Germany's rows over the occupation zones, so no sample point of that scene lies inside one polity alone:
+  // the colours of its actors are read in the seven scenes before it)
+  const readable = rows.filter((r) => !/1945/.test(r.year ?? ''));
+  check(
+    'Aktör renkleri birbirinden ayrışıyor ve mavi serbest: her sahnede odak tarafı mavi (ton 180°–310°), karşıt taraflarla arasında en az ΔE 20 (1945 sınırlarındaki son sahne hariç: Almanya’nın satırları işgal bölgeleriyle üst üste biner, tek bir devletin içinde kalan örnek yok)',
+    readable.length >= rows.length - 1 &&
+      readable.every((r) => r.focusHue !== null && r.focusHue >= 180 && r.focusHue <= 310 && r.actorsMin >= 20),
     rows
       .map(
         (r) =>
-          `${r.step}: ${(r.chromaLit / r.chromaRest).toFixed(1)}× · açıklık ${r.lightLit.toFixed(2)} / ${r.lightRest.toFixed(2)}`,
+          `${r.step}: ${r.focusHue === null ? 'okunamadı (1945 sınırları)' : `ton ${r.focusHue.toFixed(0)}°`}, en yakın aktör çifti ΔE ${r.actorsMin === Infinity ? '—' : r.actorsMin.toFixed(0)}`,
       )
       .join(' · '),
   );
-  const vividGrey = rows.filter((r) => r.chromaLit < 0.1).map((r) => r.step);
-  const vividBlue = rows.flatMap((r) => r.blues.map((id) => `${r.step}. adım: ${id}`));
   check(
-    'Canlı renkler de gri ya da mavi değil: öne çıkan devletlerin ortalama doygunluğu en az 0,10 ve hiçbir devletin tonu (canlı ya da soluk) 180°–310° arasında değil',
-    vividGrey.length === 0 && vividBlue.length === 0,
-    vividBlue.length ? vividBlue.join(', ') : rows.map((r) => `${r.step}: ${r.chromaLit.toFixed(2)}`).join(' · '),
+    'Deniz, anlatımda da tek düz renk (kâğıt örtüyle solmuş açık mavi): her sahnede deniz örneklerinin %99’undan fazlası aynı renkte',
+    rows.every((r) => r.sea.n >= 30 && r.sea.off <= r.sea.n * 0.01),
+    rows.map((r) => `${r.step}: ${r.sea.n}/${r.sea.off}`).join(' · '),
   );
   await page.context().close();
 });
@@ -4293,9 +4520,9 @@ await guard(async () => {
     (st) => st.want.length === 0 || st.got.join() !== st.want.join() || /[[\]]|olay:/.test(st.shown),
   );
   check(
-    `Her adımın altyazısında olay adları bağlantı: 1’den ${GERMANY.length}’e hepsinde, altyazının işaretlediği olay kimlikleriyle (4. adımda Barbarossa, 6. adımda Stalingrad ve El Alamein, 7. adımda Normandiya ve Bagration…); görünen yazıda işaret yok`,
+    `Her adımın altyazısında olay adları bağlantı: 1’den ${GERMANY.length}’e hepsinde, altyazının işaretlediği olay kimlikleriyle (4. adımda Barbarossa ve Leningrad, 6. adımda Stalingrad ve El Alamein, 7. adımda Normandiya ve Bagration…); görünen yazıda işaret yok`,
     badCaption.length === 0 &&
-      perStep[3].got.join() === 'barbarossa-1941' &&
+      perStep[3].got.join() === 'barbarossa-1941,leningrad-kusatmasi-1941' &&
       perStep[5].got.join() === 'stalingrad-1942,el-alamein-1942' &&
       perStep[6].got.join() === 'normandiya-1944,bagration-1944',
     perStep.map((st) => `${st.n}: ${st.got.length}`).join(' · '),
@@ -4309,7 +4536,7 @@ await guard(async () => {
   check(
     '6. adımın altyazısında Stalingrad ve El Alamein birer bağlantı (olay kimlikleriyle): noktalı alt çizgili, işaretçi imleçli; cümlenin içinde düz yazı gibi duruyor',
     refs.map((r) => r.id).join() === captionIds.join() &&
-      captionIds.join() === GERMANY[5].events.join() &&
+      captionIds.join() === GERMANY[5].eventIds.join() &&
       refs.every((r) => r.cursor === 'pointer' && r.line.includes('underline') && r.style === 'dotted'),
     refs.map((r) => `“${r.text}”`).join(' '),
   );
@@ -4320,21 +4547,36 @@ await guard(async () => {
     captionText.slice(0, 80),
   );
 
-  // the name of an event on the map shows on hover (there is no name box beside the marker)
+  // the name of an event on the map shows on hover (there is no name box beside the marker): on the full marker while its sentence
+  // plays, and on the small numbered dot it becomes
+  const tipOf = () =>
+    page.evaluate(() => {
+      const t = document.querySelector('.tip');
+      return {
+        shown: !!t && !t.hidden,
+        text: t?.textContent.replace(/\s+/g, ' ').trim() ?? '',
+        flags: [...document.querySelectorAll('.ai-layer .ai-flag')].filter((e) => !e.hidden).length,
+      };
+    });
+  await showStep(page, 6, 0);
   await page.hover('.evt[data-id="stalingrad-1942"] .evt-mark');
   await settle(page, 500);
-  const hoverTip = await page.evaluate(() => {
-    const t = document.querySelector('.tip');
-    return {
-      shown: !!t && !t.hidden,
-      text: t?.textContent.replace(/\s+/g, ' ').trim() ?? '',
-      flags: [...document.querySelectorAll('.ai-layer .ai-flag')].filter((e) => !e.hidden).length,
-    };
-  });
+  const hoverTip = await tipOf();
+  await page.mouse.move(300, 420);
+  await settle(page, 300);
+  await showStep(page, 6);
+  await page.hover('.evt[data-id="stalingrad-1942"]');
+  await settle(page, 500);
+  const dotTip = await tipOf();
   check(
-    'Haritadaki olay işaretçisinin adı üzerine gelince görünür (yanında kalıcı bir ad kutusu yok): “Stalingrad Muharebesi”',
-    hoverTip.shown && /Stalingrad Muharebesi/.test(hoverTip.text) && hoverTip.flags === 0,
-    hoverTip.text.slice(0, 70),
+    'Haritadaki olay işaretçisinin adı üzerine gelince görünür (yanında kalıcı bir ad kutusu yok): cümle oynarken işarette, sonra sayılı noktada: “Stalingrad Muharebesi”',
+    hoverTip.shown &&
+      /Stalingrad Muharebesi/.test(hoverTip.text) &&
+      hoverTip.flags === 0 &&
+      dotTip.shown &&
+      /Stalingrad Muharebesi/.test(dotTip.text) &&
+      dotTip.flags === 0,
+    `${hoverTip.text.slice(0, 40)} | ${dotTip.text.slice(0, 40)}`,
   );
   await page.mouse.move(300, 420);
   await settle(page, 300);
@@ -4403,9 +4645,9 @@ await guard(async () => {
     `Okuyucudaki metinde de olay adları bağlantı: her adımın metninde yazının işaretlediği olaylar (4. adımda Barbarossa ve Leningrad, 6. adımda Stalingrad ve El Alamein), tüm metinde ${allIds.length} bağlantı, her biri bir düğme; işaret sözdizimi görünmüyor`,
     readRefs.steps.length === GERMANY.length &&
       badText.length === 0 &&
-      readRefs.steps[3].ids.join() === GERMANY[3].events.join() &&
+      readRefs.steps[3].ids.join() === GERMANY[3].eventIds.join() &&
       readRefs.steps[5].ids.join() === textIds.join() &&
-      textIds.join() === GERMANY[5].events.join() &&
+      textIds.join() === GERMANY[5].eventIds.join() &&
       allIds.length >= GERMANY.length &&
       readRefs.all === allIds.length &&
       !readRefs.raw,
@@ -4473,7 +4715,14 @@ await guard(async () => {
   const readActive = await page.evaluate(
     () => document.querySelector('[data-testid=chat-step][data-active="true"]')?.dataset.n ?? null,
   );
-  const readOtherIds = await idsNow(page);
+  // (the scene's own markers: the opened event's marker is on the map as well)
+  const readOtherIds = await page.evaluate(() =>
+    window.__ayni
+      .visibleMarkerIds()
+      .filter((id) => id !== window.__ayni.store.state.selectedEventId)
+      .sort()
+      .join(),
+  );
   await page.click('[data-testid=chat-step][data-n="7"] button.evt-ref[data-event="normandiya-1944"]');
   await settle(page, 500);
   check(
@@ -4482,7 +4731,7 @@ await guard(async () => {
       readOtherStep.card &&
       readOtherStep.step === 6 &&
       readActive === '6' &&
-      readOtherIds === GERMANY[5].ids &&
+      readOtherIds === eventsKey(GERMANY[5]) &&
       (await eventState(page)).event === null,
     `etkin adım ${readActive}`,
   );
@@ -4808,10 +5057,9 @@ await guard(async () => {
   }
 });
 await guard(async () => {
-  // the ruler's step points while a narration is on: at the dates of the steps and inside the selected range (never spread beyond
-  // it: the eight steps of the German narration of 1939–1945 lie in seven years, and a year is about 6 px of the ruler), not on the
-  // range's writing, not on the year labels. A wider range gives them room (1931–1945), a shorter one (1942–1944, the world's
-  // narration of five steps in two or three years) crowds them; in every case they stay inside the range and in order.
+  // the scene points while a narration is on: on the zoomed strip of the timeline (the selected range, over the width of the page)
+  // at the dates of the scenes, in order, none on the 1800–2000 ruler above. A short range (1942–1944: the world's narration of five
+  // scenes in two or three years) gives them more room per year than a long one (1931–1945), in every case they stay in order.
   for (const [range, how] of [
     ['1939-1945', 'place'],
     ['1942-1944', 'world'],
@@ -4828,88 +5076,82 @@ await guard(async () => {
     await finalStatus(page);
     await cameraRests(page, 12000);
     const years = await page.evaluate(() =>
-      [...document.querySelectorAll('[data-testid=ruler-step]')].map((e) => /· (\d{4})$/.exec(e.title)?.[1]),
+      [...document.querySelectorAll('[data-testid=tl-step]')].map((e) => /· (\d{4})$/.exec(e.title)?.[1]),
     );
     const m = await page.evaluate(() => {
       const R = (e) => {
         const r = e.getBoundingClientRect();
         return { l: r.left, r: r.right, t: r.top, b: r.bottom };
       };
-      // how far the boxes of a point and a piece of writing lie into each other (a line box has a little leading above its digits)
-      const depth = (a, b) => (a.l < b.r && b.l < a.r ? Math.min(a.b, b.b) - Math.max(a.t, b.t) : -Infinity);
-      const hit = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
-      // the point on screen is drawn bigger than the others, and any of them can be that one: every point at that size
-      const big = (r) => {
-        const cx = (r.l + r.r) / 2;
-        const cy = (r.t + r.b) / 2;
-        const h = Math.max(r.r - r.l, 19.5) / 2;
-        return { l: cx - h, r: cx + h, t: cy - h, b: cy + h };
-      };
-      const seen = (e) => {
-        const cs = getComputedStyle(e);
-        const r = e.getBoundingClientRect();
-        return cs.display !== 'none' && cs.visibility !== 'hidden' && r.width > 0 && r.height > 0;
-      };
-      const ext = window.__ayni.data.extent;
-      const span = ext.to - ext.from + 1;
-      const track = document.querySelector('.ruler-track').getBoundingClientRect();
-      const brush = document.querySelector('.brush').getBoundingClientRect();
+      const domain = window.__ayni.view().domain;
+      const span = domain.to - domain.from + 1;
+      const plot = document.querySelector('.tl-plot').getBoundingClientRect();
+      const dock = document.querySelector('.dock').getBoundingClientRect();
       const steps = window.__ayni.ai.presentation.steps;
-      const pts = [...document.querySelectorAll('[data-testid=ruler-step]')].map((e) => ({
+      // (a scene dated before the range stands at its left edge, one dated after it at its right edge)
+      const clamp = (t) => Math.min(domain.to + 1, Math.max(domain.from, t));
+      const pts = [...document.querySelectorAll('[data-testid=tl-step]')].map((e) => ({
         n: Number(e.dataset.n),
         ...R(e),
-        want: track.left + ((steps[Number(e.dataset.n) - 1].when - ext.from) / span) * track.width,
+        want: plot.left + ((clamp(steps[Number(e.dataset.n) - 1].when) - domain.from) / span) * plot.width,
       }));
-      const grown = pts.map((p) => ({ n: p.n, ...big(p) }));
-      const writing = [...document.querySelectorAll('.range-readout, .brush-label, .ruler-tick b')]
-        .filter(seen)
-        .map((e) => ({ year: e.matches('.ruler-tick b'), text: e.textContent.trim(), ...R(e) }));
-      // the points sit on the ruler's axis and its years hang below it: the boxes may meet (the on-screen point at its larger size
-      // by about 3 px: a line box has leading above its digits), never lie over each other
-      const onWriting = [];
-      let deepest = 0;
-      for (const p of grown)
-        for (const w of writing) {
-          const d = depth(p, w);
-          if (w.year && d > 0) deepest = Math.max(deepest, d);
-          if (w.year ? d > 3 : hit(p, w)) onWriting.push(`${p.n}×${w.text}`);
-        }
       const centres = pts.map((p) => (p.l + p.r) / 2);
+      // the years written on the strip: a point may stand over one only by a hair (the label is not hidden)
+      const labels = [...document.querySelectorAll('.tl-tick')]
+        .filter((e) => e.textContent.trim())
+        .map((e) => {
+          const range = document.createRange();
+          range.selectNodeContents(e);
+          const r = range.getBoundingClientRect();
+          return { text: e.textContent.trim(), l: r.left, r: r.right, t: r.top, b: r.bottom };
+        });
+      const hidden = [];
+      for (const p of pts)
+        for (const w of labels) {
+          const dx = Math.min(p.r, w.r) - Math.max(p.l, w.l);
+          const dy = Math.min(p.b, w.b) - Math.max(p.t, w.t);
+          if (dx > 1.5 && dy > 1.5) hidden.push(`${p.n}×${w.text}`);
+        }
       return {
         n: pts.length,
         order: pts.map((p) => p.n),
-        onWriting,
-        deepest,
-        label: [...document.querySelectorAll('.brush-label')].some(seen),
-        inTrack: pts.every((p) => p.l >= track.left - 1 && p.r <= track.right + 1),
-        inBrush: centres.every((x) => x >= brush.left - 0.5 && x <= brush.right + 0.5),
+        onRuler: document.querySelectorAll('.ruler [data-testid=tl-step], [data-testid=ruler-step], .ruler-run').length,
+        inPlot: pts.every(
+          (p) => p.l >= plot.left - 1 && p.r <= plot.right + 1 && p.t >= dock.top - 1 && p.b <= dock.bottom + 1,
+        ),
         sorted: centres.every((x, i) => i === 0 || x >= centres[i - 1] - 1e-6),
         shift: Math.max(...pts.map((p, i) => Math.abs(centres[i] - p.want))),
-        brushWidth: brush.width,
-        beyond: centres.filter((x) => x < brush.left - 0.5 || x > brush.right + 0.5).length,
+        // (the points that want the same stretch of the strip, the ones before the range all wanting its left edge, have to be 22 px apart)
+        crowd: Math.max(...pts.map((p) => pts.filter((q) => Math.abs(q.want - p.want) < 22).length)),
+        pitch: Math.min(...centres.slice(1).map((x, i) => x - centres[i])),
+        hidden,
+        plotWidth: plot.width,
         sizes: [...new Set(pts.map((p) => Math.round(p.r - p.l)))].sort((a, b) => a - b),
+        digits: [...document.querySelectorAll('[data-testid=tl-step]')].every(
+          (e) => getComputedStyle(e).fontSize !== '0px',
+        ),
       };
     });
     const same = Math.max(...Object.values(years.reduce((c, y) => ({ ...c, [y]: (c[y] ?? 0) + 1 }), {})));
     const label = `Aralık ${range.replace('-', '–')}`;
     check(
-      `${label}: ${m.n} adım noktası (yılları ${years.join(' ')}; en kalabalık yılda ${same}) aralık yazısına (büyük yazı, fırçanın etiketi) ve cetvel yıllarına (“1950” dahil; büyütülmüş nokta yıl yazısının kutusuna en çok 3 px girebilir: nokta eksenin üstünde, yıl altında) binmiyor; fırçanın kendi etiketi gizli; hepsi cetvelin içinde`,
-      m.n >= 5 &&
-        m.onWriting.length === 0 &&
-        !m.label &&
-        m.inTrack &&
-        (how === 'place' ? m.n === GERMANY.length : true),
-      `${m.onWriting.length ? `yazıya binenler ${m.onWriting.join()} · ` : ''}yıl yazısına en çok ${m.deepest.toFixed(1)} px`,
+      `${label}: ${m.n} sahne noktası (yılları ${years.join(' ')}; en kalabalık yılda ${same}) alttaki yakınlaştırılmış şeritte, çizelgenin içinde; üstteki 1800–2000 cetvelinde hiçbiri yok`,
+      m.n >= 5 && m.onRuler === 0 && m.inPlot && (how === 'place' ? m.n === GERMANY.length : true),
+      `cetvelde ${m.onRuler} · çizelge ${Math.round(m.plotWidth)} px`,
     );
     check(
-      `${label}: noktalar seçili aralığın (fırçanın) içinde, tarihlerinde ve sıralı: hiçbiri aralığın dışında değil (${m.beyond} tane dışında), soldan sağa 1’den ${m.n}’e, tarihinin yerinden en çok ${Math.round(m.shift)} px kaymış (fırça ${Math.round(m.brushWidth)} px); nokta boyları ${m.sizes.join(', ')} px`,
-      m.inBrush &&
-        m.sorted &&
+      `${label}: noktalar tarihlerinde ve sıralı: soldan sağa 1’den ${m.n}’e, tarihinin yerinden en çok ${Math.round(m.shift)} px (en çok ${24 + 22 * (m.crowd - 1)}: yan yana ${m.crowd} sahne varsa her biri 22 px ayrı durmak zorunda) kaymış; biri ötekini örtmüyor (en yakın ikisi ${Math.round(m.pitch)} px arayla) ve numaraları görünür`,
+      m.sorted &&
         m.order.every((n, i) => n === i + 1) &&
-        m.shift <= m.brushWidth / 2 + 1 &&
-        // the wider the range, the more room: the points of a range of fifteen years are not smaller than those of seven
-        (range === '1931-1945' ? Math.max(...m.sizes) >= 10 : true),
-      `sıra ${m.order.join(' ')}`,
+        m.shift <= 24 + 22 * (m.crowd - 1) &&
+        m.pitch >= 14 &&
+        m.digits,
+      `sıra ${m.order.join(' ')} · boyutlar ${m.sizes.join('/')} px`,
+    );
+    check(
+      `${label}: noktalar şeritteki yıl yazılarını örtmüyor`,
+      m.hidden.length === 0,
+      m.hidden.join(', ') || 'örtülen yıl yazısı yok',
     );
     if (how === 'world') await shot(page, 'ai-t3-adim-noktalari-kalabalik.png');
     await page.context().close();
@@ -5341,11 +5583,11 @@ await guard(async () => {
     };
   });
   check(
-    '“Yeniden dene” aynı soruyu bir kez daha sorar: yanıt bu sefer gelir ve haritada çizilir (ittifak çizgisi); konuşmada soru ve yanıt birer tane',
+    '“Yeniden dene” aynı soruyu bir kez daha sorar: yanıt bu sefer gelir ve haritada çizilir (Almanya ile İtalya odak renginde boyalı); konuşmada soru ve yanıt birer tane',
     again.status === 'done' &&
       again.requests === early.requests + 1 &&
       again.items === 2 &&
-      (await aiDom(page)).links.join() === 'alliance',
+      (await spotlight(page)).colors['nazi-germany'] === 'focus',
   );
   await page.context().close();
 });
@@ -5390,9 +5632,9 @@ await guard(async () => {
   check('Yenilenince seçim korunuyor', (await page.evaluate(() => window.__ayni.ai.session.tier)) === 'quick');
   await ask(page, AXIS_QUESTION);
   check(
-    'Yanıt var: haritada çizim (Çelik Pakt’ın ittifak çizgisi), soru kutusunda metin düğmesi',
-    !(await aiDom(page)).hidden &&
-      (await aiDom(page)).links.join() === 'alliance' &&
+    'Yanıt var: haritada çizim (Çelik Pakt’ın tarafları boyalı), soru kutusunda metin düğmesi',
+    (await spotlight(page)).colors['nazi-germany'] === 'focus' &&
+      (await spotlight(page)).colors['kingdom-of-italy'] === 'focus' &&
       (await visible(page, '[data-testid=read-toggle]')),
   );
   const clearBtn = await page.evaluate(() => {
@@ -5544,8 +5786,8 @@ const FAKE_RUNTIME = (opts = {}) => {
           ctx,
         ),
         by.highlight.execute({ step: 1, polities: ['nazi-germany', 'kingdom-of-italy', 'atlantis'] }, ctx),
-        by.connect.execute(
-          { step: 1, from: 'nazi-germany', to: 'kingdom-of-italy', relation: 'alliance', label: 'Çelik Pakt' },
+        by.sides.execute(
+          { step: 1, sides: [{ name: 'Çelik Pakt', polities: ['nazi-germany', 'kingdom-of-italy'] }] },
           ctx,
         ),
         by.step.execute(
@@ -5587,12 +5829,15 @@ const FAKE_RUNTIME = (opts = {}) => {
           {
             n: 1,
             title: 'Eski adlarla',
-            caption: 'Çizgi Stalingrad’dan Danzig’e uzanır: ikisi de eski ad, uygulama bugünkü noktalarına çözer.',
+            caption: 'Ok Stalingrad’dan Danzig’e uzanır: ikisi de eski ad, uygulama bugünkü noktalarına çözer.',
             year: 1942,
           },
           ctx,
         ),
-        by.connect.execute({ step: 1, from: 'Stalingrad', to: 'Danzig', relation: 'war', label: 'Eski adlar' }, ctx),
+        by.route.execute(
+          { step: 1, via: ['Stalingrad', 'Danzig'], type: 'advance', label: 'Eski adlar', animate: false },
+          ctx,
+        ),
         by.step.execute(
           {
             n: 2,
@@ -5613,11 +5858,17 @@ const FAKE_RUNTIME = (opts = {}) => {
           ctx,
         ),
         by.route.execute(
-          { step: 2, via: ['Stalingrad', 'Kiev', 'Varşova'], type: 'retreat', label: 'Geri çekilme' },
+          { step: 2, via: ['Stalingrad', 'Kiev', 'Varşova'], type: 'retreat', label: 'Geri çekilme', animate: false },
           ctx,
         ),
-        by.route.execute({ step: 2, via: ['Roma', 'Viyana', 'Budapeşte'], type: 'migration', label: 'Göç' }, ctx),
-        by.route.execute({ step: 2, via: ['Paris', 'Berlin', 'Prag'], type: 'trade', label: 'Ticaret yolu' }, ctx),
+        by.route.execute(
+          { step: 2, via: ['Roma', 'Viyana', 'Budapeşte'], type: 'migration', label: 'Göç', animate: false },
+          ctx,
+        ),
+        by.route.execute(
+          { step: 2, via: ['Paris', 'Berlin', 'Prag'], type: 'trade', label: 'Ticaret yolu', animate: false },
+          ctx,
+        ),
         by.step.execute(
           {
             n: 3,
@@ -5647,6 +5898,28 @@ const FAKE_RUNTIME = (opts = {}) => {
       ],
       first: '## 1. Eski adlarla\nModel yerleri eski adlarıyla söyledi',
       rest: ', uygulama onları bugünkü noktalarına çözdü.\n\n## 2. Dört yol\nDört yol türü, her biri kendi biçiminde.\n\n## 3. İki blok\nMihver ve Müttefikler iki renkte.',
+    },
+    // a scene across the date line: an arrow from Tokyo to Pearl Harbor takes the short way over the Pacific
+    pacific: {
+      plan: (by, ctx) => [
+        by.step.execute(
+          {
+            n: 1,
+            title: 'Pearl Harbor',
+            caption:
+              "7 Aralık 1941'de Japon uçak gemileri [Pearl Harbor](olay:pearl-harbor-1941)'a saldırdı. Saldırı, ABD'nin savaşa girişini getirdi.",
+            year: 1941,
+          },
+          ctx,
+        ),
+        by.show_event.execute({ step: 1, beat: 1, event: 'pearl-harbor-1941' }, ctx),
+        by.route.execute(
+          { step: 1, beat: 1, via: ['Tokyo', 'Pearl Harbor'], type: 'advance', label: 'Japon filosu', animate: false },
+          ctx,
+        ),
+      ],
+      first: '## 1. Pearl Harbor\nJapon uçak gemileri Hawaii açıklarına ulaştı',
+      rest: " ve 7 Aralık 1941 sabahı Pearl Harbor'daki donanmaya saldırdı.",
     },
     plain: {
       plan: null,
@@ -5752,12 +6025,16 @@ await guard.smoke(async () => {
       (await count(page, '[data-testid=watch-more]')) === 0,
     `${early.status} · ${early.chars} karakter · ${early.count}`,
   );
+  await showStep(page, 1, 0);
   const mid = await mapState(page);
+  const midBeat = await beatState(page);
   check(
-    'Haritada 1. adımın çizimi şimdiden var (Almanya ve İtalya, ittifak çizgisi ve etiketi, 1939); tanınmayan devlet sessizce atlandı',
+    'Haritada 1. sahnenin çizimi şimdiden var (Almanya ve İtalya “Çelik Pakt” adıyla odak renginde boyalı ve vurgulu, 1939); tanınmayan devlet sessizce atlandı',
     mid.ids.join() === 'nazi-germany,kingdom-of-italy' &&
-      mid.links.join() === 'alliance' &&
-      mid.flags.includes('Çelik Pakt') &&
+      midBeat.sides === 'Çelik Pakt:focus' &&
+      midBeat.colors['nazi-germany'] === 'focus' &&
+      midBeat.colors['kingdom-of-italy'] === 'focus' &&
+      midBeat.emphasis === 'kingdom-of-italy,nazi-germany' &&
       mid.year === '1939' &&
       mid.outside === 0 &&
       mid.covered === 0,
@@ -5765,24 +6042,19 @@ await guard.smoke(async () => {
   );
   await showStep(page, 2);
   const mid2 = await mapState(page);
-  // the model named Germany, Italy and the event; the parties of the event come from the data
-  const lit2 = await page.evaluate(() => {
-    const r = window.__ayni.ai.session.resolver;
-    const ev = r.eventById('el-alamein-1942');
-    const year = r.showYearOf(ev);
-    const ids = ['nazi-germany', 'kingdom-of-italy'];
-    for (const p of ev.parties) if (!ids.includes(p)) ids.push(p);
-    return { ids: ids.filter((id) => r.rowAt(id, year)), year, named: 2 };
-  });
+  const end2 = await beatState(page);
+  // the model named Germany, Italy and the event: the app draws the event's marker and shows the year of the event, and the colours of the
+  // sides carry on (nothing else is lit by itself)
   check(
-    'Metin yazılmadan 2. adıma da geçilebiliyor: model yalnızca Almanya + İtalya’yı ve El Alamein’i söyledi; uygulama olayın öbür taraflarını da öne çıkardı, savaş çizgisini çizdi, yılı olayınkinden aldı (1942)',
+    'Metin yazılmadan 2. sahneye de geçilebiliyor: model yalnızca Almanya + İtalya’yı ve El Alamein’i söyledi; sahne bitince olay 1 numaralı küçük nokta, taraf boyaması (Çelik Pakt) sürüyor, olayın tarafları kendiliğinden öne çıkarılmaz, sınır yılı olayınki (1942)',
     (await pres(page)).step === 2 &&
-      mid2.ids.join() === lit2.ids.join() &&
-      lit2.ids.length > lit2.named &&
+      end2.dots.join() === 'el-alamein-1942#1=1' &&
+      end2.sides === 'Çelik Pakt:focus' &&
+      mid2.ids.join() === 'nazi-germany,kingdom-of-italy' &&
+      end2.emphasis === '' &&
       mid2.markers.join() === 'el-alamein-1942' &&
-      mid2.wars === 1 &&
-      mid2.year === String(lit2.year),
-    `${mid2.ids.join('+')} · ${mid2.markers.join()} · savaş ${mid2.wars}`,
+      mid2.year === '1942',
+    `${mid2.ids.join('+')} · ${mid2.markers.join()} · ${mid2.year}`,
   );
   // the name of the event in the caption is a link: it does what a click on the event in the timeline does
   const refs = await page.evaluate(() =>
@@ -5840,8 +6112,8 @@ await guard.smoke(async () => {
   );
   check('Araçlarla çağrıda cache hiç gönderilmiyor (çalışma zamanı reddederdi)', call.hasCache === false);
   check(
-    'Yedi araç, önem sırasıyla: step, show_event, highlight, sides, route, connect, mark (kamera ya da görünüş aracı yok)',
-    call.tools.join() === 'step,show_event,highlight,sides,route,connect,mark',
+    'Yedi araç, önem sırasıyla: step, show_event, highlight, sides, route, territory_change, mark (kamera ya da görünüş aracı yok; olaydan başkente çizgi çeken araç yok)',
+    call.tools.join() === 'step,show_event,highlight,sides,route,territory_change,mark',
     call.tools.join(),
   );
   check(
@@ -5934,7 +6206,7 @@ await guard.smoke(async () => {
       /\[El Alamein\]\(olay:el-alamein-1942\)'de Mısır sınırında Britanya ordusu/.test(second.turns[2]) &&
       second.turns[2].includes('araçlarla birlikte.') &&
       scenes.startsWith(`[Haritada gösterdiklerim: 1. adım: öne çıkan: ${said.de}, ${said.it}`) &&
-      scenes.includes(`${said.de} – ${said.it}: ittifak (Çelik Pakt)`) &&
+      scenes.includes(`taraflar: Çelik Pakt (${said.de}, ${said.it})`) &&
       scenes.includes(`2. adım: öne çıkan: ${said.de}, ${said.it}; olay: ${said.alamein}`) &&
       !/Önceki cevabımın özeti/.test(second.turns[2]),
     scenes.slice(0, 220),
@@ -5989,7 +6261,7 @@ await guard(async () => {
       writing: !!document.querySelector('[data-testid=watch-writing]'),
       rowThere: !!more,
       rowReserved: !!more?.parentElement.classList.contains('is-reserved'),
-      rulerPoints: document.querySelectorAll('[data-testid=ruler-step]').length,
+      rulerPoints: document.querySelectorAll('[data-testid=tl-step]').length,
     };
   });
   const earlyStepping = await eghSteppingOn(page);
@@ -6017,11 +6289,10 @@ await guard(async () => {
   });
   const oneMap = await mapState(page);
   check(
-    'Haritada olayın çizimi şimdiden var: yalnızca Stalingrad’ı söyleyen modelin yerine uygulama iki tarafı öne çıkardı, savaş çizgisini ve olay işaretini koydu, yılı olayınkinden aldı (1942)',
+    'Haritada olayın çizimi şimdiden var: model yalnızca Stalingrad’ı söyledi; uygulama olay işaretini koydu (tarafları kendiliğinden öne çıkarmaz, çizgi çekmez), yılı olayınkinden aldı (1942)',
     lit.ids.length === 2 &&
-      oneMap.ids.join() === lit.ids.join() &&
+      oneMap.ids.length === 0 &&
       oneMap.markers.join() === 'stalingrad-1942' &&
-      oneMap.wars === 1 &&
       oneMap.year === String(lit.year) &&
       oneMap.outside === 0 &&
       oneMap.covered === 0,
@@ -6280,6 +6551,16 @@ await guard(async () => {
       listed.ids.join() === listed.expected.join(),
     `${listed.ids.length} olay`,
   );
+  // the button says both things “this place” can mean (the point the reader chose, the polity whose borders hold it in the year shown)
+  // and does not say which of the two to tell about
+  const request = call.last.slice(call.last.lastIndexOf('İSTEK\n') + 'İSTEK\n'.length);
+  check(
+    '“Bu yerin tarihini anlat” isteği hem seçilen noktayı (koordinatıyla) hem o yılın sınırlarında noktayı içeren devleti (Nazi Almanyası, 1942) söyler; ikisinden hangisini anlatacağını söylemez',
+    /^Bu yerin tarihini seçili aralıkta anlat\. Seçtiğim yer: [^;]+; 1942 sınırlarında bu noktayı içeren devlet: Nazi Almanyası\.$/.test(
+      request.trim(),
+    ) && !/odaklan|yalnızca|sadece|önce|esas/i.test(request),
+    request.trim().slice(0, 200),
+  );
   await page.getByRole('button', { name: 'İzinleri aç' }).first().click();
   await settle(page, 200);
   check(
@@ -6509,9 +6790,8 @@ await guard.smoke(async () => {
   // the little window is at the widest view of the map: a lit polity with far-off parts (Britain) is not whole in it, but the
   // event, the ends of the war's line and the lit polities are
   check(
-    'Telefon: küçük harita 3. adımı gösteriyor (Birleşik Krallık ve Nazi Almanyası, Britanya Muharebesi: işaret ve savaş çizgisinin uçları pencerede; pencere en geniş görünümde olduğundan devlet kutularının en az %40’ı görünür); metin pencerenin altından başlıyor, soru kutusu ekranda',
-    miniM.ids.join() === GERMANY[2].ids &&
-      miniM.markers.join() === GERMANY[2].events.join() &&
+    'Telefon: küçük harita 3. sahneyi gösteriyor (Britanya Muharebesi: işaret pencerede; pencere en geniş görünümde olduğundan devlet kutularının en az %40’ı görünür); metin pencerenin altından başlıyor, soru kutusu ekranda',
+    miniM.markers.sort().join() === eventsKey(GERMANY[2]) &&
       miniM.outside === 0 &&
       miniM.warOutside === 0 &&
       miniM.boxShare >= 0.4 &&
@@ -6620,6 +6900,7 @@ await guard(async () => {
   );
   // all of the Soviet Union does not fit a phone's width (the map cannot step back any further): what is asked here is that
   // the event's marker is in view and nothing of the scene lies under the caption, the question box or the controls
+  await showStep(page, 1, 0); // (its marker is the full marker while the first sentence plays)
   const oneMap = await mapState(page);
   const marker = await page.evaluate(() => {
     const dot = document.querySelector('.evt[data-id="stalingrad-1942"] .evt-mark');
@@ -6635,8 +6916,7 @@ await guard(async () => {
       marker === true &&
       oneMap.belowFoot === 0 &&
       oneMap.covered === 0 &&
-      oneMap.markers.join() === 'stalingrad-1942' &&
-      oneMap.wars === 1,
+      oneMap.markers.join() === 'stalingrad-1942',
     `görünüm dışı ${oneMap.outside}/${oneMap.targets}, kutuların görünen payı %${Math.round(oneMap.boxShare * 100)}`,
   );
   await shot(page, 'ai-6c-mobil-tek-adim.png');
@@ -6749,7 +7029,7 @@ await guard(async () => {
 /* ================================================================ finish */
 /* ============================================ Y. places, routes and sides */
 section(
-  'Y. Yerler, yollar ve taraflar: çizgiler şehirlerden başlar (eski adlar da çözülür), dört yol türü her biri kendi biçiminde, taraflar tek blok olarak boyanır',
+  'Y. Yerler, yollar ve taraflar: oklar yerlerden geçer (eski adlar da çözülür), dört yol türü her biri kendi biçiminde, taraflar tek blok olarak, aktörün renginde boyanır',
 );
 /** The places of the elements of a layer (the centres of their circles), as longitude and latitude. */
 const lonLatOf = (page, selector) =>
@@ -6770,7 +7050,7 @@ const lonLatOf = (page, selector) =>
  */
 async function routeInk(page, type) {
   const pts = await page.evaluate((t) => {
-    const path = document.querySelector(`.ai-layer .ai-route[data-type="${t}"] path.line`);
+    const path = document.querySelector(`.ai-layer .ai-route:not(.is-leaving)[data-type="${t}"] path.line`);
     const svg = path.ownerSVGElement.getBoundingClientRect();
     const len = path.getTotalLength();
     const out = [];
@@ -6812,29 +7092,33 @@ await guard(async () => {
     JSON.stringify(results.filter((r) => r !== 'tamam')),
   );
   check(
-    'Yedi aracın hepsi sayfada: step, show_event, highlight, sides, route, connect, mark',
+    'Yedi aracın hepsi sayfada: step, show_event, highlight, sides, route, territory_change, mark',
     (await page.evaluate(() => window.__sampleCalls[0].tools.join())) ===
-      'step,show_event,highlight,sides,route,connect,mark',
+      'step,show_event,highlight,sides,route,territory_change,mark',
   );
 
-  // --- step 1: the ends of a line are places; an old name is the same place as the new one
-  const ends = await lonLatOf(page, '.ai-layer .ai-link circle.end');
+  // --- scene 1: the ends of an arrow are places; an old name is the same place as the new one
+  await showStep(page, 1, 0);
+  const stops = await page.evaluate(() => {
+    const r = window.__ayni.ai.frame().routes[0];
+    return r.points.map((p) => ({ lon: p.lon, lat: p.lat }));
+  });
   const first = await drawing(page);
   const VOLGOGRAD = { lon: 44.5, lat: 48.71 };
   const GDANSK = { lon: 18.65, lat: 54.35 };
   check(
-    'Çizginin uçları yerlerdir: “Stalingrad” bugünkü Volgograd’ın, “Danzig” Gdańsk’ın noktasına çözüldü (eski ad = aynı yer); devletlerin ortasında değil',
-    ends.length === 2 &&
-      kmBetween(ends[0], VOLGOGRAD) < 25 &&
-      kmBetween(ends[1], GDANSK) < 25 &&
-      first.links[0].from.kind === 'city' &&
-      first.links[0].to.kind === 'city',
-    ends.map((e) => `${e.lon.toFixed(2)}, ${e.lat.toFixed(2)}`).join(' → '),
+    'Okun uçları yerlerdir: “Stalingrad” bugünkü Volgograd’ın, “Danzig” Gdańsk’ın noktasına çözüldü (eski ad = aynı yer); devletlerin ortasında değil',
+    stops.length === 2 &&
+      kmBetween(stops[0], VOLGOGRAD) < 25 &&
+      kmBetween(stops[1], GDANSK) < 25 &&
+      first.routes[0].via[0].kind === 'city' &&
+      first.routes[0].via[1].kind === 'city',
+    stops.map((e) => `${e.lon.toFixed(2)}, ${e.lat.toFixed(2)}`).join(' → '),
   );
   const s1 = await mapState(page);
   check(
-    '1. adım: yalnızca kendi çizgisi (savaş, “Eski adlar”); uçları görünür alanda, hiçbir şey örtülmüyor; şehirler devlet olarak öne çıkarılmadı',
-    s1.links.join() === 'war' &&
+    '1. sahne: yalnızca kendi oku (ilerleyiş, “Eski adlar”); uçları görünür alanda, hiçbir şey örtülmüyor; şehirler devlet olarak öne çıkarılmadı',
+    s1.routes.join() === 'advance' &&
       s1.flags.includes('Eski adlar') &&
       s1.outside === 0 &&
       s1.covered === 0 &&
@@ -6842,11 +7126,11 @@ await guard(async () => {
     `${s1.ids.join('+') || '—'} · ${s1.flags.join(', ')}`,
   );
 
-  // --- step 2: four routes, each in its own look
-  await showStep(page, 2);
+  // --- scene 2: four routes, each in its own look
+  await showStep(page, 2, 0);
   await settle(page, 600);
   const routes = await page.evaluate(() =>
-    [...document.querySelectorAll('.ai-layer .ai-route')].map((g) => {
+    [...document.querySelectorAll('.ai-layer .ai-route:not(.is-leaving)')].map((g) => {
       const line = g.querySelector('path.line');
       const head = g.querySelector('path.head');
       const cs = getComputedStyle(line);
@@ -6865,7 +7149,7 @@ await guard(async () => {
   );
   const looks = new Set(routes.map((r) => `${r.dash}|${r.width}|${r.head}|${r.headFill}`));
   check(
-    '2. adım: dört yol var (ilerleyiş, geri çekilme, göç, ticaret); her türün çizgi deseni, kalınlığı ve ok ucu ötekilerden farklı — aynı tür her zaman aynı görünür',
+    '2. sahne: dört yol var (ilerleyiş, geri çekilme, göç, ticaret); her türün çizgi deseni, kalınlığı ve ok ucu ötekilerden farklı — aynı tür her zaman aynı görünür',
     routes.map((r) => r.type).join() === 'advance,retreat,migration,trade' &&
       looks.size === 4 &&
       routes[0].dash === 'none' &&
@@ -6905,47 +7189,41 @@ await guard(async () => {
   );
   const lap = await overlapReport(page);
   check(
-    '2. adım: hiçbir etiket başka bir etiketi ya da işaretçiyi örtmüyor, harita dışına taşmıyor',
+    '2. sahne: hiçbir etiket başka bir etiketi ya da işaretçiyi örtmüyor, harita dışına taşmıyor',
     lap.clash.length === 0 && lap.out.length === 0 && lap.underControl.length === 0,
     [...lap.clash, ...lap.out, ...lap.underControl].join(' | '),
   );
   const s2 = await mapState(page);
   check(
-    '2. adım: kamera yolların her durağını altyazının ve soru kutusunun üstündeki görünür alana sığdırdı',
+    '2. sahne: kamera yolların her durağını altyazının ve soru kutusunun üstündeki görünür alana sığdırdı',
     s2.targets >= 11 && s2.outside === 0 && s2.belowFoot === 0 && s2.covered === 0,
     `${s2.targets} nokta · dışarıda ${s2.outside} · dipte ${s2.belowFoot} · örtülen ${s2.covered}`,
   );
-  // “hareketi azalt” is the default of this suite: an animated route is simply there, with nothing running
-  const calm = await page.evaluate(() => {
-    // (the path that opens the mask lives in the layer's <defs>, not inside the route's group)
-    const reveal = (() => {
-      const g = document.querySelector('.ai-layer .ai-route.is-animated');
-      const id = g?.getAttribute('mask')?.match(/#([^)]+)\)/)?.[1];
-      return id ? (document.getElementById(id)?.querySelector('.reveal') ?? null) : null;
-    })();
-    return {
-      running: reveal ? reveal.getAnimations().length : -1,
-      offset: reveal ? getComputedStyle(reveal).strokeDashoffset : null,
-    };
-  });
+  // “hareketi azalt” is the default of this suite: an arrow is simply there, with nothing to draw it in (no mask, no animation)
+  const calm = await page.evaluate(() => ({
+    animated: document.querySelectorAll('.ai-layer .ai-route.is-animated').length,
+    reveals: document.querySelectorAll('.ai-layer defs .reveal').length,
+    running: document.getAnimations().filter((a) => /ai-route/.test(a.animationName ?? '')).length,
+  }));
   const calmInk = await routeInk(page, 'advance');
   check(
-    '“Hareketi azalt” isteyen okurda canlandırılması istenen yol çizilerek belirmez: hiçbir animasyon çalışmıyor, yol baştan sona orada (çizgisinin üstündeki noktaların çoğu ekranda mürekkep renginde: maske yolu kapatmıyor)',
-    calm.running === 0 && parseFloat(calm.offset) === 0 && calmInk.dark / calmInk.of > 0.5,
+    '“Hareketi azalt” isteyen okurda ok çizilerek belirmez: ne maske ne animasyon var, ok baştan sona orada (çizgisinin üstündeki noktaların çoğu ekranda mürekkep renginde)',
+    calm.animated === 0 && calm.reveals === 0 && calm.running === 0 && calmInk.dark / calmInk.of > 0.5,
     `${JSON.stringify(calm)} · ${calmInk.dark}/${calmInk.of} nokta koyu`,
   );
 
-  // --- step 3: the sides of a conflict, as blocs
+  // --- scene 3: the sides of a conflict, as blocs, each in its actor's colour (the focus is the side of the place: Germany)
   await showStep(page, 3);
   await settle(page, 800);
   const legend = await page.evaluate(() => ({
     names: [...document.querySelectorAll('[data-testid=watch-sides] li span')].map((e) => e.textContent.trim()),
+    keys: [...document.querySelectorAll('[data-testid=watch-sides] li')].map((e) => e.dataset.side),
     swatches: [...document.querySelectorAll('[data-testid=watch-sides] .watch-side-swatch')].map(
       (e) => getComputedStyle(e).backgroundColor,
     ),
-    tokens: [0, 1].map((i) => {
+    tokens: ['focus', 'foe-1'].map((key) => {
       const probe = document.createElement('i');
-      probe.style.backgroundColor = `var(--side-${i})`;
+      probe.style.backgroundColor = `var(--side-${key})`;
       document.body.appendChild(probe);
       const c = getComputedStyle(probe).backgroundColor;
       probe.remove();
@@ -6954,19 +7232,20 @@ await guard(async () => {
     inCaption: !!document.querySelector('[data-testid=watch] [data-testid=watch-sides]'),
   }));
   check(
-    '3. adım: tarafların adları anlatım kutusunda, haritanın boyadığı renklerle (Mihver, Müttefikler)',
+    '3. sahne: tarafların adları anlatım kutusunda, haritanın boyadığı renklerle (Mihver odak renginde, Müttefikler karşıt renkte)',
     legend.names.join() === 'Mihver,Müttefikler' &&
+      legend.keys.join() === 'focus,foe-1' &&
       legend.inCaption &&
       legend.swatches.join() === legend.tokens.join() &&
       new Set(legend.swatches).size === 2,
     `${legend.names.join(' / ')} · ${legend.swatches.join(' / ')}`,
   );
   const spot = await spotlight(page);
-  const sampled = await sampleMap(page, spot.ids);
+  const sampled = await sampleMap(page, spot);
   check(
-    '3. adım, ekran görüntüsünden: her tarafın devletleri TEK renkte (taraf başına bir blok), iki taraf birbirinden belirgin ayrışıyor; öne çıkan her örnek tarafının renginde',
-    sampled.nLit >= 15 && sampled.litOff / sampled.nLit < 0.05,
-    `${sampled.nLit} öne çıkan örnek, ${sampled.litOff} sapma`,
+    '3. sahne, ekran görüntüsünden: her tarafın devletleri TEK renkte (taraf başına bir blok), iki taraf birbirinden belirgin ayrışıyor; boyalı her örnek tarafının renginde',
+    sampled.nLit >= 15 && sampled.litOff / sampled.nLit < 0.05 && sampled.actorsMin >= 20,
+    `${sampled.nLit} boyalı örnek, ${sampled.litOff} sapma · aktörler ΔE ${sampled.actorsMin.toFixed(0)}`,
   );
   const blocs = await page.evaluate(() => {
     const m = window.__ayni.map;
@@ -6977,7 +7256,7 @@ await guard(async () => {
     return { head: [paint[0], paint[1]?.join?.()], pairs };
   });
   check(
-    'Taraf boyaması haritanın kendisinde: kimliğe göre eşleme, her taraf için bir renk (ikisi farklı); taraf yokken her devlet kendi canlı rengine döner',
+    'Taraf boyaması haritanın kendisinde: kimliğe göre eşleme, her taraf için bir renk (ikisi farklı)',
     blocs.head[0] === 'match' &&
       blocs.head[1] === 'get,id' &&
       blocs.pairs.length === 2 &&
@@ -6991,13 +7270,13 @@ await guard(async () => {
   const back = await page.evaluate(() => {
     const paint = window.__ayni.map.getPaintProperty('ai-fill', 'fill-color');
     return {
-      side: paint[0] === 'match' && paint[1][0] === 'get' && paint[1][1] === 'id',
+      side: Array.isArray(paint) && paint[0] === 'match' && paint[1][0] === 'get' && paint[1][1] === 'id',
       legend: !!document.querySelector('[data-testid=watch-sides]'),
     };
   });
   check(
-    'Taraf bildirmeyen 1. adıma dönünce boyama ve taraf kutusu gider (her adım yalnızca kendi çizimini gösterir)',
-    !back.legend,
+    'Taraf bildirmeyen 1. sahneye dönünce boyama ve taraf kutusu gider (taraflar anlatıda bildirildikleri andan başlar)',
+    !back.legend && !back.side,
     JSON.stringify(back),
   );
   await page.context().close();
@@ -7012,18 +7291,19 @@ await guard(async () => {
   await finalStatus(page);
   await cameraRests(page, 12000);
   await clickStep(page, 2);
-  await page.waitForFunction(() => !!document.querySelector('.ai-layer .ai-route.is-animated'), null, {
+  await page.evaluate(() => window.__ayni.ai.presentation.replayBeat(0)); // (the scene waits on its sentence while the arrows are looked at)
+  await page.waitForFunction(() => !!document.querySelector('.ai-layer .ai-route.is-animated:not(.is-leaving)'), null, {
     timeout: 8000,
   });
   const revealOf = () => {
-    const g = document.querySelector('.ai-layer .ai-route.is-animated');
+    const g = document.querySelector('.ai-layer .ai-route.is-animated:not(.is-leaving)');
     return document.getElementById(g.getAttribute('mask').match(/#([^)]+)\)/)[1]).querySelector('.reveal');
   };
   // the animation is stopped halfway (a fixed moment, however fast this machine is) so that what is on the screen can be looked at
   const during = await page.evaluate(`(() => {
     const reveal = (${revealOf})();
     const a = reveal.getAnimations();
-    const out = { running: a.length, name: a[0]?.animationName ?? '', animated: document.querySelectorAll('.ai-layer .ai-route.is-animated').length };
+    const out = { running: a.length, name: a[0]?.animationName ?? '', animated: document.querySelectorAll('.ai-layer .ai-route.is-animated:not(.is-leaving)').length };
     if (a[0]) {
       a[0].pause();
       a[0].currentTime = 1250;
@@ -7056,35 +7336,37 @@ await guard(async () => {
 });
 
 await guard(async () => {
-  // a one-step answer about the two sides: the scripted stand-in answers “Mihver ve Müttefikler kimdi?” with `sides`
+  // a one-step answer about the two sides: the scripted stand-in answers “Mihver ve Müttefikler kimdi?” with `sides` (and, in its
+  // second sentence, who stood aside)
   const page = await open(AT_HAMBURG);
   await ask(page, 'Mihver ve Müttefikler kimdi?');
   await cameraRests(page, 12000);
+  await showStep(page, 1, 1);
   await settle(page, 600);
   const dr = await drawing(page);
-  const legend = await page.evaluate(() =>
-    [...document.querySelectorAll('[data-testid=watch-sides] li span')].map((e) => e.textContent.trim()),
-  );
+  const bs = await beatState(page);
   const state = await mapState(page);
   check(
-    'Mihver ve Müttefikler sorusu: tek adımlı yanıt; iki taraf bildirildi (Mihver: Almanya, İtalya, Japonya · Müttefikler: Britanya, Sovyetler, ABD), kutuda iki taraf, 1942’nin sınırları',
+    'Mihver ve Müttefikler sorusu: tek adımlı yanıt; iki taraf bildirildi (Mihver: Almanya, İtalya, Japonya · Müttefikler: Britanya, Sovyetler, ABD), ikinci cümlede kim kenarda kaldı (İsveç, İsviçre, Türkiye: taramalı); kutuda taraflar ve tarafsızlar, 1942’nin sınırları',
     dr.sides.length === 2 &&
       dr.sides[0].polities.join() === 'nazi-germany,kingdom-of-italy,empire-of-japan' &&
       dr.sides[1].polities.length === 3 &&
-      legend.join() === 'Mihver,Müttefikler' &&
+      dr.neutral.length === 3 &&
+      bs.sides === 'Mihver:focus|Müttefikler:foe-1|Tarafsız ya da belirsiz:neutral' &&
       state.year === '1942' &&
-      state.ids.length === 6,
-    `${legend.join(' / ')} · ${state.ids.join('+')}`,
+      state.ids.length === 9,
+    `${bs.sides} · ${state.ids.join('+')}`,
   );
   const spot = await spotlight(page);
-  const sampled = await sampleMap(page, spot.ids);
+  const sampled = await sampleMap(page, spot);
   check(
-    'Ekran görüntüsünden: iki bloğun devletleri iki renkte (örneklerin %95’i tarafının renginde), haritanın geri kalanı soluk',
+    'Ekran görüntüsünden: iki bloğun devletleri iki renkte (örneklerin %95’i tarafının renginde), haritanın geri kalanı soluk; kenarda kalanlar taramalı',
     sampled.nLit >= 15 &&
       sampled.litOff / sampled.nLit < 0.05 &&
       sampled.nRest >= 100 &&
-      sampled.restOff / sampled.nRest < 0.05,
-    `${sampled.nLit} öne çıkan (${sampled.litOff} sapma) · ${sampled.nRest} soluk (${sampled.restOff} sapma)`,
+      sampled.restOff / sampled.nRest < 0.05 &&
+      spot.doubt.length === 3,
+    `${sampled.nLit} boyalı (${sampled.litOff} sapma) · ${sampled.nRest} soluk (${sampled.restOff} sapma) · taramalı ${spot.doubt.length}`,
   );
   await page.context().close();
 });
@@ -7115,38 +7397,27 @@ await guard(async () => {
   await page.waitForSelector('[data-testid=watch-caption]', { timeout: 20000 });
   await cameraRests(page, 12000);
   await settle(page, 400);
+  await showStep(page, 1, 1);
   const state = await mapState(page);
+  const bs = await beatState(page);
   const years = await page.evaluate(() => ({
     director: window.__ayni.ai.director.year,
     view: window.__ayni.view().year,
     event: window.__ayni.data.eventsById.get('fransa-muharebesi-1940').year,
   }));
   check(
-    'Fransa 1940 sahnesi: olay Mayıs 1940’ta başlıyor ama haritada 1939’un sınırları var (Fransa Üçüncü Cumhuriyeti veride 1939’a kadar; olayın başlangıcındaki sınırlar), Fransa, Hollanda, Belçika, Birleşik Krallık ve Almanya öne çıkıyor',
+    'Fransa 1940 sahnesi: olay Mayıs 1940’ta başlıyor ama haritada 1939’un sınırları var (Fransa Üçüncü Cumhuriyeti veride 1939’a kadar; olayın başlangıcındaki sınırlar); ikinci cümlede model Fransa ve Birleşik Krallık’ı vurgular (olayın tarafları kendiliğinden öne çıkarılmaz)',
     years.event === 1940 &&
       years.director === 1939 &&
       years.view === 1939 &&
-      ['french-third-republic', 'nazi-germany', 'kingdom-of-great-britain', 'netherlands', 'kingdom-of-belgium'].every(
-        (id) => state.ids.includes(id),
-      ),
-    `olay ${years.event} · harita ${years.view} · ${state.ids.join('+')}`,
-  );
-  const line = await warLineOf(page, 'fransa-muharebesi-1940');
-  check(
-    'Fransa Muharebesi’nin savaş çizgisi Almanya ile Fransa arasında: Berlin’den Paris’e; Birleşik Krallık’a düşmüyor',
-    !!line &&
-      kmBetween(line.ends[0], PLACES.berlin) < 25 &&
-      kmBetween(line.ends[1], PLACES.paris) < 25 &&
-      kmBetween(line.ends[1], PLACES.london) > 200 &&
-      line.d <= 1,
-    line
-      ? `Berlin’e ${Math.round(kmBetween(line.ends[0], PLACES.berlin))} km · Paris’e ${Math.round(kmBetween(line.ends[1], PLACES.paris))} km`
-      : 'çizgi yok',
+      bs.emphasis === 'french-third-republic,kingdom-of-great-britain' &&
+      bs.lines === 0,
+    `olay ${years.event} · harita ${years.view} · ${bs.emphasis}`,
   );
   const cam = await view(page);
-  const there = await Promise.all([PLACES.paris, PLACES.berlin, PLACES.london].map((p) => inView(page, p)));
+  const there = await Promise.all([PLACES.paris, PLACES.london].map((p) => inView(page, p)));
   check(
-    'Fransa/Britanya 1940 sahnesi Batı Avrupa’yı çerçeveler, dünyayı değil: yakınlaştırma ≥ 3,8 (dünya görünümü ≈ 2), haritanın görünen boylamı 70°’den dar ve −30°…50° arasında; Paris, Berlin ve Londra görünür alanda; sömürgeler (Guyana, Aden, Filistin) kadraja girmiyor',
+    'Fransa/Britanya 1940 sahnesi Batı Avrupa’yı çerçeveler, dünyayı değil: yakınlaştırma ≥ 3,8 (dünya görünümü ≈ 2), haritanın görünen boylamı 70°’den dar ve −30°…50° arasında; Paris ve Londra görünür alanda; sömürgeler (Guyana, Aden, Filistin) kadraja girmiyor',
     cam.zoom >= 3.8 &&
       cam.east - cam.west < 70 &&
       there.every(Boolean) &&
@@ -7165,29 +7436,25 @@ await guard(async () => {
   await ask(page, 'Normandiya çıkarmasını göster.');
   await page.waitForSelector('[data-testid=watch-caption]', { timeout: 20000 });
   await cameraRests(page, 12000);
+  await showStep(page, 1, 1);
   await settle(page, 400);
   const state = await mapState(page);
   const target = await page.evaluate(() => {
     const t = window.__ayni.ai.frameTarget();
     return { boxes: t?.boxes ?? [], points: t?.points ?? [] };
   });
-  const line = await warLineOf(page, 'normandiya-1944');
+  const bs = await beatState(page);
   check(
-    'Normandiya 1944 sahnesi: Birleşik Krallık, ABD ve Almanya öne çıkıyor, çizgi Londra’dan Berlin’e (Grönland’dan değil), sınırlar 1944’ün',
-    ['kingdom-of-great-britain', 'united-states-of-america', 'nazi-germany'].every((id) => state.ids.includes(id)) &&
-      !!line &&
-      kmBetween(line.ends[0], PLACES.london) < 25 &&
-      kmBetween(line.ends[1], PLACES.berlin) < 25 &&
-      line.d <= 1 &&
+    'Normandiya 1944 sahnesi: ikinci cümlede model Birleşik Krallık, ABD ve Almanya’yı vurgular; olaydan başkente çizgi yok; sınırlar 1944’ün',
+    bs.emphasis === 'kingdom-of-great-britain,nazi-germany,united-states-of-america' &&
+      bs.lines === 0 &&
       (await page.evaluate(() => window.__ayni.view().year)) === 1944,
-    line ? `Londra’ya ${Math.round(kmBetween(line.ends[0], PLACES.london))} km` : 'çizgi yok',
+    bs.emphasis,
   );
   const cam = await view(page);
-  const there = await Promise.all(
-    [PLACES.london, PLACES.berlin, { lon: -0.87, lat: 49.37 }].map((p) => inView(page, p)),
-  );
+  const there = await Promise.all([{ lon: -0.87, lat: 49.37 }].map((p) => inView(page, p)));
   check(
-    'Normandiya sahnesi Batı Avrupa’yı çerçeveler, dünyayı değil: ABD sahnede (öne çıkıyor) ama toprağının hiçbir parçası kadraja girmiyor (Alaska, Grönland yüzünden dünyaya uzaklaşmıyor): yakınlaştırma ≥ 3,8, görünen boylam 70°’den dar, çıkarma yeri ile iki başkent görünür',
+    'Normandiya sahnesi Batı Avrupa’yı çerçeveler, dünyayı değil: ABD sahnede (vurgulanıyor) ama toprağının hiçbir parçası kadraja girmiyor (Alaska, Grönland yüzünden dünyaya uzaklaşmıyor): yakınlaştırma ≥ 3,8, görünen boylam 70°’den dar, çıkarma yeri ile iki başkent görünür',
     cam.zoom >= 3.8 &&
       cam.east - cam.west < 70 &&
       there.every(Boolean) &&
@@ -7197,6 +7464,301 @@ await guard(async () => {
     `yakınlaştırma ${cam.zoom.toFixed(2)} · boylam ${cam.west.toFixed(0)}…${cam.east.toFixed(0)} · en batıdaki kutu ${Math.min(...target.boxes.map((b) => b[0])).toFixed(0)}°`,
   );
   await shot(page, 'ai-n2-normandiya-1944.png');
+  await page.context().close();
+});
+
+/* ===================================================================== M. the beats of a scene */
+section(
+  'M. Vuruşlar: altyazı cümle cümle okuma hızında oynar (oynayan cümle öne çıkar, gelecekler solar); biten vuruşun oku söner, işareti küçük numaralı noktaya döner; sahne bitince Oynat kapalıysa bekler; bir cümleye tıklamak o vuruşu yeniden oynatır ve orada tutar',
+);
+await guard.smoke(async () => {
+  // the sentences play by themselves, at the pace of reading, whatever “Oynat” says (the fast speed keeps the scenario short)
+  const page = await open(AT_HAMBURG);
+  await page.click('[data-testid=place-narrate]');
+  await finalStatus(page);
+  await cameraRests(page, 12000);
+  await page.selectOption('[data-testid=watch-speed]', 'fast');
+  await showStep(page, 1, 0);
+  const sentences = await page.evaluate(() => window.__ayni.ai.presentation.steps[1].beats);
+  check('2. sahnenin altyazısı iki cümle, iki vuruş', sentences.length === 2, `${sentences.length} cümle`);
+  const want0 = leadTime('fast') + beatTime(sentences[0], 'fast');
+  const t0 = Date.now();
+  await clickStep(page, 2); // (the scene begins and plays)
+  const at0 = await beatState(page);
+  const look = await page.evaluate(() => {
+    const [a, b] = [...document.querySelectorAll('[data-testid=watch-beat]')];
+    const cs = (e) => getComputedStyle(e);
+    return {
+      nowShadow: cs(a).boxShadow !== 'none',
+      nextOpacity: Number(cs(b).opacity),
+      nowOpacity: Number(cs(a).opacity),
+      nextShadow: cs(b).boxShadow,
+    };
+  });
+  check(
+    '2. sahne kendiliğinden başlar: 1. cümle öne çıkar (işaretleyici zemin), 2. cümle solgun; haritada ilk vuruşun işareti ve oku',
+    (await where(page)) === '2:0' &&
+      at0.sentences === 'nx' &&
+      look.nowShadow &&
+      look.nextOpacity < 0.6 &&
+      look.nowOpacity === 1 &&
+      at0.markers.join() === 'fransa-muharebesi-1940' &&
+      at0.now.join() === 'fransa-muharebesi-1940' &&
+      at0.routes.join() === 'advance',
+    JSON.stringify(look),
+  );
+  await page.waitForFunction(() => window.__ayni.ai.presentation.beat === 1, null, { timeout: want0 + 8000 });
+  const took0 = Date.now() - t0;
+  const at1 = await beatState(page);
+  check(
+    `1. cümle okunma süresi kadar (~${(want0 / 1000).toFixed(1)} sn) oynayıp biter: 2. vuruş başlar; 1. vuruşun oku söndü, işareti 1 numaralı küçük nokta oldu; 2. olay tam işaret; 1. cümle okunmuş (normal), 2. cümle öne çıkar`,
+    took0 >= want0 * 0.8 &&
+      took0 <= want0 + 3500 &&
+      at1.sentences === 'pn' &&
+      at1.routes.length === 0 &&
+      at1.dots.join() === 'fransa-muharebesi-1940#1=1' &&
+      at1.now.join() === 'compiegne-ateskesi-1940',
+    `${took0} ms · ${at1.dots.join()} · oklar ${at1.routes.join() || '—'}`,
+  );
+  const want1 = beatTime(sentences[1], 'fast');
+  const t1 = Date.now();
+  await page.waitForFunction(() => window.__ayni.ai.presentation.done, null, { timeout: want1 + 8000 });
+  const took1 = Date.now() - t1;
+  const at2 = await beatState(page);
+  check(
+    `2. cümle de okunma süresi kadar (~${(want1 / 1000).toFixed(1)} sn) sürer; sahne biter: iki olay da sayılı nokta (1, 2), ok yok, bütün cümleler okunmuş`,
+    took1 >= want1 * 0.5 &&
+      took1 <= want1 + 3500 &&
+      at2.sentences === 'pp' &&
+      at2.dots.join() === 'compiegne-ateskesi-1940#2=2,fransa-muharebesi-1940#1=1' &&
+      at2.now.length === 0 &&
+      at2.routes.length === 0,
+    `${took1} ms · ${at2.dots.join()}`,
+  );
+  await settle(page, lingerTime('fast') + 1800);
+  check(
+    'Oynat kapalıyken sahne bitince okuru bekler: bekleme süresi dolsa da 2. sahnenin sonunda kalır',
+    (await where(page)) === '2:D' && !(await pres(page)).playing,
+    await where(page),
+  );
+  await page.context().close();
+});
+
+await guard(async () => {
+  // a click on a sentence plays its beat again and holds there; “Oynat” lets it go on from that sentence
+  const page = await open(AT_HAMBURG);
+  await page.click('[data-testid=place-narrate]');
+  await finalStatus(page);
+  await cameraRests(page, 12000);
+  await page.selectOption('[data-testid=watch-speed]', 'fast');
+  await showStep(page, 2, 1); // (the second sentence plays, held)
+  const arrow = async () => page.evaluate(() => !!document.querySelector('.ai-layer .ai-route:not(.is-leaving)'));
+  check(
+    'Başlangıç: 2. sahnenin 2. cümlesinde tutuluyor (1. vuruşun oku yok, işareti nokta)',
+    (await where(page)) === '2:1' &&
+      !(await arrow()) &&
+      (await beatState(page)).dots.join() === 'fransa-muharebesi-1940#1=1',
+  );
+  await page.click('[data-testid=watch-beat][data-beat="0"]');
+  await cameraRests(page);
+  const sentences = await page.evaluate(() => window.__ayni.ai.presentation.steps[1].beats);
+  const again = await beatState(page);
+  const held = await page.getAttribute('[data-testid=watch-caption]', 'data-held');
+  check(
+    '1. cümleye tıklamak o vuruşu yeniden oynatır: ilk vuruşun oku yeniden çizilir, işaret yeniden tam işaret, 2. olay henüz yok; cümle öne çıkar ve oynatma orada tutulur',
+    (await where(page)) === '2:0' &&
+      again.sentences === 'nx' &&
+      again.routes.join() === 'advance' &&
+      again.now.join() === 'fransa-muharebesi-1940' &&
+      again.markers.join() === 'fransa-muharebesi-1940' &&
+      held === 'true',
+    `${await where(page)} · tutulu ${held}`,
+  );
+  await settle(page, leadTime('fast') + beatTime(sentences[0], 'fast') + 1500);
+  check(
+    'Tutulan vuruş, okunma süresi geçse de yerinde kalır (kendiliğinden ilerlemez)',
+    (await where(page)) === '2:0' && (await arrow()),
+    await where(page),
+  );
+  const before = await page.evaluate(
+    () => (window.__arrow = document.querySelector('.ai-layer .ai-route:not(.is-leaving)')),
+  );
+  await page.click('[data-testid=watch-beat][data-beat="0"]');
+  await cameraRests(page);
+  const redrawn = await page.evaluate(
+    () => document.querySelector('.ai-layer .ai-route:not(.is-leaving)') !== window.__arrow,
+  );
+  check(
+    'Aynı cümleye bir daha tıklamak vuruşu baştan oynatır: ok yeniden kurulur (animasyonlu okun çizilerek belirmesi yeniden başlar)',
+    redrawn && (await where(page)) === '2:0',
+  );
+  await page.click('[data-testid=watch-play]');
+  await page.waitForFunction(() => window.__ayni.ai.presentation.beat === 1, null, {
+    timeout: leadTime('fast') + beatTime(sentences[0], 'fast') + 6000,
+  });
+  check(
+    '“Oynat” tutulan vuruştan devam ettirir: 1. cümle bitince 2. cümleye geçer ve oynatma açık kalır',
+    (await where(page)) === '2:1' && (await pres(page)).playing,
+    await where(page),
+  );
+  await page.context().close();
+});
+
+await guard(async () => {
+  // with motion allowed, the arrows of a beat that is over fade away (and are gone a moment later); the camera does not move between beats
+  const page = await open(AT_HAMBURG, { animated: true });
+  await page.click('[data-testid=place-narrate]');
+  await finalStatus(page);
+  await cameraRests(page, 12000);
+  await showStep(page, 4, 1); // (the arrow of the Eastern Front plays, held)
+  const arrowsAt = () =>
+    page.evaluate(() => ({
+      live: document.querySelectorAll('.ai-layer .ai-route:not(.is-leaving)').length,
+      leaving: document.querySelectorAll('.ai-layer .ai-route.is-leaving').length,
+    }));
+  const camBefore = await camera(page);
+  check('4. sahnenin 2. cümlesinde ok görünür', (await arrowsAt()).live === 1, JSON.stringify(await arrowsAt()));
+  // (the fade lasts about half a second: a page busy drawing the map may not look at it in time, so the layer is watched for the class)
+  await page.evaluate(() => {
+    window.__fade = { leaving: 0 };
+    new MutationObserver((records) => {
+      for (const r of records)
+        if (r.type === 'attributes' && r.target.classList?.contains('is-leaving')) window.__fade.leaving += 1;
+    }).observe(document.querySelector('.ai-layer'), { subtree: true, attributes: true, attributeFilter: ['class'] });
+    window.__ayni.ai.presentation.replayBeat(2);
+  });
+  await page.waitForFunction(() => document.querySelectorAll('.ai-layer .ai-route').length === 0, null, {
+    timeout: 3000,
+  });
+  const fade = await page.evaluate(() => window.__fade);
+  check(
+    'Vuruş bitince ok hemen silinmez, solar (soluyor sınıfı)',
+    fade.leaving >= 1 && (await arrowsAt()).live === 0,
+    JSON.stringify(fade),
+  );
+  await settle(page, 400);
+  check(
+    'Sönen ok bir an sonra haritadan kalkar; kamera vuruşlar arasında oynamaz',
+    (await arrowsAt()).leaving === 0 && !camCompare(camBefore, await camera(page)).moved,
+  );
+  await page.context().close();
+});
+
+/* ============================================================ Q. change is always visible */
+section(
+  'Q. Değişim hep görünür: anlatım sınırların yılını değiştirince (sahneden sahneye) o aralıktaki toprak değişimi haritada bir an vurgulanır, sessizce değişmez',
+);
+await guard(async () => {
+  const page = await open(AT_HAMBURG);
+  await page.click('[data-testid=place-narrate]');
+  await finalStatus(page);
+  await cameraRests(page, 12000);
+  await showStep(page, 2, 0); // the borders of 1939 (the Third Republic is in the data up to that year)
+  await settle(page, 2800); // (whatever flashed on the way in has gone)
+  const quiet = (await flashLayers(page)).length;
+  await clickStep(page, 3); // the Battle of Britain: the borders of 1940
+  await page.evaluate(() => window.__ayni.ai.presentation.replayBeat(0));
+  const flashed = await eventually(
+    page,
+    () => window.__ayni.map.getStyle().layers.some((l) => l.id.startsWith('terr-')),
+    null,
+    6000,
+  );
+  const year = await headYear(page);
+  check(
+    'Sınırlar 1939’dan 1940’a geçince (2. sahneden 3. sahneye) görünümdeki toprak değişimi haritada belirir: bir vurgu katmanı eklendi; öncesinde sessizdi',
+    quiet === 0 && flashed && year === '1940',
+    `önce ${quiet} katman · sonra ${(await flashLayers(page)).length} · başlıkta ${year}`,
+  );
+  const gone = await eventually(
+    page,
+    () => !window.__ayni.map.getStyle().layers.some((l) => l.id.startsWith('terr-')),
+    null,
+    6000,
+  );
+  check('Vurgu bir an kalıp kendiliğinden gider (hareketi azalt: sabit, birkaç saniye)', gone);
+  // leaving the answer takes any flash away at once
+  await clickStep(page, 4);
+  await page.evaluate(() => window.__ayni.ai.presentation.replayBeat(0));
+  await page.click('[data-testid=watch-close]');
+  await settle(page, 300);
+  check('Anlatım kapanınca vurgu da kalkar', (await flashLayers(page)).length === 0);
+  await page.context().close();
+});
+
+/* ================================================== Z. across the date line */
+section(
+  'Z. Tarih değişim çizgisi: Pasifik’i aşan ok kısa yoldan gider (Tokyo’dan Pearl Harbor’a 62°, 298° değil), kamera ikisini birden çerçeveler, harita geçici olarak dünyayı iki kez gösterir',
+);
+await guard(async () => {
+  const page = await open(AT_HAMBURG, { init: FAKE_RUNTIME, initArg: { shapes: ['pacific'] } });
+  await page.fill('[data-testid=chat-input]', 'Pearl Harbor saldırısını göster');
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('[data-testid=watch-caption]', { timeout: 20000 });
+  await finalStatus(page);
+  await cameraRests(page, 12000);
+  await showStep(page, 1, 0);
+  await settle(page, 600);
+  const info = await page.evaluate(() => {
+    const m = window.__ayni.map;
+    const box = document.querySelector('#map').getBoundingClientRect();
+    const foot = document.querySelector('#bottom').getBoundingClientRect();
+    const r = window.__ayni.ai.frame().routes[0];
+    const at = (p) => m.project([p.lon, p.lat]);
+    const [a, b] = [at(r.points[0]), at(r.points[1])];
+    const ok = (p) => p.x >= 0 && p.x <= box.width && box.top + p.y >= box.top && box.top + p.y <= foot.top;
+    const path = document.querySelector('.ai-layer .ai-route path.line');
+    const mark = document.querySelector('.evt[data-id="pearl-harbor-1941"] .evt-mark')?.getBoundingClientRect();
+    return {
+      lons: r.points.map((p) => p.lon),
+      wide: window.__ayni.wide(),
+      copies: m.getRenderWorldCopies?.() ?? null,
+      aIn: ok(a),
+      bIn: ok(b),
+      dx: Math.abs(b.x - a.x),
+      width: box.width,
+      pathLen: path ? path.getTotalLength() : null,
+      markIn:
+        !!mark && mark.left >= box.left && mark.right <= box.right && mark.top >= box.top && mark.bottom <= foot.top,
+      zoom: m.getZoom(),
+    };
+  });
+  check(
+    'Ok Tokyo’dan Pearl Harbor’a kısa yoldan gider: ikinci durağın boylamı 180°’yi aşıp sürer (≈ 202°E, −158° değil)',
+    info.lons.length === 2 && info.lons[1] > 180 && info.lons[1] - info.lons[0] < 70,
+    info.lons.map((x) => x.toFixed(1)).join(' → '),
+  );
+  check(
+    'Harita sahne boyunca dünyayı iki kez gösterir (geniş görünüm açık) ve iki uç da altyazının ve soru kutusunun üstündeki görünür alanda; ok ikisi arasında kısa (yol, ekran genişliğinden uzun değil)',
+    info.wide === true &&
+      info.copies === true &&
+      info.aIn &&
+      info.bIn &&
+      info.dx < info.width &&
+      info.pathLen !== null &&
+      info.pathLen < info.width,
+    `uçlar arası ${Math.round(info.dx)} px · yol ${Math.round(info.pathLen ?? 0)} px · ekran ${Math.round(info.width)} px · yakınlaştırma ${info.zoom.toFixed(2)}`,
+  );
+  check(
+    'Pearl Harbor’ın olay işareti de görünür alanda (dünya kopyasındaki yerinde)',
+    info.markIn && (await markerIds(page)).join() === 'pearl-harbor-1941',
+    (await markerIds(page)).join(),
+  );
+  const lap = await overlapReport(page);
+  check(
+    'Tarih değişim çizgisini aşan sahnede de hiçbir etiket başka bir etiketi ya da işaretçiyi örtmüyor, harita dışına taşmıyor',
+    lap.clash.length === 0 && lap.out.length === 0 && lap.underControl.length === 0,
+    [...lap.clash, ...lap.out, ...lap.underControl].join(' | '),
+  );
+  await shot(page, 'ai-z1-pasifik.png');
+  // the reader comes back to the ordinary world: the page restores the ordinary map once the view is inside it (±179.9°)
+  await page.click('[data-testid=watch-close]');
+  await page.evaluate(() => window.__ayni.map.jumpTo({ center: [10, 50], zoom: 3 }));
+  const restored = await eventually(page, () => !window.__ayni.wide(), null, 6000);
+  check(
+    'Okur haritayı normal dünyaya getirince geniş görünüm kapanır (dünya bir kez gösterilir, sınırlar eskisi gibi)',
+    restored && (await page.evaluate(() => window.__ayni.map.getRenderWorldCopies?.())) === false,
+  );
   await page.context().close();
 });
 
@@ -7223,14 +7785,14 @@ for (const [i, s] of sections.entries()) {
 lines.push(
   '## Ekran görüntüleri',
   '',
-  '- `ai-p1-renkler-dunya.png`, `ai-p2-renkler-avrupa.png`: devlet renkleri (gri ve mavi yok, komşular ayrışıyor)',
+  '- `ai-p1-renkler-dunya.png`, `ai-p2-renkler-avrupa.png`: devlet renkleri (gri yok, deniz tek düz açık mavi, komşular ayrışıyor)',
   '- `ai-0-yeni-duzen.png`: harita neredeyse tam ekran; üstte ince çubuk, altta ince zaman çizelgesi, hemen üstünde soru kutusu, sağda küçük bilgi kartı',
   '- `ai-s1-sinir-penceresi.png`: çok daha eski bir aralığa (1900–1906, yıl 1903) geçildikten sonra: sınırlar yüklendi, başlıkta “yükleniyor…” yok',
   '- `ai-0-yer-karti.png`: bir yer seçilince küçük kart',
   '- `ai-1a-anlatim-adim1.png`, `ai-1b-anlatim-adim2.png`, `ai-1d-anlatim-adim3.png`, `ai-1e-anlatim-adim4.png`, `ai-1c-anlatim-adim6.png`, `ai-1g-anlatim-adim8.png`: İzle (Almanya, 8 adım); her adım yalnızca kendi çizimini gösterir, altyazı sabit yerde, kamera adımı izler (4. adımda Barbarossa, 6.da Stalingrad ve El Alamein, 8.de Berlin 1945)',
   '- `ai-1f-tek-anlatici.png`: yanıt ekrandayken haritada yalnızca anılan ve tıklanan olayların işaretçileri',
   '- `ai-j2-yer-secili-olaylar-cekildi.png`: bir yer seçilince dünya olayları haritadan çekilir (not nedenini söyler, çizelge o yerin olaylarıyla dolu)',
-  '- `ai-v1-ilerleme-cubugu.png`: zaman cetveli ilerleme çubuğu (adımlar tarihlerinde, görülenler dolu)',
+  '- `ai-v1-ilerleme-cubugu.png`: zaman çizelgesinin alt şeridinde sahne noktaları (tarihlerinde, görülenler dolu; üstteki 1800–2000 cetvelinde hiçbiri yok)',
   '- `ai-t1-cizelge-aralik.png`, `ai-t2-cizelge-dar-aralik.png`: yer çizelgesi yalnızca seçili aralığı gösterir; `ai-t3-adim-noktalari-kalabalik.png`: dar bir aralıkta adım noktaları küçülür, aralığın içinde kalır ve tarihlerinde durur',
   '- `ai-r1-altyazida-olay-adi.png`, `ai-r2-metinde-olay-adi.png`, `ai-r3-tam-ekranda-olay-adi.png`: altyazıdaki ve metindeki olay adları tıklanabilir; çizelgedeki tıklamayla aynı sonuç',
   '- `ai-r4-tek-adimli-altyazida-olay-adi.png`, `ai-r5-tek-adimli-metinde-olay-adi.png`: tek adımlı yanıtta da altyazıdaki ve metindeki olay adı bağlantı (Stalingrad)',
@@ -7244,6 +7806,7 @@ lines.push(
   '- `ai-4-baglam-degisti.png`: seçili yer değişince metinde “Bağlam değişti”',
   '- `ai-6c-mobil-tek-adim.png`, `ai-6d-mobil-tek-adim-oku.png`: telefonda tek adımlı yanıt (altyazı ve “Devamını oku”) ve tam ekran metin',
   '- `ai-6e-mobil-hata.png`: telefonda hata kutusu ve izin notu (ekranın içinde, düğmeler ≥ 30 px)',
+  '- `ai-z1-pasifik.png`: tarih değişim çizgisini aşan ok (Tokyo’dan Pearl Harbor’a kısa yoldan); harita dünyayı iki kez gösterir',
   '- `ai-8b-gercek-sample-duz-metin.png`: gerçek `sample` bağdaştırıcısında düz metin yazan modelin yanıtı (altyazı ve “Devamını oku”)',
   '- `ai-5-hata.png`, `ai-6-mobil.png`, `ai-6b-mobil-oku.png`, `ai-7-ayarlar.png`, `ai-8-gercek-sample.png`',
   '',

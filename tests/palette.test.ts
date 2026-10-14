@@ -5,8 +5,10 @@ import { CATEGORY_STYLES, FALLBACK_STYLE, MARKER_DIAMETER, styleFor } from '../s
 
 /**
  * Guards the colour rules of the map, in numbers:
- *  - blue belongs to the sea and the lakes alone, so no polity tint may be blue-ish; nor grey, which reads as the
- *    dotted "no data" ground; and the nine tints stay far enough apart that two neighbours never blur;
+ *  - the sea is one flat light blue; a polity may be blue too, but clearly not the colour of the sea, and none may be grey,
+ *    which reads as the dotted "no data" ground; the nine tints stay far enough apart that two neighbours never blur;
+ *  - the three colours of the actors of a narration (the side it is about and the sides against it) are told apart by
+ *    everyone, also colour-blind readers, and stand out from the sea, the paper and the selection;
  *  - event markers differ by colour alone, so every pair must stay apart, also for colour-blind readers,
  *    and none may look like the vermilion that means "your selection".
  * The maths (OKLab ΔE ×100, Machado et al. 2009 colour-vision simulation at severity 1.0) is the same
@@ -79,25 +81,25 @@ describe('polity tints', () => {
   const inUse = tints.slice(0, 8); // the data uses indices 0-7; the ninth is a spare
   const chromaOf = (hex: string) => hueChroma(hex).chroma;
 
-  it('are never blue, teal or violet (blue is for the sea)', () => {
-    for (const t of tints) expect(isBlueish(t.hex), `${t.name} ${t.hex}`).toBe(false);
-  });
-
-  it('the guard itself recognises the sea as blue', () => {
-    expect(isBlueish(token('sea'))).toBe(true);
-    expect(isBlueish(token('sea-deep'))).toBe(true);
+  it('may be blue, but the sea is one flat light blue and no tint comes near it', () => {
+    expect(isBlueish(token('sea'))).toBe(true); // (the guard recognises the sea as blue)
+    expect(tokens).not.toContain('--sea-deep'); // one flat sea: no shallows, no deep
+    for (const t of tints) {
+      expect(deltaE(t.hex, token('sea')), `${t.name} against the sea`).toBeGreaterThanOrEqual(
+        isBlueish(t.hex) ? 15 : 11,
+      );
+    }
+    expect(tints.some((t) => isBlueish(t.hex))).toBe(true); // blue is in the set: the colours of the actors are not the only blue
   });
 
   it('are never grey or sand-like: each is clearly coloured (a grey polity reads as "no data")', () => {
     for (const t of tints) expect(chromaOf(t.hex), `${t.name} ${t.hex}`).toBeGreaterThanOrEqual(0.075);
   });
 
-  it('stay well away from the dotted no-data ground, the paper and the sea', () => {
+  it('stay well away from the dotted no-data ground and the paper', () => {
     for (const t of tints) {
       expect(deltaE(t.hex, token('land-nodata')), `${t.name} against the no-data ground`).toBeGreaterThanOrEqual(11);
       expect(deltaE(t.hex, token('paper')), `${t.name} against the paper`).toBeGreaterThanOrEqual(9);
-      expect(deltaE(t.hex, token('sea')), `${t.name} against the sea`).toBeGreaterThanOrEqual(11);
-      expect(deltaE(t.hex, token('sea-deep')), `${t.name} against the deep sea`).toBeGreaterThanOrEqual(11);
     }
   });
 
@@ -124,65 +126,28 @@ describe('polity tints', () => {
     for (const t of tints) expect(contrast(token('ink'), t.hex), `${t.name} ${t.hex}`).toBeGreaterThanOrEqual(4.5);
     // (the softer ink-2 falls just short on the apricot tint, 4.4:1: that is why the labels use the darkest ink)
   });
-});
 
-describe('spotlight colours (the vivid twin of each tint)', () => {
-  const vivid = Array.from({ length: 9 }, (_, i) => ({
-    name: `vivid-${i}`,
-    hex: token(`vivid-${i}`),
-    tint: token(`tint-${i}`),
-  }));
-
-  it('are never blue, teal or violet', () => {
-    for (const v of vivid) expect(isBlueish(v.hex), `${v.name} ${v.hex}`).toBe(false);
-  });
-
-  it('are vivid: saturated and a shade darker than the wash they stand out from', () => {
-    for (const v of vivid) {
-      const { chroma } = hueChroma(v.hex);
-      expect(chroma, `${v.name} chroma`).toBeGreaterThanOrEqual(0.12);
-      expect(oklabOf(toLinear(v.hex))[0], `${v.name} is darker than its tint`).toBeLessThan(
-        oklabOf(toLinear(v.tint))[0],
-      );
-      expect(deltaE(v.hex, v.tint), `${v.name} against its own tint`).toBeGreaterThanOrEqual(12);
-    }
-  });
-
-  it('keep their own hue (a polity stays recognisable when it is lit)', () => {
-    for (const v of vivid) {
-      let d = Math.abs(hueChroma(v.hex).hue - hueChroma(v.tint).hue);
-      if (d > 180) d = 360 - d;
-      expect(d, `${v.name} hue drift`).toBeLessThanOrEqual(24);
-    }
-  });
-
-  it('stay off the vermilion and off the sea', () => {
-    for (const v of vivid) {
-      expect(deltaE(v.hex, token('accent')), `${v.name} against the accent`).toBeGreaterThanOrEqual(11);
-      expect(deltaE(v.hex, token('sea')), `${v.name} against the sea`).toBeGreaterThanOrEqual(15);
-    }
-  });
-
-  it('are told apart from each other (ΔE ≥ 6; two lit neighbours also have the link and their names)', () => {
-    for (const [i, a] of vivid.entries())
-      for (const b of vivid.slice(i + 1))
-        expect(deltaE(a.hex, b.hex), `${a.name} / ${b.name}`).toBeGreaterThanOrEqual(6);
+  it('do not use the colours of the actors of a narration, which are painted over them', () => {
+    for (const t of tints)
+      for (const name of ['side-focus', 'side-foe-1', 'side-foe-2'])
+        expect(deltaE(t.hex, token(name)), `${t.name} / ${name}`).toBeGreaterThanOrEqual(8);
   });
 });
 
-describe('the colours of the sides of a conflict (one bloc colour each, up to three sides)', () => {
-  const sides = [0, 1, 2].map((i) => ({ name: `side-${i}`, hex: token(`side-${i}`) }));
+describe('the colours of the actors of a narration (the side it is about, the sides against it)', () => {
+  const actors = [
+    { name: 'focus', hex: token('side-focus') },
+    { name: 'foe-1', hex: token('side-foe-1') },
+    { name: 'foe-2', hex: token('side-foe-2') },
+  ];
 
-  it('are never blue, teal or violet, and clearly coloured', () => {
-    for (const s of sides) {
-      expect(isBlueish(s.hex), `${s.name} ${s.hex}`).toBe(false);
-      expect(hueChroma(s.hex).chroma, `${s.name} chroma`).toBeGreaterThanOrEqual(0.1);
-    }
+  it('are clearly coloured', () => {
+    for (const a of actors) expect(hueChroma(a.hex).chroma, `${a.name} chroma`).toBeGreaterThanOrEqual(0.1);
   });
 
   it('are told apart by everyone: normal sight, protanopia and deuteranopia', () => {
-    for (const [i, a] of sides.entries())
-      for (const b of sides.slice(i + 1)) {
+    for (const [i, a] of actors.entries())
+      for (const b of actors.slice(i + 1)) {
         expect(deltaE(a.hex, b.hex), `${a.name} / ${b.name}`).toBeGreaterThanOrEqual(20);
         expect(deltaE(a.hex, b.hex, 'protan'), `${a.name} / ${b.name} (protan)`).toBeGreaterThanOrEqual(12);
         expect(deltaE(a.hex, b.hex, 'deutan'), `${a.name} / ${b.name} (deutan)`).toBeGreaterThanOrEqual(12);
@@ -190,7 +155,7 @@ describe('the colours of the sides of a conflict (one bloc colour each, up to th
   });
 
   it('stand out from the sea, the paper, the no-data ground and the vermilion of the selection', () => {
-    for (const s of sides) {
+    for (const s of actors) {
       expect(deltaE(s.hex, token('sea')), `${s.name} against the sea`).toBeGreaterThanOrEqual(15);
       expect(deltaE(s.hex, token('paper')), `${s.name} against the paper`).toBeGreaterThanOrEqual(15);
       expect(deltaE(s.hex, token('land-nodata')), `${s.name} against the no-data ground`).toBeGreaterThanOrEqual(15);
@@ -198,9 +163,13 @@ describe('the colours of the sides of a conflict (one bloc colour each, up to th
     }
   });
 
-  it('the app has exactly as many as it allows sides (a fourth side would have no colour)', async () => {
-    const { LIMITS } = await import('../src/ai/types');
-    expect(sides).toHaveLength(LIMITS.sides);
+  it('are as many as the sides a narration may state, and whoever stands aside has a colour of its own (hatched)', async () => {
+    const { LIMITS, COLOR_KEYS } = await import('../src/ai/types');
+    expect(actors).toHaveLength(LIMITS.sides);
+    expect(COLOR_KEYS).toEqual(['focus', 'foe-1', 'foe-2', 'neutral']);
+    const neutral = token('side-neutral');
+    for (const a of actors) expect(deltaE(neutral, a.hex), `neutral / ${a.name}`).toBeGreaterThanOrEqual(15);
+    expect(deltaE(neutral, token('accent'))).toBeGreaterThanOrEqual(15);
   });
 });
 

@@ -3,10 +3,12 @@ import type { PlaceIndex } from '../data/places';
 import { pointInPolygon } from '../domain/geo';
 import { overlaps } from '../domain/time';
 import type { Bounds, BorderRow, Entity, HistoricalEvent, PlacePoint, PolygonCoords, YearRange } from '../domain/types';
+import { wrapLon } from '../domain/antimeridian';
 import { eventKindOf, warSides } from './eventKinds';
 import { normalizeName } from '../domain/names';
 import { shortName } from '../ui/format';
 import { withoutOpenReference } from '../ui/read/segments';
+import { sentencesOf } from './sentences';
 import type { PlaceRef } from './types';
 
 /** What the resolver needs of the app's data (`AppData` fits). */
@@ -55,9 +57,10 @@ export function cleanLabel(value: unknown, max: number): string | null {
 }
 
 /**
- * A sentence or two for the page to show as it is (a subtitle): emphasis marks and markup are taken out without
- * leaving gaps in the sentence (the references to events, `[text](olay:id)`, stay: they are links), and it is cut
- * at `max` characters on a word.
+ * A few sentences for the page to show as they are (a subtitle: each sentence is a beat of its scene): emphasis marks and
+ * markup are taken out without leaving gaps in the sentences (the references to events, `[text](olay:id)`, stay: they are links),
+ * and it is cut at `max` characters, at the end of the last sentence that fits (a sentence that is cut in half would be a beat
+ * of half a thought), or on a word where not even the first sentence fits.
  */
 export function cleanCaption(value: unknown, max: number): string | null {
   if (typeof value !== 'string') return null;
@@ -68,6 +71,13 @@ export function cleanCaption(value: unknown, max: number): string | null {
     .trim();
   if (!text) return null;
   if (text.length <= max) return text;
+  let whole = '';
+  for (const sentence of sentencesOf(text)) {
+    const next = whole ? `${whole} ${sentence}` : sentence;
+    if (next.length > max) break;
+    whole = next;
+  }
+  if (whole) return whole;
   const cut = text.slice(0, max - 1);
   // (never in the middle of the name of an event: `[Mohaç](olay:moh` would be half a link)
   return `${withoutOpenReference(cut.slice(0, Math.max(cut.lastIndexOf(' '), Math.floor(max / 2)))).trimEnd()}…`;
@@ -405,12 +415,14 @@ export class Resolver {
    * polity (its id; it stands for its capital in the year); a city of the gazetteer by any of its names (historical
    * ones too); a polity by its name; an event by its title. A polity that has no borders in the range is not a place.
    */
-  placeRef(value: unknown, range: YearRange): PlaceRef | null {
+  placeRef(value: unknown, range: YearRange, nested = false): PlaceRef | null {
     const point = this.coordinates(value);
     if (point) return { kind: 'point', point };
     if (typeof value !== 'string') return null;
     const raw = value.trim();
     if (!raw) return null;
+    const border = nested ? null : this.borderRef(raw, range);
+    if (border) return border;
     const ev = this.eventsById.get(raw);
     if (ev) return { kind: 'event', id: ev.id, name: ev.location.name };
     if (this.rowsById.has(raw)) return this.presentIn(raw, range) ? { kind: 'polity', id: raw } : null;
@@ -445,7 +457,67 @@ export class Resolver {
           this.capitalPoint(ref.id, year) ??
           (toward ? this.anchorToward(ref.id, year, toward) : this.anchorAt(ref.id, year))
         );
+      case 'border': {
+        const target = this.placePoint(ref.toward, year);
+        return target ? this.borderPoint(ref.id, year, target) : null;
+      }
     }
+  }
+
+  /**
+   * "sınır: devlet → yer": the border of a polity toward a place, as a reference. The words before the arrow name the polity
+   * (its id or its name, present in the range), the words after it a place of any other kind. Null when it is not written
+   * that way or either end is unknown.
+   */
+  private borderRef(raw: string, range: YearRange): PlaceRef | null {
+    const m = /^([^:→>=\-]{2,24}?)\s*:\s*(.+)$/.exec(raw);
+    if (!m) return null;
+    const head = normalizeName(m[1]!);
+    if (!/^(sinir|border)/.test(head)) return null;
+    const rest = m[2]!;
+    // the first arrow (or, for a model that wrote none, the first comma) parts the polity from the place it looks toward
+    const cut = /\s*(?:→|->|=>|>|;|,|\s(?:toward|doğru|yönünde)\s)\s*/.exec(rest);
+    if (!cut) return null;
+    const polity = this.polity(rest.slice(0, cut.index).trim(), range);
+    const toward = this.placeRef(rest.slice(cut.index + cut[0].length).trim(), range, true);
+    return polity && toward ? { kind: 'border', id: polity, toward } : null;
+  }
+
+  /**
+   * The point of a polity's border (any ring of any of its parts in `year`) that lies nearest to `toward`: where an army that
+   * marches from that polity toward the place crosses the front. Null without borders that year.
+   */
+  borderPoint(id: string, year: number, toward: PlacePoint): PlacePoint | null {
+    const row = this.rowAt(id, year);
+    if (!row) return null;
+    const scale = Math.cos((toward.lat * Math.PI) / 180);
+    let best: PlacePoint | null = null;
+    let bestD = Infinity;
+    for (const poly of row.polys) {
+      for (const ring of poly) {
+        for (let i = 0; i + 1 < ring.length; i++) {
+          const [x0, y0] = ring[i]!;
+          const [x1, y1] = ring[i + 1]!;
+          // the segment in the plane around the target (longitudes as the short way from it)
+          const ax = wrapLon(x0! - toward.lon) * scale;
+          const bx = wrapLon(x1! - toward.lon) * scale;
+          const ay = y0! - toward.lat;
+          const by = y1! - toward.lat;
+          const dx = bx - ax;
+          const dy = by - ay;
+          const len = dx * dx + dy * dy;
+          const t = len > 0 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len)) : 0;
+          const px = ax + t * dx;
+          const py = ay + t * dy;
+          const d = px * px + py * py;
+          if (d < bestD) {
+            bestD = d;
+            best = { lon: toward.lon + px / (scale || 1), lat: toward.lat + py };
+          }
+        }
+      }
+    }
+    return best ? { lon: Math.round(wrapLon(best.lon) * 1000) / 1000, lat: Math.round(best.lat * 1000) / 1000 } : null;
   }
 
   /** What to call a place in words. */
@@ -455,6 +527,8 @@ export class Resolver {
         return this.nameOf(ref.id);
       case 'point':
         return ref.name ?? `${ref.point.lat.toFixed(2)}, ${ref.point.lon.toFixed(2)}`;
+      case 'border':
+        return `${this.nameOf(ref.id)} sınırı`;
       default:
         return ref.name;
     }
@@ -463,7 +537,8 @@ export class Resolver {
   /** Are the two references the same place? */
   samePlace(a: PlaceRef, b: PlaceRef): boolean {
     if (a.kind === 'point' && b.kind === 'point') return distanceKm(a.point, b.point) < 5;
-    return a.kind === b.kind && a.kind !== 'point' && b.kind !== 'point' && a.id === b.id;
+    if (a.kind === 'border' && b.kind === 'border') return a.id === b.id && this.samePlace(a.toward, b.toward);
+    return a.kind === b.kind && a.kind !== 'point' && b.kind !== 'point' && a.kind !== 'border' && a.id === b.id;
   }
 
   /** A point the map can show, rounded to about 100 m. */
